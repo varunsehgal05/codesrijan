@@ -11,18 +11,35 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as ChallengeRouteImport } from './routes/challenge'
+import { Route as CodeOfConductRouteImport } from './routes/code-of-conduct'
+import { Route as CommunityRouteImport } from './routes/community'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as HighlightsRouteImport } from './routes/highlights'
+import { Route as HostEventRouteImport } from './routes/host-event'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as MentorCommandCenterRouteImport } from './routes/mentor-command-center'
+import { Route as PaymentRouteImport } from './routes/payment'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ProblemsRouteImport } from './routes/problems'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProfileOverviewRouteImport } from './routes/profile-overview'
 import { Route as RecruitmentRouteImport } from './routes/recruitment'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SponsorsRouteImport } from './routes/sponsors'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminEvaluationsRouteImport } from './routes/admin.evaluations'
+import { Route as AdminScheduleRouteImport } from './routes/admin.schedule'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AuthOtpRouteImport } from './routes/auth.otp'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,9 +51,29 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChallengeRoute = ChallengeRouteImport.update({
   id: '/challenge',
   path: '/challenge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodeOfConductRoute = CodeOfConductRouteImport.update({
+  id: '/code-of-conduct',
+  path: '/code-of-conduct',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CommunityRoute = CommunityRouteImport.update({
+  id: '/community',
+  path: '/community',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -49,9 +86,19 @@ const HighlightsRoute = HighlightsRouteImport.update({
   path: '/highlights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HostEventRoute = HostEventRouteImport.update({
+  id: '/host-event',
+  path: '/host-event',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MentorRoute = MentorRouteImport.update({
@@ -62,6 +109,16 @@ const MentorRoute = MentorRouteImport.update({
 const MentorCommandCenterRoute = MentorCommandCenterRouteImport.update({
   id: '/mentor-command-center',
   path: '/mentor-command-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentRoute = PaymentRouteImport.update({
+  id: '/payment',
+  path: '/payment',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProblemsRoute = ProblemsRouteImport.update({
@@ -84,6 +141,21 @@ const RecruitmentRoute = RecruitmentRouteImport.update({
   path: '/recruitment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SponsorsRoute = SponsorsRouteImport.update({
+  id: '/sponsors',
+  path: '/sponsors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -94,122 +166,265 @@ const WorkspaceRoute = WorkspaceRouteImport.update({
   path: '/workspace',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminEvaluationsRoute = AdminEvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminScheduleRoute = AdminScheduleRouteImport.update({
+  id: '/schedule',
+  path: '/schedule',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AuthOtpRoute = AuthOtpRouteImport.update({
+  id: '/auth/otp',
+  path: '/auth/otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
   '/challenge': typeof ChallengeRoute
+  '/code-of-conduct': typeof CodeOfConductRoute
+  '/community': typeof CommunityRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
+  '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/payment': typeof PaymentRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
   '/profile': typeof ProfileRoute
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
+  '/register': typeof RegisterRoute
+  '/sponsors': typeof SponsorsRoute
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/auth/otp': typeof AuthOtpRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin-login': typeof AdminLoginRoute
   '/challenge': typeof ChallengeRoute
+  '/code-of-conduct': typeof CodeOfConductRoute
+  '/community': typeof CommunityRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
+  '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/payment': typeof PaymentRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
   '/profile': typeof ProfileRoute
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
+  '/register': typeof RegisterRoute
+  '/sponsors': typeof SponsorsRoute
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/auth/otp': typeof AuthOtpRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/admin-login': typeof AdminLoginRoute
   '/challenge': typeof ChallengeRoute
+  '/code-of-conduct': typeof CodeOfConductRoute
+  '/community': typeof CommunityRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
+  '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/payment': typeof PaymentRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
   '/profile': typeof ProfileRoute
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
+  '/register': typeof RegisterRoute
+  '/sponsors': typeof SponsorsRoute
+  '/support': typeof SupportRoute
   '/team': typeof TeamRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/auth/otp': typeof AuthOtpRoute
+  '/invite/$token': typeof InviteTokenRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/admin'
+    | '/admin-login'
     | '/challenge'
+    | '/code-of-conduct'
+    | '/community'
     | '/gallery'
     | '/highlights'
+    | '/host-event'
     | '/leaderboard'
+    | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/payment'
+    | '/privacy-policy'
     | '/problems'
     | '/profile'
     | '/profile-overview'
     | '/recruitment'
+    | '/register'
+    | '/sponsors'
+    | '/support'
     | '/team'
     | '/workspace'
+    | '/admin/evaluations'
+    | '/admin/schedule'
+    | '/admin/users'
+    | '/auth/otp'
+    | '/invite/$token'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
+    | '/admin-login'
     | '/challenge'
+    | '/code-of-conduct'
+    | '/community'
     | '/gallery'
     | '/highlights'
+    | '/host-event'
     | '/leaderboard'
+    | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/payment'
+    | '/privacy-policy'
     | '/problems'
     | '/profile'
     | '/profile-overview'
     | '/recruitment'
+    | '/register'
+    | '/sponsors'
+    | '/support'
     | '/team'
     | '/workspace'
+    | '/admin/evaluations'
+    | '/admin/schedule'
+    | '/admin/users'
+    | '/auth/otp'
+    | '/invite/$token'
+    | '/admin'
   id:
     | '__root__'
     | '/'
     | '/about'
+    | '/admin'
+    | '/admin-login'
     | '/challenge'
+    | '/code-of-conduct'
+    | '/community'
     | '/gallery'
     | '/highlights'
+    | '/host-event'
     | '/leaderboard'
+    | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/payment'
+    | '/privacy-policy'
     | '/problems'
     | '/profile'
     | '/profile-overview'
     | '/recruitment'
+    | '/register'
+    | '/sponsors'
+    | '/support'
     | '/team'
     | '/workspace'
+    | '/admin/evaluations'
+    | '/admin/schedule'
+    | '/admin/users'
+    | '/auth/otp'
+    | '/invite/$token'
+    | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AdminLoginRoute: typeof AdminLoginRoute
   ChallengeRoute: typeof ChallengeRoute
+  CodeOfConductRoute: typeof CodeOfConductRoute
+  CommunityRoute: typeof CommunityRoute
   GalleryRoute: typeof GalleryRoute
   HighlightsRoute: typeof HighlightsRoute
+  HostEventRoute: typeof HostEventRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
   MentorCommandCenterRoute: typeof MentorCommandCenterRoute
+  PaymentRoute: typeof PaymentRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProblemsRoute: typeof ProblemsRoute
   ProfileRoute: typeof ProfileRoute
   ProfileOverviewRoute: typeof ProfileOverviewRoute
   RecruitmentRoute: typeof RecruitmentRoute
+  RegisterRoute: typeof RegisterRoute
+  SponsorsRoute: typeof SponsorsRoute
+  SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
   WorkspaceRoute: typeof WorkspaceRoute
+  AuthOtpRoute: typeof AuthOtpRoute
+  InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -228,11 +443,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/challenge': {
       id: '/challenge'
       path: '/challenge'
       fullPath: '/challenge'
       preLoaderRoute: typeof ChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/code-of-conduct': {
+      id: '/code-of-conduct'
+      path: '/code-of-conduct'
+      fullPath: '/code-of-conduct'
+      preLoaderRoute: typeof CodeOfConductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/community': {
+      id: '/community'
+      path: '/community'
+      fullPath: '/community'
+      preLoaderRoute: typeof CommunityRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -249,11 +492,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HighlightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/host-event': {
+      id: '/host-event'
+      path: '/host-event'
+      fullPath: '/host-event'
+      preLoaderRoute: typeof HostEventRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mentor': {
@@ -268,6 +525,20 @@ declare module '@tanstack/react-router' {
       path: '/mentor-command-center'
       fullPath: '/mentor-command-center'
       preLoaderRoute: typeof MentorCommandCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment': {
+      id: '/payment'
+      path: '/payment'
+      fullPath: '/payment'
+      preLoaderRoute: typeof PaymentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/problems': {
@@ -298,6 +569,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecruitmentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sponsors': {
+      id: '/sponsors'
+      path: '/sponsors'
+      fullPath: '/sponsors'
+      preLoaderRoute: typeof SponsorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team': {
       id: '/team'
       path: '/team'
@@ -312,24 +604,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkspaceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/evaluations': {
+      id: '/admin/evaluations'
+      path: '/evaluations'
+      fullPath: '/admin/evaluations'
+      preLoaderRoute: typeof AdminEvaluationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/schedule': {
+      id: '/admin/schedule'
+      path: '/schedule'
+      fullPath: '/admin/schedule'
+      preLoaderRoute: typeof AdminScheduleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/auth/otp': {
+      id: '/auth/otp'
+      path: '/auth/otp'
+      fullPath: '/auth/otp'
+      preLoaderRoute: typeof AuthOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminEvaluationsRoute: typeof AdminEvaluationsRoute
+  AdminScheduleRoute: typeof AdminScheduleRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminEvaluationsRoute: AdminEvaluationsRoute,
+  AdminScheduleRoute: AdminScheduleRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AdminLoginRoute: AdminLoginRoute,
   ChallengeRoute: ChallengeRoute,
+  CodeOfConductRoute: CodeOfConductRoute,
+  CommunityRoute: CommunityRoute,
   GalleryRoute: GalleryRoute,
   HighlightsRoute: HighlightsRoute,
+  HostEventRoute: HostEventRoute,
   LeaderboardRoute: LeaderboardRoute,
+  LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
   MentorCommandCenterRoute: MentorCommandCenterRoute,
+  PaymentRoute: PaymentRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProblemsRoute: ProblemsRoute,
   ProfileRoute: ProfileRoute,
   ProfileOverviewRoute: ProfileOverviewRoute,
   RecruitmentRoute: RecruitmentRoute,
+  RegisterRoute: RegisterRoute,
+  SponsorsRoute: SponsorsRoute,
+  SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
   WorkspaceRoute: WorkspaceRoute,
+  AuthOtpRoute: AuthOtpRoute,
+  InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -32,7 +32,7 @@ function Page5() {
       </div>
       </nav>
       {/*Main Dashboard Content*/}
-      <main className="max-w-[1200px] mx-auto px-margin-desktop py-16 grid grid-cols-1 md:grid-cols-12 gap-8">
+      <main className="flex-grow max-w-[1200px] mx-auto px-margin-desktop py-16 grid grid-cols-1 md:grid-cols-12 gap-8">
       {/*Header*/}
       <header className="col-span-12 mb-8">
       <h1 className="font-headline-lg text-headline-lg mb-2">Mentor Command Center</h1>
@@ -164,15 +164,15 @@ function Page5() {
       <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto">
       <div>
       <div className="font-display-lg text-headline-md text-surface-bright mb-4">CodeSrijan</div>
-      <p className="font-body-md text-body-md text-surface-bright">© 2024 CodeSrijan. Built for the community.</p>
+      <p className="font-body-md text-body-md text-surface-bright">© 2026 CodeSrijan. Built for the community.</p>
       </div>
       <div className="grid grid-cols-2 md:flex md:flex-row gap-6 md:gap-8 font-body-md text-body-md">
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Sponsors</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Community</a>
+      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/sponsors" >Sponsors</a>
+      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/community" >Community</a>
       <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
       <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Privacy Policy</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Code of Conduct</a>
+      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/privacy-policy" >Privacy Policy</a>
+      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/code-of-conduct" >Code of Conduct</a>
       </div>
       </div>
       </footer>

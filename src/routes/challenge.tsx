@@ -156,15 +156,15 @@ function Page9() {
       <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto w-full">
       <div className="flex flex-col gap-4">
       <span className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</span>
-      <p className="text-surface-variant">© 2024 CodeSrijan. Built for the community.</p>
+      <p className="text-surface-variant">© 2026 CodeSrijan. Built for the community.</p>
       </div>
       <div className="flex flex-wrap gap-6 items-center">
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Sponsors</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Community</a>
+      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
+      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
       <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
       <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Privacy Policy</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Code of Conduct</a>
+      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
+      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
       </div>
       </div>
       </footer>

@@ -108,7 +108,7 @@ function Page1() {
       <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Privacy</a>
       </div>
       <div className="font-body-md text-body-md text-surface-variant text-center md:text-right mt-4 md:mt-0">
-                      © 2024 CodeSrijan. Built for the high-octane developer.
+                      © 2026 CodeSrijan. Built for the high-octane developer.
                   </div>
       </div>
       </footer>

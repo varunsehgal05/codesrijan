@@ -254,7 +254,7 @@ function Page2() {
       <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
                           CodeSrijan
                       </span>
-      <p className="font-body-md text-body-md text-surface dark:text-ink-black text-center md:text-left">© 2024 CodeSrijan. Built for the high-octane developer.</p>
+      <p className="font-body-md text-body-md text-surface dark:text-ink-black text-center md:text-left">© 2026 CodeSrijan. Built for the high-octane developer.</p>
       </div>
       <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
       <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
