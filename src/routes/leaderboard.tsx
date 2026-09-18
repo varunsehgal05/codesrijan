@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/leaderboard")({
-  component: Page13,
+  component: LeaderboardPage,
   head: () => ({
     meta: [
       { title: "Leaderboard | CodeSrijan" },
@@ -16,32 +17,39 @@ export const Route = createFileRoute("/leaderboard")({
   }),
 });
 
-function Page13() {
+function LeaderboardPage() {
+  const { teams } = useAppStore();
+
+  // Generate deterministic mock scores if score doesn't exist to make it look realistic for the demo
+  const rankedTeams = [...teams]
+    .map(t => {
+      let baseScore = t.isSubmitted ? 8000 : 2000;
+      baseScore += (t.name.length * 100);
+      baseScore += (t.members.length * 250);
+      return { ...t, computedScore: baseScore };
+    })
+    .sort((a, b) => b.computedScore - a.computedScore);
+
   return (
     <div className="min-h-screen bg-background text-on-background">
-      {/*Top Navigation (from JSON)*/}
+      {/*Top Navigation*/}
       <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-      <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-      {/*Active State applied based on context (Leaderboard)*/}
-      <a className="text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-      </div>
-      <div className="hidden md:block">
-      <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
-                          Register Now
-                      </button>
-      </div>
-      {/*Mobile Menu Icon*/}
-      <div className="md:hidden">
-      <span className="material-symbols-outlined text-3xl" data-icon="menu">menu</span>
-      </div>
-      </div>
+        <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
+          <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
+          <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
+            <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
+            <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
+            <a className="text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
+          </div>
+          <div className="hidden md:block">
+            <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
+              Register Now
+            </button>
+          </div>
+        </div>
       </nav>
-      <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
 
+      <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
@@ -49,8 +57,7 @@ function Page13() {
             GO BACK
           </button>
         </div>
-    
-        {/*Leaderboard Section*/}
+
         <section>
           <div className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
             <div>
@@ -59,78 +66,63 @@ function Page13() {
             </div>
             <div className="font-label-caps text-label-caps bg-surface-bright brutal-border px-4 py-2 flex items-center gap-2 brutal-shadow">
               <span className="w-3 h-3 bg-electric-blue rounded-full animate-pulse block"></span>
-              Live Updates Active
+              Live Tracking Engine Active
             </div>
           </div>
-          {/*Leaderboard Table Container*/}
+
           <div className="bg-surface-container-lowest brutal-border brutal-shadow-lg overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-surface-container border-b-2 border-ink-black">
                   <th className="py-4 px-6 font-button-text text-button-text text-ink-black">Rank</th>
-                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black">Team</th>
+                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black">Team / Hacker</th>
                   <th className="py-4 px-6 font-button-text text-button-text text-ink-black text-right">Score</th>
                   <th className="py-4 px-6 font-button-text text-button-text text-ink-black text-center">Trend</th>
                 </tr>
               </thead>
               <tbody className="font-body-lg text-body-lg">
-                {/*Top 1*/}
-                <tr className="border-b-2 border-ink-black bg-surface-bright transition-colors hover:bg-surface-variant">
-                  <td className="py-6 px-6 font-headline-md text-electric-blue">01</td>
-                  <td className="py-6 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-electric-blue brutal-border flex items-center justify-center text-on-primary">
-                        <span className="material-symbols-outlined" data-icon="terminal">terminal</span>
-                      </div>
-                      <span className="font-button-text text-ink-black">Null Pointers</span>
-                    </div>
-                  </td>
-                  <td className="py-6 px-6 font-button-text text-right text-ink-black">9,420</td>
-                  <td className="py-6 px-6 text-center">
-                    <span className="material-symbols-outlined text-electric-blue font-bold" data-icon="keyboard_double_arrow_up">keyboard_double_arrow_up</span>
-                  </td>
-                </tr>
-                {/*Top 2*/}
-                <tr className="border-b-2 border-ink-black hover:bg-surface-container transition-colors">
-                  <td className="py-6 px-6 font-headline-md text-ink-black">02</td>
-                  <td className="py-6 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-surface-bright brutal-border flex items-center justify-center">
-                        <span className="material-symbols-outlined" data-icon="bug_report">bug_report</span>
-                      </div>
-                      <span className="font-button-text text-ink-black">Syntax Errors</span>
-                    </div>
-                  </td>
-                  <td className="py-6 px-6 font-button-text text-right text-ink-black">8,950</td>
-                  <td className="py-6 px-6 text-center">
-                    <span className="material-symbols-outlined text-ink-black" data-icon="horizontal_rule">horizontal_rule</span>
-                  </td>
-                </tr>
-                {/*Top 3*/}
-                <tr className="border-b-2 border-ink-black hover:bg-surface-container transition-colors">
-                  <td className="py-6 px-6 font-headline-md text-ink-black">03</td>
-                  <td className="py-6 px-6">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-surface-bright brutal-border flex items-center justify-center">
-                        <span className="material-symbols-outlined" data-icon="code">code</span>
-                      </div>
-                      <span className="font-button-text text-ink-black">Byte Me</span>
-                    </div>
-                  </td>
-                  <td className="py-6 px-6 font-button-text text-right text-ink-black">8,100</td>
-                  <td className="py-6 px-6 text-center">
-                    <span className="material-symbols-outlined text-error font-bold" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
-                  </td>
-                </tr>
+                {rankedTeams.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-12 px-6 text-center text-surface-variant font-label-md">
+                      Awaiting global database synchronisation...
+                    </td>
+                  </tr>
+                ) : (
+                  rankedTeams.map((team, index) => {
+                    const isTopThree = index < 3;
+                    return (
+                      <tr key={team.id} className={`border-b-2 border-ink-black transition-colors hover:bg-surface-container ${index === 0 ? "bg-surface-bright hover:bg-surface-variant" : ""}`}>
+                        <td className={`py-6 px-6 font-headline-md ${index === 0 ? 'text-electric-blue' : 'text-ink-black'}`}>
+                          {(index + 1).toString().padStart(2, '0')}
+                        </td>
+                        <td className="py-6 px-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 brutal-border flex items-center justify-center ${index === 0 ? 'bg-electric-blue text-on-primary' : 'bg-surface-bright'}`}>
+                              <span className="material-symbols-outlined" data-icon="terminal">{index === 0 ? 'emoji_events' : 'terminal'}</span>
+                            </div>
+                            <span className="font-button-text text-ink-black">{team.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-6 px-6 font-button-text text-right text-ink-black">
+                          {team.computedScore.toLocaleString()}
+                        </td>
+                        <td className="py-6 px-6 text-center">
+                          {index === 0 ? (
+                            <span className="material-symbols-outlined text-electric-blue font-bold">keyboard_double_arrow_up</span>
+                          ) : (
+                            <span className="material-symbols-outlined text-ink-black">horizontal_rule</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
-            <div className="p-6 text-center bg-surface-container-low border-t-2 border-ink-black">
-              <button onClick={() => alert("Fetching additional team rankings...")} className="font-label-caps text-label-caps text-electric-blue hover:text-ink-black transition-colors hover:underline active:translate-y-1">LOAD MORE TEAMS</button>
-            </div>
           </div>
         </section>
       </main>
-      {/*Footer (from JSON)*/}
+
       <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-16 border-t-4 border-electric-blue flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8">
         <div className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</div>
         <div className="flex flex-wrap gap-6 font-body-md text-body-md">
@@ -148,3 +140,4 @@ function Page13() {
     </div>
   );
 }
+

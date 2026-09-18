@@ -13,9 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
+import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
+import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as ChallengeRouteImport } from './routes/challenge'
 import { Route as CodeOfConductRouteImport } from './routes/code-of-conduct'
 import { Route as CommunityRouteImport } from './routes/community'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EvaluationsRouteImport } from './routes/evaluations'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as HighlightsRouteImport } from './routes/highlights'
 import { Route as HostEventRouteImport } from './routes/host-event'
@@ -61,6 +65,16 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin-login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AiAssistantRoute = AiAssistantRouteImport.update({
+  id: '/ai-assistant',
+  path: '/ai-assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CertificatesRoute = CertificatesRouteImport.update({
+  id: '/certificates',
+  path: '/certificates',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChallengeRoute = ChallengeRouteImport.update({
   id: '/challenge',
   path: '/challenge',
@@ -74,6 +88,16 @@ const CodeOfConductRoute = CodeOfConductRouteImport.update({
 const CommunityRoute = CommunityRouteImport.update({
   id: '/community',
   path: '/community',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EvaluationsRoute = EvaluationsRouteImport.update({
+  id: '/evaluations',
+  path: '/evaluations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -202,9 +226,13 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-login': typeof AdminLoginRoute
+  '/ai-assistant': typeof AiAssistantRoute
+  '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
+  '/dashboard': typeof DashboardRoute
+  '/evaluations': typeof EvaluationsRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -234,9 +262,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin-login': typeof AdminLoginRoute
+  '/ai-assistant': typeof AiAssistantRoute
+  '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
+  '/dashboard': typeof DashboardRoute
+  '/evaluations': typeof EvaluationsRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -268,9 +300,13 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/admin': typeof AdminRouteWithChildren
   '/admin-login': typeof AdminLoginRoute
+  '/ai-assistant': typeof AiAssistantRoute
+  '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
+  '/dashboard': typeof DashboardRoute
+  '/evaluations': typeof EvaluationsRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -303,9 +339,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admin-login'
+    | '/ai-assistant'
+    | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
     | '/community'
+    | '/dashboard'
+    | '/evaluations'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -335,9 +375,13 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin-login'
+    | '/ai-assistant'
+    | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
     | '/community'
+    | '/dashboard'
+    | '/evaluations'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -368,9 +412,13 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin'
     | '/admin-login'
+    | '/ai-assistant'
+    | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
     | '/community'
+    | '/dashboard'
+    | '/evaluations'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -402,9 +450,13 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
+  AiAssistantRoute: typeof AiAssistantRoute
+  CertificatesRoute: typeof CertificatesRoute
   ChallengeRoute: typeof ChallengeRoute
   CodeOfConductRoute: typeof CodeOfConductRoute
   CommunityRoute: typeof CommunityRoute
+  DashboardRoute: typeof DashboardRoute
+  EvaluationsRoute: typeof EvaluationsRoute
   GalleryRoute: typeof GalleryRoute
   HighlightsRoute: typeof HighlightsRoute
   HostEventRoute: typeof HostEventRoute
@@ -457,6 +509,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ai-assistant': {
+      id: '/ai-assistant'
+      path: '/ai-assistant'
+      fullPath: '/ai-assistant'
+      preLoaderRoute: typeof AiAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/certificates': {
+      id: '/certificates'
+      path: '/certificates'
+      fullPath: '/certificates'
+      preLoaderRoute: typeof CertificatesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/challenge': {
       id: '/challenge'
       path: '/challenge'
@@ -476,6 +542,20 @@ declare module '@tanstack/react-router' {
       path: '/community'
       fullPath: '/community'
       preLoaderRoute: typeof CommunityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/evaluations': {
+      id: '/evaluations'
+      path: '/evaluations'
+      fullPath: '/evaluations'
+      preLoaderRoute: typeof EvaluationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -670,9 +750,13 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AdminRoute: AdminRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
+  AiAssistantRoute: AiAssistantRoute,
+  CertificatesRoute: CertificatesRoute,
   ChallengeRoute: ChallengeRoute,
   CodeOfConductRoute: CodeOfConductRoute,
   CommunityRoute: CommunityRoute,
+  DashboardRoute: DashboardRoute,
+  EvaluationsRoute: EvaluationsRoute,
   GalleryRoute: GalleryRoute,
   HighlightsRoute: HighlightsRoute,
   HostEventRoute: HostEventRoute,
