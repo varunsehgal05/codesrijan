@@ -28,7 +28,7 @@ function RegisterPage() {
                 password,
                 role: "student"
             });
-            navigate({ to: "/workspace" });
+            navigate({ to: "/auth/otp" });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to generate identity.");
         }

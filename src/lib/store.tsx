@@ -3,20 +3,20 @@ import axios from 'axios';
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, push, set } from 'firebase/database';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://codesrijan-api.onrender.com/api';
+const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
 // Optional Firebase Init
 let db: any = null;
 try {
     if (!getApps().length) {
         const firebaseConfig = {
-            apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBjkd8HbYmXfBFmauP_eocJw3Bj0GALPiQ",
-            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "arenax-chat-room.firebaseapp.com",
-            databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://arenax-chat-room.firebaseio.com",
-            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "arenax-chat-room",
-            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "arenax-chat-room.firebasestorage.app",
-            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "940787466445",
-            appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:940787466445:web:9faac285479f815081a984"
+            apiKey: import.meta.env['VITE_FIREBASE_API_KEY'] || "AIzaSyBjkd8HbYmXfBFmauP_eocJw3Bj0GALPiQ",
+            authDomain: import.meta.env['VITE_FIREBASE_AUTH_DOMAIN'] || "arenax-chat-room.firebaseapp.com",
+            databaseURL: import.meta.env['VITE_FIREBASE_DATABASE_URL'] || "https://arenax-chat-room.firebaseio.com",
+            projectId: import.meta.env['VITE_FIREBASE_PROJECT_ID'] || "arenax-chat-room",
+            storageBucket: import.meta.env['VITE_FIREBASE_STORAGE_BUCKET'] || "arenax-chat-room.firebasestorage.app",
+            messagingSenderId: import.meta.env['VITE_FIREBASE_MESSAGING_SENDER_ID'] || "940787466445",
+            appId: import.meta.env['VITE_FIREBASE_APP_ID'] || "1:940787466445:web:9faac285479f815081a984"
         };
         const app = initializeApp(firebaseConfig);
         db = getDatabase(app);
@@ -78,6 +78,7 @@ interface StoreState {
 interface StoreContextType extends StoreState {
     login: (email: string, password?: string) => Promise<any>;
     register: (user: User) => Promise<any>;
+    verifyEmail: (userId: string, code: string) => Promise<boolean>;
     logout: () => void;
     createTeam: (name: string, leaderId: string) => void;
     joinTeam: (teamId: string, userId: string) => void;
@@ -158,22 +159,29 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (email: string, password?: string) => {
         try {
-            const res = await axios.post(`${API_URL}/login`, { email, password });
-            const u = res.data;
+            const res = await axios.post(`${API_URL}/auth/login`, { email, password });
+
+            if (res.data.needsVerification) {
+                localStorage.setItem("codesrijan_pending_verification_id", res.data.userId);
+                throw new Error("verification_required");
+            }
+
+            const { user: u, token } = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_current_user_id", u.id);
+            localStorage.setItem("codesrijan_auth_token", token);
             return u;
         } catch (e: any) {
             console.error("Login Error:", e);
+            if (e.message === "verification_required") throw e;
             throw new Error(e.response?.data?.message || "Authentication failed. Connection to server refused.");
         }
     };
 
     const register = async (user: User) => {
         try {
-            const res = await axios.post(`${API_URL}/users`, user);
-            setState(prev => ({ ...prev, users: [...prev.users, res.data], currentUser: res.data }));
-            localStorage.setItem("codesrijan_current_user_id", res.data.id);
+            const res = await axios.post(`${API_URL}/auth/register`, user);
+            localStorage.setItem("codesrijan_pending_verification_id", res.data.userId);
             return res.data;
         } catch (e: any) {
             console.error("Register Error:", e);
@@ -181,9 +189,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const verifyEmail = async (userId: string, code: string) => {
+        try {
+            await axios.post(`${API_URL}/auth/verify-email`, { userId, code });
+            localStorage.removeItem("codesrijan_pending_verification_id");
+            return true;
+        } catch (e: any) {
+            throw new Error(e.response?.data?.message || "Verification failed");
+        }
+    };
+
     const logout = () => {
         setState(prev => ({ ...prev, currentUser: null }));
         localStorage.removeItem("codesrijan_current_user_id");
+        localStorage.removeItem("codesrijan_auth_token");
     };
 
     const createTeam = async (name: string, leaderId: string) => {
@@ -248,7 +267,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     return (
         <AppStoreContext.Provider value={{
             ...state,
-            login, register, logout,
+            login, register, verifyEmail, logout,
             createTeam, joinTeam, assignProblem, submitProject, addChatMessage,
             refetchData
         }}>

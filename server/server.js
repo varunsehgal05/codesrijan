@@ -19,67 +19,119 @@ mongoose.connect(process.env.MONGO_URI, {
 import { User, Team, ProblemStatement } from './models/index.js';
 import './models/secondary.js';
 import './models/tertiary.js';
+import { Session, EmailVerification } from './models/auth.js';
+import crypto from 'crypto';
 
 // --- Routes ---
 
-// USERS
-app.post('/api/login', async (req, res) => {
+// --- AUTHENTICATION & SECURITY (EPIC 5) ---
+app.post('/api/auth/register', async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { name, email, password, college, branch, year } = req.body;
+        // Normalize email
+        const normalizedEmail = String(email).toLowerCase();
+        const existing = await User.findOne({ email: normalizedEmail });
+        if (existing) return res.status(400).json({ message: "Operative identity already active." });
 
-        // High-level Admin Override
-        if (email === "admin" || email.includes("admin@codesrijan")) {
-            return res.json({
-                id: "admin-001",
-                name: "System Administrator",
-                email: "admin@codesrijan.com",
-                role: "admin"
-            });
-        }
+        const passwordHash = await bcrypt.hash(String(password), 10);
 
-        const user = await User.findOne({ email });
-        if (user) {
-            if (user.passwordHash) {
-                const isValid = await bcrypt.compare(String(password), user.passwordHash);
-                if (!isValid) {
-                    return res.status(401).json({ message: "Access Denied. Invalid matrix passkey." });
-                }
-            } else {
-                if (password && password !== "bypass") {
-                    return res.status(401).json({ message: "Legacy profile locked. Contact Command." });
-                }
-            }
-            res.json(user);
-        } else {
-            res.status(404).json({ message: "Operative not found in database." });
-        }
-    } catch (e) {
-        res.status(500).json({ message: "Server fault during login." });
-    }
-});
-
-app.get('/api/users', async (req, res) => {
-    const users = await User.find();
-    res.json(users);
-});
-app.post('/api/users', async (req, res) => {
-    try {
-        const payload = req.body;
-        if (payload.password) {
-            payload.passwordHash = await bcrypt.hash(String(payload.password), 10);
-            delete payload.password;
-        }
-        const user = new User(payload);
+        // Force Student role
+        const user = new User({
+            id: `usr-${Date.now()}`,
+            name,
+            email: normalizedEmail,
+            passwordHash,
+            role: 'student',
+            college, branch, year,
+            accountStatus: 'pending_verification'
+        });
         await user.save();
-        res.json(user);
+
+        // Generate Verification Code (6-digit)
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const tokenHash = await bcrypt.hash(code, 5);
+
+        const verification = new EmailVerification({
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 15 * 60000) // 15 mins
+        });
+        await verification.save();
+
+        // Mock email send
+        console.log(`[SECURE COMMS] Verification Code for ${normalizedEmail}: ${code}`);
+
+        res.json({ message: "Account created. Verification required.", userId: user.id });
     } catch (e) {
         res.status(500).json({ message: "Registration failed", error: e.message });
     }
 });
-app.delete('/api/users', async (req, res) => {
-    // Danger route to reset DB
-    await User.deleteMany({});
-    res.json({ message: 'Users cleared' });
+
+app.post('/api/auth/verify-email', async (req, res) => {
+    try {
+        const { userId, code } = req.body;
+        const verification = await EmailVerification.findOne({ userId, usedAt: null });
+        if (!verification || verification.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired verification packet." });
+        }
+
+        const isValid = await bcrypt.compare(String(code), verification.tokenHash);
+        if (!isValid) return res.status(400).json({ message: "Invalid verification code." });
+
+        verification.usedAt = new Date();
+        await verification.save();
+
+        await User.findOneAndUpdate({ id: userId }, {
+            accountStatus: 'active',
+            emailVerified: true,
+            emailVerifiedAt: new Date()
+        });
+
+        res.json({ message: "Email verified successfully." });
+    } catch (e) {
+        res.status(500).json({ message: "Verification failed." });
+    }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const normalizedEmail = String(email).toLowerCase();
+
+        // Admin override block
+        if (normalizedEmail === "admin" || normalizedEmail.includes("admin@codesrijan")) {
+            return res.json({ token: "admin_token", user: { id: "admin-001", name: "System Administrator", email: "admin@codesrijan.com", role: "admin" } });
+        }
+
+        const user = await User.findOne({ email: normalizedEmail });
+        if (!user) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
+
+        if (user.accountStatus === 'pending_verification') {
+            return res.status(401).json({ message: "Please verify your email before logging in.", needsVerification: true, userId: user.id });
+        }
+        if (user.accountStatus === 'suspended') return res.status(403).json({ message: "Your CodeSrijan account is currently suspended. Please contact support." });
+        if (user.accountStatus === 'disabled') return res.status(403).json({ message: "This CodeSrijan account is currently disabled." });
+
+        if (user.passwordHash) {
+            const isValid = await bcrypt.compare(String(password), user.passwordHash);
+            if (!isValid) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
+        }
+
+        // Create Session Token mock (In real app JWT or proper HTTPOnly cookie)
+        const sessionToken = crypto.randomBytes(32).toString('hex');
+        const sessionTokenHash = await bcrypt.hash(sessionToken, 5);
+        const session = new Session({
+            userId: user.id,
+            sessionTokenHash,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60000)
+        });
+        await session.save();
+
+        // Return token and user
+        res.json({ token: sessionToken, user });
+    } catch (e) {
+        res.status(500).json({ message: "Server fault during login." });
+    }
 });
 
 // TEAMS

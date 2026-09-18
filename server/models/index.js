@@ -8,7 +8,6 @@ const userSchema = new mongoose.Schema({
     passwordHash: String,
     role: { type: String, enum: ['student', 'judge', 'mentor', 'admin'], default: 'student' },
     profileImage: String,
-    phone: String,
     college: String,
     branch: String,
     year: String,
@@ -18,9 +17,11 @@ const userSchema = new mongoose.Schema({
     github: String,
     linkedin: String,
     portfolio: String,
-    isVerified: { type: Boolean, default: false },
-    isActive: { type: Boolean, default: true },
-    isSuspended: { type: Boolean, default: false },
+
+    // Epic 5 Auth Overhaul
+    accountStatus: { type: String, enum: ['pending_verification', 'active', 'suspended', 'disabled'], default: 'pending_verification' },
+    emailVerified: { type: Boolean, default: false },
+    emailVerifiedAt: Date,
     recruitmentStatus: { type: String, enum: ['looking_for_team', 'open_to_invites', 'in_team', 'not_available'], default: 'looking_for_team' },
     lastLoginAt: Date,
     teamId: String // Quick reference
