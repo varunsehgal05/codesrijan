@@ -12,12 +12,7 @@ export const Route = createFileRoute("/code-of-conduct")({
 function ConductPage() {
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-            <header className="w-full top-0 sticky z-50 bg-background border-b-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300">
-                <div className="flex justify-between items-center px-gutter py-stack-md max-w-[1200px] mx-auto">
-                    <a className="font-headline-xl text-headline-xl font-bold text-deep-navy italic tracking-tighter" href="/">CodeSrijan</a>
-                </div>
-            </header>
-            <main className="flex-grow max-w-[1000px] mx-auto px-gutter py-section-gap w-full">
+<main className="flex-grow max-w-[1000px] mx-auto px-gutter py-section-gap w-full">
                 <div className="mb-6"><button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue border-2 border-stark-black px-4 py-2 bg-surface-bright shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all w-fit cursor-pointer"><span className="material-symbols-outlined">arrow_back</span>GO BACK</button></div>
                 <div className="bg-pure-white border-2 border-stark-black p-8 md:p-12 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                     <h1 className="font-display-lg uppercase text-stark-black mb-8 border-b-4 border-electric-blue pb-4">Code of Conduct</h1>

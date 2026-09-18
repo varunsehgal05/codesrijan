@@ -22,18 +22,7 @@ function Page11() {
       {/*Pattern Background*/}
       <div className="fixed inset-0 z-[-1] opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(#000000 2px, transparent 2px)", backgroundSize: "32px 32px" }}></div>
       {/*TopNavBar*/}
-      <header className="bg-surface dark:bg-ink-black w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-          <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-<button className="font-button-text text-button-text text-electric-blue dark:text-primary-fixed-dim bg-transparent border-2 border-electric-blue px-6 py-2 rounded-DEFAULT neo-shadow hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none hidden md:block">
-            Register Now
-          </button>
-          <button className="md:hidden text-ink-black">
-            <span className="material-symbols-outlined" style={{ fontSize: "32px" }}>menu</span>
-          </button>
-        </div>
-      </header>
-      <main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 flex flex-col gap-24">
+<main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 flex flex-col gap-24">
         {/*Hero Section*/}
         <section className="flex flex-col items-center text-center gap-8 relative">
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-electric-blue rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>

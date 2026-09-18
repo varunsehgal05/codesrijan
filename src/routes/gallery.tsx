@@ -20,20 +20,7 @@ function Page3() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <header className="bg-surface dark:bg-ink-black w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <a className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright hover:-translate-y-0.5 transition-transform duration-200" href="/" >
-                      CodeSrijan
-                  </a>
-<button className="hidden md:block bg-electric-blue text-white font-button-text text-button-text neo-border neo-shadow-sm px-6 py-3 neo-hover-btn">
-                      Register Now
-                  </button>
-      <button className="md:hidden p-2 text-ink-black">
-      <span className="material-symbols-outlined" data-icon="menu">menu</span>
-      </button>
-      </div>
-      </header>
-      <main className="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 space-y-32">
+<main className="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 space-y-32">
 
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">

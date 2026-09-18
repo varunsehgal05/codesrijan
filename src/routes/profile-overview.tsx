@@ -20,27 +20,7 @@ function Page8() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar Component*/}
-      <header className="w-full border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface sticky top-0 z-50">
-      <div className="flex justify-between items-center w-full px-margin-desktop py-4 max-w-[1280px] mx-auto md:px-margin-desktop px-margin-mobile">
-      {/*Brand Logo*/}
-      <a className="font-headline-md text-headline-md font-black text-ink-black flex items-center gap-2 hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none" href="/" >
-      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
-                      CodeSrijan
-                  </a>
-      {/*Desktop Navigation*/}
-{/*Trailing Action & Mobile Menu*/}
-      <div className="flex items-center gap-4">
-      <button className="hidden md:flex items-center justify-center bg-electric-blue text-on-primary font-body-lg text-body-lg border-2 border-ink-black neo-shadow-lg px-6 py-2 transition-transform neo-shadow-hover neo-shadow-active font-bold">
-                          Register Now
-                      </button>
-      {/*Profile Avatar (Active Context)*/}
-      <div className="md:hidden flex items-center justify-center w-10 h-10 border-2 border-electric-blue bg-electric-blue/10 rounded-full cursor-pointer overflow-hidden">
-      <img alt="Profile" className="w-full h-full object-cover" data-alt="A pixel-art style, highly detailed 8-bit avatar of a young male developer with short dark hair, wearing a vibrant electric blue hoodie. The background is a solid bright yellow to provide sharp contrast. The image is rendered with raw, blocky edges typical of retro gaming, aligning perfectly with a neo-brutalist tech aesthetic. The lighting is flat but the colors are heavily saturated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1l0tDc_4tzpFHPV49UgGwZCv6Pr_2LU0TIuu_y2IoW0uy8yvua5ywdLEqq5V--mvD6w0fajNfTYfA8nPia7PBJmndwdd57RLPfF81Ees921kWW3QAkvFDcUK6RtPpja9fg2fpFdt3ckFYN4WOrzYkjaVz9RzBdVfqE9ZLk21jmm62v_oWYJmFeGWhU_EsZ6X4X-ycdxqYNINdExI4Tu5rlbymONTaanItuh4HuQG9eW8yQ89G0NAA"/>
-      </div>
-      </div>
-      </div>
-      </header>
-      <main className="flex-grow w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col gap-stack-lg z-10 relative">
+<main className="flex-grow w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col gap-stack-lg z-10 relative">
 
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">

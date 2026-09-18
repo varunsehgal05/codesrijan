@@ -19,17 +19,7 @@ export const Route = createFileRoute("/")({
 function Page14() {
   return (
     <div className="min-h-screen bg-background text-on-background">
-      {/*TopNavBar*/}
-      <header className="w-full top-0 sticky z-50 bg-background border-b-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300" id="main-header">
-        <div className="flex justify-between items-center px-gutter py-stack-md max-w-[1200px] mx-auto">
-          <a className="font-headline-xl text-headline-xl font-bold text-deep-navy italic tracking-tighter" href="/" >CodeSrijan</a>
-
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="hidden md:block font-label-bold text-label-bold text-on-surface-variant hover:text-deep-navy hover:-translate-y-1 transition-all">Sign In</Link>
-            <Link to="/register" className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-6 py-2 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 block hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">Register</Link>
-          </div>
-        </div>
-      </header>
+      {/*TopNavBar Refactored to Root*/}
       {/*Hero Section*/}
       <section className="relative min-h-[819px] flex items-center justify-center pt-section-gap pb-section-gap overflow-hidden bg-surface-container-lowest">
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
@@ -115,6 +105,6 @@ function Page14() {
         </div>
       </section>
       {/*Footer*/}
-</div>
+    </div>
   );
 }
