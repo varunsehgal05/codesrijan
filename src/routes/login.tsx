@@ -11,11 +11,19 @@ function LoginPage() {
     const navigate = useNavigate({ from: "/login" });
     const [email, setEmail] = useState("");
 
-    const handleLogin = (e: React.FormEvent) => {
+    const [errorMsg, setErrorMsg] = useState("");
+
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMsg("");
         if (!email) return;
-        login(email);
-        setTimeout(() => navigate({ to: "/workspace" }), 300);
+
+        try {
+            await login(email);
+            navigate({ to: "/workspace" });
+        } catch (err: any) {
+            setErrorMsg(err.message || "Failed to initialize session.");
+        }
     };
 
     return (
@@ -47,9 +55,16 @@ function LoginPage() {
                     <h1 className="font-display-lg text-headline-xl leading-none text-stark-black uppercase mb-2">
                         Welcome Back
                     </h1>
-                    <p className="font-body-md text-on-surface-variant font-bold mb-8 uppercase tracking-widest text-sm">
+                    <p className="font-body-md text-on-surface-variant font-bold mb-6 uppercase tracking-widest text-sm">
                         ACCESS YOUR HACKER WORKSPACE
                     </p>
+
+                    {errorMsg && (
+                        <div className="bg-error text-white p-4 mb-6 brutal-border flex items-center gap-2">
+                            <span className="material-symbols-outlined">warning</span>
+                            <span className="font-label-bold">{errorMsg}</span>
+                        </div>
+                    )}
 
                     <form className="flex flex-col gap-6 w-full" onSubmit={handleLogin}>
                         <div className="flex flex-col gap-2">

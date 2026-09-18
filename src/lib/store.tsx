@@ -75,8 +75,8 @@ interface StoreState {
 }
 
 interface StoreContextType extends StoreState {
-    login: (email: string) => void;
-    register: (user: User) => void;
+    login: (email: string) => Promise<any>;
+    register: (user: User) => Promise<any>;
     logout: () => void;
     createTeam: (name: string, leaderId: string) => void;
     joinTeam: (teamId: string, userId: string) => void;
@@ -155,15 +155,16 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, [state.currentUser?.teamId]);
 
-    const login = (email: string) => {
-        const u = state.users.find(user => user.email === email);
-        if (u) {
+    const login = async (email: string) => {
+        try {
+            const res = await axios.post(`${API_URL}/login`, { email });
+            const u = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_current_user_id", u.id);
-        } else {
-            console.error("User not found!");
-            // Temporary hack for immediate login for testing without strict backend constraints:
-            alert("No user found with that email. Make sure Node backend is running and the database is seeded.");
+            return u;
+        } catch (e: any) {
+            console.error("Login Error:", e);
+            throw new Error(e.response?.data?.message || "Authentication failed. Connection to server refused.");
         }
     };
 
@@ -172,7 +173,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const res = await axios.post(`${API_URL}/users`, user);
             setState(prev => ({ ...prev, users: [...prev.users, res.data], currentUser: res.data }));
             localStorage.setItem("codesrijan_current_user_id", res.data.id);
-        } catch (e) { console.error("Register Error:", e); }
+            return res.data;
+        } catch (e: any) {
+            console.error("Register Error:", e);
+            throw new Error(e.response?.data?.message || "Registration failed. Server unavailable.");
+        }
     };
 
     const logout = () => {

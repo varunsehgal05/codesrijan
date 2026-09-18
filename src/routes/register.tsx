@@ -12,16 +12,24 @@ function RegisterPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
 
-    const handleRegister = (e: React.FormEvent) => {
+    const [errorMsg, setErrorMsg] = useState("");
+
+    const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+        setErrorMsg("");
         if (!name || !email) return;
-        register({
-            id: `u-${Date.now()}`,
-            name,
-            email,
-            role: "student"
-        });
-        setTimeout(() => navigate({ to: "/workspace" }), 300);
+
+        try {
+            await register({
+                id: `u-${Date.now()}`,
+                name,
+                email,
+                role: "student"
+            });
+            navigate({ to: "/workspace" });
+        } catch (err: any) {
+            setErrorMsg(err.message || "Failed to generate identity.");
+        }
     };
 
     return (
@@ -53,9 +61,16 @@ function RegisterPage() {
                     <h1 className="font-display-lg text-headline-xl md:text-headline-xl leading-none text-stark-black uppercase mb-2">
                         JOIN THE <br /> <span className="text-electric-blue">RESISTANCE</span>
                     </h1>
-                    <p className="font-body-md text-on-surface-variant font-bold mb-8 tracking-widest text-sm uppercase">
+                    <p className="font-body-md text-on-surface-variant font-bold mb-6 tracking-widest text-sm uppercase">
                         Create your hacker profile and start building.
                     </p>
+
+                    {errorMsg && (
+                        <div className="bg-error text-white p-4 mb-6 brutal-border flex items-center gap-2">
+                            <span className="material-symbols-outlined">warning</span>
+                            <span className="font-label-bold">{errorMsg}</span>
+                        </div>
+                    )}
 
                     <form className="flex flex-col gap-6 w-full" onSubmit={handleRegister}>
 

@@ -50,6 +50,31 @@ const Problem = mongoose.model('Problem', problemSchema);
 // --- Routes ---
 
 // USERS
+app.post('/api/login', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // High-level Admin Override
+        if (email === "admin" || email.includes("admin@codesrijan")) {
+            return res.json({
+                id: "admin-001",
+                name: "System Administrator",
+                email: "admin@codesrijan.com",
+                role: "admin"
+            });
+        }
+
+        const user = await User.findOne({ email });
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ message: "Operative not found in database." });
+        }
+    } catch (e) {
+        res.status(500).json({ message: "Server fault during login." });
+    }
+});
+
 app.get('/api/users', async (req, res) => {
     const users = await User.find();
     res.json(users);
