@@ -123,13 +123,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     // Initialize state mapping
     useEffect(() => {
-        const storedUserId = localStorage.getItem("codesrijan_current_user_id");
-        if (storedUserId) {
-            const loadWithUser = async () => {
-                await refetchData();
-                setState(prev => ({ ...prev, currentUser: prev.users.find(u => u.id === storedUserId) || null }));
+        const storedToken = localStorage.getItem("codesrijan_auth_token");
+        if (storedToken) {
+            const loadWithToken = async () => {
+                try {
+                    const meRes = await axios.get(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${storedToken}` }
+                    });
+
+                    // We only load global data once the auth context is confirmed strictly via API
+                    await refetchData();
+                    setState(prev => ({ ...prev, currentUser: meRes.data.user }));
+                } catch (e) {
+                    console.error("Token invalid or expired. Purging local identity.");
+                    localStorage.removeItem("codesrijan_auth_token");
+                    localStorage.removeItem("codesrijan_current_user_id");
+                    refetchData();
+                }
             };
-            loadWithUser();
+            loadWithToken();
         } else {
             refetchData();
         }

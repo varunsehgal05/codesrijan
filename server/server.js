@@ -20,6 +20,7 @@ import { User, Team, ProblemStatement } from './models/index.js';
 import './models/secondary.js';
 import './models/tertiary.js';
 import { Session, EmailVerification } from './models/auth.js';
+import { requireAuth } from './middleware/auth.js';
 import crypto from 'crypto';
 
 // --- Routes ---
@@ -117,9 +118,9 @@ app.post('/api/auth/login', async (req, res) => {
             if (!isValid) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
         }
 
-        // Create Session Token mock (In real app JWT or proper HTTPOnly cookie)
+        // Create Session Token mock
         const sessionToken = crypto.randomBytes(32).toString('hex');
-        const sessionTokenHash = await bcrypt.hash(sessionToken, 5);
+        const sessionTokenHash = crypto.createHash('sha256').update(sessionToken).digest('hex');
         const session = new Session({
             userId: user.id,
             sessionTokenHash,
@@ -132,6 +133,11 @@ app.post('/api/auth/login', async (req, res) => {
     } catch (e) {
         res.status(500).json({ message: "Server fault during login." });
     }
+});
+
+app.get('/api/auth/me', requireAuth, (req, res) => {
+    // Session verified via middleware - yield validated user context
+    res.json({ user: req.user });
 });
 
 // TEAMS
