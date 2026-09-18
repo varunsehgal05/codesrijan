@@ -3,20 +3,20 @@ import axios from 'axios';
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase, ref, onValue, push, set } from 'firebase/database';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://codesrijan-api.onrender.com/api';
 
 // Optional Firebase Init
 let db: any = null;
 try {
-    if (import.meta.env.VITE_FIREBASE_API_KEY && !getApps().length) {
+    if (!getApps().length) {
         const firebaseConfig = {
-            apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-            databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-            appId: import.meta.env.VITE_FIREBASE_APP_ID
+            apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBjkd8HbYmXfBFmauP_eocJw3Bj0GALPiQ",
+            authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "arenax-chat-room.firebaseapp.com",
+            databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://arenax-chat-room.firebaseio.com",
+            projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "arenax-chat-room",
+            storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "arenax-chat-room.firebasestorage.app",
+            messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "940787466445",
+            appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:940787466445:web:9faac285479f815081a984"
         };
         const app = initializeApp(firebaseConfig);
         db = getDatabase(app);
