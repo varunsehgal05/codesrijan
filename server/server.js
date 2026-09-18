@@ -14,38 +14,10 @@ mongoose.connect(process.env.MONGO_URI, {
     dbName: 'codesrijan'
 }).then(() => console.log('MongoDB Connected to keyspace codesrijan')).catch(err => console.error(err));
 
-// --- Schemas ---
-const userSchema = new mongoose.Schema({
-    id: String,
-    name: String,
-    email: String,
-    role: String,
-    teamId: String
-});
-const User = mongoose.model('User', userSchema);
-
-const teamSchema = new mongoose.Schema({
-    id: String,
-    name: String,
-    leaderId: String,
-    problemId: String,
-    repositoryUrl: String,
-    demoUrl: String,
-    isSubmitted: Boolean,
-    members: [String]
-});
-const Team = mongoose.model('Team', teamSchema);
-
-const problemSchema = new mongoose.Schema({
-    id: String,
-    title: String,
-    category: String,
-    difficulty: String,
-    sponsor: String,
-    description: String,
-    prizePool: Number
-});
-const Problem = mongoose.model('Problem', problemSchema);
+// --- Schemas (Imported from modular directory) ---
+import { User, Team, ProblemStatement } from './models/index.js';
+import './models/secondary.js';
+import './models/tertiary.js';
 
 // --- Routes ---
 
@@ -116,11 +88,11 @@ app.post('/api/teams/submit', async (req, res) => {
 
 // PROBLEMS
 app.get('/api/problems', async (req, res) => {
-    const problems = await Problem.find();
+    const problems = await ProblemStatement.find();
     res.json(problems);
 });
 app.post('/api/problems', async (req, res) => {
-    const problem = new Problem(req.body);
+    const problem = new ProblemStatement(req.body);
     await problem.save();
     res.json(problem);
 });
