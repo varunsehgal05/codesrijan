@@ -6,9 +6,6 @@ export function Footer() {
             <div className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</div>
             <div className="flex flex-wrap gap-6 font-body-md text-body-md">
                 <Link to="/sponsors" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">Sponsors</Link>
-                <Link to="/community" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">Community</Link>
-                <a href="https://discord.com" target="_blank" rel="noreferrer" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">Discord</a>
-                <a href="https://github.com/varunsehgal05/codesrijan" target="_blank" rel="noreferrer" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">GitHub</a>
                 <Link to="/privacy-policy" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">Privacy Policy</Link>
                 <Link to="/code-of-conduct" className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300">Code of Conduct</Link>
             </div>
