@@ -4,7 +4,8 @@ import { useAppStore } from "../lib/store";
 import axios from "axios";
 
 export function ChatBotWidget() {
-    const { currentUser, apiBaseUrl } = useAppStore();
+    const { currentUser } = useAppStore();
+    const apiBaseUrl = import.meta.env['VITE_API_URL'] || "http://localhost:5000";
     const routerState = useRouterState();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");
@@ -73,7 +74,7 @@ export function ChatBotWidget() {
                 parts.push(<span key={lastIndex}>{text.substring(lastIndex, match.index)}</span>);
             }
 
-            const buttonText = match[1];
+            const buttonText = match[1] || "";
             let targetPath = "/";
 
             // Action Router
