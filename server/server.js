@@ -117,6 +117,56 @@ app.post('/api/problems', async (req, res) => {
     res.json(problem);
 });
 
+// SRIJANBOT AI CHAT ENGINE (Rule-based NLP Simulator)
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const { message, context } = req.body;
+        // context payload expects: { path, role, email, name, teamId, userId }
+        const input = String(message).toLowerCase();
+        let reply = "I couldn't find an official answer to this question. [Create Support Ticket]";
+
+        if (input.includes('deadline') || input.includes('when is submission')) {
+            reply = "Your project must be submitted by **18 September 2026 at 11:59 PM**. After the deadline, submissions are locked. [Open Submission]";
+        }
+        else if (input.includes('team') && input.includes('my')) {
+            if (context.teamId) {
+                const team = await Team.findOne({ id: context.teamId });
+                reply = team ? `You're currently a member of **${team.name}**. [Open My Team]` : "You do not appear to be in a team yet. [Find a Squad]";
+            } else {
+                reply = "You are not currently in a squad. [Find a Squad]";
+            }
+        }
+        else if (input.includes('create a team') || input.includes('new squad')) {
+            reply = "You can create a team from the Recruitment matrix or your Profile. [Create Team]";
+        }
+        else if (input.includes('certificate')) {
+            reply = "Your participation certificate is not ready yet. They will be generated at the end of the hackathon.";
+        }
+        else if (input.includes('missing') || input.includes('what do i need')) {
+            reply = "Your submission currently requires:\n- Project description\n- GitHub repository URL\n- Interactive Demo link\n[Complete Submission]";
+        }
+        else if (context.role === 'admin' && (input.includes('how many') || input.includes('stats'))) {
+            const teamCount = await Team.countDocuments();
+            const userCount = await User.countDocuments();
+            reply = `Currently, we have ${userCount} registered operatives and ${teamCount} active squads. [Admin Dashboard]`;
+        }
+        else if (context.role === 'judge' && (input.includes('project') || input.includes('evaluate'))) {
+            reply = "Welcome Judge. You can evaluate assigned projects via the Evaluations dashboard matrix. [Open Evaluations]";
+        }
+        else if (input.includes('problem') && context.path === '/problems') {
+            reply = "These are the active challenge statements. Read the requirements carefully and hit 'Select' when your squad is ready! [View Schedule]";
+        }
+        else if (input.includes('hello') || input.includes('hi')) {
+            reply = `SYSTEM WAKE. Greetings, ${context.name || 'Operative'}. I am SrijanBot. How can I assist your navigation today?`;
+        }
+
+        res.json({ reply });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ reply: "SYSTEM FAULT. Processing node offline." });
+    }
+});
+
 // START
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
