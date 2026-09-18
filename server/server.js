@@ -20,7 +20,7 @@ import { User, Team, ProblemStatement } from './models/index.js';
 import './models/secondary.js';
 import './models/tertiary.js';
 import { Session, EmailVerification } from './models/auth.js';
-import { requireAuth } from './middleware/auth.js';
+import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
 
 // --- Routes ---
@@ -141,35 +141,35 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 });
 
 // TEAMS
-app.get('/api/teams', async (req, res) => {
+app.get('/api/teams', requireAuth, async (req, res) => {
     const teams = await Team.find();
     res.json(teams);
 });
-app.post('/api/teams', async (req, res) => {
+app.post('/api/teams', requireAuth, async (req, res) => {
     const team = new Team(req.body);
     await team.save();
     // Also update leader's teamId
     await User.findOneAndUpdate({ id: req.body.leaderId }, { teamId: team.id });
     res.json(team);
 });
-app.post('/api/teams/join', async (req, res) => {
+app.post('/api/teams/join', requireAuth, async (req, res) => {
     const { teamId, userId } = req.body;
     const team = await Team.findOneAndUpdate({ id: teamId }, { $push: { members: userId } }, { new: true });
     await User.findOneAndUpdate({ id: userId }, { teamId: teamId });
     res.json(team);
 });
-app.post('/api/teams/submit', async (req, res) => {
+app.post('/api/teams/submit', requireAuth, async (req, res) => {
     const { teamId, repositoryUrl, demoUrl } = req.body;
     const team = await Team.findOneAndUpdate({ id: teamId }, { isSubmitted: true, repositoryUrl, demoUrl }, { new: true });
     res.json(team);
 });
 
 // PROBLEMS
-app.get('/api/problems', async (req, res) => {
+app.get('/api/problems', requireAuth, async (req, res) => {
     const problems = await ProblemStatement.find();
     res.json(problems);
 });
-app.post('/api/problems', async (req, res) => {
+app.post('/api/problems', requireAuth, requireRole(['admin']), async (req, res) => {
     const problem = new ProblemStatement(req.body);
     await problem.save();
     res.json(problem);
