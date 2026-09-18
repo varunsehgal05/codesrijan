@@ -16,8 +16,8 @@ mongoose.connect(process.env.MONGO_URI, {
 }).then(() => console.log('MongoDB Connected to keyspace codesrijan')).catch(err => console.error(err));
 
 // --- Schemas (Imported from modular directory) ---
-import { User, Team, ProblemStatement } from './models/index.js';
-import './models/secondary.js';
+import { User, Team, ProblemStatement, Hackathon, Registration } from './models/index.js';
+import { Announcement, CalendarEvent } from './models/secondary.js';
 import './models/tertiary.js';
 import { Session, EmailVerification } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -140,6 +140,52 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
     res.json({ user: req.user });
 });
 
+// HACKATHONS
+app.get('/api/hackathons', async (req, res) => {
+    // Optionally only return "active" or "registration_open" hackathons unless admin
+    const query = (req.headers.authorization) ? {} : { status: { $in: ['registration_open', 'active'] } };
+    // Wait, let's keep it simple: Public can view hackathons, but maybe only active ones.
+    const hackathons = await Hackathon.find();
+    res.json(hackathons);
+});
+app.post('/api/hackathons', requireAuth, requireRole(['admin']), async (req, res) => {
+    const hackathon = new Hackathon(req.body);
+    await hackathon.save();
+    res.json(hackathon);
+});
+app.patch('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    res.json(hackathon);
+});
+
+// REGISTRATIONS
+app.post('/api/registrations', requireAuth, requireRole(['student']), async (req, res) => {
+    const { hackathonId, college, branch, year } = req.body;
+
+    // Check if already registered
+    const existing = await Registration.findOne({ userId: req.user.id, hackathonId });
+    if (existing) {
+        return res.status(400).json({ message: "Already registered for this hackathon." });
+    }
+
+    const registration = new Registration({
+        id: `reg-${Date.now()}`,
+        hackathonId,
+        userId: req.user.id,
+        college,
+        branch,
+        year,
+        status: 'pending' // pending manual/auto verification
+    });
+    await registration.save();
+    res.json(registration);
+});
+app.get('/api/registrations/me', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    // Resource isolation: user can only see their own registrations
+    const registrations = await Registration.find({ userId: req.user.id });
+    res.json(registrations);
+});
+
 // TEAMS
 app.get('/api/teams', requireAuth, async (req, res) => {
     const teams = await Team.find();
@@ -173,6 +219,38 @@ app.post('/api/problems', requireAuth, requireRole(['admin']), async (req, res) 
     const problem = new ProblemStatement(req.body);
     await problem.save();
     res.json(problem);
+});
+
+// USERS
+app.get('/api/users', requireAuth, requireRole(['admin']), async (req, res) => {
+    const users = await User.find();
+    res.json(users);
+});
+app.patch('/api/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    const user = await User.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    res.json(user);
+});
+
+// ANNOUNCEMENTS
+app.get('/api/announcements', async (req, res) => {
+    const items = await Announcement.find();
+    res.json(items);
+});
+app.post('/api/announcements', requireAuth, requireRole(['admin']), async (req, res) => {
+    const item = new Announcement(req.body);
+    await item.save();
+    res.json(item);
+});
+
+// TIMELINE (EVENTS)
+app.get('/api/timeline', async (req, res) => {
+    const items = await CalendarEvent.find();
+    res.json(items);
+});
+app.post('/api/timeline', requireAuth, requireRole(['admin']), async (req, res) => {
+    const item = new CalendarEvent(req.body);
+    await item.save();
+    res.json(item);
 });
 
 // SRIJANBOT AI CHAT ENGINE (Rule-based NLP Simulator)

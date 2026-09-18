@@ -5,6 +5,15 @@ import { getDatabase, ref, onValue, push, set } from 'firebase/database';
 
 const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
+// Global API Interceptor for JWT Tokens
+axios.interceptors.request.use((config) => {
+    const token = localStorage.getItem("codesrijan_auth_token");
+    if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => Promise.reject(error));
+
 // Optional Firebase Init
 let db: any = null;
 try {
@@ -127,9 +136,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (storedToken) {
             const loadWithToken = async () => {
                 try {
-                    const meRes = await axios.get(`${API_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${storedToken}` }
-                    });
+                    const meRes = await axios.get(`${API_URL}/auth/me`);
 
                     // We only load global data once the auth context is confirmed strictly via API
                     await refetchData();
