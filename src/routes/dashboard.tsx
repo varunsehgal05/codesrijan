@@ -47,16 +47,7 @@ function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-            <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-                    <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-                    <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                        <span className="bg-electric-blue text-on-primary px-3 py-1 font-label-caps brutal-border">HACKER HUD</span>
-                    </div>
-                </div>
-            </nav>
-
-            <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
+<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
 
                 {/* Welcome & Timer Section */}
                 <section className="flex flex-col md:flex-row justify-between gap-8 items-end border-b-4 border-ink-black pb-8">
@@ -180,12 +171,6 @@ function DashboardPage() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-auto border-t-4 border-electric-blue px-margin-desktop py-8 text-center flex flex-col items-center justify-center gap-2">
-                <div className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</div>
-                <div className="text-surface-variant font-body-md text-body-md">
-                    © 2026 Student Hackathon System. All systems nominal.
-                </div>
-            </footer>
-        </div>
+</div>
     );
 }

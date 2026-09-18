@@ -75,10 +75,6 @@ function PaymentPage() {
                     </section>
                 </div>
             </main>
-
-            <footer className="w-full py-8 text-center border-t-2 border-ink-black bg-surface mt-auto">
-                <p className="font-label-caps text-text-muted">Secure Encrypted Checkout</p>
-            </footer>
-        </div>
+</div>
     );
 }

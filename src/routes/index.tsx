@@ -115,20 +115,6 @@ function Page14() {
         </div>
       </section>
       {/*Footer*/}
-      <footer className="w-full py-section-gap mt-section-gap bg-deep-navy text-pure-white border-t-4 border-electric-blue relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-center px-margin-page gap-stack-md max-w-[1200px] mx-auto">
-          <div className="text-center md:text-left">
-            <h2 className="font-headline-xl text-headline-xl text-pure-white uppercase tracking-tighter mb-2">CodeSrijan</h2>
-            <p className="font-body-md text-body-md text-outline-variant">© 2026 CodeSrijan. Built with Electric Blue Energy.</p>
-          </div>
-          <nav className="flex flex-wrap justify-center gap-6 mt-6 md:mt-0">
-            <a className="font-label-bold text-label-bold text-outline-variant hover:text-pure-white hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer" href="/community" >Community</a>
-            <a className="font-label-bold text-label-bold text-outline-variant hover:text-pure-white hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer" href="/privacy-policy" >Privacy Policy</a>
-            <a className="font-label-bold text-label-bold text-outline-variant hover:text-pure-white hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer" href="/code-of-conduct" >Code of Conduct</a>
-            <a className="font-label-bold text-label-bold text-outline-variant hover:text-pure-white hover:underline decoration-2 underline-offset-4 transition-all cursor-pointer" href="/sponsors" >Sponsors</a>
-          </nav>
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }

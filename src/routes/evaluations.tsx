@@ -36,16 +36,7 @@ function EvaluationsPage() {
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-            <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-                    <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-                    <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                        <span className="bg-electric-blue text-on-primary px-3 py-1 font-label-caps brutal-border">JUDGE PORTAL</span>
-                    </div>
-                </div>
-            </nav>
-
-            <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
+<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
                 <div className="w-full">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
                         <span className="material-symbols-outlined group-hover:-translate-x-1">arrow_back</span> GO BACK

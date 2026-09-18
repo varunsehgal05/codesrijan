@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/recruitment")({
   component: Page10,
@@ -17,20 +18,13 @@ export const Route = createFileRoute("/recruitment")({
 });
 
 function Page10() {
+  const { currentUser } = useAppStore();
+
+  if (!currentUser) return <Navigate to="/login" />;
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface dark:bg-ink-black text-electric-blue dark:text-primary-fixed-dim font-button-text text-button-text w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <a className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright" href="/" >CodeSrijan</a>
-      <div className="hidden md:flex gap-8 items-center">
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-      <a className="text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-      </div>
-      <button className="bg-electric-blue text-on-primary neo-border neo-shadow px-6 py-3 font-button-text text-button-text neo-btn transition-transform duration-200">Register Now</button>
-      </div>
-      </nav>
       {/*Main Canvas*/}
       <main className="flex-grow max-w-[1200px] w-full mx-auto px-margin-desktop py-16 flex flex-col gap-12">
 
@@ -41,7 +35,7 @@ function Page10() {
             GO BACK
           </button>
         </div>
-    
+
         {/*Header Section*/}
         <header className="flex flex-col gap-4 md:flex-row justify-between items-end border-b-4 border-ink-black pb-8">
           <div className="max-w-2xl">
@@ -207,21 +201,6 @@ function Page10() {
         </div>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black dark:bg-surface-container-lowest text-surface-bright dark:text-ink-black font-body-md text-body-md w-full mt-16 border-t-4 border-electric-blue flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 transition-all duration-300">
-        <div>
-          <span className="font-display-lg text-headline-md text-surface-bright block mb-2">CodeSrijan</span>
-          <p>© 2026 CodeSrijan. Built for the community.</p>
-        </div>
-        <div className="flex flex-wrap gap-x-8 gap-y-4">
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/sponsors" >Sponsors</a>
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/community" >Community</a>
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/privacy-policy" >Privacy Policy</a>
-          <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/code-of-conduct" >Code of Conduct</a>
-        </div>
-      </footer>
-
     </div>
   );
 }

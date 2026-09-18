@@ -24,20 +24,7 @@ function Page7() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface dark:bg-ink-black w-full sticky top-0 z-50 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto border-b-2 border-ink-black">
-        <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">
-          CodeSrijan
-        </div>
-        <div className="hidden md:flex items-center gap-8">
-          <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-          <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-          <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-        </div>
-        <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:translate-y-[4px] active:translate-x-[4px] active:shadow-none transition-all duration-200">
-          Register Now
-        </button>
-      </nav>
-      <main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-desktop py-16 flex flex-col gap-16 md:gap-24">
+<main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-desktop py-16 flex flex-col gap-16 md:gap-24">
 
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">
@@ -156,24 +143,6 @@ function Page7() {
         </section>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-16 border-t-4 border-electric-blue flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8">
-        <div className="font-display-lg text-headline-md text-surface-bright">
-          CodeSrijan
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-x-8 gap-y-4">
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
-          </div>
-          <p className="font-body-md text-body-md text-surface-variant mt-4">
-            © 2026 CodeSrijan. Built for the community.
-          </p>
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }

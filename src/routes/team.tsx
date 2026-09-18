@@ -29,18 +29,7 @@ function Page6() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface dark:bg-ink-black w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto hidden md:flex">
-          <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-          <div className="flex gap-gutter">
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems">Problems</a>
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment">Recruitment</a>
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard">Leaderboard</a>
-          </div>
-          <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-2 neo-brutal-button">Register Now</button>
-        </div>
-      </nav>
-      <main className="flex-grow max-w-[1200px] mx-auto w-full px-margin-desktop py-12 flex flex-col gap-12">
+<main className="flex-grow max-w-[1200px] mx-auto w-full px-margin-desktop py-12 flex flex-col gap-12">
         <div className="w-full mb-6">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
             <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>

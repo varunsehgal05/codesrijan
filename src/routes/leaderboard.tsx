@@ -33,23 +33,7 @@ function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*Top Navigation*/}
-      <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-        <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-          <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-          <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-            <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-            <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-            <a className="text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-          </div>
-          <div className="hidden md:block">
-            <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
-              Register Now
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
+<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
@@ -122,22 +106,7 @@ function LeaderboardPage() {
           </div>
         </section>
       </main>
-
-      <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-16 border-t-4 border-electric-blue flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8">
-        <div className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</div>
-        <div className="flex flex-wrap gap-6 font-body-md text-body-md">
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/sponsors" >Sponsors</a>
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/community" >Community</a>
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/" >Discord</a>
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/" >GitHub</a>
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/privacy-policy" >Privacy Policy</a>
-          <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors transition-all duration-300" href="/code-of-conduct" >Code of Conduct</a>
-        </div>
-        <div className="text-surface-variant font-body-md text-body-md mt-4 md:mt-0">
-          © 2026 CodeSrijan. Built for the community.
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }
 

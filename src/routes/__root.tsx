@@ -13,6 +13,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { ChatBotWidget } from "../components/ChatBotWidget";
 import { AppStoreProvider } from "../lib/store";
+import { Navbar } from "../components/layout/Navbar";
+import { Footer } from "../components/layout/Footer";
 
 function NotFoundComponent() {
   return (
@@ -129,8 +131,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppStoreProvider>
-        <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen">
+        <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative">
+          <Navbar />
           <Outlet />
+          <Footer />
         </div>
         <ChatBotWidget />
       </AppStoreProvider>

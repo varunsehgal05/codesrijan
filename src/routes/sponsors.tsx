@@ -39,9 +39,6 @@ function SponsorsPage() {
                     </div>
                 </div>
             </main>
-            <footer className="w-full bg-deep-navy border-t-2 border-stark-black py-4 mt-auto">
-                <div className="max-w-[1200px] mx-auto text-center font-body-md text-surface-bright">© 2026 CodeSrijan. Built with Electric Blue Energy.</div>
-            </footer>
-        </div>
+</div>
     );
 }

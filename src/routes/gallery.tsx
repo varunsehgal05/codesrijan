@@ -25,12 +25,7 @@ function Page3() {
       <a className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright hover:-translate-y-0.5 transition-transform duration-200" href="/" >
                       CodeSrijan
                   </a>
-      <nav className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-      </nav>
-      <button className="hidden md:block bg-electric-blue text-white font-button-text text-button-text neo-border neo-shadow-sm px-6 py-3 neo-hover-btn">
+<button className="hidden md:block bg-electric-blue text-white font-button-text text-button-text neo-border neo-shadow-sm px-6 py-3 neo-hover-btn">
                       Register Now
                   </button>
       <button className="md:hidden p-2 text-ink-black">
@@ -156,24 +151,6 @@ function Page3() {
         </section>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-16 border-t-4 border-electric-blue py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto gap-8">
-          <div className="font-display-lg text-headline-md text-surface-bright font-extrabold">
-            CodeSrijan
-          </div>
-          <div className="flex flex-wrap gap-6 font-body-md text-body-md text-surface-variant">
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
-            <a className="hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
-          </div>
-          <div className="font-body-md text-body-md text-surface-variant w-full md:w-auto text-left md:text-right">
-            © 2026 CodeSrijan. Built for the community.
-          </div>
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }

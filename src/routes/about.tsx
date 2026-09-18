@@ -25,13 +25,7 @@ function Page11() {
       <header className="bg-surface dark:bg-ink-black w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
           <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-          <nav className="hidden md:flex gap-8 items-center">
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/problems" >Problems</a>
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/recruitment" >Recruitment</a>
-            <a className="font-button-text text-button-text text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" href="/leaderboard" >Leaderboard</a>
-            <a className="font-button-text text-button-text text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200" href="/about" >About</a>
-          </nav>
-          <button className="font-button-text text-button-text text-electric-blue dark:text-primary-fixed-dim bg-transparent border-2 border-electric-blue px-6 py-2 rounded-DEFAULT neo-shadow hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none hidden md:block">
+<button className="font-button-text text-button-text text-electric-blue dark:text-primary-fixed-dim bg-transparent border-2 border-electric-blue px-6 py-2 rounded-DEFAULT neo-shadow hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none hidden md:block">
             Register Now
           </button>
           <button className="md:hidden text-ink-black">
@@ -128,22 +122,6 @@ function Page11() {
         </section>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-16 border-t-4 border-electric-blue">
-        <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto">
-          <div className="flex flex-col gap-4">
-            <div className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</div>
-            <div className="font-body-md text-body-md text-surface-bright opacity-80">© 2026 CodeSrijan. Built for the community.</div>
-          </div>
-          <div className="flex flex-wrap gap-6 font-body-md text-body-md">
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
-            <a className="text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
-          </div>
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }

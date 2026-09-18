@@ -20,31 +20,7 @@ function Page2() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar (Shared Component)*/}
-      <nav className="bg-surface dark:bg-ink-black w-full border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-50 relative">
-      <div className="flex justify-between items-center w-full px-margin-desktop max-md:px-margin-mobile py-4 max-w-[1280px] mx-auto">
-      {/*Brand*/}
-      <a className="font-headline-md text-headline-md font-black text-ink-black dark:text-surface flex items-center gap-2" href="/" >
-      <span className="material-symbols-outlined text-electric-blue" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
-                      CodeSrijan
-                  </a>
-      {/*Desktop Navigation*/}
-      <div className="hidden md:flex items-center gap-stack-lg">
-      <a className="font-button-text text-button-text text-ink-black dark:text-surface hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/problems" >Problems</a>
-      <a className="font-button-text text-button-text text-electric-blue border-b-4 border-electric-blue hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/recruitment" >Recruitment</a>
-      <a className="font-button-text text-button-text text-ink-black dark:text-surface hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/leaderboard" >Leaderboard</a>
-      </div>
-      {/*Trailing Action*/}
-      <div className="flex items-center gap-4">
-      <button className="hidden md:block bg-electric-blue text-studio-white font-label-mono-bold text-label-mono-bold px-6 py-2 hard-border hard-shadow hard-shadow-hover hard-shadow-active transition-all">
-                          Register Now
-                      </button>
-      <button className="md:hidden text-ink-black">
-      <span className="material-symbols-outlined text-[32px]">menu</span>
-      </button>
-      </div>
-      </div>
-      </nav>
-      {/*Main Content Canvas*/}
+{/*Main Content Canvas*/}
       <main className="flex-grow w-full max-w-[1280px] mx-auto px-margin-desktop max-md:px-margin-mobile py-stack-lg flex flex-col gap-gutter">
       {/*Dashboard Header*/}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b-4 border-ink-black pb-stack-md">
@@ -247,24 +223,6 @@ function Page2() {
       </section>
       </main>
       {/*Footer (Shared Component)*/}
-      <footer className="bg-ink-black dark:bg-surface-container-highest w-full border-t-4 border-ink-black mt-16 z-10 relative">
-      <div className="flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-12 gap-gutter max-w-[1280px] mx-auto">
-      <div className="flex flex-col items-center md:items-start gap-2">
-      <span className="font-headline-md text-headline-md text-electric-blue flex items-center gap-2">
-      <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
-                          CodeSrijan
-                      </span>
-      <p className="font-body-md text-body-md text-surface dark:text-ink-black text-center md:text-left">© 2026 CodeSrijan. Built for the high-octane developer.</p>
-      </div>
-      <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-      <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
-      <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-      <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >Twitter</a>
-      <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >Sponsors</a>
-      <a className="font-body-md text-body-md text-surface-variant dark:text-on-surface-variant hover:text-electric-blue transition-colors" href="/" >Privacy</a>
-      </div>
-      </div>
-      </footer>
-    </div>
+</div>
   );
 }

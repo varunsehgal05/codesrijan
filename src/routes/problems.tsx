@@ -1,4 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/problems")({
   component: Page12,
@@ -17,31 +18,13 @@ export const Route = createFileRoute("/problems")({
 });
 
 function Page12() {
+  const { currentUser } = useAppStore();
+
+  if (!currentUser) return <Navigate to="/login" />;
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="w-full sticky top-0 z-50 bg-surface border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <div className="font-display-lg text-headline-md font-extrabold text-ink-black flex items-center gap-2">
-      <span className="material-symbols-outlined text-electric-blue" style={{ fontVariationSettings: "'FILL' 1", fontSize: "32px" }}>terminal</span>
-                      CodeSrijan
-                  </div>
-      <div className="hidden md:flex gap-8 items-center">
-      <a className="font-button-text text-button-text text-electric-blue border-b-2 border-electric-blue pb-1 hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none" href="/problems" >Problems</a>
-      <a className="font-button-text text-button-text text-ink-black hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none" href="/recruitment" >Recruitment</a>
-      <a className="font-button-text text-button-text text-ink-black hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none" href="/leaderboard" >Leaderboard</a>
-      </div>
-      <div className="flex items-center gap-4">
-      <div className="hidden lg:flex items-center gap-2 font-label-caps text-label-caps text-electric-blue">
-      <span className="sync-pulse w-2 h-2 rounded-full bg-electric-blue"></span>
-                          Syncing...
-                      </div>
-      <button className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200">
-                          Register Now
-                      </button>
-      </div>
-      </div>
-      </nav>
       {/*Main Content*/}
       <main className="flex-grow flex flex-col items-center px-margin-desktop py-16 w-full max-w-[1200px] mx-auto gap-16">
 
@@ -52,7 +35,7 @@ function Page12() {
             GO BACK
           </button>
         </div>
-    
+
         {/*Header & Search*/}
         <section className="w-full flex flex-col gap-8 relative z-10">
           <div className="flex flex-col gap-4">
@@ -187,27 +170,6 @@ function Page12() {
         </button>
       </main>
       {/*Footer*/}
-      <footer className="w-full mt-16 bg-ink-black border-t-4 border-electric-blue">
-        <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto w-full">
-          <div className="flex flex-col gap-4">
-            <div className="font-display-lg text-headline-md text-surface-bright flex items-center gap-2">
-              <span className="material-symbols-outlined text-electric-blue" style={{ fontVariationSettings: "'FILL' 1", fontSize: "32px" }}>terminal</span>
-              CodeSrijan
-            </div>
-            <p className="font-body-md text-body-md text-surface-variant max-w-sm">
-              © 2026 CodeSrijan. Built for the community. Hack hard, code clean.
-            </p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

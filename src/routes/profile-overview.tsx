@@ -28,12 +28,7 @@ function Page8() {
                       CodeSrijan
                   </a>
       {/*Desktop Navigation*/}
-      <nav className="hidden md:flex gap-8 items-center">
-      <a className="font-body-md text-body-md text-ink-black hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none py-1" href="/problems" >Problems</a>
-      <a className="font-body-md text-body-md text-ink-black hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none py-1" href="/recruitment" >Recruitment</a>
-      <a className="font-body-md text-body-md text-ink-black hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform active:translate-y-1 active:translate-x-1 active:shadow-none py-1" href="/leaderboard" >Leaderboard</a>
-      </nav>
-      {/*Trailing Action & Mobile Menu*/}
+{/*Trailing Action & Mobile Menu*/}
       <div className="flex items-center gap-4">
       <button className="hidden md:flex items-center justify-center bg-electric-blue text-on-primary font-body-lg text-body-lg border-2 border-ink-black neo-shadow-lg px-6 py-2 transition-transform neo-shadow-hover neo-shadow-active font-bold">
                           Register Now
@@ -119,24 +114,6 @@ function Page8() {
         </section>
       </main>
       {/*Footer Component*/}
-      <footer className="w-full border-t-4 border-ink-black mt-16 bg-ink-black">
-        <div className="flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-12 gap-gutter max-w-[1280px] mx-auto">
-          <div className="font-headline-md text-headline-md text-electric-blue font-black flex items-center gap-2">
-            <span className="material-symbols-outlined text-electric-blue" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
-            CodeSrijan
-          </div>
-          <nav className="flex flex-wrap justify-center gap-6">
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Twitter</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Sponsors</a>
-            <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Privacy</a>
-          </nav>
-          <div className="font-body-md text-body-md text-surface">
-            © 2026 CodeSrijan. Built for the high-octane developer.
-          </div>
-        </div>
-      </footer>
-    </div>
+</div>
   );
 }

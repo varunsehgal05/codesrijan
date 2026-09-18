@@ -20,24 +20,7 @@ function Page1() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface w-full border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sticky top-0 z-50">
-      <div className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <a className="font-headline-md text-headline-md font-black text-ink-black uppercase tracking-tight" href="/" >CodeSrijan</a>
-      <div className="hidden md:flex items-center gap-gutter">
-      <a className="font-label-mono-bold text-label-mono-bold text-ink-black hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/problems" >Problems</a>
-      <a className="font-label-mono-bold text-label-mono-bold text-ink-black hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/recruitment" >Recruitment</a>
-      {/*Active logic applied to Leaderboard as it's the closest to Hall of Fame/Highlights intent*/}
-      <a className="font-label-mono-bold text-label-mono-bold text-electric-blue border-b-4 border-electric-blue pb-1 hover:-translate-y-0.5 hover:translate-x-0.5 transition-transform" href="/leaderboard" >Leaderboard</a>
-      </div>
-      <button className="bg-electric-blue text-studio-white font-label-mono-bold text-label-mono-bold px-6 py-3 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:translate-x-0.5 active:translate-y-1 active:translate-x-1 active:shadow-none transition-all uppercase hidden md:block">
-                      Register Now
-                  </button>
-      <button className="md:hidden text-ink-black">
-      <span className="material-symbols-outlined text-3xl">menu</span>
-      </button>
-      </div>
-      </nav>
-      {/*Main Content Canvas*/}
+{/*Main Content Canvas*/}
       <main className="flex-grow w-full max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg flex flex-col gap-16 md:gap-24 overflow-hidden">
       {/*Header Section*/}
       <header className="text-center flex flex-col items-center gap-stack-md mt-8">
@@ -95,23 +78,6 @@ function Page1() {
       </section>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black text-surface w-full border-t-4 border-ink-black mt-16 px-margin-mobile md:px-margin-desktop py-12">
-      <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-gutter">
-      <div className="font-headline-md text-headline-md text-electric-blue font-black uppercase">
-                      CodeSrijan
-                  </div>
-      <div className="flex flex-wrap justify-center gap-x-8 gap-y-4">
-      <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
-      <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-      <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Twitter</a>
-      <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Sponsors</a>
-      <a className="font-body-md text-body-md text-surface-variant hover:text-electric-blue transition-colors" href="/" >Privacy</a>
-      </div>
-      <div className="font-body-md text-body-md text-surface-variant text-center md:text-right mt-4 md:mt-0">
-                      © 2026 CodeSrijan. Built for the high-octane developer.
-                  </div>
-      </div>
-      </footer>
-    </div>
+</div>
   );
 }

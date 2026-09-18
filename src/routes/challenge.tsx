@@ -20,23 +20,7 @@ function Page9() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface dark:bg-ink-black text-electric-blue dark:text-primary-fixed-dim font-button-text text-button-text w-full sticky top-0 z-50 border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-      <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <a className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright" href="/" >CodeSrijan</a>
-      <div className="hidden md:flex gap-8 items-center">
-      <a className="text-electric-blue border-b-2 border-electric-blue pb-1 active:translate-y-1 active:shadow-none transition-transform duration-200" href="/problems" >Problems</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none" href="/recruitment" >Recruitment</a>
-      <a className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none" href="/leaderboard" >Leaderboard</a>
-      </div>
-      <button className="bg-electric-blue text-on-primary font-button-text text-button-text neo-border neo-shadow px-6 py-3 hidden md:block">
-                      Register Now
-                  </button>
-      <button className="md:hidden text-ink-black">
-      <span className="material-symbols-outlined text-3xl">menu</span>
-      </button>
-      </div>
-      </nav>
-      {/*Main Content*/}
+{/*Main Content*/}
       <main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-desktop py-16 flex flex-col gap-16">
       {/*Hero Section*/}
       <header className="flex flex-col gap-6 relative">
@@ -152,22 +136,6 @@ function Page9() {
       </div>
       </main>
       {/*Footer*/}
-      <footer className="bg-ink-black dark:bg-surface-container-lowest text-surface-bright dark:text-ink-black font-body-md text-body-md w-full mt-16 border-t-4 border-electric-blue flat no shadows">
-      <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto w-full">
-      <div className="flex flex-col gap-4">
-      <span className="font-display-lg text-headline-md text-surface-bright">CodeSrijan</span>
-      <p className="text-surface-variant">© 2026 CodeSrijan. Built for the community.</p>
-      </div>
-      <div className="flex flex-wrap gap-6 items-center">
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/sponsors" >Sponsors</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/community" >Community</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >Discord</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/" >GitHub</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/privacy-policy" >Privacy Policy</a>
-      <a className="text-surface-variant hover:text-surface-bright hover:text-electric-blue transition-colors duration-300" href="/code-of-conduct" >Code of Conduct</a>
-      </div>
-      </div>
-      </footer>
-    </div>
+</div>
   );
 }

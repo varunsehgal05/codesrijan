@@ -41,21 +41,7 @@ function Page4() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-      <nav className="bg-surface dark:bg-ink-black w-full border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sticky top-0 z-50">
-        <div className="flex justify-between items-center w-full px-margin-desktop py-4 max-w-[1200px] mx-auto">
-          <div className="font-headline-md text-headline-md font-black text-ink-black dark:text-surface uppercase tracking-tight">
-            CodeSrijan
-          </div>
-          <div className="hidden md:flex gap-gutter items-center">
-            <a className="text-ink-black dark:text-surface font-body-md text-body-md hover:text-electric-blue" href="/team" >Team Hub</a>
-            <a className="text-ink-black dark:text-surface font-body-md text-body-md hover:text-electric-blue" href="/problems" >Problems</a>
-          </div>
-          <button onClick={() => window.location.href = '/'} className="bg-electric-blue text-on-primary font-body-lg text-body-lg border-2 border-ink-black px-6 py-2 neo-shadow hover:-translate-y-1 hover:shadow-lg transition-all">
-            Dashboard
-          </button>
-        </div>
-      </nav>
-      {/*Main Workspace*/}
+{/*Main Workspace*/}
       <main className="flex-grow max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
         {/*Mission Control Header*/}
         <header className="bg-studio-white border-2 border-ink-black p-6 md:p-8 neo-shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">

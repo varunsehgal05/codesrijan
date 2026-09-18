@@ -42,18 +42,7 @@ function CertificatesPage() {
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
             {/* Navbar */}
-            <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-                    <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-                    <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                        <a className="text-ink-black dark:text-surface-bright hover:-translate-y-0.5" href="/problems">Problems</a>
-                        <a className="text-ink-black dark:text-surface-bright hover:-translate-y-0.5" href="/leaderboard">Leaderboard</a>
-                        <a className="text-electric-blue border-b-2 border-electric-blue pb-1" href="/certificates">Certificates</a>
-                    </div>
-                </div>
-            </nav>
-
-            {/* Main Content */}
+{/* Main Content */}
             <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-16 w-full">
                 {/* Go Back */}
                 <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
@@ -141,9 +130,6 @@ function CertificatesPage() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-ink-black dark:bg-surface-container-lowest w-full mt-auto border-t-4 border-electric-blue px-margin-desktop py-12 text-center text-surface-variant font-body-md">
-                © 2026 CodeSrijan. Built for the community.
-            </footer>
-        </div>
+</div>
     );
 }

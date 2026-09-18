@@ -49,16 +49,7 @@ function AIAssistantPage() {
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-            <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-                    <div className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">CodeSrijan</div>
-                    <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                        <a className="text-electric-blue border-b-2 border-electric-blue pb-1" href="/ai-assistant">AI Support</a>
-                    </div>
-                </div>
-            </nav>
-
-            <main className="flex-grow max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12 w-full flex flex-col h-[calc(100vh-100px)]">
+<main className="flex-grow max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12 w-full flex flex-col h-[calc(100vh-100px)]">
 
                 <div className="w-full mb-6">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">

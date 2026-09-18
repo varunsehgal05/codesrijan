@@ -20,18 +20,7 @@ function Page5() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*Top Navigation (Generated from JSON)*/}
-      <nav className="bg-surface border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] w-full sticky top-0 z-50">
-      <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-      <div className="font-display-lg text-headline-md font-extrabold text-ink-black">CodeSrijan</div>
-      <div className="hidden md:flex gap-6 items-center">
-      <a className="text-ink-black hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 font-button-text text-button-text" href="/problems" >Problems</a>
-      <a className="text-ink-black hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 font-button-text text-button-text" href="/recruitment" >Recruitment</a>
-      <a className="text-electric-blue border-b-2 border-electric-blue pb-1 font-button-text text-button-text" href="/leaderboard" >Leaderboard</a> {/*Active intent mismatch, but rendering tabs as requested*/}
-      </div>
-      <button className="bg-surface text-electric-blue font-button-text text-button-text px-4 py-2 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-transform duration-200 active:translate-y-1 active:shadow-none">Register Now</button>
-      </div>
-      </nav>
-      {/*Main Dashboard Content*/}
+{/*Main Dashboard Content*/}
       <main className="flex-grow max-w-[1200px] mx-auto px-margin-desktop py-16 grid grid-cols-1 md:grid-cols-12 gap-8">
       {/*Header*/}
       <header className="col-span-12 mb-8">
@@ -160,22 +149,6 @@ function Page5() {
       </div>
       </main>
       {/*Footer (Generated from JSON)*/}
-      <footer className="bg-ink-black w-full mt-16 border-t-4 border-electric-blue transition-all duration-300">
-      <div className="flex flex-col md:flex-row justify-between items-start px-margin-desktop py-12 gap-8 max-w-[1200px] mx-auto">
-      <div>
-      <div className="font-display-lg text-headline-md text-surface-bright mb-4">CodeSrijan</div>
-      <p className="font-body-md text-body-md text-surface-bright">© 2026 CodeSrijan. Built for the community.</p>
-      </div>
-      <div className="grid grid-cols-2 md:flex md:flex-row gap-6 md:gap-8 font-body-md text-body-md">
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/sponsors" >Sponsors</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/community" >Community</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >Discord</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/" >GitHub</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/privacy-policy" >Privacy Policy</a>
-      <a className="text-surface-variant hover:text-electric-blue transition-colors" href="/code-of-conduct" >Code of Conduct</a>
-      </div>
-      </div>
-      </footer>
-    </div>
+</div>
   );
 }
