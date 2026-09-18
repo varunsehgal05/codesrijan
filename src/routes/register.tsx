@@ -11,19 +11,21 @@ function RegisterPage() {
     const navigate = useNavigate({ from: "/register" });
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const [errorMsg, setErrorMsg] = useState("");
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
-        if (!name || !email) return;
+        if (!name || !email || !password) return;
 
         try {
             await register({
                 id: `u-${Date.now()}`,
                 name,
                 email,
+                password,
                 role: "student"
             });
             navigate({ to: "/workspace" });
@@ -122,8 +124,11 @@ function RegisterPage() {
                             <label className="font-label-bold text-stark-black uppercase">Password Matrix</label>
                             <input
                                 type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 placeholder="Create a strong password"
                                 className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                required
                             />
                         </div>
 

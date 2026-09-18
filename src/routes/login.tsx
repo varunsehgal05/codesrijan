@@ -10,6 +10,7 @@ function LoginPage() {
     const { login } = useAppStore();
     const navigate = useNavigate({ from: "/login" });
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -19,7 +20,7 @@ function LoginPage() {
         if (!email) return;
 
         try {
-            await login(email);
+            await login(email, password);
             navigate({ to: "/workspace" });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to initialize session.");
@@ -85,8 +86,11 @@ function LoginPage() {
                             </div>
                             <input
                                 type="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••••••"
                                 className="w-full bg-surface py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                required
                             />
                         </div>
 

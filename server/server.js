@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 
@@ -24,7 +25,7 @@ import './models/tertiary.js';
 // USERS
 app.post('/api/login', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, password } = req.body;
 
         // High-level Admin Override
         if (email === "admin" || email.includes("admin@codesrijan")) {
@@ -38,6 +39,16 @@ app.post('/api/login', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (user) {
+            if (user.passwordHash) {
+                const isValid = await bcrypt.compare(String(password), user.passwordHash);
+                if (!isValid) {
+                    return res.status(401).json({ message: "Access Denied. Invalid matrix passkey." });
+                }
+            } else {
+                if (password && password !== "bypass") {
+                    return res.status(401).json({ message: "Legacy profile locked. Contact Command." });
+                }
+            }
             res.json(user);
         } else {
             res.status(404).json({ message: "Operative not found in database." });
@@ -52,9 +63,18 @@ app.get('/api/users', async (req, res) => {
     res.json(users);
 });
 app.post('/api/users', async (req, res) => {
-    const user = new User(req.body);
-    await user.save();
-    res.json(user);
+    try {
+        const payload = req.body;
+        if (payload.password) {
+            payload.passwordHash = await bcrypt.hash(String(payload.password), 10);
+            delete payload.password;
+        }
+        const user = new User(payload);
+        await user.save();
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ message: "Registration failed", error: e.message });
+    }
 });
 app.delete('/api/users', async (req, res) => {
     // Danger route to reset DB

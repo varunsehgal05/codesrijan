@@ -31,6 +31,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
+    password?: string; // Optional field for transport primarily
     role: Role;
     teamId?: string;
 }
@@ -75,7 +76,7 @@ interface StoreState {
 }
 
 interface StoreContextType extends StoreState {
-    login: (email: string) => Promise<any>;
+    login: (email: string, password?: string) => Promise<any>;
     register: (user: User) => Promise<any>;
     logout: () => void;
     createTeam: (name: string, leaderId: string) => void;
@@ -155,9 +156,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, [state.currentUser?.teamId]);
 
-    const login = async (email: string) => {
+    const login = async (email: string, password?: string) => {
         try {
-            const res = await axios.post(`${API_URL}/login`, { email });
+            const res = await axios.post(`${API_URL}/login`, { email, password });
             const u = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_current_user_id", u.id);
