@@ -124,6 +124,17 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const refetchData = async () => {
         try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            let nextUser = null;
+            if (token) {
+                try {
+                    const meRes = await axios.get(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    nextUser = meRes.data.user;
+                } catch (e) { }
+            }
+
             const [usersRes, teamsRes, problemsRes, hackathonsRes] = await Promise.all([
                 axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
@@ -137,6 +148,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 teams: teamsRes.data,
                 problems: problemsRes.data,
                 hackathons: hackathonsRes.data,
+                ...(nextUser ? { currentUser: nextUser } : {}),
                 isLoaded: true
             }));
         } catch (e) {
