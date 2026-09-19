@@ -1,22 +1,38 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/")({
   component: Page14,
   head: () => ({
     meta: [
       { title: "Home | CodeSrijan" },
-      { name: "description", content: "CodeSrijan home — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:title", content: "Home | CodeSrijan" },
-      { property: "og:description", content: "CodeSrijan home — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
 });
 
 function Page14() {
+  const [stats, setStats] = useState({
+    hackersCount: 4000,
+    projectsCount: 630,
+    registrationsCount: 11500,
+    collegesCount: 600,
+    activeHackathon: null as any
+  });
+
+  const [loading, setLoading] = useState(true);
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  useEffect(() => {
+    axios.get(`${API_URL}/public/stats`)
+      .then(res => {
+        if (res.data) setStats(res.data);
+        setLoading(false);
+      })
+      .catch(err => setLoading(false));
+  }, [API_URL]);
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar Refactored to Root*/}
@@ -80,25 +96,25 @@ function Page14() {
             {/*Stat 1*/}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow text-center hover:-translate-y-2 transition-transform duration-300">
               <span className="material-symbols-outlined text-4xl text-electric-blue mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>groups</span>
-              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">4K+</h3>
+              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">{loading ? "..." : `${stats.hackersCount}+`}</h3>
               <p className="font-label-bold text-label-bold text-on-surface-variant uppercase">Hackers</p>
             </div>
             {/*Stat 2*/}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow text-center hover:-translate-y-2 transition-transform duration-300">
               <span className="material-symbols-outlined text-4xl text-electric-blue mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>rocket_launch</span>
-              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">630+</h3>
+              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">{loading ? "..." : `${stats.projectsCount}+`}</h3>
               <p className="font-label-bold text-label-bold text-on-surface-variant uppercase">Projects</p>
             </div>
             {/*Stat 3*/}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow text-center hover:-translate-y-2 transition-transform duration-300">
               <span className="material-symbols-outlined text-4xl text-electric-blue mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>assignment</span>
-              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">11.5K</h3>
+              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">{loading ? "..." : `${stats.registrationsCount}`}</h3>
               <p className="font-label-bold text-label-bold text-on-surface-variant uppercase">Registrations</p>
             </div>
             {/*Stat 4*/}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow text-center hover:-translate-y-2 transition-transform duration-300">
               <span className="material-symbols-outlined text-4xl text-electric-blue mb-4 block" style={{ fontVariationSettings: "'FILL' 1" }}>school</span>
-              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">600+</h3>
+              <h3 className="font-display-lg text-display-lg text-stark-black leading-none mb-2">{loading ? "..." : `${stats.collegesCount}+`}</h3>
               <p className="font-label-bold text-label-bold text-on-surface-variant uppercase">Colleges</p>
             </div>
           </div>

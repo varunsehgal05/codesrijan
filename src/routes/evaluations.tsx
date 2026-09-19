@@ -1,13 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useAppStore } from "../lib/store";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/evaluations")({
     component: EvaluationsPage,
 });
 
 function EvaluationsPage() {
-    const { teams } = useAppStore();
+    const [teams, setTeams] = useState<any[]>([]);
+
+    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+    useEffect(() => {
+        const token = localStorage.getItem("codesrijan_auth_token");
+        axios.get(`${API_URL}/teams`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).then(res => {
+            setTeams(res.data);
+        }).catch(err => {
+            console.error(err);
+        });
+    }, [API_URL]);
 
     // Find teams that have submitted their projects
     const submittedTeams = teams.filter(t => t.isSubmitted);
@@ -26,17 +39,39 @@ function EvaluationsPage() {
         setScores(prev => ({ ...prev, [criteria]: Math.max(0, Math.min(10, val)) }));
     };
 
-    const submitEvaluation = () => {
+    const submitEvaluation = async () => {
         if (!selectedTeam) return;
-        alert(`Evaluation submitted for ${activeTeam?.name}!\nTotal Score: ${scores.concept + scores.execution + scores.design + scores.impact}/40`);
-        // Mock clearing
-        setSelectedTeam(null);
-        setScores({ concept: 0, execution: 0, design: 0, impact: 0 });
+
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const totalScore = scores.concept + scores.execution + scores.design + scores.impact;
+            await axios.post(`${API_URL}/evaluations`, {
+                hackathonId: 'hack-1', // Default active hackathon
+                projectId: activeTeam.id,
+                scores: { ...scores },
+                totalScore: totalScore,
+                comments: "Automated Evaluation Terminal Submission",
+                strengths: "N/A",
+                improvements: "N/A"
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            alert(`Evaluation submitted for ${activeTeam?.name}!\nTotal Score: ${totalScore}/40`);
+            setSelectedTeam(null);
+            setScores({ concept: 0, execution: 0, design: 0, impact: 0 });
+
+            // Remove from local array temporarily to reflect submission visually
+            setTeams(prev => prev.filter(t => t.id !== activeTeam.id));
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Error transmitting evaluation matrix.");
+            console.error(err);
+        }
     };
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
+            <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
                 <div className="w-full">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
                         <span className="material-symbols-outlined group-hover:-translate-x-1">arrow_back</span> GO BACK

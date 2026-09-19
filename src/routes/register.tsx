@@ -12,6 +12,9 @@ function RegisterPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [college, setCollege] = useState("");
+    const [branch, setBranch] = useState("");
+    const [year, setYear] = useState("");
 
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -21,14 +24,18 @@ function RegisterPage() {
         if (!name || !email || !password) return;
 
         try {
-            await register({
-                id: `u-${Date.now()}`,
+            const resData = await register({
+                id: "", // Managed explicitly by backend now
                 name,
                 email,
                 password,
-                role: "student"
+                role: "student",
+                // @ts-ignore - appending payload variables currently outside our User UI schema definition
+                college,
+                branch,
+                year
             });
-            navigate({ to: "/auth/otp" });
+            navigate({ to: '/auth/otp', search: { uid: resData.userId } });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to generate identity.");
         }
@@ -85,6 +92,7 @@ function RegisterPage() {
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="John"
                                     className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                    required
                                 />
                             </div>
                             <div className="flex flex-col gap-2">
@@ -109,6 +117,21 @@ function RegisterPage() {
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="flex flex-col gap-2">
+                                <label className="font-label-bold text-stark-black uppercase">College</label>
+                                <input type="text" value={college} onChange={e => setCollege(e.target.value)} placeholder="Institute of Tech" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="font-label-bold text-stark-black uppercase">Branch</label>
+                                <input type="text" value={branch} onChange={e => setBranch(e.target.value)} placeholder="CS" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                <label className="font-label-bold text-stark-black uppercase">Year</label>
+                                <input type="text" value={year} onChange={e => setYear(e.target.value)} placeholder="3" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                            </div>
+                        </div>
+
                         <div className="flex flex-col gap-2">
                             <label className="font-label-bold text-stark-black uppercase">Secure Email</label>
                             <input
@@ -117,6 +140,7 @@ function RegisterPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="comm_link@codesrijan.com"
                                 className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                required
                             />
                         </div>
 

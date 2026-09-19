@@ -1,48 +1,62 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import axios from "axios";
 
 export const Route = createFileRoute("/certificates")({
     component: CertificatesPage,
 });
 
 function CertificatesPage() {
-    const { currentUser, teams } = useAppStore();
+    const { currentUser } = useAppStore();
     const [verifyId, setVerifyId] = useState("");
     const [verificationResult, setVerificationResult] = useState<null | { valid: boolean; holder?: string }>(null);
+    const [isEligible, setIsEligible] = useState(false);
 
-    // Check if current user is eligible for a certificate
-    let isEligible = false;
-    let userTeam = null;
+    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
-    if (currentUser?.teamId) {
-        userTeam = teams.find(t => t.id === currentUser.teamId);
-        if (userTeam?.isSubmitted) {
-            isEligible = true;
-        }
-    }
+    useEffect(() => {
+        if (!currentUser?.teamId) return;
+        const token = localStorage.getItem("codesrijan_auth_token");
+        // Verify team submission status using teams
+        axios.get(`${API_URL}/teams`, {
+            headers: { Authorization: `Bearer ${token}` }
+        }).then(res => {
+            const myTeam = res.data.find((t: any) => t.id === currentUser.teamId);
+            if (myTeam && myTeam.isSubmitted) setIsEligible(true);
+        }).catch(err => console.error("Error confirming team eligibility:", err));
+    }, [currentUser, API_URL]);
 
-    const handleVerify = () => {
-        // Mock Verification Logic
-        if (verifyId.startsWith("CS-") && verifyId.length > 8) {
-            setVerificationResult({ valid: true, holder: "Verified Student" });
-        } else {
+    const handleVerify = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/certificates/verify/${verifyId}`);
+            setVerificationResult({ valid: true, holder: res.data.userName });
+        } catch (err: any) {
             setVerificationResult({ valid: false });
         }
     };
 
-    const handleGenerate = () => {
+    const handleGenerate = async () => {
         if (!isEligible) {
             alert("You need to submit a project before generating a certificate!");
             return;
         }
-        alert(`Certificate generated for ${currentUser?.name}! (Mock PDF Download Triggered)`);
+
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const res = await axios.post(`${API_URL}/certificates/generate`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert(`Certificate Generated!\n\nName: ${res.data.userName}\nID: ${res.data.id}\n(Mock PDF Download Triggered)`);
+        } catch (err: any) {
+            alert(err.response?.data?.message || "Error generating cryptographic certificate block.");
+        }
     };
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
             {/* Navbar */}
-{/* Main Content */}
+            {/* Main Content */}
             <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-16 w-full">
                 {/* Go Back */}
                 <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
@@ -130,6 +144,6 @@ function CertificatesPage() {
             </main>
 
             {/* Footer */}
-</div>
+        </div>
     );
 }

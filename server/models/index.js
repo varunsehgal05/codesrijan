@@ -212,6 +212,19 @@ const recruitmentProfileSchema = new mongoose.Schema({
     isVisible: { type: Boolean, default: true }
 }, { timestamps: true });
 
+// 12. Certificates Collection
+const certificateSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    userId: String,
+    userName: String,
+    teamId: String,
+    hackathonId: String,
+    type: { type: String, enum: ['participation', 'winner', 'runner_up', 'special_mention'], default: 'participation' },
+    issuedBy: String,
+    issueDate: { type: Date, default: Date.now },
+    metadata: Object
+}, { timestamps: true });
+
 
 // Export logic (prevent overwrite if extremely frequent hot reloading)
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
@@ -225,7 +238,8 @@ export const Project = mongoose.models.Project || mongoose.model('Project', proj
 export const Submission = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
 export const Evaluation = mongoose.models.Evaluation || mongoose.model('Evaluation', evaluationSchema);
 export const RecruitmentProfile = mongoose.models.RecruitmentProfile || mongoose.model('RecruitmentProfile', recruitmentProfileSchema);
+export const Certificate = mongoose.models.Certificate || mongoose.model('Certificate', certificateSchema);
 
 export default {
-    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile
+    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile, Certificate
 };

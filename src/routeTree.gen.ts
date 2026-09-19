@@ -20,6 +20,7 @@ import { Route as CodeOfConductRouteImport } from './routes/code-of-conduct'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EvaluationsRouteImport } from './routes/evaluations'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as HighlightsRouteImport } from './routes/highlights'
 import { Route as HostEventRouteImport } from './routes/host-event'
@@ -34,16 +35,22 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProfileOverviewRouteImport } from './routes/profile-overview'
 import { Route as RecruitmentRouteImport } from './routes/recruitment'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as TeamRouteImport } from './routes/team'
+import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminEvaluationsRouteImport } from './routes/admin.evaluations'
 import { Route as AdminScheduleRouteImport } from './routes/admin.schedule'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthOtpRouteImport } from './routes/auth.otp'
+import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AdminHackathonsCreateRouteImport } from './routes/admin.hackathons.create'
+import { Route as HackathonsIdRegisterRouteImport } from './routes/hackathons.$id.register'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -98,6 +105,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const EvaluationsRoute = EvaluationsRouteImport.update({
   id: '/evaluations',
   path: '/evaluations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GalleryRoute = GalleryRouteImport.update({
@@ -170,6 +182,11 @@ const RegisterRoute = RegisterRouteImport.update({
   path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SponsorsRoute = SponsorsRouteImport.update({
   id: '/sponsors',
   path: '/sponsors',
@@ -183,6 +200,11 @@ const SupportRoute = SupportRouteImport.update({
 const TeamRoute = TeamRouteImport.update({
   id: '/team',
   path: '/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkspaceRoute = WorkspaceRouteImport.update({
@@ -210,14 +232,34 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthOtpRoute = AuthOtpRouteImport.update({
   id: '/auth/otp',
   path: '/auth/otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
+  id: '/auth/reset-password',
+  path: '/auth/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminHackathonsCreateRoute = AdminHackathonsCreateRouteImport.update({
+  id: '/hackathons/create',
+  path: '/hackathons/create',
+  getParentRoute: () => AdminRoute,
+} as any)
+const HackathonsIdRegisterRoute = HackathonsIdRegisterRouteImport.update({
+  id: '/hackathons/$id/register',
+  path: '/hackathons/$id/register',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -233,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -247,16 +290,22 @@ export interface FileRoutesByFullPath {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
+  '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -269,6 +318,7 @@ export interface FileRoutesByTo {
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -283,16 +333,22 @@ export interface FileRoutesByTo {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
+  '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -307,6 +363,7 @@ export interface FileRoutesById {
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
   '/evaluations': typeof EvaluationsRoute
+  '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
@@ -321,16 +378,22 @@ export interface FileRoutesById {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
   '/team': typeof TeamRoute
+  '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
+  '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -346,6 +409,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/evaluations'
+    | '/faq'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -360,16 +424,22 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/settings'
     | '/sponsors'
     | '/support'
     | '/team'
+    | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
     | '/admin/schedule'
     | '/admin/users'
+    | '/auth/forgot-password'
     | '/auth/otp'
+    | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/admin/hackathons/create'
+    | '/hackathons/$id/register'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -382,6 +452,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/evaluations'
+    | '/faq'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -396,16 +467,22 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/settings'
     | '/sponsors'
     | '/support'
     | '/team'
+    | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
     | '/admin/schedule'
     | '/admin/users'
+    | '/auth/forgot-password'
     | '/auth/otp'
+    | '/auth/reset-password'
     | '/invite/$token'
     | '/admin'
+    | '/admin/hackathons/create'
+    | '/hackathons/$id/register'
   id:
     | '__root__'
     | '/'
@@ -419,6 +496,7 @@ export interface FileRouteTypes {
     | '/community'
     | '/dashboard'
     | '/evaluations'
+    | '/faq'
     | '/gallery'
     | '/highlights'
     | '/host-event'
@@ -433,16 +511,22 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/settings'
     | '/sponsors'
     | '/support'
     | '/team'
+    | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
     | '/admin/schedule'
     | '/admin/users'
+    | '/auth/forgot-password'
     | '/auth/otp'
+    | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/admin/hackathons/create'
+    | '/hackathons/$id/register'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -457,6 +541,7 @@ export interface RootRouteChildren {
   CommunityRoute: typeof CommunityRoute
   DashboardRoute: typeof DashboardRoute
   EvaluationsRoute: typeof EvaluationsRoute
+  FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
   HighlightsRoute: typeof HighlightsRoute
   HostEventRoute: typeof HostEventRoute
@@ -471,12 +556,17 @@ export interface RootRouteChildren {
   ProfileOverviewRoute: typeof ProfileOverviewRoute
   RecruitmentRoute: typeof RecruitmentRoute
   RegisterRoute: typeof RegisterRoute
+  SettingsRoute: typeof SettingsRoute
   SponsorsRoute: typeof SponsorsRoute
   SupportRoute: typeof SupportRoute
   TeamRoute: typeof TeamRoute
+  TimelineRoute: typeof TimelineRoute
   WorkspaceRoute: typeof WorkspaceRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
   AuthOtpRoute: typeof AuthOtpRoute
+  AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  HackathonsIdRegisterRoute: typeof HackathonsIdRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -556,6 +646,13 @@ declare module '@tanstack/react-router' {
       path: '/evaluations'
       fullPath: '/evaluations'
       preLoaderRoute: typeof EvaluationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/gallery': {
@@ -656,6 +753,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sponsors': {
       id: '/sponsors'
       path: '/sponsors'
@@ -675,6 +779,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/team'
       preLoaderRoute: typeof TeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workspace': {
@@ -712,6 +823,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth/otp': {
       id: '/auth/otp'
       path: '/auth/otp'
@@ -719,11 +837,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/reset-password': {
+      id: '/auth/reset-password'
+      path: '/auth/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
       fullPath: '/invite/$token'
       preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/hackathons/create': {
+      id: '/admin/hackathons/create'
+      path: '/hackathons/create'
+      fullPath: '/admin/hackathons/create'
+      preLoaderRoute: typeof AdminHackathonsCreateRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/hackathons/$id/register': {
+      id: '/hackathons/$id/register'
+      path: '/hackathons/$id/register'
+      fullPath: '/hackathons/$id/register'
+      preLoaderRoute: typeof HackathonsIdRegisterRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -734,6 +873,7 @@ interface AdminRouteChildren {
   AdminScheduleRoute: typeof AdminScheduleRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminHackathonsCreateRoute: typeof AdminHackathonsCreateRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -741,6 +881,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminScheduleRoute: AdminScheduleRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminHackathonsCreateRoute: AdminHackathonsCreateRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -757,6 +898,7 @@ const rootRouteChildren: RootRouteChildren = {
   CommunityRoute: CommunityRoute,
   DashboardRoute: DashboardRoute,
   EvaluationsRoute: EvaluationsRoute,
+  FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
   HighlightsRoute: HighlightsRoute,
   HostEventRoute: HostEventRoute,
@@ -771,12 +913,17 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileOverviewRoute: ProfileOverviewRoute,
   RecruitmentRoute: RecruitmentRoute,
   RegisterRoute: RegisterRoute,
+  SettingsRoute: SettingsRoute,
   SponsorsRoute: SponsorsRoute,
   SupportRoute: SupportRoute,
   TeamRoute: TeamRoute,
+  TimelineRoute: TimelineRoute,
   WorkspaceRoute: WorkspaceRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
   AuthOtpRoute: AuthOtpRoute,
+  AuthResetPasswordRoute: AuthResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
+  HackathonsIdRegisterRoute: HackathonsIdRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

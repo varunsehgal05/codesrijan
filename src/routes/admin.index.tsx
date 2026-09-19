@@ -1,12 +1,45 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/admin/")({
     component: AdminTelemetry,
 });
 
 function AdminTelemetry() {
-    const { users, teams, chatMessages } = useAppStore();
+    const [users, setUsers] = useState<any[]>([]);
+    const [teams, setTeams] = useState<any[]>([]);
+    const [hackathons, setHackathons] = useState<any[]>([]);
+    const [chatMessages, setChatMessages] = useState<any[]>([]); // Stubbed
+
+    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+    useEffect(() => {
+        const fetchTelemetry = async () => {
+            try {
+                const token = localStorage.getItem("codesrijan_auth_token");
+                const headers = { Authorization: `Bearer ${token}` };
+
+                const statsRes = await axios.get(`${API_URL}/public/stats`);
+                // Use public stats to quickly display counts if available, otherwise just use counts from actual API dumps
+
+                const [teamsRes, usersRes, evtsRes] = await Promise.all([
+                    axios.get(`${API_URL}/teams`, { headers }),
+                    axios.get(`${API_URL}/users`, { headers }).catch(() => ({ data: Array(statsRes.data.hackers || 0).fill({}) })),
+                    axios.get(`${API_URL}/hackathons`, { headers }).catch(() => ({ data: [] }))
+                ]);
+
+                setTeams(teamsRes.data);
+                setUsers(usersRes.data);
+                setHackathons(evtsRes.data);
+            } catch (err) {
+                console.error("Telemetry failure:", err);
+            }
+        };
+        fetchTelemetry();
+    }, [API_URL]);
+
+    const activeEvent = hackathons[0];
 
     return (
         <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -59,13 +92,13 @@ function AdminTelemetry() {
                 </div>
 
                 {/* Metric 4 */}
-                <div className="bg-destructive text-pure-white p-6 brutal-border brutal-shadow hover:-translate-y-2 transition-transform duration-300 flex flex-col justify-between">
+                <div className="bg-electric-blue text-pure-white p-6 brutal-border brutal-shadow hover:-translate-y-2 transition-transform duration-300 flex flex-col justify-between">
                     <div className="flex justify-between items-center mb-4">
-                        <span className="font-label-bold text-label-bold uppercase">Server Health</span>
-                        <span className="material-symbols-outlined">dns</span>
+                        <span className="font-label-bold text-label-bold uppercase">Event Timeline</span>
+                        <span className="material-symbols-outlined">event</span>
                     </div>
-                    <h3 className="font-display-lg text-display-lg leading-none">98%</h3>
-                    <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm text-stark-black font-bold">ALL SYSTEMS GO</p>
+                    <h3 className="font-display-lg text-display-lg leading-none">{hackathons.length}</h3>
+                    <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm text-pure-white font-bold">RECORDED EVENTS</p>
                 </div>
             </div>
 
@@ -127,11 +160,11 @@ function AdminTelemetry() {
                             <span className="absolute -top-3 left-4 bg-ink-black text-white px-2 font-label-caps text-xs">Event Stages</span>
                             <div className="flex justify-between items-center mt-2">
                                 <div>
-                                    <h4 className="font-headline-md text-ink-black uppercase">Round 2: Main Hackathon</h4>
-                                    <p className="font-body-sm text-text-muted">Currently active. Ends in 24 hours.</p>
+                                    <h4 className="font-headline-md text-ink-black uppercase">{activeEvent ? activeEvent.name : 'NO ACTIVE EVENT'}</h4>
+                                    <p className="font-body-sm text-text-muted">{activeEvent ? `Status: ${activeEvent.status}` : 'Configure a Hackathon to begin.'}</p>
                                 </div>
-                                <button onClick={() => alert("Advancing to the next event stage...")} className="bg-electric-blue text-white p-2 border-2 border-ink-black hover:-translate-y-1 transition-transform">
-                                    Next Round
+                                <button onClick={() => alert("Advancing to the next event stage...")} className="bg-electric-blue text-white p-2 border-2 border-ink-black hover:-translate-y-1 transition-transform uppercase font-label-bold">
+                                    Next Stage
                                 </button>
                             </div>
                         </div>

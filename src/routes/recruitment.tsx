@@ -1,24 +1,40 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { useAppStore } from "../lib/store";
+import axios from "axios";
 
 export const Route = createFileRoute("/recruitment")({
   component: Page10,
   head: () => ({
     meta: [
       { title: "Recruitment | CodeSrijan" },
-      { name: "description", content: "CodeSrijan recruitment — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:title", content: "Recruitment | CodeSrijan" },
-      { property: "og:description", content: "CodeSrijan recruitment — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "/recruitment" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/recruitment" }],
   }),
 });
 
 function Page10() {
   const { currentUser } = useAppStore();
+  const [profiles, setProfiles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  useEffect(() => {
+    if (currentUser) {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      axios.get(`${API_URL}/recruitment`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => {
+          setProfiles(res.data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error("Could not fetch recruitment profiles", err);
+          setLoading(false);
+        });
+    }
+  }, [currentUser, API_URL]);
 
   if (!currentUser) return <Navigate to="/login" />;
 
@@ -108,95 +124,40 @@ function Page10() {
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-ink-black">search</span>
             </div>
             {/*Grid of Cards (Bento-ish)*/}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/*Card 1: Team Seeking Talent*/}
-              <article className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform duration-300">
-                {/*Status Badge*/}
-                <div className="absolute -top-3 -right-3 bg-[#FFE100] text-ink-black font-label-caps text-label-caps px-3 py-1 neo-border neo-shadow z-10 rotate-3 group-hover:rotate-6 transition-transform">
-                  Looking for 1 more
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 neo-border bg-surface-container-low shrink-0 overflow-hidden">
-                    <img alt="" className="w-full h-full object-cover grayscale contrast-125" data-alt="A stylized geometric avatar in bold electric blue and ink black, representing a tech team. Flat vector art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbpfqme1Ql_RzNA9w5XU01gjamFflJsE8OEP36Ae7iNrriWN9vD8vktlBUGxYAzHMFEttU_qsTNR1MhwgxroILGz1A1CWzQ_hXqVcgjRD8ik9g-BVaq2E8M5AR0W4dhr1NfeDWNkE0QLo0Yf7BzRjw4NbJB626DJRuTgxisMC2k8GaLFhrmztOi5lZG01BQxPjxkqtqp2XHMLHD9t45yY04VTymblvwOcrXWvgGMVSzwzOJ9yLEZ1u" />
-                  </div>
-                  <div>
-                    <h3 className="font-headline-md text-[24px] leading-tight text-ink-black uppercase mb-1">Project Neo-Web</h3>
-                    <p className="font-body-md text-body-md text-text-muted">Building a decentralized AI agent hub.</p>
-                  </div>
-                </div>
-                <div className="h-0.5 w-full bg-ink-black my-2"></div>
-                <div className="flex-grow">
-                  <p className="font-label-caps text-label-caps text-ink-black mb-2">Seeking:</p>
-                  <ul className="flex flex-col gap-2 font-body-md text-body-md text-ink-black">
-                    <li className="flex items-center gap-2"><div className="w-2 h-2 bg-electric-blue"></div> Backend Eng (Python/Go)</li>
-                  </ul>
-                </div>
-                <div className="flex gap-2 flex-wrap mt-2">
-                  <span className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">AI</span>
-                  <span className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">Web3</span>
-                </div>
-                <button onClick={() => alert("Your application has been successfully routed to Project Neo-Web!")} className="mt-4 w-full bg-electric-blue text-on-primary neo-border py-2 font-button-text text-button-text hover:bg-primary-fixed-dim hover:text-ink-black transition-colors">Apply to Join</button>
-              </article>
-              {/*Card 2: Hacker Seeking Team*/}
-              <article className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform duration-300">
-                <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 neo-border bg-surface-container-low shrink-0 overflow-hidden rounded-full">
-                    <img alt="" className="w-full h-full object-cover" data-alt="A high-contrast black and white portrait photo of a young developer wearing glasses, set against a bright yellow background. Neo-brutalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBrUKTXMUPbWQxPQt5f6SMtD95MULUhQjOF2FLyW9hbDgQGbQGbbsaZiErEc6lS5IwmAflNZUdCqFXbNTqFRJwWxmelI_fVUFMl7u-u00l3tAb0HfUamsdOaT8yAUqJ4nWBUlzFmnZR1PTjoBwx3nCH0Vkyu8Kb10OqSGc_fbRNNTxpNGURh-uqHXB4o6radTvS54Q3LhBCUNzw80B68tUcaHF8iz5wbfONbbvX93-bSSOZ1zZoezAN" />
-                  </div>
-                  <div>
-                    <h3 className="font-headline-md text-[24px] leading-tight text-ink-black uppercase mb-1">Alex Chen</h3>
-                    <p className="font-body-md text-body-md text-text-muted">Full-stack React wizard.</p>
-                  </div>
-                </div>
-                <div className="h-0.5 w-full bg-ink-black my-2"></div>
-                <div className="flex-grow">
-                  <p className="font-body-md text-body-md text-ink-black italic">"Looking for a fast-paced team building consumer tech. I build fast and ship faster."</p>
-                </div>
-                <div className="flex gap-2 flex-wrap mt-2">
-                  <span className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">React</span>
-                  <span className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">Tailwind</span>
-                  <span className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">Node.js</span>
-                </div>
-                <button onClick={() => alert("Invitation successfully sent to Alex Chen. They will be notified via email.")} className="mt-4 w-full bg-surface text-ink-black neo-border py-2 font-button-text text-button-text hover:bg-electric-blue hover:text-white transition-colors">Invite to Squad</button>
-              </article>
-              {/*Card 3: Team Seeking Talent (Spanning)*/}
-              <article className="bg-electric-blue text-white neo-border neo-shadow p-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform duration-300 lg:col-span-2">
-                {/*Status Badge*/}
-                <div className="absolute -top-3 -right-3 bg-[#00E5FF] text-ink-black font-label-caps text-label-caps px-3 py-1 neo-border neo-shadow z-10 -rotate-2 group-hover:-rotate-4 transition-transform">
-                  URGENT: Hackathon Tomorrow
-                </div>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-6 justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="w-20 h-20 neo-border bg-ink-black shrink-0 overflow-hidden flex items-center justify-center">
-                      <span className="material-symbols-outlined text-white text-[40px]" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
+            {loading ? (
+              <div className="text-center font-mono py-12 text-zinc-500 uppercase">SCANNING RECRUITMENT NODES...</div>
+            ) : profiles.length === 0 ? (
+              <div className="text-center bg-surface neo-border p-12 mt-8">
+                <h2 className="font-headline-md text-ink-black uppercase">No Active Recruits</h2>
+                <p className="font-mono text-zinc-500 mt-2">Zero matching profiles found in the registry.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+                {profiles.map((profile, idx) => (
+                  <article key={idx} className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform duration-300">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 neo-border flex items-center justify-center bg-electric-blue text-white overflow-hidden uppercase font-black text-2xl">
+                        {(profile.name || "A").substring(0, 1)}
+                      </div>
+                      <div>
+                        <h3 className="font-headline-md text-[24px] leading-tight text-ink-black uppercase mb-1">{profile.name || `User ${profile.userId.substring(0, 5)}`}</h3>
+                        <p className="font-body-md text-body-md text-text-muted">{profile.headline || 'Web Developer'}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-headline-md text-[32px] leading-tight text-white uppercase mb-1">Syntax Error</h3>
-                      <p className="font-body-md text-body-md text-primary-fixed-dim">We broke production, but we're winning this hackathon.</p>
+                    <div className="h-0.5 w-full bg-ink-black my-2"></div>
+                    <div className="flex-grow">
+                      <p className="font-body-md text-body-md text-ink-black italic">"{profile.bio || 'Looking for an aggressive team focused on fast iteration.'}"</p>
                     </div>
-                  </div>
-                  <div className="bg-ink-black p-4 neo-border w-full md:w-auto">
-                    <p className="font-label-caps text-label-caps text-primary-fixed-dim mb-1">Seeking:</p>
-                    <p className="font-button-text text-[20px] text-white">UI/UX Designer</p>
-                  </div>
-                </div>
-                <div className="h-0.5 w-full bg-ink-black my-2"></div>
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                  <div className="flex gap-2 flex-wrap">
-                    <span className="font-label-caps text-[12px] bg-ink-black text-white neo-border px-2 py-0.5 border-white">Figma</span>
-                    <span className="font-label-caps text-[12px] bg-ink-black text-white neo-border px-2 py-0.5 border-white">Prototyping</span>
-                  </div>
-                  <button onClick={() => { alert("Welcome to Syntax Error! Rerouting to your new squad workspace."); window.location.href = '/workspace'; }} className="w-full md:w-auto bg-surface text-ink-black neo-border py-3 px-8 font-button-text text-button-text hover:bg-ink-black hover:text-white hover:border-white transition-colors neo-btn shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] hover:shadow-[6px_6px_0px_0px_rgba(255,255,255,1)]">Join Squad NOW</button>
-                </div>
-              </article>
-            </div>
-            {/*Load More*/}
-            <div className="flex justify-center mt-8">
-              <button className="bg-surface text-ink-black neo-border px-8 py-3 font-button-text text-button-text hover:bg-surface-variant transition-colors flex items-center gap-2">
-                Load More Entries
-                <span className="material-symbols-outlined">expand_more</span>
-              </button>
-            </div>
+                    <div className="flex gap-2 flex-wrap mt-2">
+                      {(profile.skills || ['React', 'Node.js']).map((skill: string, i: number) => (
+                        <span key={i} className="font-label-caps text-[12px] bg-canvas-gray neo-border px-2 py-0.5">{skill}</span>
+                      ))}
+                    </div>
+                    <button onClick={() => alert("Dispatching invitation ping... Developer functionality simulated.")} className="mt-4 w-full bg-surface text-ink-black neo-border py-2 font-button-text text-button-text hover:bg-electric-blue hover:text-white transition-colors">Dispatch Invite</button>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       </main>

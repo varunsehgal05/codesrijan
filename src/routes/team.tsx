@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import axios from "axios";
 
 export const Route = createFileRoute("/team")({
   component: Page6,
@@ -10,6 +11,21 @@ function Page6() {
   const { currentUser, teams, users, createTeam, joinTeam } = useAppStore();
   const [newTeamName, setNewTeamName] = useState("");
   const [joinTeamId, setJoinTeamId] = useState("");
+
+  const [invitations, setInvitations] = useState<any[]>([]);
+
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  useEffect(() => {
+    if (currentUser?.role === 'student' && !currentUser.teamId) {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      axios.get(`${API_URL}/teams/invitations/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => setInvitations(res.data))
+        .catch(err => console.error("Could not fetch invites", err));
+    }
+  }, [currentUser, API_URL]);
 
   const currentTeam = currentUser?.teamId ? teams.find(t => t.id === currentUser.teamId) : null;
   const teamMembers = currentTeam ? currentTeam.members.map(userId => users.find(u => u.id === userId)).filter(Boolean) : [];
@@ -26,10 +42,23 @@ function Page6() {
     joinTeam(joinTeamId, currentUser.id);
   };
 
+  const actOnInvite = async (inviteId: string) => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/accept-invite/${inviteId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to confirm invitation");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-<main className="flex-grow max-w-[1200px] mx-auto w-full px-margin-desktop py-12 flex flex-col gap-12">
+      <main className="flex-grow max-w-[1200px] mx-auto w-full px-margin-desktop py-12 flex flex-col gap-12">
         <div className="w-full mb-6">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
             <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
@@ -68,9 +97,29 @@ function Page6() {
                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
                 />
                 <button type="submit" className="bg-ink-black text-pure-white font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                  JOIN SQUAD
+                  JOIN PUBLIC SQUAD
                 </button>
               </form>
+            </div>
+
+            {/* Invitations Panel */}
+            <div className="bg-surface p-8 neo-brutal-card md:col-span-2 border-dashed">
+              <h1 className="font-display-lg text-headline-lg text-ink-black mb-4">Pending Interventions</h1>
+              {invitations.length === 0 ? (
+                <p className="font-mono text-zinc-500 uppercase tracking-widest text-sm">NO INCOMING SQUAD REQUESTS DETECTED</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {invitations.map((inv: any) => (
+                    <div key={inv.id} className="bg-white p-4 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col justify-between">
+                      <span className="font-label-bold text-electric-blue text-sm uppercase">SQUAD: {inv.teamId}</span>
+                      <span className="font-mono text-zinc-500 text-xs mb-4">SENDER: {inv.senderId}</span>
+                      <button onClick={() => actOnInvite(inv.id)} className="w-full bg-electric-blue py-2 font-bold uppercase text-black hover:bg-black hover:text-white border-2 border-transparent transition-colors">
+                        ACCEPT DISPATCH
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ) : (

@@ -1,26 +1,38 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/gallery")({
   component: Page3,
   head: () => ({
     meta: [
       { title: "Gallery | CodeSrijan" },
-      { name: "description", content: "CodeSrijan gallery — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:title", content: "Gallery | CodeSrijan" },
-      { property: "og:description", content: "CodeSrijan gallery — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "/gallery" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/gallery" }],
   }),
 });
 
 function Page3() {
+  const [gallery, setGallery] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  useEffect(() => {
+    axios.get(`${API_URL}/gallery`)
+      .then(res => {
+        setGallery(res.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to load gallery");
+        setLoading(false);
+      });
+  }, [API_URL]);
+
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-<main className="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 space-y-32">
+      <main className="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 space-y-32">
 
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">
@@ -29,7 +41,7 @@ function Page3() {
             GO BACK
           </button>
         </div>
-    
+
         {/*Hero Section*/}
         <section className="text-center space-y-8">
           <h1 className="font-display-lg text-display-lg text-ink-black uppercase">Event Highlights</h1>
@@ -56,30 +68,31 @@ function Page3() {
             <span className="material-symbols-outlined text-4xl text-electric-blue" data-icon="photo_library">photo_library</span>
             <h2 className="font-headline-lg text-headline-lg text-ink-black">Gallery</h2>
           </div>
-          <div className="masonry-grid">
-            {/*Image 1*/}
-            <div className="masonry-item bg-white neo-border neo-shadow-sm p-4 relative group">
-              <img className="w-full h-auto object-cover border-2 border-ink-black mb-2" data-alt="Close up shot of a coder's hands typing furiously on a mechanical keyboard with bright electric blue backlighting, reflecting off dark matte keycaps in a high contrast, dramatic lighting environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGIKO2N8r6EdY9IUYjtxHwFiqE5deLtLzAqB0H-85CL3lo6TjFKMNNKORwtwel2ckRNXlz_dAdiouy7VJhQ47G4ASgfequl66O-QzpCrqftjByyrrSr2hMEv6Xm1jafxLg107ZasgwQb-LzoiHmACMY7lMFw1QA1DHYotVnoKxZwPtwANTNn1nLkvh3Vm_KPw7zydVPS5P-4km2UXRNT_CR93KNKPgQF3ckoaXTFme95dVTeI_5xFt" />
-              <p className="font-label-caps text-label-caps text-ink-black uppercase">Midnight Coding</p>
+
+          {loading ? (
+            <div className="text-center font-mono opacity-50 py-20">[LOADING GALLERY METRICS...]</div>
+          ) : gallery.length === 0 ? (
+            <div className="text-center bg-zinc-200 border-2 border-stark-black p-12">
+              <span className="material-symbols-outlined text-4xl mb-4">image_not_supported</span>
+              <h2 className="font-headline-md text-ink-black uppercase">No Media Available</h2>
+              <p className="font-mono text-zinc-500 mt-2">The system operators have not uploaded any visual telemetry yet.</p>
             </div>
-            {/*Image 2*/}
-            <div className="masonry-item bg-white neo-border neo-shadow-sm p-4 relative group">
-              <img className="w-full h-auto object-cover border-2 border-ink-black mb-2" data-alt="Wide angle shot of a large tech venue during a hackathon opening ceremony. Bright spotlights shine down on a stage, cutting through a dark room. The audience is illuminated by the glow of hundreds of laptop screens. Electric blue accents and stark architectural lines dominate." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhR5Vscf7tBGPyljDOPVdQ63PV3f_4MeUAYrT_z2rrpIcZvBti4AHT3LpkP9RmqnrTdfpBx-uwga9oEmCksmQu0zOECsc0I4729S4yHBgT3Wr0jzpiC2P583a9JFn9HS9o9ks_Ec4l6dB1tHZJ_bFDAnpDPAemMcfbfNZK5KIM-LPKuL5Et-sEbp2gRtfx1FCsqc25--Nd9Y5QRbedYIw_uEBIZyKHKUM5Pm01pRbn6C4Re9h8xhsO" />
-              <p className="font-label-caps text-label-caps text-ink-black uppercase">Opening Ceremony</p>
+          ) : (
+            <div className="masonry-grid">
+              {gallery.map((item, idx) => (
+                <div key={idx} className="masonry-item bg-white neo-border neo-shadow-sm p-4 relative group">
+                  {item.mediaType === 'quote' ? (
+                    <div className="aspect-square flex items-center justify-center border-2 border-ink-black mb-2 bg-ink-black text-white p-6 text-center">
+                      <h3 className="font-headline-md text-headline-md">"{item.description}"</h3>
+                    </div>
+                  ) : (
+                    <img className="w-full h-auto object-cover border-2 border-ink-black mb-2" src={item.mediaUrl} alt={item.title} />
+                  )}
+                  <p className="font-label-caps text-label-caps text-ink-black uppercase">{item.title}</p>
+                </div>
+              ))}
             </div>
-            {/*Image 3*/}
-            <div className="masonry-item bg-electric-blue neo-border neo-shadow-sm p-4 relative group">
-              <div className="aspect-square flex items-center justify-center border-2 border-ink-black mb-2 bg-ink-black text-white p-6 text-center">
-                <h3 className="font-headline-md text-headline-md">"The energy here is unmatched."</h3>
-              </div>
-              <p className="font-label-caps text-label-caps text-white uppercase">Participant Quote</p>
-            </div>
-            {/*Image 4*/}
-            <div className="masonry-item bg-white neo-border neo-shadow-sm p-4 relative group">
-              <img className="w-full h-auto object-cover border-2 border-ink-black mb-2" data-alt="A small group of developers huddled tightly around a single monitor, pointing at code in deep discussion. The lighting is focused and high-contrast, emphasizing their intense concentration and collaboration. The room background is dark, stark, and modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7yw_w_hE4q2G1K3ZVqHiiWKBGQIrPP6_j5yHuDtUZDjnLthLB3SVq-_9n9UFQZzTZT5kJw8tjYZQ508c-Axb8Fig4OR8lHI_BdFC3pSv03_qEY-Pmf_yURxQhVzx02UxWxEBl6O__V39NpcupYfqg3UMUDfcM_LotSdtbZ4h03U6zI7ZkjqAcNFFXBAUCfvRGUYGzfp56NG8ETwNP74EgRMVmnyGiYLCaO0X6kBCwSAf__Xbtocro" />
-              <p className="font-label-caps text-label-caps text-ink-black uppercase">Team Workshop</p>
-            </div>
-          </div>
+          )}
         </section>
 
         {/*Public Projects Display*/}
@@ -138,6 +151,6 @@ function Page3() {
         </section>
       </main>
       {/*Footer*/}
-</div>
+    </div>
   );
 }

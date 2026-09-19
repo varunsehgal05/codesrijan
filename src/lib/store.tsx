@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from 'axios';
-import { initializeApp, getApps } from 'firebase/app';
-import { getDatabase, ref, onValue, push, set } from 'firebase/database';
+import { io } from 'socket.io-client';
 
 const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+export const socket = io(API_URL.replace('/api', ''));
 
 // Global API Interceptor for JWT Tokens
 axios.interceptors.request.use((config) => {
@@ -13,26 +13,6 @@ axios.interceptors.request.use((config) => {
     }
     return config;
 }, (error) => Promise.reject(error));
-
-// Optional Firebase Init
-let db: any = null;
-try {
-    if (!getApps().length) {
-        const firebaseConfig = {
-            apiKey: import.meta.env['VITE_FIREBASE_API_KEY'] || "AIzaSyBjkd8HbYmXfBFmauP_eocJw3Bj0GALPiQ",
-            authDomain: import.meta.env['VITE_FIREBASE_AUTH_DOMAIN'] || "arenax-chat-room.firebaseapp.com",
-            databaseURL: import.meta.env['VITE_FIREBASE_DATABASE_URL'] || "https://arenax-chat-room.firebaseio.com",
-            projectId: import.meta.env['VITE_FIREBASE_PROJECT_ID'] || "arenax-chat-room",
-            storageBucket: import.meta.env['VITE_FIREBASE_STORAGE_BUCKET'] || "arenax-chat-room.firebasestorage.app",
-            messagingSenderId: import.meta.env['VITE_FIREBASE_MESSAGING_SENDER_ID'] || "940787466445",
-            appId: import.meta.env['VITE_FIREBASE_APP_ID'] || "1:940787466445:web:9faac285479f815081a984"
-        };
-        const app = initializeApp(firebaseConfig);
-        db = getDatabase(app);
-    }
-} catch (e) {
-    console.warn("Firebase not properly configured. Chat will be disabled.", e);
-}
 
 export type Role = "student" | "admin" | "judge" | "mentor";
 
@@ -66,6 +46,16 @@ export interface Problem {
     prizePool: number;
 }
 
+export interface Hackathon {
+    id: string;
+    name: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    submissionDeadline: string;
+    status: string;
+}
+
 export interface ChatMessage {
     id: string;
     teamId: string;
@@ -80,6 +70,7 @@ interface StoreState {
     users: User[];
     teams: Team[];
     problems: Problem[];
+    hackathons: Hackathon[];
     chatMessages: ChatMessage[];
     isLoaded: boolean;
 }
@@ -105,16 +96,38 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         users: [],
         teams: [],
         problems: [],
+        hackathons: [],
         chatMessages: [],
         isLoaded: false
     });
 
+    useEffect(() => {
+        if (state.currentUser?.teamId) {
+            socket.emit('join_team', state.currentUser.teamId);
+        }
+
+        const handleReceive = (msg: ChatMessage) => {
+            setState(prev => {
+                const isDuplicate = prev.chatMessages.some((m: ChatMessage) => m.id === msg.id);
+                if (isDuplicate) return prev;
+                return { ...prev, chatMessages: [...prev.chatMessages, msg] };
+            });
+        };
+
+        socket.on('receive_message', handleReceive);
+
+        return () => {
+            socket.off('receive_message', handleReceive);
+        };
+    }, [state.currentUser?.teamId]);
+
     const refetchData = async () => {
         try {
-            const [usersRes, teamsRes, problemsRes] = await Promise.all([
+            const [usersRes, teamsRes, problemsRes, hackathonsRes] = await Promise.all([
                 axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/problems`).catch(() => ({ data: [] }))
+                axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
+                axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] }))
             ]);
 
             setState(prev => ({
@@ -122,6 +135,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 users: usersRes.data,
                 teams: teamsRes.data,
                 problems: problemsRes.data,
+                hackathons: hackathonsRes.data,
                 isLoaded: true
             }));
         } catch (e) {
@@ -143,8 +157,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     setState(prev => ({ ...prev, currentUser: meRes.data.user }));
                 } catch (e) {
                     console.error("Token invalid or expired. Purging local identity.");
+                    console.error("Token invalid or expired. Purging local identity.");
                     localStorage.removeItem("codesrijan_auth_token");
-                    localStorage.removeItem("codesrijan_current_user_id");
                     refetchData();
                 }
             };
@@ -154,26 +168,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    // Firebase Chat synchronization
+    // Realtime Chat synchronization
     useEffect(() => {
-        if (!db) return;
-
-        // Setup listener for team active chats
-        // For security across teams we would normally paginate or filter dynamically, 
-        // but for Hackathon prototype we just read all or specific team.
-        if (state.currentUser?.teamId) {
-            const chatRef = ref(db, `chats/${state.currentUser.teamId}`);
-            onValue(chatRef, (snapshot) => {
-                const data = snapshot.val();
-                if (data) {
-                    const parsedMessages = Object.keys(data).map(key => ({
-                        id: key,
-                        ...data[key]
-                    }));
-                    setState(prev => ({ ...prev, chatMessages: parsedMessages }));
-                }
+        const handleReceiveMsg = (data: any) => {
+            setState(prev => {
+                // Prevent duplicate insertions
+                if (prev.chatMessages.find(m => m.id === data.id)) return prev;
+                return { ...prev, chatMessages: [...prev.chatMessages, data] };
             });
+        };
+
+        socket.on('receive_message', handleReceiveMsg);
+
+        if (state.currentUser?.teamId) {
+            socket.emit('join_team', state.currentUser.teamId);
         }
+
+        return () => {
+            socket.off('receive_message', handleReceiveMsg);
+        };
     }, [state.currentUser?.teamId]);
 
     const login = async (email: string, password?: string) => {
@@ -181,18 +194,16 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const res = await axios.post(`${API_URL}/auth/login`, { email, password });
 
             if (res.data.needsVerification) {
-                localStorage.setItem("codesrijan_pending_verification_id", res.data.userId);
-                throw new Error("verification_required");
+                throw new Error(JSON.stringify({ type: "verification_required", userId: res.data.userId }));
             }
 
             const { user: u, token } = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
-            localStorage.setItem("codesrijan_current_user_id", u.id);
             localStorage.setItem("codesrijan_auth_token", token);
             return u;
         } catch (e: any) {
             console.error("Login Error:", e);
-            if (e.message === "verification_required") throw e;
+            if (e.message && e.message.includes("verification_required")) throw e;
             throw new Error(e.response?.data?.message || "Authentication failed. Connection to server refused.");
         }
     };
@@ -200,7 +211,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const register = async (user: User) => {
         try {
             const res = await axios.post(`${API_URL}/auth/register`, user);
-            localStorage.setItem("codesrijan_pending_verification_id", res.data.userId);
             return res.data;
         } catch (e: any) {
             console.error("Register Error:", e);
@@ -211,7 +221,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const verifyEmail = async (userId: string, code: string) => {
         try {
             await axios.post(`${API_URL}/auth/verify-email`, { userId, code });
-            localStorage.removeItem("codesrijan_pending_verification_id");
             return true;
         } catch (e: any) {
             throw new Error(e.response?.data?.message || "Verification failed");
@@ -220,67 +229,71 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         setState(prev => ({ ...prev, currentUser: null }));
-        localStorage.removeItem("codesrijan_current_user_id");
         localStorage.removeItem("codesrijan_auth_token");
     };
 
     const createTeam = async (name: string, leaderId: string) => {
         try {
             const payload = {
-                id: `t-${Date.now()}`,
                 name,
                 leaderId,
-                members: [leaderId]
+                description: "",
+                recruitmentOpen: true
             };
             await axios.post(`${API_URL}/teams`, payload);
             await refetchData();
-            // Re-sync current user
-            setState(prev => {
-                const u = prev.users.find(u => u.id === prev.currentUser?.id);
-                return { ...prev, currentUser: u || null };
-            });
-        } catch (e) { console.error("Create Team Error:", e); }
+            // Re-sync current user via the `/auth/me` pipeline
+            const meRes = await axios.get(`${API_URL}/auth/me`);
+            setState(prev => ({ ...prev, currentUser: meRes.data.user }));
+        } catch (e: any) {
+            console.error("Create Team Error:", e.response?.data || e);
+        }
     };
 
-    const joinTeam = async (teamId: string, userId: string) => {
+    const sendInvite = async (teamId: string, receiverId: string) => {
         try {
-            await axios.post(`${API_URL}/teams/join`, { teamId, userId });
-            await refetchData();
-            // Re-sync current user
-            setState(prev => {
-                const u = prev.users.find(u => u.id === prev.currentUser?.id);
-                return { ...prev, currentUser: u || null };
-            });
-        } catch (e) { console.error("Join Team Error:", e); }
+            await axios.post(`${API_URL}/teams/${teamId}/invite`, { receiverId });
+            // For now, silently succeed
+        } catch (e) {
+            console.error("Send Invite Error:", e);
+        }
     };
 
-    const assignProblem = (teamId: string, problemId: string) => {
-        // Needs a new node route: app.post('/api/teams/problem')
-        // For simplicity we'll skip backend mutation in this stub and just update state locally
-        setState(prev => ({
-            ...prev,
-            teams: prev.teams.map(t => t.id === teamId ? { ...t, problemId } : t)
-        }));
+    const joinTeam = async (inviteId: string) => {
+        try {
+            await axios.post(`${API_URL}/teams/accept-invite/${inviteId}`);
+            await refetchData();
+            const meRes = await axios.get(`${API_URL}/auth/me`);
+            setState(prev => ({ ...prev, currentUser: meRes.data.user }));
+        } catch (e: any) {
+            console.error("Join Team Error:", e.response?.data || e);
+        }
+    };
+
+    const assignProblem = async (teamId: string, problemId: string) => {
+        try {
+            await axios.post(`${API_URL}/teams/${teamId}/problem`, { problemId });
+            await refetchData();
+        } catch (e) {
+            console.error("Assign Problem Error:", e);
+        }
     };
 
     const submitProject = async (teamId: string, repositoryUrl: string, demoUrl: string) => {
         try {
-            await axios.post(`${API_URL}/teams/submit`, { teamId, repositoryUrl, demoUrl });
+            // Include placeholder description and title for now 
+            await axios.post(`${API_URL}/submissions`, { teamId, repositoryUrl, demoUrl, description: "Final submission", projectTitle: "Hackathon Entry" });
             await refetchData();
         } catch (e) { console.error("Submit Project Error:", e); }
     };
 
     const addChatMessage = (msg: Omit<ChatMessage, "id" | "timestamp">) => {
-        if (!db) {
-            console.warn("DB not connected. Cannot send Firebase message.");
-            return;
-        }
-        const chatRef = ref(db, `chats/${msg.teamId}`);
-        const newMsgRef = push(chatRef);
-        set(newMsgRef, {
+        const newMsg = {
             ...msg,
+            id: `msg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
             timestamp: Date.now()
-        });
+        };
+        socket.emit('send_message', newMsg);
     };
 
     return (

@@ -3,10 +3,35 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import dns from 'dns';
 
 dotenv.config();
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+// Configure Realtime Sockets
+io.on('connection', (socket) => {
+    socket.on('join_team', (teamId) => {
+        socket.join(teamId);
+    });
+
+    socket.on('send_message', (data) => {
+        // data expects: { id, authorId, authorName, teamId, content }
+        io.to(data.teamId).emit('receive_message', data);
+    });
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -16,12 +41,13 @@ mongoose.connect(process.env.MONGO_URI, {
 }).then(() => console.log('MongoDB Connected to keyspace codesrijan')).catch(err => console.error(err));
 
 // --- Schemas (Imported from modular directory) ---
-import { User, Team, ProblemStatement, Hackathon, Registration } from './models/index.js';
-import { Announcement, CalendarEvent } from './models/secondary.js';
-import './models/tertiary.js';
-import { Session, EmailVerification } from './models/auth.js';
+import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate } from './models/index.js';
+import { Announcement, CalendarEvent, Sponsor } from './models/secondary.js';
+import { FAQ, Gallery } from './models/tertiary.js';
+import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
+import { sendVerificationEmail } from './services/email.js';
 
 // --- Routes ---
 
@@ -59,8 +85,9 @@ app.post('/api/auth/register', async (req, res) => {
         });
         await verification.save();
 
-        // Mock email send
-        console.log(`[SECURE COMMS] Verification Code for ${normalizedEmail}: ${code}`);
+        // Dispatch Verification Email
+        await sendVerificationEmail(normalizedEmail, code);
+        console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
 
         res.json({ message: "Account created. Verification required.", userId: user.id });
     } catch (e) {
@@ -140,6 +167,79 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
     res.json({ user: req.user });
 });
 
+app.post('/api/auth/sessions/revoke', requireAuth, async (req, res) => {
+    try {
+        await Session.updateMany({ userId: req.user.id }, { revokedAt: new Date() });
+        res.json({ message: "All sessions terminated. Identity sealed." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to revoke sessions." });
+    }
+});
+
+app.post('/api/auth/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const normalizedEmail = String(email).toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            // Silently succeed to prevent email enumeration
+            return res.json({ message: "If an account exists, a reset instruction has been dispatched." });
+        }
+
+        // Generate reset token
+        const resetTokenRaw = crypto.randomBytes(32).toString('hex');
+        const tokenHash = await bcrypt.hash(resetTokenRaw, 5);
+
+        const resetToken = new PasswordResetToken({
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 60 * 60000) // 1 Hour
+        });
+        await resetToken.save();
+
+        // In production, this dispatches via Email Service
+        // We will repurpose the verification transporter logic here later if requested,
+        // but for now, generate the link string:
+        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${resetTokenRaw}&uid=${user.id}`;
+        console.log(`[PASSWORD RESET GENERATED] ${resetLink}`);
+
+        res.json({ message: "If an account exists, a reset instruction has been dispatched." });
+    } catch (e) {
+        res.status(500).json({ message: "Reset initiation failed." });
+    }
+});
+
+app.post('/api/auth/reset-password', async (req, res) => {
+    try {
+        const { userId, token, newPassword } = req.body;
+
+        const resetRecord = await PasswordResetToken.findOne({ userId, usedAt: null });
+        if (!resetRecord || resetRecord.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired reset token." });
+        }
+
+        const isValid = await bcrypt.compare(String(token), resetRecord.tokenHash);
+        if (!isValid) return res.status(400).json({ message: "Invalid token payload." });
+
+        const newPasswordHash = await bcrypt.hash(String(newPassword), 10);
+
+        // Update user
+        await User.findOneAndUpdate({ id: userId }, { passwordHash: newPasswordHash });
+
+        // Burn token
+        resetRecord.usedAt = new Date();
+        await resetRecord.save();
+
+        // Revoke all existing sessions for security
+        await Session.updateMany({ userId, revokedAt: null }, { revokedAt: new Date() });
+
+        res.json({ message: "Password updated successfully. All previous sessions revoked." });
+    } catch (e) {
+        res.status(500).json({ message: "Reset operation failed.", error: e.message });
+    }
+});
+
 // HACKATHONS
 app.get('/api/hackathons', async (req, res) => {
     // Optionally only return "active" or "registration_open" hackathons unless admin
@@ -191,23 +291,177 @@ app.get('/api/teams', requireAuth, async (req, res) => {
     const teams = await Team.find();
     res.json(teams);
 });
-app.post('/api/teams', requireAuth, async (req, res) => {
-    const team = new Team(req.body);
+app.post('/api/teams', requireAuth, requireRole(['student']), async (req, res) => {
+    // Only logged-in students can create teams, and they become the leader automatically.
+    const team = new Team({
+        ...req.body,
+        id: `t-${Date.now()}`,
+        leaderId: req.user.id,
+        memberIds: [req.user.id]
+    });
     await team.save();
-    // Also update leader's teamId
-    await User.findOneAndUpdate({ id: req.body.leaderId }, { teamId: team.id });
+    await User.findOneAndUpdate({ id: req.user.id }, { teamId: team.id });
     res.json(team);
 });
-app.post('/api/teams/join', requireAuth, async (req, res) => {
-    const { teamId, userId } = req.body;
-    const team = await Team.findOneAndUpdate({ id: teamId }, { $push: { members: userId } }, { new: true });
-    await User.findOneAndUpdate({ id: userId }, { teamId: teamId });
+app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (req, res) => {
+    const { receiverId } = req.body;
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || team.leaderId !== req.user.id) {
+        return res.status(403).json({ message: "Only team leaders can send invites." });
+    }
+    const invite = new TeamInvitation({
+        id: `inv-${Date.now()}`,
+        teamId: team.id,
+        senderId: req.user.id,
+        receiverId
+    });
+    await invite.save();
+    res.json(invite);
+});
+app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['student']), async (req, res) => {
+    const invite = await TeamInvitation.findOne({ id: req.params.inviteId, receiverId: req.user.id, status: 'pending' });
+    if (!invite) return res.status(404).json({ message: "Invite not found or expired." });
+
+    const team = await Team.findOneAndUpdate({ id: invite.teamId }, { $push: { memberIds: req.user.id } }, { new: true });
+    await User.findOneAndUpdate({ id: req.user.id }, { teamId: invite.teamId });
+    invite.status = 'accepted';
+    await invite.save();
     res.json(team);
 });
-app.post('/api/teams/submit', requireAuth, async (req, res) => {
-    const { teamId, repositoryUrl, demoUrl } = req.body;
-    const team = await Team.findOneAndUpdate({ id: teamId }, { isSubmitted: true, repositoryUrl, demoUrl }, { new: true });
+app.get('/api/teams/invitations/me', requireAuth, requireRole(['student']), async (req, res) => {
+    const invites = await TeamInvitation.find({ receiverId: req.user.id, status: 'pending' });
+    res.json(invites);
+});
+// SUBMISSIONS & WORKSPACE
+app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async (req, res) => {
+    const { problemId } = req.body;
+    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId }, { new: true });
+    if (!team) return res.status(403).json({ message: "Only team leaders can select a problem statement." });
     res.json(team);
+});
+
+app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, res) => {
+    const { teamId, repositoryUrl, demoUrl, description, projectTitle } = req.body;
+    const team = await Team.findOne({ id: teamId, memberIds: req.user.id });
+    if (!team) return res.status(403).json({ message: "Not a core member of this team." });
+
+    // Epic D: Final Submission Lock
+    if (team.isSubmitted || team.status === 'submitted') {
+        return res.status(403).json({ message: "Project stream is LOCKED. Final submission has already been recorded for evaluation." });
+    }
+
+    // Create Submission Schema Record
+    const submission = new Submission({
+        id: `sub-${Date.now()}`,
+        teamId,
+        submittedBy: req.user.id,
+        projectTitle,
+        description,
+        githubUrl: repositoryUrl,
+        liveDemoUrl: demoUrl,
+        status: 'submitted'
+    });
+    await submission.save();
+
+    // Revert backwards compat on Team just to be safe
+    team.isSubmitted = true;
+    team.repositoryUrl = repositoryUrl;
+    team.demoUrl = demoUrl;
+    await team.save();
+
+    res.json(submission);
+});
+
+// EVALUATIONS (JUDGE/ADMIN)
+app.get('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    // Return all for admin, otherwise filter to judge
+    const query = req.user.role === 'admin' ? {} : { judgeId: req.user.id };
+    const items = await Evaluation.find(query);
+    res.json(items);
+});
+app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    const { hackathonId, projectId, assignmentId, scores, totalScore, comments, strengths, improvements } = req.body;
+    const evalData = new Evaluation({
+        id: `evl-${Date.now()}`,
+        hackathonId,
+        projectId,
+        judgeId: req.user.id,
+        assignmentId,
+        scores,
+        totalScore,
+        comments,
+        strengths,
+        improvements
+    });
+    await evalData.save();
+    res.json(evalData);
+});
+
+// CERTIFICATES 
+app.post('/api/certificates/generate', requireAuth, async (req, res) => {
+    // Allow users to request their own certificate if team is submitted
+    if (!req.user.teamId) return res.status(403).json({ message: "No team assigned." });
+
+    const team = await Team.findOne({ id: req.user.teamId });
+    if (!team || !team.isSubmitted) return res.status(403).json({ message: "Certificate generation locked pending project submission." });
+
+    // Check if one already exists
+    let cert = await Certificate.findOne({ userId: req.user.id, teamId: team.id });
+    if (!cert) {
+        const certId = `CS-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString().slice(-4)}`;
+        cert = new Certificate({
+            id: certId,
+            userId: req.user.id,
+            userName: req.user.name,
+            teamId: team.id,
+            hackathonId: team.hackathonId || 'hack-1',
+            type: 'participation'
+        });
+        await cert.save();
+    }
+    res.json(cert);
+});
+
+app.get('/api/certificates/verify/:id', async (req, res) => {
+    const cert = await Certificate.findOne({ id: req.params.id });
+    if (!cert) return res.status(404).json({ message: "Invalid cryptographic certificate payload." });
+    res.json(cert);
+});
+app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    const { hackathonId, projectId, assignmentId, scores, totalScore, comments, strengths, improvements } = req.body;
+
+    // Ensure Judge is grading a correctly assigned project.
+    // In reality, this requires looking up Assignment documents too. For now we save securely.
+    const evaluation = new Evaluation({
+        id: `eval-${Date.now()}`,
+        hackathonId,
+        projectId,
+        judgeId: req.user.id,
+        assignmentId,
+        scores,
+        totalScore,
+        comments,
+        strengths,
+        improvements,
+        status: 'submitted'
+    });
+    await evaluation.save();
+    res.json(evaluation);
+});
+
+// RECRUITMENT
+app.get('/api/recruitment', requireAuth, async (req, res) => {
+    // Only return visible profiles
+    const profiles = await RecruitmentProfile.find({ isVisible: true });
+    res.json(profiles);
+});
+app.post('/api/recruitment', requireAuth, requireRole(['student']), async (req, res) => {
+    const profile = await RecruitmentProfile.findOneAndUpdate(
+        { userId: req.user.id },
+        { ...req.body, userId: req.user.id },
+        { upsert: true, new: true }
+    );
+    res.json(profile);
 });
 
 // PROBLEMS
@@ -251,6 +505,72 @@ app.post('/api/timeline', requireAuth, requireRole(['admin']), async (req, res) 
     const item = new CalendarEvent(req.body);
     await item.save();
     res.json(item);
+});
+
+// SPONSORS
+app.get('/api/sponsors', async (req, res) => {
+    const items = await Sponsor.find({ isPublished: true }).sort('order');
+    res.json(items);
+});
+app.post('/api/sponsors', requireAuth, requireRole(['admin']), async (req, res) => {
+    const item = new Sponsor(req.body);
+    await item.save();
+    res.json(item);
+});
+
+// GALLERY
+app.get('/api/gallery', async (req, res) => {
+    const items = await Gallery.find();
+    res.json(items);
+});
+app.post('/api/gallery', requireAuth, requireRole(['admin']), async (req, res) => {
+    const item = new Gallery(req.body);
+    await item.save();
+    res.json(item);
+});
+
+// FAQs
+app.get('/api/faqs', async (req, res) => {
+    const items = await FAQ.find({ isPublished: true }).sort('order');
+    res.json(items);
+});
+app.post('/api/faqs', requireAuth, requireRole(['admin']), async (req, res) => {
+    const item = new FAQ(req.body);
+    await item.save();
+    res.json(item);
+});
+
+// PUBLIC LANDING PAGE STATS
+app.get('/api/search', async (req, res) => {
+    const q = (req.query.q || '').toString().toLowerCase();
+    if (!q) return res.json({ teams: [], users: [], problems: [] });
+    try {
+        const teamRes = await Team.find({ name: { $regex: q, $options: 'i' } }).limit(10);
+        const userRes = await User.find({ name: { $regex: q, $options: 'i' } }).select('-password').limit(10);
+        const probRes = await ProblemStatement.find({ title: { $regex: q, $options: 'i' } }).limit(10);
+        res.json({ teams: teamRes, users: userRes, problems: probRes });
+    } catch (err) {
+        res.status(500).json({ message: "Search index failure." });
+    }
+});
+
+app.get('/api/public/stats', async (req, res) => {
+    const hackersCount = await User.countDocuments({ role: 'student' });
+    const projectsCount = await Project.countDocuments();
+    const registrationsCount = await Registration.countDocuments();
+    // Default colleges to 1 for MVP (this would normally be an aggregation on unique college names)
+    const collegesCount = (await User.distinct('college')).length || 1;
+
+    // Check if there is an active hackathon for the countdown
+    const activeHackathon = await Hackathon.findOne({ status: { $in: ['active', 'registration_open'] } });
+
+    res.json({
+        hackersCount: hackersCount || 0,
+        projectsCount: projectsCount || 0,
+        registrationsCount: registrationsCount || 0,
+        collegesCount: collegesCount,
+        activeHackathon: activeHackathon || null
+    });
 });
 
 // SRIJANBOT AI CHAT ENGINE (Rule-based NLP Simulator)
@@ -304,5 +624,5 @@ app.post('/api/ai/chat', async (req, res) => {
 });
 
 // START
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const PORT = process.env.PORT || 5001;
+httpServer.listen(PORT, () => console.log(`Server & WebSockets running on port ${PORT}`));

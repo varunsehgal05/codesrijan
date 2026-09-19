@@ -18,7 +18,7 @@ export const Route = createFileRoute("/problems")({
 });
 
 function Page12() {
-  const { currentUser } = useAppStore();
+  const { currentUser, problems } = useAppStore();
 
   if (!currentUser) return <Navigate to="/login" />;
 
@@ -58,116 +58,45 @@ function Page12() {
           </div>
         </section>
         {/*Problems Grid*/}
-        <section className="w-full grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-          {/*Card 1*/}
-          <div className="bg-white border-4 border-ink-black p-6 flex flex-col gap-6 neo-shadow-sm hover:neo-shadow-lg transition-all duration-300 h-full relative overflow-hidden group">
-            <div className="absolute -right-16 -top-16 bg-electric-blue text-white font-label-caps text-label-caps px-16 py-2 rotate-45 border-b-2 border-ink-black shadow-sm group-hover:bg-ink-black transition-colors z-20">
-              HARD
+        <section className="w-full relative z-10">
+          {problems.length === 0 ? (
+            <div className="bg-surface-container-lowest border-4 border-ink-black py-16 text-center neo-shadow flex flex-col items-center">
+              <span className="material-symbols-outlined text-outline text-6xl mb-4">cloud_off</span>
+              <p className="font-headline-md text-ink-black uppercase">No Active Problem Statements</p>
+              <p className="font-body-md text-text-muted mt-2">Awaiting global database synchronisation from Sponsors and Admins.</p>
             </div>
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="font-label-caps text-label-caps text-electric-blue">BLOCKCHAIN / DEFI</span>
-                <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">Decentralized Autonomous Escrow Protocol</h3>
-              </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {problems.map((prob) => (
+                <div key={prob.id} className="bg-white border-4 border-ink-black p-6 flex flex-col gap-6 neo-shadow-sm hover:neo-shadow-lg transition-all duration-300 h-full relative overflow-hidden group">
+                  <div className={`absolute -right-16 -top-16 font-label-caps text-label-caps px-16 py-2 rotate-45 border-b-2 border-ink-black shadow-sm transition-colors z-20 ${prob.difficulty === 'HARD' || prob.difficulty === 'EXTREME' ? 'bg-ink-black text-white group-hover:bg-electric-blue' : 'bg-electric-blue text-white group-hover:bg-ink-black'}`}>
+                    {prob.difficulty}
+                  </div>
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="font-label-caps text-label-caps text-electric-blue">{prob.category}</span>
+                      <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">{prob.title}</h3>
+                    </div>
+                  </div>
+                  <p className="font-body-md text-body-md text-text-muted line-clamp-3 flex-grow">
+                    {prob.description}
+                  </p>
+                  <div className="w-full h-1 bg-ink-black my-2"></div>
+                  <div className="flex justify-between items-end">
+                    <div className="flex flex-col">
+                      <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
+                      <span className="font-headline-md text-headline-md text-electric-blue">${prob.prizePool.toLocaleString()}</span>
+                    </div>
+                    <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
+                      View Details
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <p className="font-body-md text-body-md text-text-muted line-clamp-3 flex-grow">
-              Build a trustless escrow smart contract system on Ethereum that handles multi-party dispute resolution using a decentralized jury system.
-            </p>
-            <div className="w-full h-1 bg-ink-black my-2"></div>
-            <div className="flex justify-between items-end">
-              <div className="flex flex-col">
-                <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
-                <span className="font-headline-md text-headline-md text-electric-blue">$15,000</span>
-              </div>
-              <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
-                View Details
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-          {/*Card 2*/}
-          <div className="bg-white border-4 border-ink-black p-6 flex flex-col gap-6 neo-shadow-sm hover:neo-shadow-lg transition-all duration-300 h-full relative overflow-hidden group">
-            <div className="absolute -right-16 -top-16 bg-ink-black text-white font-label-caps text-label-caps px-16 py-2 rotate-45 border-b-2 border-ink-black shadow-sm group-hover:bg-electric-blue transition-colors z-20">
-              EXTREME
-            </div>
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="font-label-caps text-label-caps text-electric-blue">AI / ML</span>
-                <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">Real-time Anomaly Detection Engine</h3>
-              </div>
-            </div>
-            <p className="font-body-md text-body-md text-text-muted line-clamp-3 flex-grow">
-              Develop an ultra-low latency machine learning model to detect anomalies in high-frequency trading data streams with sub-millisecond response times.
-            </p>
-            <div className="w-full h-1 bg-ink-black my-2"></div>
-            <div className="flex justify-between items-end">
-              <div className="flex flex-col">
-                <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
-                <span className="font-headline-md text-headline-md text-electric-blue">$25,000</span>
-              </div>
-              <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
-                View Details
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-          {/*Card 3*/}
-          <div className="bg-white border-4 border-ink-black p-6 flex flex-col gap-6 neo-shadow-sm hover:neo-shadow-lg transition-all duration-300 h-full relative overflow-hidden group">
-            <div className="absolute -right-16 -top-16 bg-white border-4 border-ink-black text-ink-black font-label-caps text-label-caps px-16 py-2 rotate-45 shadow-sm group-hover:bg-electric-blue group-hover:text-white transition-colors z-20">
-              EASY
-            </div>
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="font-label-caps text-label-caps text-electric-blue">WEB / MOBILE</span>
-                <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">Accessible Voting Interface UI</h3>
-              </div>
-            </div>
-            <p className="font-body-md text-body-md text-text-muted line-clamp-3 flex-grow">
-              Design and build a highly accessible, cross-platform voting interface prioritizing WCAG 2.1 AAA compliance and low-bandwidth performance.
-            </p>
-            <div className="w-full h-1 bg-ink-black my-2"></div>
-            <div className="flex justify-between items-end">
-              <div className="flex flex-col">
-                <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
-                <span className="font-headline-md text-headline-md text-electric-blue">$5,000</span>
-              </div>
-              <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
-                View Details
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-          {/*Card 4*/}
-          <div className="bg-white border-4 border-ink-black p-6 flex flex-col gap-6 neo-shadow-sm hover:neo-shadow-lg transition-all duration-300 h-full relative overflow-hidden group">
-            <div className="absolute -right-16 -top-16 bg-electric-blue text-white font-label-caps text-label-caps px-16 py-2 rotate-45 border-b-2 border-ink-black shadow-sm group-hover:bg-ink-black transition-colors z-20">
-              MEDIUM
-            </div>
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex flex-col gap-2">
-                <span className="font-label-caps text-label-caps text-electric-blue">INFRASTRUCTURE</span>
-                <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">Serverless Edge Caching Layer</h3>
-              </div>
-            </div>
-            <p className="font-body-md text-body-md text-text-muted line-clamp-3 flex-grow">
-              Create a distributed, serverless caching layer utilizing Cloudflare Workers to optimize delivery of dynamic API payloads.
-            </p>
-            <div className="w-full h-1 bg-ink-black my-2"></div>
-            <div className="flex justify-between items-end">
-              <div className="flex flex-col">
-                <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
-                <span className="font-headline-md text-headline-md text-electric-blue">$10,000</span>
-              </div>
-              <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
-                View Details
-                <span className="material-symbols-outlined">arrow_forward</span>
-              </button>
-            </div>
-          </div>
+          )}
         </section>
-        <button className="mt-8 bg-surface text-ink-black font-button-text text-button-text px-8 py-4 border-4 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2 hover:bg-ink-black hover:text-white">
-          <span className="material-symbols-outlined">refresh</span>
-          Load More Problems
-        </button>
       </main>
       {/*Footer*/}
     </div>

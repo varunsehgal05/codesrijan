@@ -15,7 +15,7 @@ function OTPVerification() {
     const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
-        const pendingId = localStorage.getItem("codesrijan_pending_verification_id");
+        const pendingId = new URLSearchParams(window.location.search).get("uid");
         if (!pendingId) {
             navigate({ to: "/login" });
         }
@@ -39,7 +39,7 @@ function OTPVerification() {
     };
 
     const handleSubmit = async () => {
-        const pendingId = localStorage.getItem("codesrijan_pending_verification_id");
+        const pendingId = new URLSearchParams(window.location.search).get("uid");
         const fullCode = code.join("");
         if (fullCode.length !== 6 || !pendingId) return;
 

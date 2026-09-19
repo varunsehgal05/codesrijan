@@ -1,13 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import axios from "axios";
 
 export const Route = createFileRoute("/workspace")({
   component: Page4,
 });
 
 function Page4() {
-  const { currentUser, teams, users, chatMessages, addChatMessage, submitProject } = useAppStore();
+  const { currentUser, teams, users, chatMessages, hackathons, addChatMessage, submitProject } = useAppStore();
+  const activeEvent = hackathons[0];
   const [chatInput, setChatInput] = useState("");
   const [repoLink, setRepoLink] = useState("");
   const [demoLink, setDemoLink] = useState("");
@@ -29,10 +31,27 @@ function Page4() {
     setChatInput("");
   };
 
-  const handleFinalSubmit = () => {
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  const handleFinalSubmit = async () => {
     if (!currentTeam || !repoLink) return alert("Repository link is required to submit!");
-    submitProject(currentTeam.id, repoLink, demoLink);
-    alert("Project submitted successfully! Your submission is now recorded.");
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/submissions`, {
+        teamId: currentTeam.id,
+        repositoryUrl: repoLink,
+        demoUrl: demoLink,
+        projectTitle: currentTeam.name + " Project",
+        description: "Submitted via CodeSrijan Workspace"
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("Project submitted successfully! Your submission is now recorded.");
+      window.location.reload();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to submit project.");
+    }
   };
 
   if (!currentUser) return <div className="p-8 text-center bg-black text-white h-screen">Please login first.</div>;
@@ -41,7 +60,7 @@ function Page4() {
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*TopNavBar*/}
-{/*Main Workspace*/}
+      {/*Main Workspace*/}
       <main className="flex-grow max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
         {/*Mission Control Header*/}
         <header className="bg-studio-white border-2 border-ink-black p-6 md:p-8 neo-shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -51,7 +70,7 @@ function Page4() {
           </div>
           <div className="bg-ink-black text-electric-blue border-2 border-electric-blue px-6 py-4 flex flex-col items-center neo-shadow">
             <span className="font-label-mono-sm text-label-mono-sm uppercase text-studio-white mb-1">T-Minus Hackathon End</span>
-            <CountdownClock initialSeconds={51729} />
+            <CountdownClock targetDate={activeEvent?.submissionDeadline} />
           </div>
         </header>
 
@@ -115,11 +134,9 @@ function Page4() {
                 <h3 className="font-headline-md text-headline-md font-bold text-electric-blue uppercase">In Progress</h3>
               </div>
               <div className="flex flex-col gap-4">
-                <div className="bg-studio-white border-2 border-electric-blue p-4 neo-shadow-hover cursor-pointer border-l-8 transition-transform transform hover:-translate-y-1">
-                  <h4 className="font-body-md text-body-md font-bold text-ink-black mb-2 leading-tight">Implement Demo Features</h4>
-                  <div className="w-full bg-surface-container h-3 border-2 border-ink-black mt-2 mb-2">
-                    <div className="bg-electric-blue h-full w-[60%] border-r-2 border-ink-black"></div>
-                  </div>
+                <div className="bg-surface-dim border-2 border-dashed border-ink-black p-4 text-center">
+                  <span className="material-symbols-outlined text-outline text-3xl mb-2 block">task</span>
+                  <h4 className="font-body-md text-text-muted">No active missions detected.</h4>
                 </div>
               </div>
             </div>
@@ -161,15 +178,35 @@ function Page4() {
   );
 }
 
-function CountdownClock({ initialSeconds }: { initialSeconds: number }) {
-  const [secondsRemaining, setSecondsRemaining] = useState(initialSeconds);
+function CountdownClock({ targetDate }: { targetDate?: string | undefined }) {
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
+
   useEffect(() => {
-    const interval = setInterval(() => setSecondsRemaining((prev) => Math.max(0, prev - 1)), 1000);
-    return () => clearInterval(interval);
-  }, []);
-  const hrs = String(Math.floor(secondsRemaining / 3600)).padStart(2, "0");
-  const mins = String(Math.floor((secondsRemaining % 3600) / 60)).padStart(2, "0");
-  const secs = String(secondsRemaining % 60).padStart(2, "0");
+    if (!targetDate) return;
+
+    const computeDifference = () => {
+      const target = new Date(targetDate).getTime();
+      const now = new Date().getTime();
+      const diff = target - now;
+
+      if (diff <= 0) return { h: 0, m: 0, s: 0, active: false };
+      return {
+        h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+        s: Math.floor((diff % (1000 * 60)) / 1000),
+        active: true
+      };
+    };
+
+    setTimeLeft(computeDifference());
+    const timer = setInterval(() => setTimeLeft(computeDifference()), 1000);
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  const hrs = String(timeLeft.h).padStart(2, "0");
+  const mins = String(timeLeft.m).padStart(2, "0");
+  const secs = String(timeLeft.s).padStart(2, "0");
+
   return (
     <div className="font-headline-md text-headline-md font-black tracking-widest font-code-snippet" id="countdown-timer">
       {hrs}:{mins}:{secs}

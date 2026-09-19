@@ -7,23 +7,32 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-    const { currentUser, teams } = useAppStore();
+    const { currentUser, teams, hackathons } = useAppStore();
+    const activeEvent = hackathons[0];
 
-    // Calculate mock countdown
-    const [timeLeft, setTimeLeft] = useState({ h: 36, m: 14, s: 59 });
+    const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                let { h, m, s } = prev;
-                s--;
-                if (s < 0) { s = 59; m--; }
-                if (m < 0) { m = 59; h--; }
-                return { h, m, s };
-            });
-        }, 1000);
+        if (!activeEvent?.submissionDeadline) return;
+
+        const computeDifference = () => {
+            const target = new Date(activeEvent.submissionDeadline).getTime();
+            const now = new Date().getTime();
+            const diff = target - now;
+
+            if (diff <= 0) return { h: 0, m: 0, s: 0, active: false };
+            return {
+                h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                s: Math.floor((diff % (1000 * 60)) / 1000),
+                active: true
+            };
+        };
+
+        setTimeLeft(computeDifference());
+        const timer = setInterval(() => setTimeLeft(computeDifference()), 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [activeEvent]);
 
     const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
@@ -47,7 +56,7 @@ function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
+            <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
 
                 {/* Welcome & Timer Section */}
                 <section className="flex flex-col md:flex-row justify-between gap-8 items-end border-b-4 border-ink-black pb-8">
@@ -171,6 +180,6 @@ function DashboardPage() {
             </main>
 
             {/* Footer */}
-</div>
+        </div>
     );
 }

@@ -1,5 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
+import { useAppStore } from "../lib/store";
+import axios from "axios";
 
 export const Route = createFileRoute("/ai-assistant")({
     component: AIAssistantPage,
@@ -12,16 +14,11 @@ function AIAssistantPage() {
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
 
-    const predefinedAnswers: Record<string, string> = {
-        "team": "To form a team, navigate to the Recruitment page, find available hackers, or go to the Team Hub and Create a Squad. You need at least 1 member, max 4.",
-        "submit": "Project Submissions are handled inside your Project Workspace. You must supply a Github Repository URL and a live Demo Link to be eligible for judging.",
-        "prize": "The total prize pool is 100,000 INR! 1st gets 50K, 2nd gets 30K, 3rd gets 20K. Plus Swag for all finalists.",
-        "mentor": "Mentors are assigned 24 hours before hacking concludes. Check your Team Hub or Workspace Chat to see if a Mentor has dropped in.",
-        "hello": "GREETINGS! ARE YOU READY TO DESTROY THE COMPETITION?",
-        "help": "You can ask me about Teams, Submissions, Prizes, Mentorship, or General Rules!"
-    };
+    const location = useLocation();
+    const { currentUser } = useAppStore();
+    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
-    const handleSend = (e: React.FormEvent) => {
+    const handleSend = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
 
@@ -30,26 +27,34 @@ function AIAssistantPage() {
         setInput("");
         setIsTyping(true);
 
-        // Mock AI delay
-        setTimeout(() => {
-            const lowerInput = userMsg.toLowerCase();
-            let answer = "I'm sorry, my databanks don't have information on that specific protocol. Please reach out to an Organizer on the Discord server!";
+        try {
+            const contextPayload = {
+                path: location.pathname,
+                role: currentUser?.role || 'guest',
+                email: currentUser?.email,
+                name: currentUser?.name,
+                teamId: currentUser?.teamId,
+                userId: currentUser?.id
+            };
 
-            for (const [key, val] of Object.entries(predefinedAnswers)) {
-                if (lowerInput.includes(key)) {
-                    answer = val;
-                    break;
-                }
-            }
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+            const res = await axios.post(`${API_URL}/ai/chat`,
+                { message: userMsg, context: contextPayload },
+                { headers }
+            );
 
-            setMessages(prev => [...prev, { role: "ai", content: answer }]);
+            setMessages(prev => [...prev, { role: "ai", content: res.data.reply }]);
+        } catch (err: any) {
+            setMessages(prev => [...prev, { role: "ai", content: "CRITICAL: Neural Node connection lost. Offline." }]);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-<main className="flex-grow max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12 w-full flex flex-col h-[calc(100vh-100px)]">
+            <main className="flex-grow max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12 w-full flex flex-col h-[calc(100vh-100px)]">
 
                 <div className="w-full mb-6">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">

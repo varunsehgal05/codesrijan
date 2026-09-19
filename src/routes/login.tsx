@@ -23,11 +23,14 @@ function LoginPage() {
             await login(email, password);
             navigate({ to: "/workspace" });
         } catch (err: any) {
-            if (err.message === "verification_required") {
-                navigate({ to: "/auth/otp" });
-            } else {
-                setErrorMsg(err.message || "Failed to initialize session.");
-            }
+            try {
+                const parsed = JSON.parse(err.message);
+                if (parsed.type === "verification_required") {
+                    navigate({ to: '/auth/otp', search: { uid: parsed.userId } });
+                    return;
+                }
+            } catch (e) { }
+            setErrorMsg(err.message || "Failed to initialize session.");
         }
     };
 

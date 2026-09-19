@@ -1,39 +1,51 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
   head: () => ({
     meta: [
       { title: "Leaderboard | CodeSrijan" },
-      { name: "description", content: "CodeSrijan leaderboard — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:title", content: "Leaderboard | CodeSrijan" },
-      { property: "og:description", content: "CodeSrijan leaderboard — the student-run hackathon platform for builders, mentors and recruiters." },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: "/leaderboard" },
-      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/leaderboard" }],
   }),
 });
 
 function LeaderboardPage() {
-  const { teams } = useAppStore();
+  const [rankedTeams, setRankedTeams] = useState<any[]>([]);
 
-  // Generate deterministic mock scores if score doesn't exist to make it look realistic for the demo
-  const rankedTeams = [...teams]
-    .map(t => {
-      let baseScore = t.isSubmitted ? 8000 : 2000;
-      baseScore += (t.name.length * 100);
-      baseScore += (t.members.length * 250);
-      return { ...t, computedScore: baseScore };
-    })
-    .sort((a, b) => b.computedScore - a.computedScore);
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const [teamsRes, evalsRes] = await Promise.all([
+          axios.get(`${API_URL}/teams`),
+          axios.get(`${API_URL}/evaluations`)
+        ]);
+
+        const teams = teamsRes.data;
+        const evals = evalsRes.data;
+
+        // Compute scores
+        const scored = teams.map((team: any) => {
+          const teamEvals = evals.filter((e: any) => e.projectId === team.id || e.teamId === team.id);
+          const totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
+          return { ...team, totalScore, isScored: teamEvals.length > 0 };
+        }).filter((t: any) => t.isScored).sort((a: any, b: any) => b.totalScore - a.totalScore); // Only show ranked teams
+
+        setRankedTeams(scored);
+      } catch (err) {
+        console.error("Leaderboard fetch error", err);
+      }
+    };
+    fetchLeaderboard();
+  }, [API_URL]);
 
   return (
     <div className="min-h-screen bg-background text-on-background">
       {/*Top Navigation*/}
-<main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
+      <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
         {/* Global Go Back Navigation */}
         <div className="w-full mb-6">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
@@ -68,7 +80,7 @@ function LeaderboardPage() {
                 {rankedTeams.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-12 px-6 text-center text-surface-variant font-label-md">
-                      Awaiting global database synchronisation...
+                      No teams have been officially scored by the judging panel. Awaiting evaluations completion.
                     </td>
                   </tr>
                 ) : (
@@ -88,7 +100,8 @@ function LeaderboardPage() {
                           </div>
                         </td>
                         <td className="py-6 px-6 font-button-text text-right text-ink-black">
-                          {team.computedScore.toLocaleString()}
+                          {/* @ts-ignore */}
+                          {team.totalScore.toLocaleString()}
                         </td>
                         <td className="py-6 px-6 text-center">
                           {index === 0 ? (
@@ -106,7 +119,7 @@ function LeaderboardPage() {
           </div>
         </section>
       </main>
-</div>
+    </div>
   );
 }
 
