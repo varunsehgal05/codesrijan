@@ -667,6 +667,42 @@ app.post('/api/announcements', requireAuth, requireRole(['admin']), async (req, 
     }
 });
 
+// ADMIN USERS CRUD
+app.post('/api/admin/users', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { id, name, email, role, password, teamId } = req.body;
+        const existing = await User.findOne({ email });
+        if (existing) return res.status(400).json({ message: "Email already registered." });
+
+        const passwordHash = await bcrypt.hash(password || "Hackathon2026!", 10);
+        const newUser = new User({
+            id: id || `u-${Date.now()}`,
+            name, email, role, passwordHash, teamId,
+            accountStatus: 'active',
+            emailVerified: true
+        });
+        await newUser.save();
+        res.json(newUser);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to force add user." });
+    }
+});
+
+app.put('/api/admin/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { name, role, status, teamId } = req.body;
+        // Map status cleanly to real mongo enums if necessary, or just save generic strings
+        const updated = await User.findOneAndUpdate(
+            { id: req.params.id },
+            { name, role, accountStatus: status === 'Active' ? 'active' : 'suspended', teamId },
+            { new: true }
+        );
+        res.json(updated);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to modify user profile." });
+    }
+});
+
 // TELEMETRY & LOGS
 app.get('/api/admin/logs', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
