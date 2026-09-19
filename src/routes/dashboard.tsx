@@ -39,7 +39,7 @@ function DashboardPage() {
     // Calculate Rank
     const rankedTeams = [...teams].map(t => ({
         ...t,
-        computedScore: (t.isSubmitted ? 8000 : 2000) + (t.name.length * 100)
+        computedScore: (t.isSubmitted ? 8000 : 2000) + ((t.name || '').length * 100)
     })).sort((a, b) => b.computedScore - a.computedScore);
 
     const myRank = rankedTeams.findIndex(t => t.id === userTeam?.id) + 1;
@@ -113,7 +113,7 @@ function DashboardPage() {
                                     <div className="bg-surface p-4 border-2 border-electric-blue">
                                         <p className="font-label-caps text-surface-variant mb-1">Squad Designation</p>
                                         <h3 className="font-headline-sm uppercase text-electric-blue">{userTeam.name}</h3>
-                                        <p className="font-body-sm mt-2"><span className="font-bold">{userTeam.members.length}/4</span> Operatives connected.</p>
+                                        <p className="font-body-sm mt-2"><span className="font-bold">{(userTeam.memberIds || userTeam.members || []).length}/4</span> Operatives connected.</p>
                                     </div>
 
                                     <div className="bg-surface-container p-4 border-2 border-ink-black">
