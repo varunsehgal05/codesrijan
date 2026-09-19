@@ -43,7 +43,6 @@ import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from '.
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
 import { sendVerificationEmail } from './services/email.js';
-import bcrypt from 'bcryptjs';
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
