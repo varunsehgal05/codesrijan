@@ -35,11 +35,6 @@ io.on('connection', (socket) => {
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-    dbName: 'codesrijan'
-}).then(() => console.log('MongoDB Connected to keyspace codesrijan')).catch(err => console.error(err));
-
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor } from './models/secondary.js';
@@ -48,6 +43,45 @@ import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from '.
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
 import { sendVerificationEmail } from './services/email.js';
+import bcrypt from 'bcryptjs';
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+    dbName: 'codesrijan'
+}).then(async () => {
+    console.log('MongoDB Connected to keyspace codesrijan');
+
+    // Seed secure root accounts exactly once
+    const adminExists = await User.findOne({ email: "admin@codesrijan.com" });
+    if (!adminExists) {
+        const passwordHash = await bcrypt.hash("CodeSrijan99!", 10);
+        await User.create({
+            id: "root-admin-01",
+            name: "CodeSrijan Administrator",
+            email: "admin@codesrijan.com",
+            passwordHash,
+            role: "admin",
+            accountStatus: "active",
+            emailVerified: true
+        });
+        console.log("[SYSTEM] Root Admin cryptographic identity provisioned.");
+    }
+
+    const studentExists = await User.findOne({ email: "student@codesrijan.com" });
+    if (!studentExists) {
+        const passwordHash = await bcrypt.hash("HackerStudent99!", 10);
+        await User.create({
+            id: "test-student-01",
+            name: "Vanguard Hacker",
+            email: "student@codesrijan.com",
+            passwordHash,
+            role: "student",
+            accountStatus: "active",
+            emailVerified: true
+        });
+        console.log("[SYSTEM] Structural Hacker student identity provisioned.");
+    }
+}).catch(err => console.error(err));
 
 // --- Routes ---
 
@@ -133,10 +167,7 @@ app.post('/api/auth/login', async (req, res) => {
         const { email, password } = req.body;
         const normalizedEmail = String(email).toLowerCase();
 
-        // Admin override block
-        if (normalizedEmail === "admin" || normalizedEmail.includes("admin@codesrijan")) {
-            return res.json({ token: "admin_token", user: { id: "admin-001", name: "System Administrator", email: "admin@codesrijan.com", role: "admin" } });
-        }
+
 
         const user = await User.findOne({ email: normalizedEmail });
         if (!user) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
