@@ -1,23 +1,31 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/certificates')({
-  component: AdminCertificatesComponent,
-})
+export const Route = createFileRoute("/admin/certificates")({
+  component: AdminCertificates,
+});
 
-function AdminCertificatesComponent() {
+function AdminCertificates() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-stark-black text-pure-white p-8 brutal-border brutal-shadow">
-        <div className="flex items-center gap-4 mb-6 border-b-2 border-electric-blue pb-4">
-            <span className="material-symbols-outlined text-4xl text-electric-blue">construction</span>
-            <h2 className="font-headline-md text-headline-md italic tracking-tighter uppercase whitespace-nowrap">
-                certificates <span className="text-electric-blue">MATRIX</span>
-            </h2>
+    <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto">
+      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+        <div>
+          <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none bg-[#FFD700] px-2 py-1 inline-block transform -skew-x-6">
+            CERTIFICATES ENFORCEMENT
+          </h2>
         </div>
-        <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin CERTIFICATES control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
+      </div>
+
+      <div className="bg-pure-white p-8 brutal-border brutal-shadow flex flex-col justify-center items-center gap-8 py-16">
+        <span className="material-symbols-outlined text-[80px] text-electric-blue">workspace_premium</span>
+        <p className="font-mono text-stark-black text-center text-sm max-w-lg">
+          Automatically map participation grids against final submissions to batch-generate SHA-256 verifiable credentials.
         </p>
+        <div className="flex gap-4">
+          <button className="bg-stark-black text-pure-white px-8 py-4 font-label-bold uppercase brutal-border brutal-shadow-hover transition-all">
+            GENERATE BATCH RUN
+          </button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

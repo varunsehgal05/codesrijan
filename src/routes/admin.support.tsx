@@ -1,23 +1,24 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/support')({
-  component: AdminSupportComponent,
-})
+export const Route = createFileRoute("/admin/support")({
+  component: AdminSupport,
+});
 
-function AdminSupportComponent() {
+function AdminSupport() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-stark-black text-pure-white p-8 brutal-border brutal-shadow">
-        <div className="flex items-center gap-4 mb-6 border-b-2 border-electric-blue pb-4">
-            <span className="material-symbols-outlined text-4xl text-electric-blue">construction</span>
-            <h2 className="font-headline-md text-headline-md italic tracking-tighter uppercase whitespace-nowrap">
-                support <span className="text-electric-blue">MATRIX</span>
-            </h2>
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+        <div>
+          <h2 className="font-display-lg text-headline-xl uppercase text-pure-white bg-error px-2 py-1 inline-block transform -skew-x-6">
+            GLOBAL SUPPORT TICKETS
+          </h2>
         </div>
-        <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin SUPPORT control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
-        </p>
+        <div className="font-mono bg-stark-black text-pure-white px-4 py-2 brutal-border">0 ACTIVE ALERTS</div>
+      </div>
+
+      <div className="bg-pure-white brutal-border brutal-shadow p-12 text-center text-stark-black font-code-snippet">
+        INFRASTRUCTURE IS NOMINAL. NO USER SUPPORT TICKETS DETECTED.
       </div>
     </div>
-  )
+  );
 }

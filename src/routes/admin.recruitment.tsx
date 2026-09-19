@@ -1,23 +1,25 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/recruitment')({
-  component: AdminRecruitmentComponent,
-})
+export const Route = createFileRoute("/admin/recruitment")({
+  component: AdminRecruitment,
+});
 
-function AdminRecruitmentComponent() {
+function AdminRecruitment() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-stark-black text-pure-white p-8 brutal-border brutal-shadow">
-        <div className="flex items-center gap-4 mb-6 border-b-2 border-electric-blue pb-4">
-            <span className="material-symbols-outlined text-4xl text-electric-blue">construction</span>
-            <h2 className="font-headline-md text-headline-md italic tracking-tighter uppercase whitespace-nowrap">
-                recruitment <span className="text-electric-blue">MATRIX</span>
-            </h2>
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+        <div>
+          <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none bg-electric-blue text-pure-white px-2 py-1 inline-block transform -skew-x-6">
+            RECRUITMENT MATRIX
+          </h2>
         </div>
-        <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin RECRUITMENT control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
-        </p>
+      </div>
+
+      <div className="bg-surface-container p-16 brutal-border text-center flex flex-col items-center justify-center gap-4">
+        <span className="material-symbols-outlined text-6xl text-text-muted">handshake</span>
+        <h3 className="font-display-lg uppercase text-2xl text-ink-black">Public Talent Pool</h3>
+        <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs">No operatives are actively broadcasting recruitment signatures.</p>
       </div>
     </div>
-  )
+  );
 }

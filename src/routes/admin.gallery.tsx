@@ -1,23 +1,23 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/gallery')({
-  component: AdminGalleryComponent,
-})
+export const Route = createFileRoute("/admin/gallery")({
+  component: AdminGallery,
+});
 
-function AdminGalleryComponent() {
+function AdminGallery() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-stark-black text-pure-white p-8 brutal-border brutal-shadow">
-        <div className="flex items-center gap-4 mb-6 border-b-2 border-electric-blue pb-4">
-            <span className="material-symbols-outlined text-4xl text-electric-blue">construction</span>
-            <h2 className="font-headline-md text-headline-md italic tracking-tighter uppercase whitespace-nowrap">
-                gallery <span className="text-electric-blue">MATRIX</span>
-            </h2>
-        </div>
-        <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin GALLERY control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
-        </p>
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+        <h2 className="font-display-lg text-headline-xl uppercase text-pure-white tracking-tight leading-none bg-electric-blue px-2 py-1 inline-block transform -skew-x-6">
+          MEDIA GALLERY
+        </h2>
+        <button className="bg-stark-black text-pure-white font-label-bold uppercase px-6 py-2 brutal-border transition-all">
+          UPLOAD ARTIFACT
+        </button>
+      </div>
+      <div className="bg-surface p-16 font-mono text-center brutal-border brutal-shadow text-zinc-500">
+        GALLERY ARRAYS EMPTY. UPLOAD EVENT MEDIA.
       </div>
     </div>
-  )
+  );
 }

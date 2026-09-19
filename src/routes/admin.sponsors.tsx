@@ -1,23 +1,30 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/admin/sponsors')({
-  component: AdminSponsorsComponent,
-})
+export const Route = createFileRoute("/admin/sponsors")({
+  component: AdminSponsors,
+});
 
-function AdminSponsorsComponent() {
+function AdminSponsors() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-stark-black text-pure-white p-8 brutal-border brutal-shadow">
-        <div className="flex items-center gap-4 mb-6 border-b-2 border-electric-blue pb-4">
-            <span className="material-symbols-outlined text-4xl text-electric-blue">construction</span>
-            <h2 className="font-headline-md text-headline-md italic tracking-tighter uppercase whitespace-nowrap">
-                sponsors <span className="text-electric-blue">MATRIX</span>
-            </h2>
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+        <div>
+          <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none bg-[#FFD700] px-2 py-1 inline-block transform -skew-x-6">
+            SPONSORS & PARTNERS
+          </h2>
         </div>
-        <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin SPONSORS control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
-        </p>
+        <button className="bg-electric-blue text-pure-white px-6 py-2 brutal-border font-bold uppercase transition-all hover:bg-stark-black">
+          ADD PARTNER
+        </button>
+      </div>
+
+      <div className="grid grid-cols-3 gap-6">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="aspect-square bg-surface-container brutal-border flex items-center justify-center opacity-50">
+            <span className="material-symbols-outlined text-4xl text-text-muted">add_photo_alternate</span>
+          </div>
+        ))}
       </div>
     </div>
-  )
+  );
 }
