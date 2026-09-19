@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useAppStore } from "../../lib/store";
 
 export function Navbar() {
-    const { currentUser } = useAppStore();
+    const { currentUser, isLoaded } = useAppStore();
 
     return (
         <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
@@ -11,7 +11,7 @@ export function Navbar() {
                     CodeSrijan
                 </Link>
                 <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                    {currentUser ? (
+                    {!isLoaded ? null : currentUser ? (
                         <>
                             <Link to="/problems" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Problems</Link>
                             <Link to="/recruitment" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Recruitment</Link>
@@ -22,10 +22,18 @@ export function Navbar() {
                     )}
                 </div>
                 <div className="hidden md:block">
-                    {currentUser ? (
-                        <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
-                            Go to Dashboard
-                        </Link>
+                    {!isLoaded ? null : currentUser ? (
+                        <div className="flex gap-4">
+                            {currentUser.role === 'admin' && (
+                                <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[18px]">shield_person</span>
+                                    Admin Panel
+                                </Link>
+                            )}
+                            <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
+                                Go to Dashboard
+                            </Link>
+                        </div>
                     ) : (
                         <div className="flex gap-4">
                             <Link to="/login" className="bg-surface text-ink-black font-button-text text-button-text px-6 py-3 border-2 border-ink-black transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
