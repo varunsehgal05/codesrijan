@@ -37,7 +37,7 @@ app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate } from './models/index.js';
-import { Announcement, CalendarEvent, Sponsor } from './models/secondary.js';
+import { Announcement, CalendarEvent, Sponsor, ActivityLog } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -664,6 +664,16 @@ app.post('/api/announcements', requireAuth, requireRole(['admin']), async (req, 
         res.json(newAnn);
     } catch (e) {
         res.status(500).json({ message: "Failed to broadcast announcement." });
+    }
+});
+
+// TELEMETRY & LOGS
+app.get('/api/admin/logs', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const logs = await ActivityLog.find().sort({ createdAt: -1 }).limit(150);
+        res.json(logs);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch telemetry streams." });
     }
 });
 
