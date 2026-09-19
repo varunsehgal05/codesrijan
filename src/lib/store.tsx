@@ -8,7 +8,8 @@ export const socket = io(API_URL.replace('/api', ''));
 // Global API Interceptor for JWT Tokens
 axios.interceptors.request.use((config) => {
     const token = localStorage.getItem("codesrijan_auth_token");
-    if (token && config.headers) {
+    if (token) {
+        config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -150,7 +151,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (storedToken) {
             const loadWithToken = async () => {
                 try {
-                    const meRes = await axios.get(`${API_URL}/auth/me`);
+                    const meRes = await axios.get(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${storedToken}` }
+                    });
 
                     // We only load global data once the auth context is confirmed strictly via API
                     await refetchData();
