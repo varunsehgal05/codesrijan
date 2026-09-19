@@ -338,12 +338,32 @@ app.get('/api/teams', requireAuth, async (req, res) => {
 });
 app.post('/api/teams', requireAuth, requireRole(['student']), async (req, res) => {
     // Only logged-in students can create teams, and they become the leader automatically.
+    if (req.user.teamId) {
+        return res.status(403).json({ message: "You are already in a team." });
+    }
     const team = new Team({
-        ...req.body,
+        ...req.body, // { name: string, description: string } (optional extra fields)
         id: `t-${Date.now()}`,
         leaderId: req.user.id,
-        memberIds: [req.user.id]
+        memberIds: [req.user.id] // Auto-assign as member 1
     });
+    await team.save();
+    await User.findOneAndUpdate({ id: req.user.id }, { teamId: team.id });
+    res.json(team);
+});
+app.post('/api/teams/join', requireAuth, requireRole(['student']), async (req, res) => {
+    const { teamCode } = req.body;
+    if (req.user.teamId) {
+        return res.status(403).json({ message: "You are already in a team." });
+    }
+    const team = await Team.findOne({ id: teamCode });
+    if (!team) {
+        return res.status(404).json({ message: "Invalid Squad Code." });
+    }
+    if (team.memberIds.length >= 4) {
+        return res.status(403).json({ message: "Squad is at maximum capacity (4 members)." });
+    }
+    team.memberIds.push(req.user.id);
     await team.save();
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: team.id });
     res.json(team);
