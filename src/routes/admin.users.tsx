@@ -1,16 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { useAppStore } from "../lib/store";
+
 export const Route = createFileRoute("/admin/users")({
     component: AdminUsers,
 });
 
 function AdminUsers() {
-    const users = [
-        { id: "USR-001", name: "Sarah Connor", team: "Skynet Busters", role: "Frontend", status: "Active" },
-        { id: "USR-002", name: "John Doe", team: "Undecided", role: "Fullstack", status: "Looking for Team" },
-        { id: "USR-003", name: "Alice Smith", team: "Blockchain Boys", role: "Smart Contracts", status: "Active" },
-        { id: "USR-004", name: "Bob Johnson", team: "AI Innovators", role: "Data Scientist", status: "Inactive" },
-    ];
+    const { users, teams } = useAppStore();
+
+    // Mapping real users to required grid payload shapes.
+    const displayUsers = users.map(u => {
+        const userTeam = teams.find(t => t.id === u.teamId);
+        return {
+            id: u.id,
+            name: (u.name) || ((u as any).firstName + ' ' + (u as any).lastName) || "Unknown User",
+            team: userTeam ? userTeam.name : "Free Agent",
+            role: (u.role || 'student').toUpperCase(),
+            status: ((u as any).accountStatus === 'active' || u.role) ? 'Active' : 'Inactive',
+        };
+    });
 
     return (
         <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -44,8 +53,8 @@ function AdminUsers() {
                         </tr>
                     </thead>
                     <tbody>
-                        {users.map((u, i) => (
-                            <tr key={u.id} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
+                        {displayUsers.map((u, i) => (
+                            <tr key={u.id || i} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
                                 <td className="p-4 font-code-snippet text-sm border-r-2 border-stark-black">{u.id}</td>
                                 <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black">{u.name}</td>
                                 <td className="p-4 font-body-md border-r-2 border-stark-black">{u.team}</td>

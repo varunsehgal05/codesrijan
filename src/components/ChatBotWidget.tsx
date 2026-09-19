@@ -5,7 +5,7 @@ import axios from "axios";
 
 export function ChatBotWidget() {
     const { currentUser } = useAppStore();
-    const apiBaseUrl = import.meta.env['VITE_API_URL'] || "http://localhost:5000";
+    const apiBaseUrl = import.meta.env['VITE_API_URL'] || "https://codesrijan-api.onrender.com";
     const routerState = useRouterState();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");

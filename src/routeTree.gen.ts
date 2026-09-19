@@ -43,6 +43,7 @@ import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminEvaluationsRouteImport } from './routes/admin.evaluations'
+import { Route as AdminHackathonsRouteImport } from './routes/admin.hackathons'
 import { Route as AdminScheduleRouteImport } from './routes/admin.schedule'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
@@ -222,6 +223,11 @@ const AdminEvaluationsRoute = AdminEvaluationsRouteImport.update({
   path: '/evaluations',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHackathonsRoute = AdminHackathonsRouteImport.update({
+  id: '/hackathons',
+  path: '/hackathons',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminScheduleRoute = AdminScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
@@ -253,9 +259,9 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminHackathonsCreateRoute = AdminHackathonsCreateRouteImport.update({
-  id: '/hackathons/create',
-  path: '/hackathons/create',
-  getParentRoute: () => AdminRoute,
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminHackathonsRoute,
 } as any)
 const HackathonsIdRegisterRoute = HackathonsIdRegisterRouteImport.update({
   id: '/hackathons/$id/register',
@@ -297,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -385,6 +393,7 @@ export interface FileRoutesById {
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -431,6 +440,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
+    | '/admin/hackathons'
     | '/admin/schedule'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -474,6 +484,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
+    | '/admin/hackathons'
     | '/admin/schedule'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -518,6 +529,7 @@ export interface FileRouteTypes {
     | '/timeline'
     | '/workspace'
     | '/admin/evaluations'
+    | '/admin/hackathons'
     | '/admin/schedule'
     | '/admin/users'
     | '/auth/forgot-password'
@@ -809,6 +821,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminEvaluationsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/hackathons': {
+      id: '/admin/hackathons'
+      path: '/hackathons'
+      fullPath: '/admin/hackathons'
+      preLoaderRoute: typeof AdminHackathonsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/schedule': {
       id: '/admin/schedule'
       path: '/schedule'
@@ -853,10 +872,10 @@ declare module '@tanstack/react-router' {
     }
     '/admin/hackathons/create': {
       id: '/admin/hackathons/create'
-      path: '/hackathons/create'
+      path: '/create'
       fullPath: '/admin/hackathons/create'
       preLoaderRoute: typeof AdminHackathonsCreateRouteImport
-      parentRoute: typeof AdminRoute
+      parentRoute: typeof AdminHackathonsRoute
     }
     '/hackathons/$id/register': {
       id: '/hackathons/$id/register'
@@ -868,20 +887,32 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminHackathonsRouteChildren {
+  AdminHackathonsCreateRoute: typeof AdminHackathonsCreateRoute
+}
+
+const AdminHackathonsRouteChildren: AdminHackathonsRouteChildren = {
+  AdminHackathonsCreateRoute: AdminHackathonsCreateRoute,
+}
+
+const AdminHackathonsRouteWithChildren = AdminHackathonsRoute._addFileChildren(
+  AdminHackathonsRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminEvaluationsRoute: typeof AdminEvaluationsRoute
+  AdminHackathonsRoute: typeof AdminHackathonsRouteWithChildren
   AdminScheduleRoute: typeof AdminScheduleRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  AdminHackathonsCreateRoute: typeof AdminHackathonsCreateRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminEvaluationsRoute: AdminEvaluationsRoute,
+  AdminHackathonsRoute: AdminHackathonsRouteWithChildren,
   AdminScheduleRoute: AdminScheduleRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
-  AdminHackathonsCreateRoute: AdminHackathonsCreateRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -928,13 +959,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
