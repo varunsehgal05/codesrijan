@@ -37,6 +37,7 @@ export interface Team {
     members?: string[]; // Legacy compatibility 
     memberIds: string[]; // Native MongoDB property
     description?: string;
+}
 
 export interface Problem {
     id: string;
