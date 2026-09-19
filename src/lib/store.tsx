@@ -170,10 +170,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     // We only load global data once the auth context is confirmed strictly via API
                     await refetchData();
                     setState(prev => ({ ...prev, currentUser: meRes.data.user }));
-                } catch (e) {
-                    console.error("Token invalid or expired. Purging local identity.");
-                    console.error("Token invalid or expired. Purging local identity.");
-                    localStorage.removeItem("codesrijan_auth_token");
+                } catch (e: any) {
+                    if (e.response?.status === 401 || e.response?.status === 403) {
+                        console.error("Token explicitly invalid or expired. Purging local identity.");
+                        localStorage.removeItem("codesrijan_auth_token");
+                    } else {
+                        console.warn("Network error verifying session, server might be spinning up. Keeping token intact.");
+                    }
                     refetchData();
                 }
             };

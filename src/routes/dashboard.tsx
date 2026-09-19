@@ -7,7 +7,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-    const { currentUser, teams, hackathons } = useAppStore();
+    const { currentUser, teams, hackathons, isLoaded } = useAppStore();
     const activeEvent = hackathons[0];
 
     const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
@@ -43,6 +43,15 @@ function DashboardPage() {
     })).sort((a, b) => b.computedScore - a.computedScore);
 
     const myRank = rankedTeams.findIndex(t => t.id === userTeam?.id) + 1;
+
+    if (!isLoaded) {
+        return (
+            <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+                <div className="w-16 h-16 border-4 border-ink-black border-t-electric-blue rounded-full animate-spin mb-4"></div>
+                <h1 className="font-display-lg text-2xl uppercase tracking-widest animate-pulse">VERIFYING IDENTITY...</h1>
+            </div>
+        );
+    }
 
     if (!currentUser) {
         return (

@@ -8,7 +8,7 @@ export const Route = createFileRoute("/workspace")({
 });
 
 function Page4() {
-  const { currentUser, teams, users, chatMessages, hackathons, addChatMessage, submitProject } = useAppStore();
+  const { currentUser, teams, users, chatMessages, hackathons, addChatMessage, submitProject, isLoaded } = useAppStore();
   const activeEvent = hackathons[0];
   const [chatInput, setChatInput] = useState("");
   const [repoLink, setRepoLink] = useState("");
@@ -54,9 +54,14 @@ function Page4() {
     }
   };
 
-  if (!currentUser) return <div className="p-8 text-center bg-black text-white h-screen">Please login first.</div>;
+  if (!isLoaded) return (
+    <div className="min-h-screen bg-stark-black flex flex-col items-center justify-center p-8">
+      <div className="w-16 h-16 border-4 border-pure-white border-t-electric-blue rounded-full animate-spin mb-4"></div>
+      <h1 className="font-display-lg text-pure-white text-2xl uppercase tracking-widest animate-pulse">ESTABLISHING SECURE LINK...</h1>
+    </div>
+  );
 
-  if (!currentTeam) {
+  if (!currentUser) return <div className="p-8 text-center bg-black text-white h-screen">Please login first.</div>; if (!currentTeam) {
     return (
       <div className="min-h-screen bg-stark-black p-8 flex items-center justify-center bg-pattern">
         <div className="bg-electric-blue p-10 brutal-border brutal-shadow-lg max-w-2xl w-full text-center flex flex-col items-center gap-6 relative z-10 overflow-hidden">
