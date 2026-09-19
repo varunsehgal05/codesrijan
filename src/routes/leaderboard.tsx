@@ -30,9 +30,16 @@ function LeaderboardPage() {
         // Compute scores
         const scored = teams.map((team: any) => {
           const teamEvals = evals.filter((e: any) => e.projectId === team.id || e.teamId === team.id);
-          const totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
-          return { ...team, totalScore, isScored: teamEvals.length > 0 };
-        }).filter((t: any) => t.isScored).sort((a: any, b: any) => b.totalScore - a.totalScore); // Only show ranked teams
+          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
+          const isScored = teamEvals.length > 0;
+
+          // Apply pre-evaluation ranking heuristic if not yet officially judged
+          if (!isScored) {
+            totalScore = (team.isSubmitted ? 8000 : 2000) + ((team.name || '').length * 100);
+          }
+
+          return { ...team, totalScore, isScored };
+        }).sort((a: any, b: any) => b.totalScore - a.totalScore); // Show all active squads!
 
         setRankedTeams(scored);
       } catch (err) {
