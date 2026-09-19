@@ -89,7 +89,7 @@ function LoginPage() {
                         <div className="flex flex-col gap-2">
                             <div className="flex justify-between items-center">
                                 <label className="font-label-bold text-stark-black uppercase">Operation Password</label>
-                                <Link to="/auth/otp" className="font-label-mono-sm text-electric-blue hover:underline uppercase">Forgot?</Link>
+                                <Link to="/auth/forgot-password" className="font-label-mono-sm text-electric-blue hover:underline uppercase">Forgot?</Link>
                             </div>
                             <input
                                 type="password"

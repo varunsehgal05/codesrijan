@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+const API_URL = 'https://codesrijan-api.onrender.com/api';
 export const socket = io(API_URL.replace('/api', ''));
 
 // Global API Interceptor for JWT Tokens
