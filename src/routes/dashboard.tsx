@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/dashboard")({
     component: DashboardPage,
 });
 
 function DashboardPage() {
-    const { currentUser, teams, hackathons, isLoaded } = useAppStore();
+    const { currentUser, teams, hackathons, users, isLoaded } = useAppStore();
     const activeEvent = hackathons[0];
 
     const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
@@ -35,6 +36,44 @@ function DashboardPage() {
     }, [activeEvent]);
 
     const userTeam = teams.find(t => t.id === currentUser?.teamId);
+
+    const [teamRequests, setTeamRequests] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (userTeam?.leaderId === currentUser?.id) {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+            axios.get(`${BASE}/teams/requests/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            }).then(r => setTeamRequests(r.data)).catch(() => null);
+        }
+    }, [userTeam, currentUser]);
+
+    const handleKickUser = async (userId: string) => {
+        if (!confirm("Are you sure you want to kick this operative?")) return;
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+            await axios.post(`${BASE}/teams/${userTeam?.id}/kick`, { userId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            window.location.reload();
+        } catch (e: any) { alert(e.response?.data?.message || "Failed to kick."); }
+    };
+
+    const handleActionRequest = async (reqId: string, action: 'accept' | 'reject') => {
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+            await axios.post(`${BASE}/teams/requests/${reqId}/${action}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            window.location.reload();
+        } catch (e: any) { alert(e.response?.data?.message || "Failed to process request."); }
+    };
 
     // Calculate Rank
     const rankedTeams = [...teams].map(t => ({
@@ -146,6 +185,54 @@ function DashboardPage() {
                                 </div>
                             )}
                         </div>
+
+                        {userTeam && userTeam.leaderId === currentUser.id && (
+                            <div className="mt-8 border-t-4 border-ink-black pt-8">
+                                <h2 className="font-headline-md uppercase mb-4 text-ink-black flex items-center justify-between">
+                                    Squad Management
+                                </h2>
+                                <div className="space-y-4">
+                                    {/* Members roster */}
+                                    <div className="bg-surface p-4 border-2 border-ink-black">
+                                        <h3 className="font-label-bold uppercase text-surface-variant mb-2 border-b-2 border-ink-black pb-1">Operative Roster</h3>
+                                        <div className="flex flex-col gap-2">
+                                            {(userTeam.memberIds || userTeam.members || []).map((mId: string) => {
+                                                const u = users.find(u => u.id === mId);
+                                                return (
+                                                    <div key={mId} className="flex justify-between items-center bg-white p-2 border border-ink-black">
+                                                        <span className="font-label-bold uppercase">{u ? u.name : mId} {userTeam.leaderId === mId && <span className="text-electric-blue text-xs ml-2">(LEADER)</span>}</span>
+                                                        {userTeam.leaderId !== mId && (
+                                                            <button onClick={() => handleKickUser(mId)} className="bg-error text-white font-label-bold px-3 py-1 text-xs brutal-hover">KICK</button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* Join requests */}
+                                    {teamRequests.length > 0 && (
+                                        <div className="bg-[#ffeb3b] p-4 border-2 border-ink-black brutal-shadow">
+                                            <h3 className="font-label-bold uppercase text-ink-black mb-2 border-b-2 border-ink-black pb-1">Pending Join Signatures</h3>
+                                            <div className="flex flex-col gap-2">
+                                                {teamRequests.map(r => {
+                                                    const u = users.find(u => u.id === r.userId);
+                                                    return (
+                                                        <div key={r.id} className="flex justify-between items-center bg-white p-2 border border-ink-black">
+                                                            <span className="font-label-bold uppercase">{u ? u.name : r.userId} <span className="text-surface-variant text-xs ml-2">Wants to join</span></span>
+                                                            <div className="flex gap-2">
+                                                                <button onClick={() => handleActionRequest(r.id, 'accept')} className="bg-success text-white font-label-bold px-3 py-1 text-xs brutal-hover">ACCEPT</button>
+                                                                <button onClick={() => handleActionRequest(r.id, 'reject')} className="bg-ink-black text-white font-label-bold px-3 py-1 text-xs brutal-hover">REJECT</button>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {userTeam && (
                             <div className="mt-8">

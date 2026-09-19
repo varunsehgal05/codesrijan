@@ -397,6 +397,82 @@ app.get('/api/teams/invitations/me', requireAuth, requireRole(['student']), asyn
     const invites = await TeamInvitation.find({ receiverId: req.user.id, status: 'pending' });
     res.json(invites);
 });
+
+// SQUAD RECRUITMENT AND MANAGEMENT (EPIC 4/5)
+app.post('/api/teams/:id/request', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    try {
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team) return res.status(404).json({ message: "Squad not found." });
+        if (req.user.teamId) return res.status(400).json({ message: "You are already bound to a squad." });
+        if (team.memberIds.length >= 4) return res.status(403).json({ message: "Squad slots full." });
+
+        const existing = await TeamJoinRequest.findOne({ teamId: team.id, userId: req.user.id, status: 'pending' });
+        if (existing) return res.status(400).json({ message: "Join signature already deployed." });
+
+        const reqData = new TeamJoinRequest({
+            id: `tjr-${Date.now()}`,
+            teamId: team.id,
+            userId: req.user.id,
+            status: 'pending'
+        });
+        await reqData.save();
+        res.json(reqData);
+    } catch (e) { res.status(500).json({ error: e.message }) }
+});
+
+app.get('/api/teams/requests/me', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    if (!req.user.teamId) return res.json([]);
+    const team = await Team.findOne({ id: req.user.teamId });
+    if (!team || team.leaderId !== req.user.id) return res.json([]);
+
+    const requests = await TeamJoinRequest.find({ teamId: team.id, status: 'pending' });
+    res.json(requests);
+});
+
+app.post('/api/teams/requests/:id/:action', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    try {
+        const { action } = req.params; // 'accept' | 'reject'
+        const request = await TeamJoinRequest.findOne({ id: req.params.id, status: 'pending' });
+        if (!request) return res.status(404).json({ message: "Join signature not found." });
+
+        const team = await Team.findOne({ id: request.teamId });
+        if (!team || team.leaderId !== req.user.id) return res.status(403).json({ message: "Squad Leader clearance required." });
+
+        if (action === 'accept') {
+            if (team.memberIds.length >= 4) return res.status(403).json({ message: "Squad capacity reached." });
+
+            // Re-verify the student is still free
+            const student = await User.findOne({ id: request.userId });
+            if (student.teamId) return res.status(400).json({ message: "Operative already aligned with another squad." });
+
+            team.memberIds.push(request.userId);
+            await team.save();
+            student.teamId = team.id;
+            await student.save();
+
+            request.status = 'approved';
+        } else {
+            request.status = 'rejected';
+        }
+        await request.save();
+        res.json({ message: `Signature ${action}ed.` });
+    } catch (e) { res.status(500).json({ error: e.message }) }
+});
+
+app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team || team.leaderId !== req.user.id) return res.status(403).json({ message: "Squad Leader clearance required." });
+        if (team.leaderId === userId) return res.status(403).json({ message: "System Error: Cannot purge designated Leader." });
+
+        team.memberIds = team.memberIds.filter(id => id !== userId);
+        await team.save();
+        await User.findOneAndUpdate({ id: userId }, { teamId: null });
+
+        res.json({ message: "Operative purged from squad." });
+    } catch (e) { res.status(500).json({ error: e.message }) }
+});
 // SUBMISSIONS & WORKSPACE
 app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async (req, res) => {
     const { problemId } = req.body;

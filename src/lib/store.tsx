@@ -34,8 +34,9 @@ export interface Team {
     repositoryUrl?: string;
     demoUrl?: string;
     isSubmitted?: boolean;
-    members: string[]; // array of user IDs
-}
+    members?: string[]; // Legacy compatibility 
+    memberIds: string[]; // Native MongoDB property
+    description?: string;
 
 export interface Problem {
     id: string;

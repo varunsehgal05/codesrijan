@@ -59,7 +59,22 @@ function RecruitmentMatrix() {
       await refetchData();
       navigate({ to: "/dashboard" });
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRequestJoin = async (teamId: string) => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/${teamId}/request`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("Join signature transmitted! Await Squad Leader approval.");
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to transmit request.");
     } finally {
       setLoading(false);
     }
@@ -139,8 +154,8 @@ function RecruitmentMatrix() {
                       <p className="font-body-md text-ink-black italic line-clamp-2 min-h-[48px]">
                         {team.description || "Deploying custom tech stack for massive disruption."}
                       </p>
-                      <button onClick={() => { setActiveTab('join'); setErrorMsg('Enter Squad Code below to transmit join signature.'); }} className="mt-4 w-full bg-electric-blue text-pure-white brutal-border py-2 font-button-text hover:bg-stark-black transition-colors" disabled={hasSquad}>
-                        Request Join Code
+                      <button onClick={() => handleRequestJoin(team.id)} className="mt-4 w-full bg-electric-blue text-pure-white brutal-border py-2 font-button-text hover:bg-stark-black transition-colors" disabled={hasSquad || loading}>
+                        Transmit Join Signature
                       </button>
                     </article>
                   ))
