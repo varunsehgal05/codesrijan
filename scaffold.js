@@ -1,9 +1,9 @@
-const fs = require('fs');
-const routes = ['hackathons', 'teams', 'problems', 'submissions', 'judges', 'mentors', 'announcements', 'leaderboard', 'certificates', 'recruitment', 'support', 'sponsors', 'gallery', 'analytics', 'logs', 'settings'];
+import fs from 'fs';
+const routes = ['teams', 'problems', 'submissions', 'judges', 'mentors', 'announcements', 'leaderboard', 'certificates', 'recruitment', 'support', 'sponsors', 'gallery', 'analytics', 'logs', 'settings'];
 
 routes.forEach(route => {
-    const componentName = 'Admin' + route.charAt(0).toUpperCase() + route.slice(1);
-    const content = `import { createFileRoute } from '@tanstack/react-router';
+  const componentName = 'Admin' + route.charAt(0).toUpperCase() + route.slice(1);
+  const content = `import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/admin/${route}')({
   component: ${componentName}Component,
@@ -20,13 +20,13 @@ function ${componentName}Component() {
             </h2>
         </div>
         <p className="font-body-md text-gray-300">
-          [SYSTEM COMMAND]: The Admin ${route.toUpperCase()} control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural MongoDB integration.
+          [SYSTEM COMMAND]: The Admin ${route.toUpperCase()} control module is currently being scaffolded under the Phase 4 Mega-Spec architecture. Pending structural Database integration.
         </p>
       </div>
     </div>
   )
 }
 `;
-    fs.writeFileSync(`src/routes/admin.${route}.tsx`, content);
+  fs.writeFileSync(`src/routes/admin.${route}.tsx`, content);
 });
 console.log('Routes scaffolded successfully!');

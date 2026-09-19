@@ -42,9 +42,24 @@ import { Route as TeamRouteImport } from './routes/team'
 import { Route as TimelineRouteImport } from './routes/timeline'
 import { Route as WorkspaceRouteImport } from './routes/workspace'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
+import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminCertificatesRouteImport } from './routes/admin.certificates'
 import { Route as AdminEvaluationsRouteImport } from './routes/admin.evaluations'
+import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminHackathonsRouteImport } from './routes/admin.hackathons'
+import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
+import { Route as AdminLeaderboardRouteImport } from './routes/admin.leaderboard'
+import { Route as AdminLogsRouteImport } from './routes/admin.logs'
+import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
+import { Route as AdminProblemsRouteImport } from './routes/admin.problems'
+import { Route as AdminRecruitmentRouteImport } from './routes/admin.recruitment'
 import { Route as AdminScheduleRouteImport } from './routes/admin.schedule'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminSponsorsRouteImport } from './routes/admin.sponsors'
+import { Route as AdminSubmissionsRouteImport } from './routes/admin.submissions'
+import { Route as AdminSupportRouteImport } from './routes/admin.support'
+import { Route as AdminTeamsRouteImport } from './routes/admin.teams'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthOtpRouteImport } from './routes/auth.otp'
@@ -218,9 +233,29 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCertificatesRoute = AdminCertificatesRouteImport.update({
+  id: '/certificates',
+  path: '/certificates',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminEvaluationsRoute = AdminEvaluationsRouteImport.update({
   id: '/evaluations',
   path: '/evaluations',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminGalleryRoute = AdminGalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminHackathonsRoute = AdminHackathonsRouteImport.update({
@@ -228,9 +263,64 @@ const AdminHackathonsRoute = AdminHackathonsRouteImport.update({
   path: '/hackathons',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminJudgesRoute = AdminJudgesRouteImport.update({
+  id: '/judges',
+  path: '/judges',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLeaderboardRoute = AdminLeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminLogsRoute = AdminLogsRouteImport.update({
+  id: '/logs',
+  path: '/logs',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminMentorsRoute = AdminMentorsRouteImport.update({
+  id: '/mentors',
+  path: '/mentors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminProblemsRoute = AdminProblemsRouteImport.update({
+  id: '/problems',
+  path: '/problems',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRecruitmentRoute = AdminRecruitmentRouteImport.update({
+  id: '/recruitment',
+  path: '/recruitment',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminScheduleRoute = AdminScheduleRouteImport.update({
   id: '/schedule',
   path: '/schedule',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSponsorsRoute = AdminSponsorsRouteImport.update({
+  id: '/sponsors',
+  path: '/sponsors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubmissionsRoute = AdminSubmissionsRouteImport.update({
+  id: '/submissions',
+  path: '/submissions',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSupportRoute = AdminSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminTeamsRoute = AdminTeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
@@ -302,9 +392,24 @@ export interface FileRoutesByFullPath {
   '/team': typeof TeamRoute
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/certificates': typeof AdminCertificatesRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sponsors': typeof AdminSponsorsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/teams': typeof AdminTeamsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
@@ -346,9 +451,24 @@ export interface FileRoutesByTo {
   '/team': typeof TeamRoute
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/certificates': typeof AdminCertificatesRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sponsors': typeof AdminSponsorsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/teams': typeof AdminTeamsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
@@ -392,9 +512,24 @@ export interface FileRoutesById {
   '/team': typeof TeamRoute
   '/timeline': typeof TimelineRoute
   '/workspace': typeof WorkspaceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/certificates': typeof AdminCertificatesRoute
   '/admin/evaluations': typeof AdminEvaluationsRoute
+  '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/judges': typeof AdminJudgesRoute
+  '/admin/leaderboard': typeof AdminLeaderboardRoute
+  '/admin/logs': typeof AdminLogsRoute
+  '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/sponsors': typeof AdminSponsorsRoute
+  '/admin/submissions': typeof AdminSubmissionsRoute
+  '/admin/support': typeof AdminSupportRoute
+  '/admin/teams': typeof AdminTeamsRoute
   '/admin/users': typeof AdminUsersRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
   '/auth/otp': typeof AuthOtpRoute
@@ -439,9 +574,24 @@ export interface FileRouteTypes {
     | '/team'
     | '/timeline'
     | '/workspace'
+    | '/admin/analytics'
+    | '/admin/announcements'
+    | '/admin/certificates'
     | '/admin/evaluations'
+    | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/judges'
+    | '/admin/leaderboard'
+    | '/admin/logs'
+    | '/admin/mentors'
+    | '/admin/problems'
+    | '/admin/recruitment'
     | '/admin/schedule'
+    | '/admin/settings'
+    | '/admin/sponsors'
+    | '/admin/submissions'
+    | '/admin/support'
+    | '/admin/teams'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/otp'
@@ -483,9 +633,24 @@ export interface FileRouteTypes {
     | '/team'
     | '/timeline'
     | '/workspace'
+    | '/admin/analytics'
+    | '/admin/announcements'
+    | '/admin/certificates'
     | '/admin/evaluations'
+    | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/judges'
+    | '/admin/leaderboard'
+    | '/admin/logs'
+    | '/admin/mentors'
+    | '/admin/problems'
+    | '/admin/recruitment'
     | '/admin/schedule'
+    | '/admin/settings'
+    | '/admin/sponsors'
+    | '/admin/submissions'
+    | '/admin/support'
+    | '/admin/teams'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/otp'
@@ -528,9 +693,24 @@ export interface FileRouteTypes {
     | '/team'
     | '/timeline'
     | '/workspace'
+    | '/admin/analytics'
+    | '/admin/announcements'
+    | '/admin/certificates'
     | '/admin/evaluations'
+    | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/judges'
+    | '/admin/leaderboard'
+    | '/admin/logs'
+    | '/admin/mentors'
+    | '/admin/problems'
+    | '/admin/recruitment'
     | '/admin/schedule'
+    | '/admin/settings'
+    | '/admin/sponsors'
+    | '/admin/submissions'
+    | '/admin/support'
+    | '/admin/teams'
     | '/admin/users'
     | '/auth/forgot-password'
     | '/auth/otp'
@@ -814,11 +994,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/announcements': {
+      id: '/admin/announcements'
+      path: '/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AdminAnnouncementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/certificates': {
+      id: '/admin/certificates'
+      path: '/certificates'
+      fullPath: '/admin/certificates'
+      preLoaderRoute: typeof AdminCertificatesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/evaluations': {
       id: '/admin/evaluations'
       path: '/evaluations'
       fullPath: '/admin/evaluations'
       preLoaderRoute: typeof AdminEvaluationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/gallery': {
+      id: '/admin/gallery'
+      path: '/gallery'
+      fullPath: '/admin/gallery'
+      preLoaderRoute: typeof AdminGalleryRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/hackathons': {
@@ -828,11 +1036,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHackathonsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/judges': {
+      id: '/admin/judges'
+      path: '/judges'
+      fullPath: '/admin/judges'
+      preLoaderRoute: typeof AdminJudgesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/leaderboard': {
+      id: '/admin/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/admin/leaderboard'
+      preLoaderRoute: typeof AdminLeaderboardRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/logs': {
+      id: '/admin/logs'
+      path: '/logs'
+      fullPath: '/admin/logs'
+      preLoaderRoute: typeof AdminLogsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/mentors': {
+      id: '/admin/mentors'
+      path: '/mentors'
+      fullPath: '/admin/mentors'
+      preLoaderRoute: typeof AdminMentorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/problems': {
+      id: '/admin/problems'
+      path: '/problems'
+      fullPath: '/admin/problems'
+      preLoaderRoute: typeof AdminProblemsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/recruitment': {
+      id: '/admin/recruitment'
+      path: '/recruitment'
+      fullPath: '/admin/recruitment'
+      preLoaderRoute: typeof AdminRecruitmentRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/schedule': {
       id: '/admin/schedule'
       path: '/schedule'
       fullPath: '/admin/schedule'
       preLoaderRoute: typeof AdminScheduleRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/sponsors': {
+      id: '/admin/sponsors'
+      path: '/sponsors'
+      fullPath: '/admin/sponsors'
+      preLoaderRoute: typeof AdminSponsorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/submissions': {
+      id: '/admin/submissions'
+      path: '/submissions'
+      fullPath: '/admin/submissions'
+      preLoaderRoute: typeof AdminSubmissionsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/support': {
+      id: '/admin/support'
+      path: '/support'
+      fullPath: '/admin/support'
+      preLoaderRoute: typeof AdminSupportRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/teams': {
+      id: '/admin/teams'
+      path: '/teams'
+      fullPath: '/admin/teams'
+      preLoaderRoute: typeof AdminTeamsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/users': {
@@ -900,17 +1185,47 @@ const AdminHackathonsRouteWithChildren = AdminHackathonsRoute._addFileChildren(
 )
 
 interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
+  AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
+  AdminCertificatesRoute: typeof AdminCertificatesRoute
   AdminEvaluationsRoute: typeof AdminEvaluationsRoute
+  AdminGalleryRoute: typeof AdminGalleryRoute
   AdminHackathonsRoute: typeof AdminHackathonsRouteWithChildren
+  AdminJudgesRoute: typeof AdminJudgesRoute
+  AdminLeaderboardRoute: typeof AdminLeaderboardRoute
+  AdminLogsRoute: typeof AdminLogsRoute
+  AdminMentorsRoute: typeof AdminMentorsRoute
+  AdminProblemsRoute: typeof AdminProblemsRoute
+  AdminRecruitmentRoute: typeof AdminRecruitmentRoute
   AdminScheduleRoute: typeof AdminScheduleRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminSponsorsRoute: typeof AdminSponsorsRoute
+  AdminSubmissionsRoute: typeof AdminSubmissionsRoute
+  AdminSupportRoute: typeof AdminSupportRoute
+  AdminTeamsRoute: typeof AdminTeamsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
+  AdminAnnouncementsRoute: AdminAnnouncementsRoute,
+  AdminCertificatesRoute: AdminCertificatesRoute,
   AdminEvaluationsRoute: AdminEvaluationsRoute,
+  AdminGalleryRoute: AdminGalleryRoute,
   AdminHackathonsRoute: AdminHackathonsRouteWithChildren,
+  AdminJudgesRoute: AdminJudgesRoute,
+  AdminLeaderboardRoute: AdminLeaderboardRoute,
+  AdminLogsRoute: AdminLogsRoute,
+  AdminMentorsRoute: AdminMentorsRoute,
+  AdminProblemsRoute: AdminProblemsRoute,
+  AdminRecruitmentRoute: AdminRecruitmentRoute,
   AdminScheduleRoute: AdminScheduleRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminSponsorsRoute: AdminSponsorsRoute,
+  AdminSubmissionsRoute: AdminSubmissionsRoute,
+  AdminSupportRoute: AdminSupportRoute,
+  AdminTeamsRoute: AdminTeamsRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
