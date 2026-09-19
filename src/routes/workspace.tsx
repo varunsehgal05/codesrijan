@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
@@ -55,7 +55,25 @@ function Page4() {
   };
 
   if (!currentUser) return <div className="p-8 text-center bg-black text-white h-screen">Please login first.</div>;
-  if (!currentTeam) return <div className="p-8 text-center bg-black text-white h-screen">Please create or join a team first from the Team Hub! <a href="/team" className="text-electric-blue underline ml-2">Go to Team Hub</a></div>;
+
+  if (!currentTeam) {
+    return (
+      <div className="min-h-screen bg-stark-black p-8 flex items-center justify-center bg-pattern">
+        <div className="bg-electric-blue p-10 brutal-border brutal-shadow-lg max-w-2xl w-full text-center flex flex-col items-center gap-6 relative z-10 overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-pure-white opacity-10 transform rotate-45 translate-x-16 -translate-y-16"></div>
+          <span className="material-symbols-outlined text-6xl text-pure-white mb-2">group_off</span>
+          <h1 className="font-display-lg text-4xl text-pure-white uppercase">No Squad Detected</h1>
+          <p className="font-body-md text-pure-white font-bold opacity-90 tracking-widest text-sm uppercase">
+            You must align with an active team to access the central Workspace Matrix.
+          </p>
+          <Link to="/team" className="mt-4 px-8 py-4 bg-pure-white text-stark-black font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-1 transition-transform uppercase flex items-center gap-2 group">
+            <span className="material-symbols-outlined font-bold transition-transform group-hover:rotate-12">group_add</span>
+            ACCESS TEAM HUB
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-on-background">

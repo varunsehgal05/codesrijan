@@ -200,6 +200,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const { user: u, token } = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_auth_token", token);
+            socket.emit('authenticate', res.data.token);
             return u;
         } catch (e: any) {
             console.error("Login Error:", e);

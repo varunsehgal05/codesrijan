@@ -20,8 +20,9 @@ function LoginPage() {
         if (!email) return;
 
         try {
-            await login(email, password);
-            navigate({ to: "/workspace" });
+            const user = await login(email, password);
+            if (user.role === 'admin') navigate({ to: "/admin" });
+            else navigate({ to: "/workspace" });
         } catch (err: any) {
             try {
                 const parsed = JSON.parse(err.message);

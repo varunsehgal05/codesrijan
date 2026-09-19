@@ -86,10 +86,17 @@ app.post('/api/auth/register', async (req, res) => {
         await verification.save();
 
         // Dispatch Verification Email
-        await sendVerificationEmail(normalizedEmail, code);
-        console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
-
-        res.json({ message: "Account created. Verification required.", userId: user.id });
+        try {
+            await sendVerificationEmail(normalizedEmail, code);
+            console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
+            res.json({ message: "Account created. Verification required.", userId: user.id });
+        } catch (mailError) {
+            console.log(`[SMTP FAULT] Transport failed or unconfigured. Auto-verifying fallback activated for ${normalizedEmail}.`, mailError.message);
+            user.accountStatus = 'active';
+            user.emailVerified = true;
+            await user.save();
+            res.json({ message: "Account created and instantly verified (SMTP offline threshold reached).", userId: user.id });
+        }
     } catch (e) {
         res.status(500).json({ message: "Registration failed", error: e.message });
     }
@@ -135,7 +142,15 @@ app.post('/api/auth/login', async (req, res) => {
         if (!user) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
 
         if (user.accountStatus === 'pending_verification') {
-            return res.status(401).json({ message: "Please verify your email before logging in.", needsVerification: true, userId: user.id });
+            // Hotfix: Auto-verify trapped accounts if the SMTP node was offline previously
+            if (!process.env.EMAIL_USER) {
+                console.log(`[SYSTEM RECOVERY] Auto-activating structurally trapped identity: ${normalizedEmail}`);
+                user.accountStatus = 'active';
+                user.emailVerified = true;
+                await user.save();
+            } else {
+                return res.status(401).json({ message: "Please verify your email before logging in.", needsVerification: true, userId: user.id });
+            }
         }
         if (user.accountStatus === 'suspended') return res.status(403).json({ message: "Your CodeSrijan account is currently suspended. Please contact support." });
         if (user.accountStatus === 'disabled') return res.status(403).json({ message: "This CodeSrijan account is currently disabled." });
