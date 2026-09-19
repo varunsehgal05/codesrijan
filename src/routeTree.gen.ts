@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
+import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as ChallengeRouteImport } from './routes/challenge'
 import { Route as CodeOfConductRouteImport } from './routes/code-of-conduct'
@@ -91,6 +92,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
 const AiAssistantRoute = AiAssistantRouteImport.update({
   id: '/ai-assistant',
   path: '/ai-assistant',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AnnouncementsRoute = AnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CertificatesRoute = CertificatesRouteImport.update({
@@ -365,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/admin-login': typeof AdminLoginRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/admin-login': typeof AdminLoginRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
@@ -485,6 +493,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/admin-login': typeof AdminLoginRoute
   '/ai-assistant': typeof AiAssistantRoute
+  '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
   '/code-of-conduct': typeof CodeOfConductRoute
@@ -547,6 +556,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-login'
     | '/ai-assistant'
+    | '/announcements'
     | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
@@ -606,6 +616,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/admin-login'
     | '/ai-assistant'
+    | '/announcements'
     | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
@@ -666,6 +677,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-login'
     | '/ai-assistant'
+    | '/announcements'
     | '/certificates'
     | '/challenge'
     | '/code-of-conduct'
@@ -727,6 +739,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AdminLoginRoute: typeof AdminLoginRoute
   AiAssistantRoute: typeof AiAssistantRoute
+  AnnouncementsRoute: typeof AnnouncementsRoute
   CertificatesRoute: typeof CertificatesRoute
   ChallengeRoute: typeof ChallengeRoute
   CodeOfConductRoute: typeof CodeOfConductRoute
@@ -796,6 +809,13 @@ declare module '@tanstack/react-router' {
       path: '/ai-assistant'
       fullPath: '/ai-assistant'
       preLoaderRoute: typeof AiAssistantRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/announcements': {
+      id: '/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AnnouncementsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/certificates': {
@@ -1238,6 +1258,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AdminLoginRoute: AdminLoginRoute,
   AiAssistantRoute: AiAssistantRoute,
+  AnnouncementsRoute: AnnouncementsRoute,
   CertificatesRoute: CertificatesRoute,
   ChallengeRoute: ChallengeRoute,
   CodeOfConductRoute: CodeOfConductRoute,

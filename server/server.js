@@ -638,6 +638,35 @@ app.get('/api/public/stats', async (req, res) => {
     });
 });
 
+// ANNOUNCEMENTS
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.json(announcements);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch announcements." });
+    }
+});
+
+app.post('/api/announcements', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { title, content, type, targetAudience } = req.body;
+        const newAnn = new Announcement({
+            id: `ann-${Date.now()}`,
+            title,
+            content,
+            type: type || 'announcement',
+            targetAudience: targetAudience || 'everyone',
+            publishedBy: req.user.id,
+            isPinned: false
+        });
+        await newAnn.save();
+        res.json(newAnn);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to broadcast announcement." });
+    }
+});
+
 // SRIJANBOT AI CHAT ENGINE (Rule-based NLP Simulator)
 app.post('/api/ai/chat', async (req, res) => {
     try {

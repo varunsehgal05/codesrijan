@@ -15,6 +15,7 @@ export function Navbar() {
                         <>
                             <Link to="/problems" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Problems</Link>
                             <Link to="/recruitment" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Recruitment</Link>
+                            <Link to="/announcements" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Announcements</Link>
                             <Link to="/leaderboard" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Leaderboard</Link>
                         </>
                     ) : (
