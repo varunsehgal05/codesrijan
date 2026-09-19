@@ -336,8 +336,8 @@ app.get('/api/teams', requireAuth, async (req, res) => {
     const teams = await Team.find();
     res.json(teams);
 });
-app.post('/api/teams', requireAuth, requireRole(['student']), async (req, res) => {
-    // Only logged-in students can create teams, and they become the leader automatically.
+app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    // Only logged-in students (and admins for testing) can create teams, and they become the leader automatically.
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
     }
@@ -351,7 +351,7 @@ app.post('/api/teams', requireAuth, requireRole(['student']), async (req, res) =
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: team.id });
     res.json(team);
 });
-app.post('/api/teams/join', requireAuth, requireRole(['student']), async (req, res) => {
+app.post('/api/teams/join', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const { teamCode } = req.body;
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
