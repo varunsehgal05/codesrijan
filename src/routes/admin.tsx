@@ -1,5 +1,5 @@
-import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
-
+import { createFileRoute, Outlet, Link, useRouterState, Navigate } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
 export const Route = createFileRoute("/admin")({
     component: AdminLayout,
 });
@@ -28,6 +28,20 @@ const ADMIN_LINKS = [
 
 function AdminLayout() {
     const activeRoute = useRouterState({ select: (s) => s.location.pathname });
+    const { currentUser, isLoaded } = useAppStore();
+
+    if (!isLoaded) {
+        return (
+            <div className="min-h-screen bg-stark-black flex flex-col items-center justify-center p-8">
+                <div className="w-16 h-16 border-4 border-pure-white border-t-error rounded-full animate-spin mb-4"></div>
+                <h1 className="font-display-lg text-error text-2xl uppercase tracking-widest animate-pulse">VERIFYING ADMIN CLEARANCE...</h1>
+            </div>
+        );
+    }
+
+    if (!currentUser || currentUser.role !== 'admin') {
+        return <Navigate to="/dashboard" />;
+    }
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row font-body-md overflow-hidden">
