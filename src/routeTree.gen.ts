@@ -66,6 +66,7 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-pas
 import { Route as AuthOtpRouteImport } from './routes/auth.otp'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
+import { Route as AdminHackathonsIdRouteImport } from './routes/admin.hackathons.$id'
 import { Route as AdminHackathonsCreateRouteImport } from './routes/admin.hackathons.create'
 import { Route as HackathonsIdRegisterRouteImport } from './routes/hackathons.$id.register'
 
@@ -354,6 +355,11 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminHackathonsIdRoute = AdminHackathonsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminHackathonsRoute,
+} as any)
 const AdminHackathonsCreateRoute = AdminHackathonsCreateRouteImport.update({
   id: '/create',
   path: '/create',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
@@ -483,6 +490,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
@@ -545,6 +553,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
@@ -608,6 +617,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/hackathons/$id/register'
   fileRoutesByTo: FileRoutesByTo
@@ -668,6 +678,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin'
+    | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/hackathons/$id/register'
   id:
@@ -729,6 +740,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/hackathons/$id/register'
   fileRoutesById: FileRoutesById
@@ -1175,6 +1187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/hackathons/$id': {
+      id: '/admin/hackathons/$id'
+      path: '/$id'
+      fullPath: '/admin/hackathons/$id'
+      preLoaderRoute: typeof AdminHackathonsIdRouteImport
+      parentRoute: typeof AdminHackathonsRoute
+    }
     '/admin/hackathons/create': {
       id: '/admin/hackathons/create'
       path: '/create'
@@ -1193,10 +1212,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminHackathonsRouteChildren {
+  AdminHackathonsIdRoute: typeof AdminHackathonsIdRoute
   AdminHackathonsCreateRoute: typeof AdminHackathonsCreateRoute
 }
 
 const AdminHackathonsRouteChildren: AdminHackathonsRouteChildren = {
+  AdminHackathonsIdRoute: AdminHackathonsIdRoute,
   AdminHackathonsCreateRoute: AdminHackathonsCreateRoute,
 }
 

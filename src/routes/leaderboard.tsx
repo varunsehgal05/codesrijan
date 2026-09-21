@@ -30,7 +30,9 @@ function LeaderboardPage() {
         // Compute scores
         const scored = teams.map((team: any) => {
           const teamEvals = evals.filter((e: any) => e.projectId === team.id || e.teamId === team.id);
-          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);\n          const isScored = teamEvals.length > 0;\n          return { ...team, totalScore, isScored };
+          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
+          const isScored = teamEvals.length > 0;
+          return { ...team, totalScore, isScored };
         }).sort((a: any, b: any) => b.totalScore - a.totalScore); // Show all active squads!
 
         setRankedTeams(scored);
