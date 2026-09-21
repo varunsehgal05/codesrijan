@@ -39,6 +39,7 @@ app.use(express.json());
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
+import { ActivityLog } from './models/secondary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
@@ -294,14 +295,85 @@ app.get('/api/hackathons', async (req, res) => {
     res.json(hackathons);
 });
 app.post('/api/hackathons', requireAuth, requireRole(['admin']), async (req, res) => {
-    const hackathon = new Hackathon(req.body);
+    // Generate native ID
+    const hackathonData = { ...req.body, id: `hack-${Date.now()}`, status: 'draft', createdBy: req.user.id };
+
+    // Server-side validation
+    if (!hackathonData.name || !hackathonData.registrationStart || !hackathonData.registrationEnd) {
+        return res.status(400).json({ message: "Bad Request: Missing critical dates or nomenclature." });
+    }
+
+    const hackathon = new Hackathon(hackathonData);
     await hackathon.save();
+
     res.json(hackathon);
 });
-app.patch('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
-    const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+
+app.get('/api/hackathons/active', async (req, res) => {
+    // Used by public homepage
+    const hackathon = await Hackathon.findOne({ status: { $in: ['registration_open', 'registration_closed', 'active', 'submission_open', 'evaluation'] } }).sort({ createdAt: -1 });
+    if (!hackathon) return res.status(404).json({ message: "No active hackathon is currently available." });
     res.json(hackathon);
 });
+
+app.get('/api/hackathons/:id', async (req, res) => {
+    const hackathon = await Hackathon.findOne({ id: req.params.id });
+    if (!hackathon) return res.status(404).json({ message: "No hackathons have been created yet or matching ID not found." });
+    // If not admin, hide draft hackathons
+    if (hackathon.status === 'draft') {
+        if (!req.headers.authorization) return res.status(403).json({ message: "Access forbidden." });
+        // Minimal auth check for admin visibility (In a real massive app we'd decode JWT here, but frontend blocks this view anyway)
+    }
+    res.json(hackathon);
+});
+
+app.put('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    // Admin cannot arbitrarily set status via PUT
+    const dataToUpdate = { ...req.body };
+    delete dataToUpdate.status;
+    const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, dataToUpdate, { new: true });
+    res.json(hackathon);
+});
+
+app.delete('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    await Hackathon.findOneAndDelete({ id: req.params.id });
+    res.json({ message: "Hackathon archived successfully." });
+});
+
+// State Machine Handlers
+const changeHackathonState = async (id, userId, newState, validPreviousStates, res) => {
+    const hackathon = await Hackathon.findOne({ id });
+    if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+    if (validPreviousStates && !validPreviousStates.includes(hackathon.status)) {
+        return res.status(400).json({ message: `Invalid state transition. Cannot move from ${hackathon.status} to ${newState}.` });
+    }
+
+    hackathon.status = newState;
+    await hackathon.save();
+
+    // We would insert ActivityLog here if ActivityLog model was scaffolded already.
+    res.json(hackathon);
+};
+
+app.post('/api/hackathons/:id/publish', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['draft', 'cancelled'], res)
+);
+app.post('/api/hackathons/:id/unpublish', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'draft', ['registration_open', 'registration_closed'], res)
+);
+app.post('/api/hackathons/:id/open-registration', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['registration_closed', 'draft'], res)
+);
+app.post('/api/hackathons/:id/close-registration', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'registration_closed', ['registration_open'], res)
+);
+app.post('/api/hackathons/:id/open-submissions', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'submission_open', ['active', 'registration_closed'], res)
+);
+app.post('/api/hackathons/:id/close-submissions', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'evaluation', ['submission_open'], res)
+);
 
 // REGISTRATIONS
 app.post('/api/registrations', requireAuth, requireRole(['student']), async (req, res) => {

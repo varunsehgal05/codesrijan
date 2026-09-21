@@ -18,30 +18,42 @@ function CreateHackathonPage() {
     const [name, setName] = useState("");
     const [slug, setSlug] = useState("");
     const [theme, setTheme] = useState("");
+    const [venue, setVenue] = useState("");
     const [rules, setRules] = useState("");
     const [eligibility, setEligibility] = useState("");
     const [teamSizeMin, setTeamSizeMin] = useState(1);
     const [teamSizeMax, setTeamSizeMax] = useState(4);
+
+    // Dates
+    const [registrationStart, setRegistrationStart] = useState("");
+    const [registrationEnd, setRegistrationEnd] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [submissionDeadline, setSubmissionDeadline] = useState("");
+    const [evaluationDeadline, setEvaluationDeadline] = useState("");
+    const [resultDate, setResultDate] = useState("");
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await axios.post(`${API_URL}/hackathons`, {
-                id: `evt-${Date.now()}`,
                 name,
                 slug,
-                description: rules,
+                description: rules, // Simple mapping for now
                 theme,
-                rules,
-                eligibility,
+                venue,
+                hackathonRules: rules,
+                eligibilityRules: eligibility,
                 teamSizeMin,
                 teamSizeMax,
+                registrationStart,
+                registrationEnd,
                 startDate,
                 endDate,
-                status: 'registration_open' // Start directly in registration Open 
-            });
+                submissionDeadline,
+                evaluationDeadline,
+                resultDate
+            }, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
             await refetchData();
             setStatusMsg("OK: Hackathon event matrix generated successfully.");
             setTimeout(() => navigate({ to: "/admin" }), 2000);
@@ -101,12 +113,38 @@ function CreateHackathonPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="flex flex-col gap-2">
-                            <label className="font-label-bold uppercase text-ink-black">Ignition Date (Start)</label>
+                            <label className="font-label-bold uppercase text-ink-black">Registration Start</label>
+                            <input value={registrationStart} onChange={e => setRegistrationStart(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase text-ink-black">Registration End</label>
+                            <input value={registrationEnd} onChange={e => setRegistrationEnd(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase text-ink-black">Hackathon Start</label>
                             <input value={startDate} onChange={e => setStartDate(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
                         </div>
                         <div className="flex flex-col gap-2">
-                            <label className="font-label-bold uppercase text-ink-black">Termination Date (End)</label>
+                            <label className="font-label-bold uppercase text-ink-black">Hackathon End</label>
                             <input value={endDate} onChange={e => setEndDate(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase text-ink-black">Submission Deadline</label>
+                            <input value={submissionDeadline} onChange={e => setSubmissionDeadline(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase text-ink-black">Evaluation Deadline</label>
+                            <input value={evaluationDeadline} onChange={e => setEvaluationDeadline(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase text-ink-black">Results Date</label>
+                            <input value={resultDate} onChange={e => setResultDate(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
                         </div>
                     </div>
 

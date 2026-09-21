@@ -22,16 +22,51 @@ function Page14() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [timeLeft, setTimeLeft] = useState("Loading...");
   const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
   useEffect(() => {
+    // 1. Fetch Global Numbers
     axios.get(`${API_URL}/public/stats`)
       .then(res => {
-        if (res.data) setStats(res.data);
+        if (res.data) setStats(prev => ({ ...prev, ...res.data }));
+      }).catch(err => console.log('Telemetry fetch failed.'));
+
+    // 2. Fetch Active CodeSrijan Event
+    axios.get(`${API_URL}/hackathons/active`)
+      .then(res => {
+        if (res.data) setStats(prev => ({ ...prev, activeHackathon: res.data }));
         setLoading(false);
       })
-      .catch(err => setLoading(false));
+      .catch(err => {
+        console.error("Public API failed to return live event.");
+        setLoading(false);
+      });
   }, [API_URL]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (stats.activeHackathon && stats.activeHackathon.registrationEnd) {
+      timer = setInterval(() => {
+        const end = new Date(stats.activeHackathon.registrationEnd).getTime();
+        const now = new Date().getTime();
+        const dis = end - now;
+
+        if (dis < 0) {
+          setTimeLeft("ACCESS CONCLUDED");
+        } else {
+          const d = Math.floor(dis / (1000 * 60 * 60 * 24));
+          const h = Math.floor((dis % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const m = Math.floor((dis % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((dis % (1000 * 60)) / 1000);
+          setTimeLeft(`${d}d ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+        }
+      }, 1000);
+    } else {
+      setTimeLeft("--:--:--");
+    }
+    return () => clearInterval(timer);
+  }, [stats.activeHackathon]);
 
   return (
     <div className="min-h-screen bg-background text-on-background">
@@ -66,8 +101,12 @@ function Page14() {
             <div className="relative bg-pure-white p-card-padding brutal-border brutal-shadow-lg transform -rotate-3 z-10 h-full flex flex-col justify-between min-h-[400px]">
               <div className="flex justify-between items-start border-b-2 border-stark-black pb-4 mb-4">
                 <div>
-                  <p className="font-label-bold text-label-bold text-on-surface-variant">Next Event In</p>
-                  <h3 className="font-headline-lg text-headline-lg text-deep-navy">14:23:45</h3>
+                  <p className="font-label-bold text-label-bold text-on-surface-variant">
+                    {stats.activeHackathon ? 'Registration Ends' : 'Next Event In'}
+                  </p>
+                  <h3 className="font-headline-lg text-headline-lg text-deep-navy">
+                    {loading ? "SEARCHING..." : timeLeft}
+                  </h3>
                 </div>
                 <span className="material-symbols-outlined text-4xl text-electric-blue">timer</span>
               </div>
@@ -75,8 +114,10 @@ function Page14() {
                 <img className="w-full h-auto max-h-[250px] object-contain" data-alt="A stylized, flat-design illustration of a diverse group of young developers working intensely around a cluttered table with laptops. The illustration uses bold black outlines and a vibrant palette of deep navy, electric blue, and crisp white to match a modern, high-energy hackathon aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAThiZ96bZmCOUnYVfaHFYmG-a3Q5QOog8xaZK_2znm1IrHVlMO_f2YYhyS5a6pk3aGFIxSG2OmmL16G9WCGfnWJA899_CMjVgBT5dpHd_OY3sqkVlaVo_6Q6KEB9ElyI-m6pO92rmtDlpdkaT2CS9vxzJdGnCGVURSL6Xhgw_NWXA65CM9FUIxCcORGwLDHu7I03rhwOQK_rEaysg4jSZ-86pgLK6_63PDtXWvA4FCCge5Uw34MKA6" />
               </div>
               <div className="mt-4 pt-4 border-t-2 border-stark-black flex justify-between items-center">
-                <span className="font-label-bold text-label-bold bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full">#CodeSrijan2026</span>
-                <span className="font-label-bold text-label-bold text-stark-black">Online &amp; Offline</span>
+                <span className="font-label-bold text-label-bold bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full">
+                  {stats.activeHackathon ? `#${stats.activeHackathon.slug}` : '#CodeSrijanOffensive'}
+                </span>
+                <span className="font-label-bold text-label-bold text-stark-black">{stats.activeHackathon?.venue || 'Online & Offline'}</span>
               </div>
             </div>
           </div>
