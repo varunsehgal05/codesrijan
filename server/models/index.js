@@ -46,9 +46,19 @@ const hackathonSchema = new mongoose.Schema({
     resultDate: Date,
     teamSizeMin: Number,
     teamSizeMax: Number,
-    status: { type: String, enum: ['draft', 'registration_open', 'registration_closed', 'active', 'submission_open', 'evaluation', 'completed', 'cancelled'] },
-    rules: String,
-    eligibility: String,
+    status: { type: String, enum: ['draft', 'registration_open', 'registration_closed', 'active', 'submission_open', 'evaluation', 'completed', 'cancelled'], default: 'draft' },
+
+    // Eligibility
+    eligibleColleges: [String],
+    eligibleBranches: [String],
+    eligibleAcademicYears: [String],
+    eligibilityRules: String,
+
+    // Detailed Rules
+    hackathonRules: String,
+    submissionRules: String,
+    codeOfConduct: String,
+
     createdBy: String
 }, { timestamps: true });
 
