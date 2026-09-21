@@ -30,15 +30,7 @@ function LeaderboardPage() {
         // Compute scores
         const scored = teams.map((team: any) => {
           const teamEvals = evals.filter((e: any) => e.projectId === team.id || e.teamId === team.id);
-          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
-          const isScored = teamEvals.length > 0;
-
-          // Apply pre-evaluation ranking heuristic if not yet officially judged
-          if (!isScored) {
-            totalScore = (team.isSubmitted ? 8000 : 2000) + ((team.name || '').length * 100);
-          }
-
-          return { ...team, totalScore, isScored };
+          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);\n          const isScored = teamEvals.length > 0;\n          return { ...team, totalScore, isScored };
         }).sort((a: any, b: any) => b.totalScore - a.totalScore); // Show all active squads!
 
         setRankedTeams(scored);
@@ -95,26 +87,33 @@ function LeaderboardPage() {
                     const isTopThree = index < 3;
                     return (
                       <tr key={team.id} className={`border-b-2 border-ink-black transition-colors hover:bg-surface-container ${index === 0 ? "bg-surface-bright hover:bg-surface-variant" : ""}`}>
-                        <td className={`py-6 px-6 font-headline-md ${index === 0 ? 'text-electric-blue' : 'text-ink-black'}`}>
-                          {(index + 1).toString().padStart(2, '0')}
+                        <td className={`py-6 px-6 font-headline-md ${index === 0 && team.isScored ? 'text-electric-blue' : 'text-ink-black'}`}>
+                          {team.isScored ? (index + 1).toString().padStart(2, '0') : '-'}
                         </td>
                         <td className="py-6 px-6">
                           <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 brutal-border flex items-center justify-center ${index === 0 ? 'bg-electric-blue text-on-primary' : 'bg-surface-bright'}`}>
-                              <span className="material-symbols-outlined" data-icon="terminal">{index === 0 ? 'emoji_events' : 'terminal'}</span>
+                            <div className={`w-10 h-10 brutal-border flex items-center justify-center ${index === 0 && team.isScored ? 'bg-electric-blue text-on-primary' : 'bg-surface-bright'}`}>
+                              <span className="material-symbols-outlined" data-icon="terminal">{index === 0 && team.isScored ? 'emoji_events' : 'terminal'}</span>
                             </div>
                             <span className="font-button-text text-ink-black">{team.name}</span>
                           </div>
                         </td>
                         <td className="py-6 px-6 font-button-text text-right text-ink-black">
-                          {/* @ts-ignore */}
-                          {team.totalScore.toLocaleString()}
+                          {team.isScored ? (
+                            <span className="bg-electric-blue text-pure-white px-3 py-1 brutal-border">{team.totalScore.toLocaleString()}</span>
+                          ) : (
+                            <span className="text-surface-variant text-sm font-label-bold uppercase tracking-wider">Pending Evaluation</span>
+                          )}
                         </td>
                         <td className="py-6 px-6 text-center">
-                          {index === 0 ? (
-                            <span className="material-symbols-outlined text-electric-blue font-bold">keyboard_double_arrow_up</span>
+                          {team.isScored ? (
+                            index === 0 ? (
+                              <span className="material-symbols-outlined text-electric-blue font-bold">keyboard_double_arrow_up</span>
+                            ) : (
+                              <span className="material-symbols-outlined text-ink-black">horizontal_rule</span>
+                            )
                           ) : (
-                            <span className="material-symbols-outlined text-ink-black">horizontal_rule</span>
+                            <span className="material-symbols-outlined text-surface-variant">hourglass_empty</span>
                           )}
                         </td>
                       </tr>
