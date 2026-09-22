@@ -13,6 +13,7 @@ function Page6() {
   const [joinTeamId, setJoinTeamId] = useState("");
 
   const [invitations, setInvitations] = useState<any[]>([]);
+  const [joinRequests, setJoinRequests] = useState<any[]>([]);
 
   const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
@@ -24,6 +25,14 @@ function Page6() {
       })
         .then(res => setInvitations(res.data))
         .catch(err => console.error("Could not fetch invites", err));
+    }
+    if (currentUser?.role === 'student' && currentUser.teamId) {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      axios.get(`${API_URL}/teams/requests/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => setJoinRequests(res.data))
+        .catch(err => console.error("Could not fetch requests", err));
     }
   }, [currentUser, API_URL]);
 
@@ -54,6 +63,19 @@ function Page6() {
     } catch (err) {
       console.error(err);
       alert("Failed to confirm invitation");
+    }
+  };
+
+  const actOnRequest = async (reqId: string, action: 'accept' | 'reject') => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/requests/${reqId}/${action}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      window.location.reload();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || `Failed to ${action} request`);
     }
   };
 
@@ -158,6 +180,29 @@ function Page6() {
                     ))}
                   </div>
                 </section>
+                {currentTeam.leaderId === currentUser.id && (
+                  <section className="bg-surface p-6 neo-brutal-card border-dashed">
+                    <h2 className="font-headline-md text-ink-black mb-4 uppercase">Pending Join Requests</h2>
+                    {joinRequests.length === 0 ? (
+                      <p className="font-mono text-zinc-500 uppercase text-xs">No pending requests</p>
+                    ) : (
+                      <div className="flex flex-col gap-4">
+                        {joinRequests.map(req => {
+                           const reqUser = users.find(u => u.id === req.userId);
+                           return (
+                            <div key={req.id} className="p-4 border-2 border-ink-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-2">
+                              <span className="font-label-bold text-electric-blue text-sm uppercase">Hacker: {reqUser?.name || req.userId}</span>
+                              <div className="flex gap-2 mt-2">
+                                <button onClick={() => actOnRequest(req.id, 'accept')} className="flex-1 bg-electric-blue text-black font-bold text-xs py-2 border-2 border-transparent hover:border-black transition-all">ACCEPT</button>
+                                <button onClick={() => actOnRequest(req.id, 'reject')} className="flex-1 bg-error text-white font-bold text-xs py-2 border-2 border-transparent hover:border-black transition-all">REJECT</button>
+                              </div>
+                            </div>
+                           );
+                        })}
+                      </div>
+                    )}
+                  </section>
+                )}
               </div>
 
               <div className="lg:col-span-2">

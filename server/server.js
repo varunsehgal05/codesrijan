@@ -610,19 +610,40 @@ app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), asy
 });
 
 app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (req, res) => {
-    const { receiverId } = req.body;
-    const team = await Team.findOne({ id: req.params.id });
-    if (!team || team.leaderId !== req.user.id) {
-        return res.status(403).json({ message: "Only team leaders can send invites." });
+    try {
+        const { receiverId } = req.body;
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team || team.leaderId !== req.user.id) {
+            return res.status(403).json({ message: "Only squad leaders can transmit invitations." });
+        }
+
+        const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+        const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
+        if (team.memberIds.length >= maxAllowed) {
+            return res.status(403).json({ message: `Squad capacity reached (${maxAllowed} members).` });
+        }
+
+        const receiver = await User.findOne({ id: receiverId });
+        if (!receiver) return res.status(404).json({ message: "Operative not found." });
+        if (receiver.teamId) return res.status(400).json({ message: "Operative is already aligned with a squad." });
+
+        const registration = await Registration.findOne({ userId: receiverId, hackathonId: team.hackathonId });
+        if (!registration) return res.status(400).json({ message: "Operative is not registered for this event." });
+
+        const existingInvite = await TeamInvitation.findOne({ teamId: team.id, receiverId, status: 'pending' });
+        if (existingInvite) return res.status(400).json({ message: "Invitation already dispatched." });
+
+        const invite = new TeamInvitation({
+            id: `inv-${Date.now()}`,
+            teamId: team.id,
+            senderId: req.user.id,
+            receiverId
+        });
+        await invite.save();
+        res.json(invite);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
-    const invite = new TeamInvitation({
-        id: `inv-${Date.now()}`,
-        teamId: team.id,
-        senderId: req.user.id,
-        receiverId
-    });
-    await invite.save();
-    res.json(invite);
 });
 app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['student']), async (req, res) => {
     const invite = await TeamInvitation.findOne({ id: req.params.inviteId, receiverId: req.user.id, status: 'pending' });

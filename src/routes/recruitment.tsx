@@ -13,7 +13,7 @@ export const Route = createFileRoute("/recruitment")({
 });
 
 function RecruitmentMatrix() {
-  const { currentUser, teams, refetchData } = useAppStore();
+  const { currentUser, teams, users, refetchData } = useAppStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'find' | 'join' | 'create'>('find');
   const [loading, setLoading] = useState(false);
@@ -80,7 +80,25 @@ function RecruitmentMatrix() {
     }
   };
 
+  const handleInvite = async (userId: string) => {
+    try {
+      setLoading(true);
+      setErrorMsg("");
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/${currentUser.teamId}/invite`, { receiverId: userId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("Invite dispatched to Operative.");
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to dispatch invite.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const hasSquad = !!currentUser.teamId;
+  const currentTeam = teams.find(t => t.id === currentUser.teamId);
+  const isTeamLeader = currentTeam?.leaderId === currentUser.id;
 
   return (
     <div className="min-h-screen bg-background text-on-background">
@@ -127,38 +145,69 @@ function RecruitmentMatrix() {
           </div>
         )}
 
-        {hasSquad && (
+        {hasSquad && !isTeamLeader && (
           <div className="p-6 bg-[#FFD700] text-stark-black font-label-bold uppercase brutal-border brutal-shadow mb-4">
-            ⚠ WARNING: YOU ARE ALREADY BOUND TO A SQUAD ({teams.find(t => t.id === currentUser.teamId)?.name}). CREATING OR JOINING A NEW MATRIX IS CURRENTLY LOCKED.
+            ⚠ WARNING: YOU ARE ALREADY BOUND TO A SQUAD ({currentTeam?.name}). CREATING OR JOINING A NEW MATRIX IS CURRENTLY LOCKED.
+          </div>
+        )}
+        {isTeamLeader && (
+          <div className="p-6 bg-electric-blue text-pure-white font-label-bold uppercase brutal-border brutal-shadow mb-4">
+            SQUAD LEADER ACTIVE. YOU MAY RECRUIT FREE HACKERS FROM THE MARKETPLACE.
           </div>
         )}
 
         <div className="relative">
           {activeTab === 'find' && (
             <section className="flex flex-col gap-6">
-              <h2 className="font-headline-md uppercase">Active Squad Marketplace</h2>
+              <h2 className="font-headline-md uppercase">{isTeamLeader ? "Recruit Free Hackers" : "Active Squad Marketplace"}</h2>
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {teams.filter(t => t.memberIds && t.memberIds.length < 4).length === 0 ? (
-                  <div className="col-span-full text-center bg-surface brutal-border p-12">
-                    <h2 className="font-headline-md text-ink-black uppercase">No Open Squads</h2>
-                    <p className="font-mono text-zinc-500 mt-2">All scanned teams are packed to max capacity (4 Hackers).</p>
-                  </div>
+                {isTeamLeader ? (
+                  users.filter(u => !u.teamId && u.role === 'student' && u.id !== currentUser.id).length === 0 ? (
+                    <div className="col-span-full text-center bg-surface brutal-border p-12">
+                      <h2 className="font-headline-md text-ink-black uppercase">No Free Hackers</h2>
+                      <p className="font-mono text-zinc-500 mt-2">All registered operatives are currently assigned to squads.</p>
+                    </div>
+                  ) : (
+                    users.filter(u => !u.teamId && u.role === 'student' && u.id !== currentUser.id).map(user => (
+                      <article key={user.id} className="bg-surface brutal-border brutal-shadow px-6 py-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full border-2 border-ink-black flex items-center justify-center bg-electric-blue text-white font-bold text-xl uppercase">
+                            {(user.name || "?").charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="font-headline-md uppercase text-xl truncate">{user.name}</h3>
+                            <p className="font-label-caps text-xs text-text-muted">{user.email}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => handleInvite(user.id)} className="mt-4 w-full bg-electric-blue text-pure-white brutal-border py-2 font-button-text hover:bg-stark-black transition-colors" disabled={loading}>
+                          Dispatch Invite
+                        </button>
+                      </article>
+                    ))
+                  )
                 ) : (
-                  teams.filter(t => t.memberIds && t.memberIds.length < 4).map((team) => (
-                    <article key={team.id} className="bg-surface brutal-border brutal-shadow px-6 py-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-headline-md uppercase text-2xl truncate">{team.name}</h3>
-                        <span className="bg-stark-black text-pure-white px-2 py-1 font-label-bold text-xs brutal-border">{team.memberIds.length} / 4 SLOTS</span>
-                      </div>
-                      <div className="h-0.5 w-full bg-ink-black opacity-30"></div>
-                      <p className="font-body-md text-ink-black italic line-clamp-2 min-h-[48px]">
-                        {team.description || "Deploying custom tech stack for massive disruption."}
-                      </p>
-                      <button onClick={() => handleRequestJoin(team.id)} className="mt-4 w-full bg-electric-blue text-pure-white brutal-border py-2 font-button-text hover:bg-stark-black transition-colors" disabled={hasSquad || loading}>
-                        Transmit Join Signature
-                      </button>
-                    </article>
-                  ))
+                  teams.filter(t => t.memberIds && t.memberIds.length < 4).length === 0 ? (
+                    <div className="col-span-full text-center bg-surface brutal-border p-12">
+                      <h2 className="font-headline-md text-ink-black uppercase">No Open Squads</h2>
+                      <p className="font-mono text-zinc-500 mt-2">All scanned teams are packed to max capacity (4 Hackers).</p>
+                    </div>
+                  ) : (
+                    teams.filter(t => t.memberIds && t.memberIds.length < 4).map((team) => (
+                      <article key={team.id} className="bg-surface brutal-border brutal-shadow px-6 py-6 flex flex-col gap-4 relative group hover:-translate-y-1 transition-transform">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-headline-md uppercase text-2xl truncate">{team.name}</h3>
+                          <span className="bg-stark-black text-pure-white px-2 py-1 font-label-bold text-xs brutal-border">{team.memberIds.length} / 4 SLOTS</span>
+                        </div>
+                        <div className="h-0.5 w-full bg-ink-black opacity-30"></div>
+                        <p className="font-body-md text-ink-black italic line-clamp-2 min-h-[48px]">
+                          {team.description || "Deploying custom tech stack for massive disruption."}
+                        </p>
+                        <button onClick={() => handleRequestJoin(team.id)} className="mt-4 w-full bg-electric-blue text-pure-white brutal-border py-2 font-button-text hover:bg-stark-black transition-colors" disabled={hasSquad || loading}>
+                          Transmit Join Signature
+                        </button>
+                      </article>
+                    ))
+                  )
                 )}
               </div>
             </section>
