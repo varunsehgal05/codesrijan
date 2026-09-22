@@ -11,9 +11,10 @@ function PublicAnnouncements() {
     const [loading, setLoading] = useState(true);
 
     const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
     useEffect(() => {
-        axios.get(`${API_URL}/announcements`)
+        axios.get(`${BASE}/announcements`)
             .then(res => {
                 setAnnouncements(res.data);
                 setLoading(false);

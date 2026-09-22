@@ -26,13 +26,15 @@ function AdminAnnouncements() {
     }
   }, [currentUser, navigate]);
 
+  const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setStatusMsg("");
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_URL}/announcements`,
+      await axios.post(`${BASE}/announcements`,
         { title, content, type, targetAudience },
         { headers: { Authorization: `Bearer ${token}` } }
       );

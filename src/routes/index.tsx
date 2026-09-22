@@ -27,20 +27,20 @@ function Page14() {
   const [timeLeft, setTimeLeft] = useState("Loading...");
   const [problems, setProblems] = useState<any[]>([]);
   const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
   useEffect(() => {
     // 1. Fetch Global Numbers
-    axios.get(`${API_URL}/public/stats`)
+    axios.get(`${BASE}/public/stats`)
       .then(res => {
         if (res.data) setStats(prev => ({ ...prev, ...res.data }));
       }).catch(err => console.log('Telemetry fetch failed.'));
 
     // 2. Fetch Active CodeSrijan Event
-    axios.get(`${API_URL}/hackathons/active`)
+    axios.get(`${BASE}/hackathons/active`)
       .then(res => {
         if (res.data) {
           setStats(prev => ({ ...prev, activeHackathon: res.data }));
-          const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
           axios.get(`${BASE}/hackathons/${res.data.id}/problems`)
             .then(pr => setProblems((pr.data || []).slice(0, 3))) // Show top 3 natively
             .catch(() => null);

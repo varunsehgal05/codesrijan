@@ -13,6 +13,7 @@ function AdminTelemetry() {
     const [chatMessages, setChatMessages] = useState<any[]>([]); // Stubbed
 
     const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
     useEffect(() => {
         const fetchTelemetry = async () => {
@@ -20,13 +21,13 @@ function AdminTelemetry() {
                 const token = localStorage.getItem("codesrijan_auth_token");
                 const headers = { Authorization: `Bearer ${token}` };
 
-                const statsRes = await axios.get(`${API_URL}/public/stats`);
+                const statsRes = await axios.get(`${BASE}/public/stats`);
                 // Use public stats to quickly display counts if available, otherwise just use counts from actual API dumps
 
                 const [teamsRes, usersRes, evtsRes] = await Promise.all([
-                    axios.get(`${API_URL}/teams`, { headers }),
-                    axios.get(`${API_URL}/users`, { headers }).catch(() => ({ data: Array(statsRes.data.hackers || 0).fill({}) })),
-                    axios.get(`${API_URL}/hackathons`, { headers }).catch(() => ({ data: [] }))
+                    axios.get(`${BASE}/teams`, { headers }),
+                    axios.get(`${BASE}/users`, { headers }).catch(() => ({ data: Array(statsRes.data.hackers || 0).fill({}) })),
+                    axios.get(`${BASE}/hackathons`, { headers }).catch(() => ({ data: [] }))
                 ]);
 
                 setTeams(teamsRes.data);
