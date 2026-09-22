@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -8,8 +8,14 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-    const { currentUser, teams, hackathons, users, registrations, isLoaded } = useAppStore();
+    const navigate = useNavigate();
+    const { currentUser, teams, hackathons, users, registrations, isLoaded, logout } = useAppStore();
     const activeEvent = hackathons[0];
+
+    const handleLogout = () => {
+        logout();
+        navigate({ to: '/login' });
+    };
 
     const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
 
@@ -137,10 +143,19 @@ function DashboardPage() {
                     <div>
                         <p className="font-label-caps text-surface-variant mb-2">Welcome Back,</p>
                         <h1 className="font-display-lg text-headline-lg uppercase text-ink-black">{currentUser.name}</h1>
-                        <p className="font-body-md mt-2 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-electric-blue text-sm">badge</span>
-                            Role: <span className="uppercase font-label-bold">{currentUser.role}</span>
-                        </p>
+                        <div className="flex items-center gap-4 mt-2">
+                            <p className="font-body-md flex items-center gap-2">
+                                <span className="material-symbols-outlined text-electric-blue text-sm">badge</span>
+                                Role: <span className="uppercase font-label-bold">{currentUser.role}</span>
+                            </p>
+                            <button
+                                onClick={handleLogout}
+                                className="bg-error text-white px-3 py-1 font-label-bold text-xs uppercase brutal-border hover:bg-stark-black hover:-translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
+                                title="Terminate Session"
+                            >
+                                <span className="material-symbols-outlined text-xs">logout</span> Logout
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-ink-black text-on-primary p-6 brutal-border brutal-shadow flex flex-col items-center">
@@ -323,6 +338,14 @@ function DashboardPage() {
                                 <li><a href="/profile" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">person</span> Personal Profile</a></li>
                                 <li><a href="/certificates" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">workspace_premium</span> Diplomas</a></li>
                                 <li><a href="/ai-assistant" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">smart_toy</span> Oracle Support</a></li>
+                                <li>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-2 p-3 bg-error text-white border-2 border-ink-black hover:bg-stark-black transition-colors brutal-hover cursor-pointer uppercase font-label-bold"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">logout</span> Terminate Session (Logout)
+                                    </button>
+                                </li>
                             </ul>
                         </div>
                     </div>

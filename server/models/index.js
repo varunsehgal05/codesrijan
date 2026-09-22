@@ -119,7 +119,8 @@ const teamSchema = new mongoose.Schema({
     githubLink: String,
     figmaLink: String,
     demoLink: String,
-    isSubmitted: { type: Boolean, default: false }
+    isSubmitted: { type: Boolean, default: false },
+    points: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // 6. Team Invitations Collection

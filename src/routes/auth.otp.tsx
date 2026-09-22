@@ -1,6 +1,8 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
+import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/auth/otp")({
     component: OTPVerification,
@@ -11,7 +13,9 @@ function OTPVerification() {
     const navigate = useNavigate();
     const [code, setCode] = useState(["", "", "", "", "", ""]);
     const [errorMsg, setErrorMsg] = useState("");
+    const [successMsg, setSuccessMsg] = useState("");
     const [loading, setLoading] = useState(false);
+    const [resending, setResending] = useState(false);
     const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
@@ -45,15 +49,37 @@ function OTPVerification() {
 
         setLoading(true);
         setErrorMsg("");
+        setSuccessMsg("");
 
         try {
             await verifyEmail(pendingId, fullCode);
-            // After successful verification, user goes to login to grab their secure JWT session
+            // After successful verification, user goes to login
             navigate({ to: "/login" });
         } catch (e: any) {
             setErrorMsg(e.message || "Invalid or expired verification packet.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleResendCode = async () => {
+        const pendingId = new URLSearchParams(window.location.search).get("uid");
+        if (!pendingId) return;
+
+        setResending(true);
+        setErrorMsg("");
+        setSuccessMsg("");
+
+        try {
+            const res = await axios.post(`${API_BASE}/auth/resend-otp`, { userId: pendingId });
+            setSuccessMsg(res.data.message || "New 6-digit verification passkey dispatched.");
+            if (res.data.message?.includes("auto-verified")) {
+                setTimeout(() => navigate({ to: "/login" }), 1500);
+            }
+        } catch (err: any) {
+            setErrorMsg(err.response?.data?.message || "Failed to re-transmit code.");
+        } finally {
+            setResending(false);
         }
     };
 
@@ -80,6 +106,12 @@ function OTPVerification() {
                         </div>
                     )}
 
+                    {successMsg && (
+                        <div className="bg-success text-stark-black p-3 mb-6 w-full brutal-border flex items-center gap-2 font-label-bold text-sm">
+                            <span className="material-symbols-outlined">check_circle</span> {successMsg}
+                        </div>
+                    )}
+
                     {/* Brutalist OTP Inputs */}
                     <div className="flex gap-2 justify-between w-full mb-8">
                         {code.map((v, i) => (
@@ -100,15 +132,20 @@ function OTPVerification() {
                     <button
                         onClick={handleSubmit}
                         disabled={loading || code.join("").length !== 6}
-                        className={`w-full text-pure-white py-4 font-label-caps text-lg brutal-border brutal-shadow transition-all duration-200 ${loading || code.join("").length !== 6 ? 'bg-surface-variant' : 'bg-stark-black hover:bg-electric-blue'}`}
+                        className={`w-full text-pure-white py-4 font-label-caps text-lg brutal-border brutal-shadow transition-all duration-200 cursor-pointer ${loading || code.join("").length !== 6 ? 'bg-surface-variant' : 'bg-stark-black hover:bg-electric-blue'}`}
                     >
                         {loading ? 'VERIFYING...' : 'AUTHORIZE OVERRIDE'}
                     </button>
 
                     <div className="mt-6 text-center">
-                        <Link to="/" className="font-label-bold text-electric-blue hover:underline underline-offset-4 uppercase text-sm">
-                            Re-transmit Code
-                        </Link>
+                        <button
+                            type="button"
+                            onClick={handleResendCode}
+                            disabled={resending}
+                            className="font-label-bold text-electric-blue hover:underline underline-offset-4 uppercase text-sm cursor-pointer disabled:opacity-50"
+                        >
+                            {resending ? 'TRANSMITTING...' : 'Re-transmit Code'}
+                        </button>
                     </div>
                 </div>
             </div>

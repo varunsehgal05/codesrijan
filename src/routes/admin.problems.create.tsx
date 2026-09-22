@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/problems/create")({
     component: AdminCreateProblem,
@@ -22,13 +23,10 @@ function AdminCreateProblem() {
         difficulty: "easy"
     });
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
-
     useEffect(() => {
         const token = localStorage.getItem("codesrijan_auth_token");
-        const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
         // Load hackathons to associate
-        axios.get(`${BASE}/hackathons`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API_BASE}/hackathons`, { headers: { Authorization: `Bearer ${token}` } })
             .then(r => setHackathons(r.data))
             .catch(console.error);
     }, []);
@@ -40,11 +38,10 @@ function AdminCreateProblem() {
 
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-            const res = await axios.post(`${BASE}/admin/problems`, formData, {
+            await axios.post(`${API_BASE}/admin/problems`, formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            navigate({ to: `/admin/problems/${res.data.id}` });
+            navigate({ to: '/admin/problems' });
         } catch (e: any) {
             setError(e.response?.data?.message || "Failed to instantiate problem statement node.");
         } finally {
@@ -73,7 +70,7 @@ function AdminCreateProblem() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <label className="font-label-bold uppercase text-ink-black text-sm block">Parent Hackathon (Optional)</label>
-                        <select required className="w-full bg-surface-container border-2 border-ink-black p-3 font-mono text-sm" value={formData.hackathonId} onChange={e => setFormData({ ...formData, hackathonId: e.target.value })}>
+                        <select className="w-full bg-surface-container border-2 border-ink-black p-3 font-mono text-sm" value={formData.hackathonId} onChange={e => setFormData({ ...formData, hackathonId: e.target.value })}>
                             <option value="">No Active Matrix Selected</option>
                             {hackathons.map(h => (
                                 <option key={h.id} value={h.id}>[{h.id}] {h.name}</option>

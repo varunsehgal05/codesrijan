@@ -42,7 +42,7 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
-import { sendVerificationEmail } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail } from './services/email.js';
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI, {
@@ -89,9 +89,43 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         const { name, email, password, college, branch, year } = req.body;
         // Normalize email
-        const normalizedEmail = String(email).toLowerCase();
+        const normalizedEmail = String(email).toLowerCase().trim();
         const existing = await User.findOne({ email: normalizedEmail });
-        if (existing) return res.status(400).json({ message: "Operative identity already active." });
+
+        if (existing) {
+            if (existing.accountStatus === 'pending_verification') {
+                // User already registered but pending verification - update profile and re-issue OTP
+                if (password) existing.passwordHash = await bcrypt.hash(String(password), 10);
+                if (name) existing.name = name;
+                if (college) existing.college = college;
+                if (branch) existing.branch = branch;
+                if (year) existing.year = year;
+                await existing.save();
+
+                const code = Math.floor(100000 + Math.random() * 900000).toString();
+                const tokenHash = await bcrypt.hash(code, 5);
+                await EmailVerification.deleteMany({ userId: existing.id });
+                await EmailVerification.create({
+                    userId: existing.id,
+                    tokenHash,
+                    expiresAt: new Date(Date.now() + 15 * 60000)
+                });
+
+                try {
+                    await sendVerificationEmail(normalizedEmail, code);
+                    return res.json({ message: "Verification passkey dispatched.", userId: existing.id });
+                } catch (mailError) {
+                    console.log(`[SMTP FAULT] Fallback activated for ${normalizedEmail}:`, mailError.message);
+                    existing.accountStatus = 'active';
+                    existing.emailVerified = true;
+                    await existing.save();
+                    sendWelcomeEmail(normalizedEmail, existing.name, existing.role).catch(() => {});
+                    return res.json({ message: "Account created and instantly verified.", userId: existing.id });
+                }
+            } else {
+                return res.status(400).json({ message: "An active account with this email already exists. Please proceed to login." });
+            }
+        }
 
         const passwordHash = await bcrypt.hash(String(password), 10);
 
@@ -128,10 +162,44 @@ app.post('/api/auth/register', async (req, res) => {
             user.accountStatus = 'active';
             user.emailVerified = true;
             await user.save();
+            sendWelcomeEmail(normalizedEmail, user.name, user.role).catch(() => {});
             res.json({ message: "Account created and instantly verified (SMTP offline threshold reached).", userId: user.id });
         }
     } catch (e) {
         res.status(500).json({ message: "Registration failed", error: e.message });
+    }
+});
+
+app.post('/api/auth/resend-otp', async (req, res) => {
+    try {
+        const { userId, email } = req.body;
+        const query = userId ? { id: userId } : { email: String(email).toLowerCase().trim() };
+        const user = await User.findOne(query);
+        if (!user) return res.status(404).json({ message: "Operative identity not found." });
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        const tokenHash = await bcrypt.hash(code, 5);
+
+        await EmailVerification.deleteMany({ userId: user.id });
+        await EmailVerification.create({
+            userId: user.id,
+            tokenHash,
+            expiresAt: new Date(Date.now() + 15 * 60000)
+        });
+
+        try {
+            await sendVerificationEmail(user.email, code);
+            res.json({ message: "Verification passkey re-transmitted.", userId: user.id });
+        } catch (mailError) {
+            console.log(`[SMTP FAULT] Auto-verifying identity upon re-transmit for ${user.email}`);
+            user.accountStatus = 'active';
+            user.emailVerified = true;
+            await user.save();
+            sendWelcomeEmail(user.email, user.name, user.role).catch(() => {});
+            res.json({ message: "Identity auto-verified via fallback.", userId: user.id });
+        }
+    } catch (e) {
+        res.status(500).json({ message: "Failed to re-transmit verification code." });
     }
 });
 
@@ -149,11 +217,16 @@ app.post('/api/auth/verify-email', async (req, res) => {
         verification.usedAt = new Date();
         await verification.save();
 
-        await User.findOneAndUpdate({ id: userId }, {
+        const updatedUser = await User.findOneAndUpdate({ id: userId }, {
             accountStatus: 'active',
             emailVerified: true,
             emailVerifiedAt: new Date()
-        });
+        }, { new: true });
+
+        // Dispatch Welcome Email Transmission
+        if (updatedUser) {
+            sendWelcomeEmail(updatedUser.email, updatedUser.name, updatedUser.role).catch(() => {});
+        }
 
         res.json({ message: "Email verified successfully." });
     } catch (e) {
@@ -607,6 +680,24 @@ app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), asy
     await User.updateMany({ id: { $in: team.memberIds } }, { $unset: { teamId: "" } });
     await Team.findOneAndDelete({ id: team.id });
     res.json({ message: "Squad completely dissolved across the network." });
+});
+
+app.patch('/api/teams/:id/points', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { points, delta } = req.body;
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+
+        if (delta !== undefined) {
+            team.points = (Number(team.points) || 0) + Number(delta);
+        } else if (points !== undefined) {
+            team.points = Number(points);
+        }
+        await team.save();
+        res.json({ message: "Squad points modified successfully.", team });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to modify squad points.", error: e.message });
+    }
 });
 
 app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (req, res) => {

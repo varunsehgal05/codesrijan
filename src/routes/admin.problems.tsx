@@ -1,22 +1,38 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/problems")({
   component: AdminProblems,
 });
 
 function AdminProblems() {
+  const matches = useMatches();
+  const isExact = matches[matches.length - 1]?.routeId === Route.id;
+
   const [problems, setProblems] = useState<any[]>([]);
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isExact) return;
     const token = localStorage.getItem("codesrijan_auth_token");
-    const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-    axios.get(`${BASE}/admin/problems`, {
+    axios.get(`${API_BASE}/admin/problems`, {
       headers: { Authorization: `Bearer ${token}` }
-    }).then(r => setProblems(r.data)).catch(console.error);
-  }, []);
+    })
+      .then(r => {
+        setProblems(r.data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Admin problems fetch error:", err);
+        setLoading(false);
+      });
+  }, [isExact]);
+
+  if (!isExact) {
+    return <Outlet />;
+  }
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -29,17 +45,24 @@ function AdminProblems() {
             Challenge Directives Manager
           </p>
         </div>
-        <Link to="/admin/problems/create" className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold brutal-border brutal-shadow-hover transition-all uppercase flex items-center gap-2">
+        <Link to="/admin/problems/create" className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold brutal-border brutal-shadow-hover transition-all uppercase flex items-center gap-2 hover:bg-stark-black">
           <span className="material-symbols-outlined">add_task</span>
           New Statement
         </Link>
       </div>
 
-      {(problems.length === 0) ? (
+      {loading ? (
+        <div className="bg-surface-container p-16 brutal-border text-center">
+          <p className="font-code-snippet uppercase tracking-widest animate-pulse">Syncing Problem Statements Matrix...</p>
+        </div>
+      ) : (problems.length === 0) ? (
         <div className="bg-surface-container p-16 brutal-border text-center flex flex-col items-center justify-center gap-4">
           <span className="material-symbols-outlined text-6xl text-text-muted">assignment_late</span>
           <h3 className="font-display-lg uppercase text-2xl text-ink-black">No Active Directives</h3>
-          <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs">Run the Mongoose array creation toolkit to seed Problem Statements.</p>
+          <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs mb-4">No challenge statements have been authored yet.</p>
+          <Link to="/admin/problems/create" className="bg-stark-black text-pure-white px-6 py-3 font-label-bold uppercase brutal-border brutal-shadow hover:bg-electric-blue transition-all">
+            + Author First Problem Statement
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -56,7 +79,7 @@ function AdminProblems() {
                 <p className="font-mono text-sm text-surface-variant line-clamp-2">{p.description}</p>
               </div>
               <div className="mt-6 flex gap-2">
-                <Link to={`/admin/problems/${p.id}`} className="bg-ink-black text-pure-white px-4 py-2 font-label-bold text-xs brutal-hover flex-1 text-center border-2 border-transparent">CONTROL PANEL</Link>
+                <Link to={`/admin/problems/${p.id}`} className="bg-ink-black text-pure-white px-4 py-2 font-label-bold text-xs brutal-hover flex-1 text-center border-2 border-transparent hover:bg-electric-blue">CONTROL PANEL</Link>
               </div>
             </div>
           ))}

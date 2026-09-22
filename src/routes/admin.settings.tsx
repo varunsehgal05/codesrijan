@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettingsPage,
@@ -13,8 +14,7 @@ function AdminSettingsPage() {
   const [settings, setSettings] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
   const [statusMsg, setStatusMsg] = useState("");
-
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
   const globalFlags = [
     { key: "registrationEnabled", label: "Global Registrations", desc: "Allow new operatives to sign up." },
@@ -25,19 +25,16 @@ function AdminSettingsPage() {
     { key: "maintenanceMode", label: "Lockdown Mode (Maintenance)", desc: "Take entire infrastructure offline." }
   ];
 
-  useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
-      navigate({ to: "/dashboard" });
-      return;
-    }
-
+  const fetchSettings = () => {
     const token = localStorage.getItem("codesrijan_auth_token");
-    axios.get(`${API_URL}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
+    axios.get(`${API_BASE}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => {
         const map: Record<string, any> = {};
-        res.data.forEach((s: any) => {
-          map[s.key] = s.value;
-        });
+        if (Array.isArray(res.data)) {
+          res.data.forEach((s: any) => {
+            map[s.key] = s.value;
+          });
+        }
         setSettings(map);
         setLoading(false);
       })
@@ -45,26 +42,37 @@ function AdminSettingsPage() {
         console.error("Settings error", err);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'admin') {
+      navigate({ to: "/dashboard" });
+      return;
+    }
+    fetchSettings();
   }, [currentUser, navigate]);
 
   const handleToggle = async (key: string, currentValue: any, description: string) => {
     const newValue = !currentValue;
+    setTogglingKey(key);
+    setStatusMsg("");
 
     // Optimistic update
     setSettings(prev => ({ ...prev, [key]: newValue }));
-    setStatusMsg("");
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_URL}/admin/settings`,
+      await axios.post(`${API_BASE}/admin/settings`,
         { key, value: newValue, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setStatusMsg(`SYS_UPDATE: Parameter [${key}] successfully modified to [${String(newValue).toUpperCase()}].`);
+      setStatusMsg(`SYS_UPDATE: Parameter [${key}] successfully updated to [${String(newValue).toUpperCase()}].`);
     } catch (e: any) {
-      // Revert
+      // Revert on error
       setSettings(prev => ({ ...prev, [key]: currentValue }));
-      setStatusMsg("ERR: Core parameter write failed. Signal interrupted.");
+      setStatusMsg(`ERR: Core parameter write failed for [${key}]. ${e.response?.data?.message || ''}`);
+    } finally {
+      setTogglingKey(null);
     }
   };
 
@@ -110,6 +118,7 @@ function AdminSettingsPage() {
           ) : (
             globalFlags.map((flag) => {
               const isEnabled = settings[flag.key] === true;
+              const isBusy = togglingKey === flag.key;
 
               return (
                 <div key={flag.key} className="flex flex-col md:flex-row justify-between items-start md:items-center bg-surface-container p-6 brutal-border hover:bg-surface-variant transition-colors group">
@@ -123,12 +132,13 @@ function AdminSettingsPage() {
                   </div>
                   <button
                     onClick={() => handleToggle(flag.key, isEnabled, flag.desc)}
-                    className={`mt-4 md:mt-0 font-label-bold uppercase px-6 py-3 brutal-border-sm transition-all w-full md:w-40 flex items-center justify-between pointer-cursor ${isEnabled ? 'bg-stark-black text-white hover:bg-error' : 'bg-pure-white text-stark-black hover:bg-success hover:text-ink-black'
+                    disabled={isBusy}
+                    className={`mt-4 md:mt-0 font-label-bold uppercase px-6 py-3 brutal-border-sm transition-all w-full md:w-44 flex items-center justify-between cursor-pointer disabled:opacity-50 ${isEnabled ? 'bg-stark-black text-white hover:bg-error' : 'bg-pure-white text-stark-black hover:bg-success hover:text-ink-black'
                       }`}
                   >
-                    {isEnabled ? 'ENABLED' : 'DISABLED'}
-                    <span className={`material-symbols-outlined text-[18px] transition-transform ${isEnabled ? '' : 'rotate-180'}`}>
-                      toggle_on
+                    <span>{isBusy ? 'SYNCING...' : isEnabled ? 'ENABLED' : 'DISABLED'}</span>
+                    <span className={`material-symbols-outlined text-[20px] transition-transform ${isEnabled ? 'text-success' : 'rotate-180 text-surface-variant'}`}>
+                      {isEnabled ? 'toggle_on' : 'toggle_off'}
                     </span>
                   </button>
                 </div>

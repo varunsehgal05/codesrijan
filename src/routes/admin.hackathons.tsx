@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/admin/hackathons")({
@@ -6,7 +6,13 @@ export const Route = createFileRoute("/admin/hackathons")({
 });
 
 function AdminHackathons() {
+    const matches = useMatches();
+    const isExact = matches[matches.length - 1]?.routeId === Route.id;
     const { hackathons } = useAppStore();
+
+    if (!isExact) {
+        return <Outlet />;
+    }
 
     return (
         <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
