@@ -65,8 +65,8 @@ const hackathonSchema = new mongoose.Schema({
 // 3. Registrations Collection
 const registrationSchema = new mongoose.Schema({
     id: { type: String, unique: true },
-    hackathonId: String,
-    userId: String,
+    hackathonId: { type: String, required: true },
+    userId: { type: String, required: true },
     registrationNumber: String,
     college: String,
     branch: String,
@@ -74,6 +74,9 @@ const registrationSchema = new mongoose.Schema({
     status: { type: String, default: 'pending' },
     verifiedAt: Date
 }, { timestamps: true });
+
+// Prevent generic registration duplication at Database Level
+registrationSchema.index({ hackathonId: 1, userId: 1 }, { unique: true });
 
 // 4. Problem Statements Collection
 const problemStatementSchema = new mongoose.Schema({
@@ -113,6 +116,9 @@ const teamSchema = new mongoose.Schema({
     // Backwards compat fields for current frontend
     repositoryUrl: String,
     demoUrl: String,
+    githubLink: String,
+    figmaLink: String,
+    demoLink: String,
     isSubmitted: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -191,7 +197,7 @@ const submissionSchema = new mongoose.Schema({
 const evaluationSchema = new mongoose.Schema({
     id: { type: String, unique: true },
     hackathonId: String,
-    projectId: String,
+    teamId: String,
     judgeId: String,
     assignmentId: String,
     scores: [{ criteriaId: String, score: Number }],
@@ -236,6 +242,18 @@ const certificateSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+// Epic 4: Project Tasks
+const projectTaskSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    teamId: String,
+    title: String,
+    description: String,
+    status: { type: String, enum: ['todo', 'in-progress', 'review', 'completed'], default: 'todo' },
+    assignedTo: String, // userId
+    createdBy: String,
+    priority: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' }
+}, { timestamps: true });
+
 // Export logic (prevent overwrite if extremely frequent hot reloading)
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export const Hackathon = mongoose.models.Hackathon || mongoose.model('Hackathon', hackathonSchema);
@@ -244,6 +262,7 @@ export const ProblemStatement = mongoose.models.ProblemStatement || mongoose.mod
 export const Team = mongoose.models.Team || mongoose.model('Team', teamSchema);
 export const TeamInvitation = mongoose.models.TeamInvitation || mongoose.model('TeamInvitation', teamInvitationSchema);
 export const TeamJoinRequest = mongoose.models.TeamJoinRequest || mongoose.model('TeamJoinRequest', teamJoinRequestSchema);
+export const ProjectTask = mongoose.models.ProjectTask || mongoose.model('ProjectTask', projectTaskSchema);
 export const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
 export const Submission = mongoose.models.Submission || mongoose.model('Submission', submissionSchema);
 export const Evaluation = mongoose.models.Evaluation || mongoose.model('Evaluation', evaluationSchema);

@@ -13,7 +13,7 @@ function EvaluationsPage() {
 
     useEffect(() => {
         const token = localStorage.getItem("codesrijan_auth_token");
-        axios.get(`${API_URL}/teams`, {
+        axios.get(`${API_URL}/submissions`, {
             headers: { Authorization: `Bearer ${token}` }
         }).then(res => {
             setTeams(res.data);
@@ -22,8 +22,8 @@ function EvaluationsPage() {
         });
     }, [API_URL]);
 
-    // Find teams that have submitted their projects
-    const submittedTeams = teams.filter(t => t.isSubmitted);
+    // Submissions endpoint already filters for `isSubmitted === true`
+    const submittedTeams = teams;
 
     const [selectedTeam, setSelectedTeam] = useState<string | null>(null);
     const [scores, setScores] = useState({
@@ -45,9 +45,9 @@ function EvaluationsPage() {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             const totalScore = scores.concept + scores.execution + scores.design + scores.impact;
-            await axios.post(`${API_URL}/evaluations`, {
+            await axios.post(`${API_URL}/evaluations/${activeTeam.id}`, {
                 hackathonId: 'hack-1', // Default active hackathon
-                projectId: activeTeam.id,
+                teamId: activeTeam.id,
                 scores: { ...scores },
                 totalScore: totalScore,
                 comments: "Automated Evaluation Terminal Submission",

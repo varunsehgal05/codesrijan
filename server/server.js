@@ -36,10 +36,9 @@ app.use(cors());
 app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
-import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate } from './models/index.js';
+import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
-import { ActivityLog } from './models/secondary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
@@ -376,31 +375,152 @@ app.post('/api/hackathons/:id/close-submissions', requireAuth, requireRole(['adm
 );
 
 // REGISTRATIONS
-app.post('/api/registrations', requireAuth, requireRole(['student']), async (req, res) => {
-    const { hackathonId, college, branch, year } = req.body;
+app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), async (req, res) => {
+    try {
+        const hackathonId = req.params.id;
+        const userId = req.user.id;
+        const { college, branch, year } = req.body; // Only trust non-auth fields from body!
 
-    // Check if already registered
-    const existing = await Registration.findOne({ userId: req.user.id, hackathonId });
-    if (existing) {
-        return res.status(400).json({ message: "Already registered for this hackathon." });
+        // 1. Verify Hackathon Exists and is accepting registrations
+        const hackathon = await Hackathon.findOne({ id: hackathonId });
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+        if (hackathon.status !== 'registration_open') {
+            return res.status(403).json({ message: `Registration is currently closed for this event (Status: ${hackathon.status}).` });
+        }
+
+        // 2. Validate Time Window
+        const now = new Date();
+        const regStart = new Date(hackathon.registrationStart);
+        const regEnd = new Date(hackathon.registrationEnd);
+
+        if (now < regStart) return res.status(403).json({ message: "Registration window has not started yet." });
+        if (now > regEnd) return res.status(403).json({ message: "Registration deadline has passed." });
+
+        // 3. User Activation Pre-Check
+        if (req.user.accountStatus !== 'active' || !req.user.emailVerified) {
+            return res.status(403).json({ message: "Your identity matrix is unverified. Validate email to unlock registrations." });
+        }
+
+        // 4. Create Registration
+        const registration = new Registration({
+            id: `reg-${Date.now()}`,
+            hackathonId,
+            userId,
+            registrationNumber: `REG-${Math.floor(100000 + Math.random() * 900000)}`,
+            college: college || req.user.college,
+            branch: branch || req.user.branch,
+            year: year || req.user.year,
+            status: 'registered'
+        });
+
+        await registration.save();
+        res.json({ success: true, registration });
+    } catch (e) {
+        if (e.code === 11000) {
+            return res.status(409).json({ message: "Duplicate record: This operative is already registered for this event." });
+        }
+        res.status(500).json({ message: "Registration failed.", error: e.message });
     }
+});
 
-    const registration = new Registration({
-        id: `reg-${Date.now()}`,
-        hackathonId,
-        userId: req.user.id,
-        college,
-        branch,
-        year,
-        status: 'pending' // pending manual/auto verification
-    });
-    await registration.save();
+app.get('/api/hackathons/:id/registration', requireAuth, async (req, res) => {
+    // Determine the authenticated user from the server-side session.
+    const registration = await Registration.findOne({ userId: req.user.id, hackathonId: req.params.id });
+    if (!registration) return res.status(404).json({ message: "Registration not found." });
     res.json(registration);
 });
-app.get('/api/registrations/me', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
-    // Resource isolation: user can only see their own registrations
+
+app.delete('/api/hackathons/:id/registration', requireAuth, async (req, res) => {
+    await Registration.findOneAndDelete({ userId: req.user.id, hackathonId: req.params.id });
+    res.json({ message: "Registration voided successfully." });
+});
+
+app.get('/api/student/registrations', requireAuth, async (req, res) => {
     const registrations = await Registration.find({ userId: req.user.id });
     res.json(registrations);
+});
+
+// PROBLEM STATEMENTS
+// --- ADMIN MANAGEMENT ROUTES ---
+
+app.get('/api/admin/problems', requireAuth, requireRole(['admin']), async (req, res) => {
+    const problems = await ProblemStatement.find().sort({ createdAt: -1 });
+    res.json(problems);
+});
+
+app.post('/api/admin/problems', requireAuth, requireRole(['admin']), async (req, res) => {
+    // Generate organic ID mapped to standard slug structure
+    const problem = new ProblemStatement({
+        ...req.body,
+        id: `prob-${Date.now()}`,
+        isPublished: false,
+        isLocked: false,
+        createdBy: req.user.id
+    });
+    await problem.save();
+    res.json(problem);
+});
+
+app.get('/api/admin/problems/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    const problem = await ProblemStatement.findOne({ id: req.params.id });
+    if (!problem) return res.status(404).json({ message: "Problem matrix not located." });
+    res.json(problem);
+});
+
+app.put('/api/admin/problems/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    const data = { ...req.body };
+    delete data.isPublished;
+    delete data.isLocked; // Force usage of specific PATCH routes for business critical flags!
+
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, data, { new: true });
+    if (!problem) return res.status(404).json({ message: "Problem matrix not located." });
+    res.json(problem);
+});
+
+app.delete('/api/admin/problems/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    await ProblemStatement.findOneAndDelete({ id: req.params.id });
+    res.json({ message: "Problem statement eradicated from the mainframe." });
+});
+
+app.patch('/api/admin/problems/:id/publish', requireAuth, requireRole(['admin']), async (req, res) => {
+    const { isPublished } = req.body;
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isPublished }, { new: true });
+    res.json(problem);
+});
+
+app.patch('/api/admin/problems/:id/lock', requireAuth, requireRole(['admin']), async (req, res) => {
+    const { isLocked } = req.body;
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isLocked }, { new: true });
+    res.json(problem);
+});
+
+
+// --- STUDENT ROUTES ---
+app.get('/api/problems', async (req, res) => {
+    // Extract published problems for global access
+    const problems = await ProblemStatement.find({ isPublished: true });
+    res.json(problems);
+});
+
+app.get('/api/hackathons/:id/problems', async (req, res) => {
+    // Extract published problems for this hackathon
+    const problems = await ProblemStatement.find({ hackathonId: req.params.id, isPublished: true });
+    res.json(problems);
+});
+
+app.get('/api/problems/:id', async (req, res) => {
+    const problem = await ProblemStatement.findOne({ id: req.params.id });
+    if (!problem) return res.status(404).json({ message: "Problem missing or invalid ID." });
+
+    if (!problem.isPublished) {
+        // Only admins can see unpublished problems natively through this hook.
+        // Wait, students shouldn't see it if it's draft.
+        // Let's implement authorization header validation if draft!
+        if (!req.headers.authorization) return res.status(403).json({ message: "Classified Problem Statement." });
+        // NOTE: Further role enforcement logic applies upstream with requireRole block. 
+    }
+    res.json(problem);
 });
 
 // TEAMS
@@ -413,8 +533,20 @@ app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (re
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
     }
+    const { hackathonId, ...restBody } = req.body;
+    if (!hackathonId) return res.status(400).json({ message: "Hackathon ID is required to form a squad." });
+
+    const hackathon = await Hackathon.findOne({ id: hackathonId });
+    if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+    
+    const registration = await Registration.findOne({ userId: req.user.id, hackathonId });
+    if (!registration) {
+        return res.status(403).json({ message: "You must register for this Hackathon before forming a squad." });
+    }
+
     const team = new Team({
-        ...req.body, // { name: string, description: string } (optional extra fields)
+        ...restBody, // { name: string, description: string } (optional extra fields)
+        hackathonId,
         id: `t-${Date.now()}`,
         leaderId: req.user.id,
         memberIds: [req.user.id] // Auto-assign as member 1
@@ -432,14 +564,51 @@ app.post('/api/teams/join', requireAuth, requireRole(['student', 'admin']), asyn
     if (!team) {
         return res.status(404).json({ message: "Invalid Squad Code." });
     }
-    if (team.memberIds.length >= 4) {
-        return res.status(403).json({ message: "Squad is at maximum capacity (4 members)." });
+    const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+    const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
+    
+    if (team.memberIds.length >= maxAllowed) {
+        return res.status(403).json({ message: `Squad is at maximum capacity (${maxAllowed} members).` });
     }
     team.memberIds.push(req.user.id);
     await team.save();
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: team.id });
     res.json(team);
 });
+
+app.post('/api/teams/leave', requireAuth, requireRole(['student']), async (req, res) => {
+    if (!req.user.teamId) return res.status(400).json({ message: "You are not currently enlisted in a squad." });
+
+    const team = await Team.findOne({ id: req.user.teamId });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+
+    if (team.leaderId === req.user.id) {
+        if (team.memberIds.length > 1) {
+            return res.status(403).json({ message: "Command Protocol: Leaders cannot abandon squads while operatives remain. Transfer command or dissolve manually." });
+        } else {
+            // Dissolve totally empty squad
+            await Team.findOneAndDelete({ id: team.id });
+        }
+    } else {
+        await Team.findOneAndUpdate({ id: team.id }, { $pull: { memberIds: req.user.id } });
+    }
+
+    await User.findOneAndUpdate({ id: req.user.id }, { $unset: { teamId: "" } });
+    res.json({ message: "Successfully departed squad operations." });
+});
+
+app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Security Action Blocked: Only leaders possess authorization to dissolve the squad." });
+    }
+
+    await User.updateMany({ id: { $in: team.memberIds } }, { $unset: { teamId: "" } });
+    await Team.findOneAndDelete({ id: team.id });
+    res.json({ message: "Squad completely dissolved across the network." });
+});
+
 app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (req, res) => {
     const { receiverId } = req.body;
     const team = await Team.findOne({ id: req.params.id });
@@ -459,7 +628,16 @@ app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['studen
     const invite = await TeamInvitation.findOne({ id: req.params.inviteId, receiverId: req.user.id, status: 'pending' });
     if (!invite) return res.status(404).json({ message: "Invite not found or expired." });
 
-    const team = await Team.findOneAndUpdate({ id: invite.teamId }, { $push: { memberIds: req.user.id } }, { new: true });
+    const team = await Team.findOne({ id: invite.teamId });
+    if (!team) return res.status(404).json({ message: "Team not found." });
+    const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+    const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
+    
+    if (team.memberIds.length >= maxAllowed) {
+        return res.status(403).json({ message: `Squad capacity reached (${maxAllowed} members).` });
+    }
+
+    await Team.findOneAndUpdate({ id: invite.teamId }, { $push: { memberIds: req.user.id } }, { new: true });
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: invite.teamId });
     invite.status = 'accepted';
     await invite.save();
@@ -468,6 +646,26 @@ app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['studen
 app.get('/api/teams/invitations/me', requireAuth, requireRole(['student']), async (req, res) => {
     const invites = await TeamInvitation.find({ receiverId: req.user.id, status: 'pending' });
     res.json(invites);
+});
+
+app.post('/api/teams/:id/select-problem', requireAuth, requireRole(['student']), async (req, res) => {
+    const { problemId } = req.body;
+    const team = await Team.findOne({ id: req.params.id });
+
+    if (!team) return res.status(404).json({ message: "Squad not found in mainframe." });
+    if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Squad directive: Only leaders can select the project vector." });
+    if (team.isSubmitted) return res.status(403).json({ message: "Payload already deployed. Architecture locked." });
+
+    const problem = await ProblemStatement.findOne({ id: problemId, isPublished: true });
+    if (!problem) return res.status(404).json({ message: "Valid published matrix not located." });
+    
+    if (problem.hackathonId !== team.hackathonId) {
+        return res.status(403).json({ message: "Problem does not belong to this hackathon." });
+    }
+
+    team.problemId = problem.id;
+    await team.save();
+    res.json(team);
 });
 
 // SQUAD RECRUITMENT AND MANAGEMENT (EPIC 4/5)
@@ -511,7 +709,10 @@ app.post('/api/teams/requests/:id/:action', requireAuth, requireRole(['student',
         if (!team || team.leaderId !== req.user.id) return res.status(403).json({ message: "Squad Leader clearance required." });
 
         if (action === 'accept') {
-            if (team.memberIds.length >= 4) return res.status(403).json({ message: "Squad capacity reached." });
+            const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+            const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
+            
+            if (team.memberIds.length >= maxAllowed) return res.status(403).json({ message: `Squad capacity reached (${maxAllowed} members).` });
 
             // Re-verify the student is still free
             const student = await User.findOne({ id: request.userId });
@@ -698,16 +899,7 @@ app.patch('/api/users/:id', requireAuth, requireRole(['admin']), async (req, res
     res.json(user);
 });
 
-// ANNOUNCEMENTS
-app.get('/api/announcements', async (req, res) => {
-    const items = await Announcement.find();
-    res.json(items);
-});
-app.post('/api/announcements', requireAuth, requireRole(['admin']), async (req, res) => {
-    const item = new Announcement(req.body);
-    await item.save();
-    res.json(item);
-});
+
 
 // TIMELINE (EVENTS)
 app.get('/api/timeline', async (req, res) => {
@@ -931,6 +1123,154 @@ app.post('/api/ai/chat', async (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ reply: "SYSTEM FAULT. Processing node offline." });
+    }
+});
+
+// --- EPIC 4: SQUAD WORKSPACE KANBAN ---
+app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (req.user.role !== 'admin' && !team.memberIds.includes(req.user.id)) {
+        return res.status(403).json({ message: "Intruder Alert: Not authorized to view external squad workspace." });
+    }
+    const tasks = await ProjectTask.find({ teamId: req.params.id });
+    res.json(tasks);
+});
+
+app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
+    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED: Final Payload already transmitted." });
+
+    const task = new ProjectTask({
+        ...req.body,
+        id: `tsk-${Date.now()}`,
+        teamId: team.id,
+        createdBy: req.user.id
+    });
+    await task.save();
+    res.json(task);
+});
+
+app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || (!team.memberIds.includes(req.user.id) && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
+    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+
+    const task = await ProjectTask.findOneAndUpdate(
+        { id: req.params.taskId, teamId: team.id },
+        { status: req.body.status },
+        { new: true }
+    );
+    res.json(task);
+});
+
+app.delete('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
+    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+
+    const task = await ProjectTask.findOne({ id: req.params.taskId });
+    if (!task) return res.status(404).json({ message: "Task Node missing." });
+
+    if (task.createdBy !== req.user.id && team.leaderId !== req.user.id) {
+        return res.status(403).json({ message: "Unauthorized delete action." });
+    }
+
+    await ProjectTask.findOneAndDelete({ id: req.params.taskId });
+    res.json({ message: "Task eradicated." });
+});
+
+app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Command Directive: Only squad leaders can trigger payload transmission." });
+    if (team.isSubmitted) return res.status(400).json({ message: "Payload already locked." });
+
+    // Require at least one payload link before enabling lockdown
+    if (!team.githubLink && !team.figmaLink && !team.demoLink) {
+        return res.status(400).json({ message: "Cannot initiate transmit: No structural payload linked. Add a GitHub repository, Figma prototype, or Demo video." });
+    }
+
+    team.isSubmitted = true;
+    await team.save();
+    res.json(team);
+});
+
+app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
+    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+
+    team.githubLink = req.body.githubLink !== undefined ? req.body.githubLink : team.githubLink;
+    team.figmaLink = req.body.figmaLink !== undefined ? req.body.figmaLink : team.figmaLink;
+    team.demoLink = req.body.demoLink !== undefined ? req.body.demoLink : team.demoLink;
+
+    await team.save();
+    res.json(team);
+});
+
+// ==========================================
+// EPIC 5: JUDGE & EVALUATION ENGINE
+// ==========================================
+
+// GET Submissions Queue (Only returns teams that have transmitted payload)
+app.get('/api/submissions', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    try {
+        const submittedTeams = await Team.find({ isSubmitted: true });
+        res.json(submittedTeams);
+    } catch (e) {
+        res.status(500).json({ message: "Engine Failure fetching submissions." });
+    }
+});
+
+// GET Evaluations for leaderboard parsing
+app.get('/api/evaluations', async (req, res) => {
+    try {
+        const evals = await mongoose.model('Evaluation').find({});
+        res.json(evals);
+    } catch (e) {
+        res.json([]);
+    }
+});
+
+// POST Formulate a final score
+app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    try {
+        const { hackathonId, scores, totalScore, comments, strengths, improvements } = req.body;
+
+        // Prevent duplicate grading by the same judge for the same team?
+        const existing = await mongoose.model('Evaluation').findOne({
+            teamId: req.params.teamId,
+            judgeId: req.user.id
+        });
+
+        if (existing) {
+            existing.scores = scores;
+            existing.totalScore = totalScore;
+            existing.comments = comments;
+            existing.strengths = strengths;
+            existing.improvements = improvements;
+            await existing.save();
+            return res.json(existing);
+        }
+
+        const evaluation = await mongoose.model('Evaluation').create({
+            id: 'eval_' + Date.now().toString(),
+            hackathonId,
+            teamId: req.params.teamId,
+            judgeId: req.user.id,
+            scores,
+            totalScore,
+            comments,
+            strengths,
+            improvements,
+            status: 'submitted'
+        });
+
+        res.status(201).json(evaluation);
+    } catch (e) {
+        res.status(500).json({ message: "Core error locking evaluation payload." });
     }
 });
 

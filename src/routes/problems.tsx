@@ -1,5 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/problems")({
   component: Page12,
@@ -18,9 +20,48 @@ export const Route = createFileRoute("/problems")({
 });
 
 function Page12() {
-  const { currentUser, problems } = useAppStore();
+  const { currentUser, hackathons, teams } = useAppStore();
+  const [problems, setProblems] = useState<any[]>([]);
+  const activeEvent = hackathons[0];
+  const userTeam = teams.find(t => t.id === currentUser?.teamId);
+
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+
+  useEffect(() => {
+    if (activeEvent?.id) {
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      axios.get(`${BASE}/hackathons/${activeEvent.id}/problems`)
+        .then(r => setProblems(r.data))
+        .catch(console.error);
+    }
+  }, [activeEvent]);
 
   if (!currentUser) return <Navigate to="/login" />;
+
+  const selectProblem = async (problemId: string) => {
+    if (!userTeam) {
+      return alert("You must join a squad before selecting a problem statement.");
+    }
+    if (userTeam.leaderId !== currentUser.id) {
+      return alert("Only squad leaders can deploy the problem selection directive.");
+    }
+    if (userTeam.problemId) {
+      if (!confirm("Your squad already has an active tracking vector. Switching vectors will overwrite your objective. Proceed?")) return;
+    }
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.post(`${BASE}/teams/${userTeam.id}/select-problem`, { problemId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert("Problem Statement Locked. Return to Dashboard workspace to begin.");
+      window.location.reload(); // Force full state refresh
+    } catch (e: any) {
+      alert(e.response?.data?.message || "Failed to select problem.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-on-background">
@@ -74,7 +115,7 @@ function Page12() {
                   </div>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="font-label-caps text-label-caps text-electric-blue">{prob.category}</span>
+                      <span className="font-label-caps text-label-caps text-electric-blue">{prob.domain || prob.category}</span>
                       <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">{prob.title}</h3>
                     </div>
                   </div>
@@ -85,12 +126,20 @@ function Page12() {
                   <div className="flex justify-between items-end">
                     <div className="flex flex-col">
                       <span className="font-label-caps text-label-caps text-outline">PRIZE POOL</span>
-                      <span className="font-headline-md text-headline-md text-electric-blue">${prob.prizePool.toLocaleString()}</span>
+                      <span className="font-headline-md text-headline-md text-electric-blue">${prob.prizePool?.toLocaleString() || 'N/A'}</span>
                     </div>
-                    <button onClick={() => alert("Loading full problem parameters...")} className="bg-ink-black text-white font-button-text text-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover neo-shadow-active transition-all duration-200 flex items-center gap-2">
-                      View Details
-                      <span className="material-symbols-outlined">arrow_forward</span>
-                    </button>
+
+                    {userTeam?.problemId === prob.id ? (
+                      <button disabled className="bg-success text-pure-white font-button-text px-6 py-3 border-2 border-success transition-all uppercase font-label-bold flex items-center gap-2">
+                        OBJECTIVE LOCKED
+                        <span className="material-symbols-outlined">check_circle</span>
+                      </button>
+                    ) : (
+                      <button onClick={() => selectProblem(prob.id)} className="bg-ink-black text-white font-button-text px-6 py-3 border-2 border-ink-black neo-shadow-sm neo-shadow-hover transition-all duration-200 uppercase font-label-bold flex items-center gap-2">
+                        SELECT DIRECTIVE
+                        <span className="material-symbols-outlined">arrow_forward</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

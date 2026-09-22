@@ -1,10 +1,23 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/admin/problems")({
   component: AdminProblems,
 });
 
 function AdminProblems() {
+  const [problems, setProblems] = useState<any[]>([]);
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+
+  useEffect(() => {
+    const token = localStorage.getItem("codesrijan_auth_token");
+    const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+    axios.get(`${BASE}/admin/problems`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(r => setProblems(r.data)).catch(console.error);
+  }, []);
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
       <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
@@ -16,17 +29,39 @@ function AdminProblems() {
             Challenge Directives Manager
           </p>
         </div>
-        <button className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold brutal-border brutal-shadow-hover transition-all uppercase flex items-center gap-2">
+        <Link to="/admin/problems/create" className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold brutal-border brutal-shadow-hover transition-all uppercase flex items-center gap-2">
           <span className="material-symbols-outlined">add_task</span>
           New Statement
-        </button>
+        </Link>
       </div>
 
-      <div className="bg-surface-container p-16 brutal-border text-center flex flex-col items-center justify-center gap-4">
-        <span className="material-symbols-outlined text-6xl text-text-muted">assignment_late</span>
-        <h3 className="font-display-lg uppercase text-2xl text-ink-black">No Active Directives</h3>
-        <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs">Run the Mongoose array creation toolkit to seed Problem Statements.</p>
-      </div>
+      {(problems.length === 0) ? (
+        <div className="bg-surface-container p-16 brutal-border text-center flex flex-col items-center justify-center gap-4">
+          <span className="material-symbols-outlined text-6xl text-text-muted">assignment_late</span>
+          <h3 className="font-display-lg uppercase text-2xl text-ink-black">No Active Directives</h3>
+          <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs">Run the Mongoose array creation toolkit to seed Problem Statements.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {problems.map(p => (
+            <div key={p.id} className="bg-pure-white p-6 brutal-border brutal-shadow hover:-translate-y-1 transition-transform flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-start mb-4">
+                  <span className={`px-2 py-1 text-xs font-bold uppercase border-2 ${p.isPublished ? 'bg-success/20 text-success border-success' : 'bg-surface-variant text-ink-black border-ink-black'}`}>
+                    {p.isPublished ? 'PUBLISHED' : 'DRAFT'}
+                  </span>
+                  {p.isLocked && <span className="material-symbols-outlined text-error text-sm">lock</span>}
+                </div>
+                <h3 className="font-headline-sm uppercase text-ink-black mb-2">{p.title}</h3>
+                <p className="font-mono text-sm text-surface-variant line-clamp-2">{p.description}</p>
+              </div>
+              <div className="mt-6 flex gap-2">
+                <Link to={`/admin/problems/${p.id}`} className="bg-ink-black text-pure-white px-4 py-2 font-label-bold text-xs brutal-hover flex-1 text-center border-2 border-transparent">CONTROL PANEL</Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

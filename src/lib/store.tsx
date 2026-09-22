@@ -33,6 +33,9 @@ export interface Team {
     problemId?: string;
     repositoryUrl?: string;
     demoUrl?: string;
+    githubLink?: string;
+    figmaLink?: string;
+    demoLink?: string;
     isSubmitted?: boolean;
     members?: string[]; // Legacy compatibility 
     memberIds: string[]; // Native MongoDB property
@@ -75,6 +78,9 @@ interface StoreState {
     problems: Problem[];
     hackathons: Hackathon[];
     chatMessages: ChatMessage[];
+    registrations: any[];
+    tasks: any[];
+    evaluations: any[];
     isLoaded: boolean;
 }
 
@@ -83,7 +89,7 @@ interface StoreContextType extends StoreState {
     register: (user: User) => Promise<any>;
     verifyEmail: (userId: string, code: string) => Promise<boolean>;
     logout: () => void;
-    createTeam: (name: string, leaderId: string) => void;
+    createTeam: (name: string, leaderId: string, hackathonId: string) => void;
     joinTeam: (teamId: string, userId: string) => void;
     assignProblem: (teamId: string, problemId: string) => void;
     submitProject: (teamId: string, repositoryUrl: string, demoUrl: string) => void;
@@ -101,6 +107,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         problems: [],
         hackathons: [],
         chatMessages: [],
+        registrations: [],
+        tasks: [],
+        evaluations: [],
         isLoaded: false
     });
 
@@ -137,11 +146,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 } catch (e) { }
             }
 
-            const [usersRes, teamsRes, problemsRes, hackathonsRes] = await Promise.all([
+            let teamTasks = [];
+            if (nextUser && nextUser.teamId) {
+                try {
+                    const taskRes = await axios.get(`${API_URL}/teams/${nextUser.teamId}/tasks`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    teamTasks = taskRes.data;
+                } catch (e) {
+                    // Task fetch failed (ignoring for partial loading)
+                }
+            }
+
+            const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
                 axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] }))
+                axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] })),
+                axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+                axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] }))
             ]);
 
             setState(prev => ({
@@ -150,6 +173,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 teams: teamsRes.data,
                 problems: problemsRes.data,
                 hackathons: hackathonsRes.data,
+                registrations: regRes.data,
+                tasks: teamTasks,
+                evaluations: evalRes.data,
                 ...(nextUser ? { currentUser: nextUser } : {}),
                 isLoaded: true
             }));
@@ -253,11 +279,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("codesrijan_auth_token");
     };
 
-    const createTeam = async (name: string, leaderId: string) => {
+    const createTeam = async (name: string, leaderId: string, hackathonId: string) => {
         try {
             const payload = {
                 name,
                 leaderId,
+                hackathonId,
                 description: "",
                 recruitmentOpen: true
             };

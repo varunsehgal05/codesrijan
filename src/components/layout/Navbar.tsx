@@ -11,7 +11,13 @@ export function Navbar() {
                     CodeSrijan
                 </Link>
                 <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
-                    {!isLoaded ? null : currentUser ? (
+                    {!isLoaded ? (
+                        <div className="flex gap-4 animate-pulse">
+                            <div className="w-20 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                            <div className="w-24 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                            <div className="w-28 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                    ) : currentUser ? (
                         <>
                             <Link to="/problems" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Problems</Link>
                             <Link to="/recruitment" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Recruitment</Link>
@@ -23,7 +29,12 @@ export function Navbar() {
                     )}
                 </div>
                 <div className="hidden md:block">
-                    {!isLoaded ? null : currentUser ? (
+                    {!isLoaded ? (
+                        <div className="flex gap-4 animate-pulse">
+                            <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700"></div>
+                            <div className="w-32 h-12 bg-gray-200 dark:bg-gray-700"></div>
+                        </div>
+                    ) : currentUser ? (
                         <div className="flex gap-4">
                             {currentUser.role === 'admin' && (
                                 <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2">

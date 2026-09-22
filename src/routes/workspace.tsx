@@ -1,238 +1,270 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export const Route = createFileRoute("/workspace")({
-  component: Page4,
+  component: WorkspaceHUD,
 });
 
-function Page4() {
-  const { currentUser, teams, users, chatMessages, hackathons, addChatMessage, submitProject, isLoaded } = useAppStore();
-  const activeEvent = hackathons[0];
-  const [chatInput, setChatInput] = useState("");
-  const [repoLink, setRepoLink] = useState("");
+function WorkspaceHUD() {
+  const { currentUser, teams, tasks, hackathons, refetchData } = useAppStore();
+  const navigate = useNavigate();
+
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [githubLink, setGithubLink] = useState("");
+  const [figmaLink, setFigmaLink] = useState("");
   const [demoLink, setDemoLink] = useState("");
 
-  const currentTeam = currentUser?.teamId ? teams.find(t => t.id === currentUser.teamId) : null;
-  const teamMembers = currentTeam ? currentTeam.members.map(userId => users.find(u => u.id === userId)).filter(Boolean) : [];
-
-  const teamChat = chatMessages.filter(m => m.teamId === currentTeam?.id);
-
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!chatInput.trim() || !currentUser || !currentTeam) return;
-    addChatMessage({
-      authorId: currentUser.id,
-      authorName: currentUser.name,
-      teamId: currentTeam.id,
-      content: chatInput.trim()
-    });
-    setChatInput("");
-  };
+  const userTeam = teams.find(t => t.id === currentUser?.teamId);
+  const activeEvent = hackathons[0];
 
   const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
-  const handleFinalSubmit = async () => {
-    if (!currentTeam || !repoLink) return alert("Repository link is required to submit!");
-    try {
-      const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_URL}/submissions`, {
-        teamId: currentTeam.id,
-        repositoryUrl: repoLink,
-        demoUrl: demoLink,
-        projectTitle: currentTeam.name + " Project",
-        description: "Submitted via CodeSrijan Workspace"
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert("Project submitted successfully! Your submission is now recorded.");
-      window.location.reload();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to submit project.");
+  useEffect(() => {
+    if (userTeam) {
+      setGithubLink(userTeam.githubLink || userTeam.repositoryUrl || "");
+      setFigmaLink(userTeam.figmaLink || "");
+      setDemoLink(userTeam.demoLink || userTeam.demoUrl || "");
     }
-  };
+  }, [userTeam]);
 
-  if (!isLoaded) return (
-    <div className="min-h-screen bg-stark-black flex flex-col items-center justify-center p-8">
-      <div className="w-16 h-16 border-4 border-pure-white border-t-electric-blue rounded-full animate-spin mb-4"></div>
-      <h1 className="font-display-lg text-pure-white text-2xl uppercase tracking-widest animate-pulse">ESTABLISHING SECURE LINK...</h1>
-    </div>
-  );
+  useEffect(() => {
+    if (!currentUser) navigate({ to: "/login" });
+  }, [currentUser]);
 
-  if (!currentUser) return <div className="p-8 text-center bg-black text-white h-screen">Please login first.</div>; if (!currentTeam) {
+  if (!currentUser) return null;
+
+  if (!userTeam) {
     return (
-      <div className="min-h-screen bg-stark-black p-8 flex items-center justify-center bg-pattern">
-        <div className="bg-electric-blue p-10 brutal-border brutal-shadow-lg max-w-2xl w-full text-center flex flex-col items-center gap-6 relative z-10 overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-pure-white opacity-10 transform rotate-45 translate-x-16 -translate-y-16"></div>
-          <span className="material-symbols-outlined text-6xl text-pure-white mb-2">group_off</span>
-          <h1 className="font-display-lg text-4xl text-pure-white uppercase">No Squad Detected</h1>
-          <p className="font-body-md text-pure-white font-bold opacity-90 tracking-widest text-sm uppercase">
-            You must align with an active team to access the central Workspace Matrix.
-          </p>
-          <Link to="/team" className="mt-4 px-8 py-4 bg-pure-white text-stark-black font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-1 transition-transform uppercase flex items-center gap-2 group">
-            <span className="material-symbols-outlined font-bold transition-transform group-hover:rotate-12">group_add</span>
-            ACCESS TEAM HUB
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+        <div className="bg-pure-white p-8 border-4 border-ink-black neo-shadow max-w-lg text-center flex flex-col items-center">
+          <span className="material-symbols-outlined text-6xl text-error mb-4">gpp_maybe</span>
+          <h2 className="font-display-lg text-3xl uppercase mb-2">ACCESS RESTRICTED</h2>
+          <p className="font-body-md text-text-muted mb-6">You must establish or enlist in a Squad before accessing visual workspace sectors.</p>
+          <Link to="/dashboard" className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold uppercase border-2 border-transparent brutal-hover hover:-translate-y-1 block max-w-xs mx-auto">
+            RETURN TO DASHBOARD
           </Link>
         </div>
       </div>
     );
   }
 
+  const handleTaskCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.post(`${BASE}/teams/${userTeam.id}/tasks`,
+        { title: newTaskTitle, description: "New Task Objective", status: 'todo' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNewTaskTitle("");
+      await refetchData(); // Re-poll tasks automatically
+    } catch (e: any) { alert(e.response?.data?.message || "Task generation failed."); }
+  };
+
+  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.put(`${BASE}/teams/${userTeam.id}/tasks/${taskId}/status`,
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await refetchData();
+    } catch (e) { alert("State transmission fault."); }
+  };
+
+  const deleteTask = async (taskId: string) => {
+    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.delete(`${BASE}/teams/${userTeam.id}/tasks/${taskId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await refetchData();
+    } catch (e: any) { alert(e.response?.data?.message || "Destruction protocol fault."); }
+  };
+
+  const handleSaveLinks = async () => {
+    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.put(`${BASE}/teams/${userTeam.id}/links`,
+        { githubLink, figmaLink, demoLink },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await refetchData();
+      alert("Payload links safely registered.");
+    } catch (e) { alert("Failed to store structural payloads."); }
+  };
+
+  const handleFinalSubmit = async () => {
+    if (!githubLink && !figmaLink && !demoLink) {
+      return alert("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
+    }
+    if (!confirm("ABSOLUTE WARNING: Transmitting final payload permanently LOCKS this workspace. No operatives may leave, and tasks cannot be altered. Initiate sequence?")) return;
+
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+      await axios.post(`${BASE}/teams/${userTeam.id}/submit`,
+        {}, { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await refetchData();
+    } catch (e: any) { alert(e.response?.data?.message || "Transmission completely denied by server."); }
+  };
+
+  const kanbanColumns = ['todo', 'in-progress', 'review', 'completed'];
+  const columnLabels = ['IDLE / BACKLOG', 'ACTIVE OPERATIONS', 'QA / REVIEW DECK', 'EXECUTED'];
+
   return (
-    <div className="min-h-screen bg-background text-on-background">
-      {/*TopNavBar*/}
-      {/*Main Workspace*/}
-      <main className="flex-grow max-w-[1280px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
-        {/*Mission Control Header*/}
-        <header className="bg-studio-white border-2 border-ink-black p-6 md:p-8 neo-shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div className="flex flex-col gap-2">
-            <span className="font-label-mono-bold text-label-mono-bold text-electric-blue uppercase tracking-widest">[ ACTIVE TEAM: {currentTeam.name} ]</span>
-            <h1 className="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-ink-black">Workspace Control</h1>
-          </div>
-          <div className="bg-ink-black text-electric-blue border-2 border-electric-blue px-6 py-4 flex flex-col items-center neo-shadow">
-            <span className="font-label-mono-sm text-label-mono-sm uppercase text-studio-white mb-1">T-Minus Hackathon End</span>
-            <CountdownClock targetDate={activeEvent?.submissionDeadline} />
-          </div>
-        </header>
-
-        {/*Workspace Grid*/}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/*Left Sidebar (Roster & Chat)*/}
-          <div className="flex flex-col gap-8 lg:col-span-1">
-            {/*Squad Roster*/}
-            <section className="bg-studio-white border-2 border-ink-black neo-shadow">
-              <div className="bg-electric-blue border-b-2 border-ink-black p-3 flex justify-between items-center">
-                <h2 className="font-label-mono-bold text-label-mono-bold text-on-primary uppercase tracking-wide flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">group</span>
-                  Squad Roster
-                </h2>
-              </div>
-              <div className="p-4 flex flex-col gap-3">
-                {teamMembers.map(member => (
-                  <div key={member?.id} className="flex items-center gap-3">
-                    <div className="w-10 h-10 border-2 border-ink-black rounded-none flex justify-center items-center font-bold uppercase relative bg-surface-dim">
-                      {(member?.name || "?").charAt(0)}
-                      <div className="absolute bottom-0 right-0 w-3 h-3 bg-[#00FF00] border-t-2 border-l-2 border-ink-black"></div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-body-md text-body-md font-bold text-ink-black leading-tight">{member?.name}</span>
-                      <span className="font-label-mono-sm text-label-mono-sm text-slate-tech uppercase">{member?.role}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/*Terminal Chat*/}
-            <section className="bg-ink-black border-2 border-ink-black neo-shadow flex-grow flex flex-col max-h-[400px]">
-              <div className="bg-slate-tech border-b-2 border-ink-black p-3 flex justify-between items-center">
-                <h2 className="font-label-mono-bold text-label-mono-bold text-studio-white uppercase tracking-wide flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">terminal</span> Commlink
-                </h2>
-              </div>
-              <div className="p-4 flex-grow overflow-y-auto font-label-mono-sm text-label-mono-sm text-[#00FF00] flex flex-col gap-2">
-                <p>&gt; System initialized. Secure channel open.</p>
-                {teamChat.map(msg => (
-                  <p key={msg.id}>&gt; <span className="text-electric-blue">{msg.authorName}:</span> {msg.content}</p>
-                ))}
-                <p className="mt-auto animate-pulse">_</p>
-              </div>
-              <form onSubmit={handleSendChat} className="border-t-2 border-ink-black p-2 bg-ink-black flex">
-                <span className="text-[#00FF00] font-label-mono-bold text-label-mono-bold p-2">&gt;</span>
-                <input
-                  value={chatInput}
-                  onChange={e => setChatInput(e.target.value)}
-                  className="bg-transparent border-none outline-none text-[#00FF00] font-label-mono-sm text-label-mono-sm w-full focus:ring-0 placeholder:text-outline"
-                  placeholder="Type message..." type="text" />
-              </form>
-            </section>
+    <div className="min-h-screen bg-surface-container-lowest text-on-background pb-16 px-gutter md:px-0 bg-[radial-gradient(#00000018_1px,transparent_1px)] bg-[size:16px_16px]">
+      <div className="max-w-[1400px] mx-auto flex flex-col gap-8 md:pt-16 pt-8">
+        {/* Header block */}
+        <div className="w-full flex md:flex-row flex-col items-start md:items-center justify-between border-4 border-ink-black pb-8 bg-pure-white p-8 brutal-shadow">
+          <div>
+            <Link to="/dashboard" className="font-label-bold uppercase text-ink-black flex items-center gap-2 mb-4 transition-transform hover:-translate-x-1 w-fit">
+              <span className="material-symbols-outlined">arrow_back</span>
+              RETURN TO DASHBOARD
+            </Link>
+            <h1 className="font-display-lg text-4xl md:text-5xl uppercase tracking-tight text-ink-black">
+              SQUAD WORKSPACE
+            </h1>
+            <p className="font-mono text-sm text-surface-variant flex gap-4 mt-2 font-bold flex-wrap">
+              <span className="uppercase text-electric-blue">DESIGNATION: {userTeam.name}</span>
+              <span className="hidden md:inline">|</span>
+              <span>EVENT ID: {activeEvent?.slug?.toUpperCase()}</span>
+            </p>
           </div>
 
-          {/*Kanban Board & Submission*/}
-          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-4">
-              <div className="border-b-4 border-electric-blue pb-2 flex justify-between items-center">
-                <h3 className="font-headline-md text-headline-md font-bold text-electric-blue uppercase">In Progress</h3>
-              </div>
-              <div className="flex flex-col gap-4">
-                <div className="bg-surface-dim border-2 border-dashed border-ink-black p-4 text-center">
-                  <span className="material-symbols-outlined text-outline text-3xl mb-2 block">task</span>
-                  <h4 className="font-body-md text-text-muted">No active missions detected.</h4>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="border-b-4 border-[#FFA500] pb-2 flex justify-between items-center">
-                <h3 className="font-headline-md text-headline-md font-bold text-ink-black uppercase">Final Submission</h3>
-              </div>
-              <div className="flex flex-col gap-4">
-                <div className="bg-surface-bright border-2 border-ink-black p-4 neo-shadow flex flex-col gap-4">
-                  <h4 className="font-headline-md text-ink-black uppercase border-b-2 border-ink-black pb-2">Submit Project</h4>
-                  {currentTeam.isSubmitted ? (
-                    <div className="text-center p-4 bg-error text-white font-bold border-2 border-ink-black neo-shadow uppercase">
-                      Project Received and Locked for Judging!
-                    </div>
-                  ) : (
-                    <>
-                      <input
-                        value={repoLink}
-                        onChange={e => setRepoLink(e.target.value)}
-                        className="font-body-sm w-full p-2 border-2 border-ink-black focus:outline-none focus:border-electric-blue" placeholder="GitHub Repository URL" type="url" />
-                      <input
-                        value={demoLink}
-                        onChange={e => setDemoLink(e.target.value)}
-                        className="font-body-sm w-full p-2 border-2 border-ink-black focus:outline-none focus:border-electric-blue" placeholder="Live Demo Link (Optional)" type="url" />
-
-                      <button onClick={handleFinalSubmit} className="bg-[#FFA500] text-ink-black font-headline-md uppercase border-2 border-ink-black py-2 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform mt-2">
-                        Mark as Final
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col items-start md:items-end gap-2 mt-6 md:mt-0">
+            <span className="font-label-bold uppercase text-surface-variant">Framework Status</span>
+            {userTeam.isSubmitted ? (
+              <span className="bg-success text-pure-white px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-success brutal-shadow-sm">
+                <span className="material-symbols-outlined">lock</span> PAYLOAD DELIVERED
+              </span>
+            ) : (
+              <span className="bg-warning text-ink-black px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-ink-black brutal-shadow-sm">
+                <span className="material-symbols-outlined">shield</span> SYSTEMS UNLOCKED
+              </span>
+            )}
           </div>
         </div>
-      </main>
-    </div>
-  );
-}
 
-function CountdownClock({ targetDate }: { targetDate?: string | undefined }) {
-  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
+        {/* Kanban Grid */}
+        <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-8">
+          <h2 className="font-headline-lg uppercase text-electric-blue border-b-4 border-ink-black pb-2 mb-6">Active Operations Vectors</h2>
 
-  useEffect(() => {
-    if (!targetDate) return;
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {kanbanColumns.map((col, idx) => (
+              <div key={col} className={`bg-surface-container border-4 ${col === 'completed' && userTeam.isSubmitted ? 'border-success' : 'border-ink-black'} min-h-[400px] flex flex-col brutal-shadow-sm`}>
+                <div className={`p-3 font-label-bold uppercase text-center border-b-4 tracking-wider ${(col === 'completed' || userTeam.isSubmitted) ? 'bg-ink-black text-pure-white border-ink-black' : 'bg-electric-blue text-pure-white border-ink-black'}`}>
+                  {columnLabels[idx]}
+                </div>
+                <div className="flex-grow p-4 space-y-4 overflow-y-auto">
+                  {tasks.filter(t => t.status === col).map(task => (
+                    <div key={task.id} className="bg-white border-2 border-ink-black p-4 brutal-shadow-sm group transition-all hover:-translate-y-1 hover:brutal-shadow relative">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-[10px] font-mono font-bold text-surface-variant uppercase">{task.id}</span>
+                        {!userTeam.isSubmitted && (
+                          <button onClick={() => deleteTask(task.id)} className="text-error opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-error/10 absolute right-2 top-2">
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        )}
+                      </div>
+                      <p className="font-label-bold uppercase leading-snug mb-3 pr-4">{task.title}</p>
 
-    const computeDifference = () => {
-      const target = new Date(targetDate).getTime();
-      const now = new Date().getTime();
-      const diff = target - now;
+                      {!userTeam.isSubmitted && (
+                        <select
+                          value={task.status}
+                          onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                          className="w-full bg-surface-container border-2 border-ink-black text-xs font-label-bold uppercase p-2 cursor-pointer focus:outline-none focus:border-electric-blue outline-none"
+                        >
+                          {kanbanColumns.map(c => <option key={c} value={c}>{c.toUpperCase()}</option>)}
+                        </select>
+                      )}
+                    </div>
+                  ))}
+                </div>
 
-      if (diff <= 0) return { h: 0, m: 0, s: 0, active: false };
-      return {
-        h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-        m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-        s: Math.floor((diff % (1000 * 60)) / 1000),
-        active: true
-      };
-    };
+                {col === 'todo' && !userTeam.isSubmitted && (
+                  <form onSubmit={handleTaskCreate} className="p-4 border-t-4 border-ink-black bg-white flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="NEW OBJECTIVE"
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      className="flex-grow border-2 border-ink-black p-2 text-xs font-label-bold uppercase placeholder-surface-variant outline-none focus:border-electric-blue transition-colors"
+                    />
+                    <button type="submit" className="bg-electric-blue text-pure-white px-3 border-2 border-electric-blue hover:-translate-y-0.5 transition-transform font-bold">
+                      <span className="material-symbols-outlined align-middle text-sm">add</span>
+                    </button>
+                  </form>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
 
-    setTimeLeft(computeDifference());
-    const timer = setInterval(() => setTimeLeft(computeDifference()), 1000);
-    return () => clearInterval(timer);
-  }, [targetDate]);
+        {/* Deliverable Payload Engine */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="col-span-1 md:col-span-2 bg-pure-white border-4 border-ink-black brutal-shadow p-8 flex flex-col gap-6">
+            <h2 className="font-headline-lg uppercase text-electric-blue border-b-4 border-ink-black pb-2">Payload Attachments</h2>
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label className="block font-label-bold uppercase text-xs mb-2">GitHub Repository Core</label>
+                <input disabled={userTeam.isSubmitted} type="text" value={githubLink} onChange={e => setGithubLink(e.target.value)} placeholder="https://github.com/..." className="w-full bg-surface-container border-2 border-ink-black p-4 font-mono text-sm focus:border-electric-blue outline-none transition-colors" />
+              </div>
+              <div>
+                <label className="block font-label-bold uppercase text-xs mb-2">Figma Prototype Matrix</label>
+                <input disabled={userTeam.isSubmitted} type="text" value={figmaLink} onChange={e => setFigmaLink(e.target.value)} placeholder="https://figma.com/..." className="w-full bg-surface-container border-2 border-ink-black p-4 font-mono text-sm focus:border-electric-blue outline-none transition-colors" />
+              </div>
+              <div>
+                <label className="block font-label-bold uppercase text-xs mb-2">Live Demo / Video Pitch</label>
+                <input disabled={userTeam.isSubmitted} type="text" value={demoLink} onChange={e => setDemoLink(e.target.value)} placeholder="https://youtube.com/..." className="w-full bg-surface-container border-2 border-ink-black p-4 font-mono text-sm focus:border-electric-blue outline-none transition-colors" />
+              </div>
+            </div>
 
-  const hrs = String(timeLeft.h).padStart(2, "0");
-  const mins = String(timeLeft.m).padStart(2, "0");
-  const secs = String(timeLeft.s).padStart(2, "0");
+            {!userTeam.isSubmitted && (
+              <button onClick={handleSaveLinks} className="w-full md:w-fit bg-ink-black text-pure-white px-8 py-4 font-label-bold uppercase border-2 border-transparent brutal-hover mt-2">
+                STORE LINKS TO CLUSTER
+              </button>
+            )}
+          </div>
 
-  return (
-    <div className="font-headline-md text-headline-md font-black tracking-widest font-code-snippet" id="countdown-timer">
-      {hrs}:{mins}:{secs}
+          <div className={`col-span-1 border-4 brutal-shadow p-8 flex flex-col items-center justify-center text-center ${userTeam.isSubmitted ? 'bg-success border-success text-pure-white' : 'bg-pure-white border-error text-ink-black'}`}>
+            {!userTeam.isSubmitted ? (
+              <>
+                <span className="material-symbols-outlined text-error text-6xl mb-4 animate-pulse">crisis_alert</span>
+                <h3 className="font-display-lg uppercase text-error text-4xl md:text-3xl mb-4 leading-none mx-auto max-w-[250px]">TRANSMIT PAYLOAD</h3>
+                <p className="font-mono text-sm mb-8 px-4 opacity-80">Execute this action ONLY when your squad has finalized structural construction. This will lockdown your Kanban arrays indefinitely.</p>
+                <button onClick={handleFinalSubmit} className="bg-error text-pure-white font-headline-md uppercase px-8 py-4 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs">
+                  INITIATE LOCKDOWN
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="material-symbols-outlined text-pure-white text-6xl mb-4">gpp_good</span>
+                <h3 className="font-display-lg uppercase text-pure-white text-4xl mb-4 leading-none mx-auto max-w-[250px]">STRUCTURE LOCKED</h3>
+                <p className="font-mono text-sm text-pure-white/90">Your squad data is currently under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -68,6 +68,8 @@ import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-passw
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AdminHackathonsIdRouteImport } from './routes/admin.hackathons.$id'
 import { Route as AdminHackathonsCreateRouteImport } from './routes/admin.hackathons.create'
+import { Route as AdminProblemsIdRouteImport } from './routes/admin.problems.$id'
+import { Route as AdminProblemsCreateRouteImport } from './routes/admin.problems.create'
 import { Route as HackathonsIdRegisterRouteImport } from './routes/hackathons.$id.register'
 
 const IndexRoute = IndexRouteImport.update({
@@ -365,6 +367,16 @@ const AdminHackathonsCreateRoute = AdminHackathonsCreateRouteImport.update({
   path: '/create',
   getParentRoute: () => AdminHackathonsRoute,
 } as any)
+const AdminProblemsIdRoute = AdminProblemsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AdminProblemsRoute,
+} as any)
+const AdminProblemsCreateRoute = AdminProblemsCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AdminProblemsRoute,
+} as any)
 const HackathonsIdRegisterRoute = HackathonsIdRegisterRouteImport.update({
   id: '/hackathons/$id/register',
   path: '/hackathons/$id/register',
@@ -415,7 +427,7 @@ export interface FileRoutesByFullPath {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
-  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -431,6 +443,8 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/admin/problems/$id': typeof AdminProblemsIdRoute
+  '/admin/problems/create': typeof AdminProblemsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRoutesByTo {
@@ -476,7 +490,7 @@ export interface FileRoutesByTo {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
-  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -492,6 +506,8 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/admin/problems/$id': typeof AdminProblemsIdRoute
+  '/admin/problems/create': typeof AdminProblemsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRoutesById {
@@ -539,7 +555,7 @@ export interface FileRoutesById {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
-  '/admin/problems': typeof AdminProblemsRoute
+  '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -555,6 +571,8 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
+  '/admin/problems/$id': typeof AdminProblemsIdRoute
+  '/admin/problems/create': typeof AdminProblemsCreateRoute
   '/hackathons/$id/register': typeof HackathonsIdRegisterRoute
 }
 export interface FileRouteTypes {
@@ -619,6 +637,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
+    | '/admin/problems/$id'
+    | '/admin/problems/create'
     | '/hackathons/$id/register'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -680,6 +700,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
+    | '/admin/problems/$id'
+    | '/admin/problems/create'
     | '/hackathons/$id/register'
   id:
     | '__root__'
@@ -742,6 +764,8 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
+    | '/admin/problems/$id'
+    | '/admin/problems/create'
     | '/hackathons/$id/register'
   fileRoutesById: FileRoutesById
 }
@@ -1201,6 +1225,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHackathonsCreateRouteImport
       parentRoute: typeof AdminHackathonsRoute
     }
+    '/admin/problems/$id': {
+      id: '/admin/problems/$id'
+      path: '/$id'
+      fullPath: '/admin/problems/$id'
+      preLoaderRoute: typeof AdminProblemsIdRouteImport
+      parentRoute: typeof AdminProblemsRoute
+    }
+    '/admin/problems/create': {
+      id: '/admin/problems/create'
+      path: '/create'
+      fullPath: '/admin/problems/create'
+      preLoaderRoute: typeof AdminProblemsCreateRouteImport
+      parentRoute: typeof AdminProblemsRoute
+    }
     '/hackathons/$id/register': {
       id: '/hackathons/$id/register'
       path: '/hackathons/$id/register'
@@ -1225,6 +1263,20 @@ const AdminHackathonsRouteWithChildren = AdminHackathonsRoute._addFileChildren(
   AdminHackathonsRouteChildren,
 )
 
+interface AdminProblemsRouteChildren {
+  AdminProblemsIdRoute: typeof AdminProblemsIdRoute
+  AdminProblemsCreateRoute: typeof AdminProblemsCreateRoute
+}
+
+const AdminProblemsRouteChildren: AdminProblemsRouteChildren = {
+  AdminProblemsIdRoute: AdminProblemsIdRoute,
+  AdminProblemsCreateRoute: AdminProblemsCreateRoute,
+}
+
+const AdminProblemsRouteWithChildren = AdminProblemsRoute._addFileChildren(
+  AdminProblemsRouteChildren,
+)
+
 interface AdminRouteChildren {
   AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
@@ -1236,7 +1288,7 @@ interface AdminRouteChildren {
   AdminLeaderboardRoute: typeof AdminLeaderboardRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMentorsRoute: typeof AdminMentorsRoute
-  AdminProblemsRoute: typeof AdminProblemsRoute
+  AdminProblemsRoute: typeof AdminProblemsRouteWithChildren
   AdminRecruitmentRoute: typeof AdminRecruitmentRoute
   AdminScheduleRoute: typeof AdminScheduleRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -1259,7 +1311,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLeaderboardRoute: AdminLeaderboardRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMentorsRoute: AdminMentorsRoute,
-  AdminProblemsRoute: AdminProblemsRoute,
+  AdminProblemsRoute: AdminProblemsRouteWithChildren,
   AdminRecruitmentRoute: AdminRecruitmentRoute,
   AdminScheduleRoute: AdminScheduleRoute,
   AdminSettingsRoute: AdminSettingsRoute,

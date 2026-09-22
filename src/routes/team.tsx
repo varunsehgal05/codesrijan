@@ -8,7 +8,7 @@ export const Route = createFileRoute("/team")({
 });
 
 function Page6() {
-  const { currentUser, teams, users, createTeam, joinTeam } = useAppStore();
+  const { currentUser, teams, users, hackathons, createTeam, joinTeam } = useAppStore();
   const [newTeamName, setNewTeamName] = useState("");
   const [joinTeamId, setJoinTeamId] = useState("");
 
@@ -33,7 +33,9 @@ function Page6() {
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName || !currentUser) return;
-    createTeam(newTeamName, currentUser.id);
+    const activeHackathonId = hackathons[0]?.id;
+    if (!activeHackathonId) return alert("No active hackathon to form a squad in.");
+    createTeam(newTeamName, currentUser.id, activeHackathonId);
   };
 
   const handleJoinTeam = (e: React.FormEvent) => {

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -8,7 +8,7 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPage() {
-    const { currentUser, teams, hackathons, users, isLoaded } = useAppStore();
+    const { currentUser, teams, hackathons, users, registrations, isLoaded } = useAppStore();
     const activeEvent = hackathons[0];
 
     const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
@@ -61,6 +61,32 @@ function DashboardPage() {
             });
             window.location.reload();
         } catch (e: any) { alert(e.response?.data?.message || "Failed to kick."); }
+    };
+
+    const handleLeaveTeam = async () => {
+        if (!confirm("WARNING: Are you absolutely certain you want to abandon your active squad allocation?")) return;
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+            await axios.post(`${BASE}/teams/leave`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            window.location.reload();
+        } catch (e: any) { alert(e.response?.data?.message || "Leave protocol denied."); }
+    };
+
+    const handleDissolveTeam = async () => {
+        if (!confirm("CRITICAL WARNING: Are you certain you want to completely DISSOLVE this squad? All assignment tracking for this team will evaporate permanently.")) return;
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+            await axios.delete(`${BASE}/teams/${userTeam?.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            window.location.reload();
+        } catch (e: any) { alert(e.response?.data?.message || "Dissolve sequence interrupted."); }
     };
 
     const handleActionRequest = async (reqId: string, action: 'accept' | 'reject') => {
@@ -142,19 +168,36 @@ function DashboardPage() {
                 <section className="grid grid-cols-1 md:grid-cols-12 gap-8">
 
                     {/* Mission Status (Team/Project) */}
+                    {/* Mission Status (Team/Project) & Judge Portal */}
                     <div className="col-span-1 md:col-span-8 bg-surface-bright brutal-border brutal-shadow p-8 flex flex-col justify-between h-full">
+                        {(currentUser.role === 'admin' || currentUser.role === 'judge') && (
+                            <div className="mb-8 border-4 border-ink-black p-6 bg-[#ffeb3b] text-ink-black brutal-shadow">
+                                <h3 className="font-display-md text-2xl uppercase mb-2 flex items-center gap-2"><span className="material-symbols-outlined text-3xl">policy</span> Judge Operations Center</h3>
+                                <p className="font-body-md mb-4 font-bold">You possess rigorous grade authorization capability. Open the matrix to begin rendering judgments on locked payloads.</p>
+                                <Link to="/evaluations" className="bg-ink-black text-pure-white w-full uppercase py-3 font-label-bold flex items-center justify-center gap-2 brutal-hover">
+                                    <span className="material-symbols-outlined text-electric-blue">launch</span> ENTER JUDGE PORTAL
+                                </Link>
+                            </div>
+                        )}
                         <div>
                             <h2 className="font-headline-md uppercase mb-6 border-l-4 border-ink-black pl-3 flex items-center justify-between">
                                 Mission Status
                                 {userTeam && <span className="text-xs bg-success text-on-primary px-2 py-1 font-label-bold">ACTIVE ALLIANCE</span>}
                             </h2>
 
-                            {!userTeam ? (
+                            {!(registrations || []).some(r => r.hackathonId === activeEvent?.id) ? (
+                                <div className="bg-electric-blue text-on-primary p-6 brutal-border">
+                                    <span className="material-symbols-outlined text-4xl mb-2">how_to_reg</span>
+                                    <h3 className="font-label-bold text-xl uppercase mb-2">REGISTRATION REQUIRED</h3>
+                                    <p className="font-body-md mb-6">You are not registered for the {activeEvent?.id || 'Active'} Hackathon. Registration is mandatory to proceed.</p>
+                                    <a href={`/hackathons/${activeEvent?.id}/register`} className="bg-white text-ink-black py-3 px-6 font-label-bold text-center block brutal-hover shadow-black drop-shadow-xl hover:-translate-y-1">ENROLL IN THE MAINFRAME</a>
+                                </div>
+                            ) : !userTeam ? (
                                 <div className="bg-error text-on-primary p-6 brutal-border">
                                     <span className="material-symbols-outlined text-4xl mb-2">warning</span>
                                     <h3 className="font-label-bold text-xl uppercase mb-2">LONE WOLF DETECTED</h3>
                                     <p className="font-body-md mb-6">You have not joined a squad yet. You cannot access the project workspace or submit to the hackathon without a team.</p>
-                                    <a href="/recruitment" className="bg-white text-ink-black py-3 px-6 font-label-bold text-center block brutal-hover">ACCESS RECRUITMENT MARKETPLACE</a>
+                                    <a href="/recruitment" className="bg-white text-ink-black py-3 px-6 font-label-bold text-center block brutal-hover hover:-translate-y-1">ACCESS RECRUITMENT MARKETPLACE</a>
                                 </div>
                             ) : (
                                 <div className="space-y-6">
@@ -162,6 +205,9 @@ function DashboardPage() {
                                         <p className="font-label-caps text-surface-variant mb-1">Squad Designation</p>
                                         <h3 className="font-headline-sm uppercase text-electric-blue">{userTeam.name}</h3>
                                         <p className="font-body-sm mt-2"><span className="font-bold">{(userTeam.memberIds || userTeam.members || []).length}/4</span> Operatives connected.</p>
+                                        {userTeam.leaderId !== currentUser.id && (
+                                            <button onClick={handleLeaveTeam} className="mt-4 font-label-bold uppercase text-xs px-4 py-2 border-2 border-ink-black text-ink-black brutal-hover bg-pure-white transition-transform hover:-translate-y-1">ABANDON SQUAD</button>
+                                        )}
                                     </div>
 
                                     <div className="bg-surface-container p-4 border-2 border-ink-black">
@@ -182,6 +228,10 @@ function DashboardPage() {
                                         </div>
                                         {userTeam.isSubmitted && <span className="material-symbols-outlined text-success text-4xl">check_circle</span>}
                                     </div>
+
+                                    <Link to="/workspace" className="mt-8 bg-electric-blue text-pure-white py-4 px-6 font-display-md text-xl text-center flex justify-center items-center gap-2 brutal-hover shadow-black drop-shadow-xl hover:-translate-y-1 w-full border-4 border-ink-black uppercase">
+                                        ENTER KANBAN WORKSPACE <span className="material-symbols-outlined font-bold">arrow_forward</span>
+                                    </Link>
                                 </div>
                             )}
                         </div>
@@ -192,6 +242,11 @@ function DashboardPage() {
                                     Squad Management
                                 </h2>
                                 <div className="space-y-4">
+                                    <div className="bg-error/20 p-4 border-2 border-error">
+                                        <h3 className="font-label-bold uppercase text-error mb-2 border-b-2 border-error pb-1">Extreme Measures</h3>
+                                        <button onClick={handleDissolveTeam} className="bg-error text-white font-label-bold px-4 py-3 text-xs brutal-hover w-full uppercase transition-transform hover:-translate-y-1 block max-w-sm">DISSOLVE SQUAD ENTIRELY</button>
+                                    </div>
+
                                     {/* Members roster */}
                                     <div className="bg-surface p-4 border-2 border-ink-black">
                                         <h3 className="font-label-bold uppercase text-surface-variant mb-2 border-b-2 border-ink-black pb-1">Operative Roster</h3>

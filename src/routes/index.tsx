@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/")({
   component: Page14,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Page14() {
+  const { currentUser } = useAppStore();
   const [stats, setStats] = useState({
     hackersCount: 4000,
     projectsCount: 630,
@@ -23,6 +25,7 @@ function Page14() {
 
   const [loading, setLoading] = useState(true);
   const [timeLeft, setTimeLeft] = useState("Loading...");
+  const [problems, setProblems] = useState<any[]>([]);
   const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
   useEffect(() => {
@@ -35,7 +38,13 @@ function Page14() {
     // 2. Fetch Active CodeSrijan Event
     axios.get(`${API_URL}/hackathons/active`)
       .then(res => {
-        if (res.data) setStats(prev => ({ ...prev, activeHackathon: res.data }));
+        if (res.data) {
+          setStats(prev => ({ ...prev, activeHackathon: res.data }));
+          const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+          axios.get(`${BASE}/hackathons/${res.data.id}/problems`)
+            .then(pr => setProblems((pr.data || []).slice(0, 3))) // Show top 3 natively
+            .catch(() => null);
+        }
         setLoading(false);
       })
       .catch(err => {
@@ -88,7 +97,7 @@ function Page14() {
               Join CodeSrijan for 48 hours of intense coding, networking, and building the future. Ready to make your mark?
             </p>
             <div className="flex gap-4 mt-4">
-              <Link to="/register" className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-8 py-4 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-lg flex items-center gap-2 block hover:-translate-y-1">
+              <Link to={currentUser ? "/dashboard" : "/register"} className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-8 py-4 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-lg flex items-center gap-2 block hover:-translate-y-1">
                 Start Building <span className="material-symbols-outlined font-bold">arrow_forward</span>
               </Link>
               <Link to="/about" className="bg-surface-container text-stark-black font-label-bold text-label-bold px-8 py-4 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-lg block hover:-translate-y-1">
@@ -161,6 +170,43 @@ function Page14() {
           </div>
         </div>
       </section>
+
+      {/* Problems Highlight */}
+      {problems.length > 0 && (
+        <section className="py-section-gap bg-stark-black px-gutter border-t-4 border-electric-blue">
+          <div className="max-w-[1200px] mx-auto text-pure-white">
+            <div className="flex justify-between items-end mb-12 border-b-2 border-surface-variant pb-4">
+              <div>
+                <h2 className="font-display-lg text-4xl uppercase text-pure-white mb-2">Live Objective Matrices</h2>
+                <p className="font-mono text-electric-blue uppercase tracking-widest text-sm">Top 3 published targets for the active assignment</p>
+              </div>
+              <Link to="/problems" className="hidden md:flex bg-electric-blue text-pure-white px-6 py-3 font-label-bold uppercase border-2 border-transparent brutal-hover hover:-translate-y-1 items-center gap-2">
+                ALL DIRECTIVES <span className="material-symbols-outlined text-sm">open_in_new</span>
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {problems.map(prob => (
+                <div key={prob.id} className="bg-surface-container-lowest border-4 border-surface-variant p-6 hover:border-electric-blue transition-colors flex flex-col justify-between">
+                  <div>
+                    <span className="inline-block bg-electric-blue text-pure-white px-2 py-1 text-xs font-bold uppercase mb-4">{prob.domain || prob.category}</span>
+                    <h3 className="font-headline-sm uppercase text-pure-white mb-2 line-clamp-2">{prob.title}</h3>
+                    <p className="font-mono text-sm text-surface-variant line-clamp-3 mb-6">{prob.description}</p>
+                  </div>
+                  <Link to="/problems" className="font-label-bold text-electric-blue hover:text-pure-white uppercase text-sm flex items-center gap-2 group w-fit">
+                    EXPLORE PARAMETERS <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                  </Link>
+                </div>
+              ))}
+            </div>
+
+            <Link to="/problems" className="md:hidden mt-8 w-full bg-electric-blue text-pure-white px-6 py-4 font-label-bold uppercase border-2 border-transparent brutal-hover text-center block">
+              VIEW ALL DIRECTIVES
+            </Link>
+          </div>
+        </section>
+      )}
+
       {/*Footer*/}
     </div>
   );

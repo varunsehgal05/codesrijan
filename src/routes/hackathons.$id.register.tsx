@@ -40,8 +40,7 @@ function HackathonRegistrationPage() {
 
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            await axios.post(`${API_URL}/registrations`, {
-                hackathonId: id,
+            await axios.post(`${API_URL}/hackathons/${id}/register`, {
                 college,
                 branch,
                 year
