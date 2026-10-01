@@ -1,0 +1,202 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { io, Socket } from "socket.io-client";
+
+export const Route = createFileRoute("/chat")({
+  component: ChatDashboard,
+});
+
+function ChatDashboard() {
+  const { currentUser } = useAppStore();
+  const navigate = useNavigate();
+
+  const [conversations, setConversations] = useState<any[]>([]);
+  const [activeConv, setActiveConv] = useState<any | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [inputText, setInputText] = useState("");
+  const socketRef = useRef<Socket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+  useEffect(() => {
+    if (!currentUser) navigate({ to: "/login" });
+  }, [currentUser, navigate]);
+
+  useEffect(() => {
+    if (currentUser) {
+      loadConversations();
+      
+      const socketUrl = API_URL.replace('/api', '');
+      socketRef.current = io(socketUrl);
+      
+      socketRef.current.on('message:new', (newMsg) => {
+        if (activeConv && newMsg.conversationId === activeConv.id) {
+          setMessages((prev) => [...prev, newMsg]);
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      });
+
+      return () => {
+        socketRef.current?.disconnect();
+      };
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (activeConv && socketRef.current) {
+      socketRef.current.emit('conversation:join', activeConv.id);
+      loadMessages(activeConv.id);
+
+      return () => {
+        socketRef.current?.emit('conversation:leave', activeConv.id);
+      };
+    }
+  }, [activeConv]);
+
+  const loadConversations = async () => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.get(`${BASE}/conversations`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setConversations(res.data);
+      if (res.data.length > 0 && !activeConv) {
+        setActiveConv(res.data[0]);
+      }
+    } catch (e) {
+      console.error("Failed to load conversations");
+    }
+  };
+
+  const loadMessages = async (convId: string) => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.get(`${BASE}/conversations/${convId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessages(res.data);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (e) {
+      console.error("Failed to load messages");
+    }
+  };
+
+  const sendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim() || !activeConv) return;
+    
+    const text = inputText;
+    setInputText("");
+    
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${BASE}/conversations/${activeConv.id}/messages`, 
+        { message: text },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // The socket event will append the message to the list
+    } catch (e) {
+      console.error("Failed to send message");
+    }
+  };
+
+  if (!currentUser) return null;
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-7xl mx-auto flex h-[85vh] border-4 border-ink-black neo-shadow bg-pure-white">
+        
+        {/* Sidebar */}
+        <div className="w-1/3 border-r-4 border-ink-black flex flex-col bg-surface">
+          <div className="p-4 border-b-4 border-ink-black bg-primary">
+            <h2 className="font-display-lg text-xl uppercase text-stark-black tracking-tight">Comms Channels</h2>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {conversations.length === 0 ? (
+              <div className="p-4 text-center font-code-snippet text-text-muted mt-10">No channels available.</div>
+            ) : (
+              conversations.map(conv => (
+                <div 
+                  key={conv.id} 
+                  onClick={() => setActiveConv(conv)}
+                  className={`p-4 border-b border-ink-black cursor-pointer brutal-hover transition-colors ${activeConv?.id === conv.id ? 'bg-electric-blue text-pure-white' : 'hover:bg-surface-container'}`}
+                >
+                  <p className="font-label-bold">
+                    {conv.type === 'team' ? 'Squad Comm: ' : conv.type === 'direct' ? 'Direct Relay: ' : 'Admin/Support: '} 
+                    {conv.id.substring(0,8)}
+                  </p>
+                  <p className={`font-code-snippet text-xs ${activeConv?.id === conv.id ? 'text-surface' : 'text-text-muted'}`}>
+                    {conv.type.toUpperCase()} VECTOR
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Chat Window */}
+        <div className="w-2/3 flex flex-col bg-surface-container-low relative">
+          {activeConv ? (
+            <>
+              {/* Header */}
+              <div className="p-4 border-b-4 border-ink-black bg-stark-black text-pure-white">
+                <h3 className="font-display-lg uppercase tracking-wider">Channel // {activeConv.id}</h3>
+              </div>
+              
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {messages.length === 0 ? (
+                  <div className="text-center font-code-snippet text-text-muted mt-20 opacity-50">Secure transmission initialized... No messages yet.</div>
+                ) : (
+                  messages.map(msg => {
+                    const isMine = msg.senderId === currentUser.id;
+                    return (
+                      <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-md p-3 border-2 border-ink-black ${isMine ? 'bg-primary text-stark-black' : 'bg-surface-container-high text-stark-black'}`}>
+                          <p className="font-label-bold text-xs mb-1 opacity-70">{isMine ? 'YOU' : msg.senderId.substring(0,8)}</p>
+                          <p className="font-body-md whitespace-pre-wrap">{msg.message}</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+              
+              {/* Input Area */}
+              <div className="p-4 border-t-4 border-ink-black bg-pure-white">
+                <form onSubmit={sendMessage} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="Transmit payload..."
+                    className="flex-1 p-3 border-2 border-ink-black bg-surface font-code-snippet focus:outline-none focus:ring-2 ring-primary"
+                  />
+                  <button 
+                    type="submit" 
+                    className="bg-stark-black text-primary px-6 py-3 border-2 border-transparent font-label-bold uppercase brutal-hover hover:-translate-y-1"
+                  >
+                    SEND
+                  </button>
+                </form>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center font-display-lg text-2xl text-text-muted uppercase">
+              SELECT A CHANNEL TO BEGIN
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
