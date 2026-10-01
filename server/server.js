@@ -1403,6 +1403,19 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
         const userId = req.user.id;
         const userTeams = await Team.find({ memberIds: userId });
         const teamIds = userTeams.map(t => t.id);
+
+        for (const team of userTeams) {
+            const existing = await Conversation.findOne({ teamId: team.id, type: 'team' });
+            if (!existing) {
+                await Conversation.create({
+                    id: 'conv-' + Date.now().toString() + '-' + team.id.substring(0, 5),
+                    type: 'team',
+                    teamId: team.id,
+                    hackathonId: team.hackathonId,
+                    participantIds: [] // Entire team can access via teamId
+                });
+            }
+        }
         
         let query = {
             $or: [
