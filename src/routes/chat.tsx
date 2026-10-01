@@ -31,36 +31,36 @@ function ChatDashboard() {
   }, [currentUser, navigate]);
 
   useEffect(() => {
-    if (currentUser) {
-      loadConversations();
-      
-      const socketUrl = API_URL.replace('/api', '');
-      socketRef.current = io(socketUrl);
-      
-      socketRef.current.on('message:new', (newMsg) => {
-        if (activeConv && newMsg.conversationId === activeConv.id) {
-          setMessages((prev) => [...prev, newMsg]);
-          setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
-        }
-      });
+    if (!currentUser) return;
+    
+    loadConversations();
+    
+    const socketUrl = API_URL.replace('/api', '');
+    socketRef.current = io(socketUrl);
+    
+    socketRef.current.on('message:new', (newMsg) => {
+      if (activeConv && newMsg.conversationId === activeConv.id) {
+        setMessages((prev) => [...prev, newMsg]);
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    });
 
-      return () => {
-        socketRef.current?.disconnect();
-      };
-    }
+    return () => {
+      socketRef.current?.disconnect();
+    };
   }, [currentUser]);
 
   useEffect(() => {
-    if (activeConv && socketRef.current) {
-      socketRef.current.emit('conversation:join', activeConv.id);
-      loadMessages(activeConv.id);
+    if (!activeConv || !socketRef.current) return;
+    
+    socketRef.current.emit('conversation:join', activeConv.id);
+    loadMessages(activeConv.id);
 
-      return () => {
-        socketRef.current?.emit('conversation:leave', activeConv.id);
-      };
-    }
+    return () => {
+      socketRef.current?.emit('conversation:leave', activeConv.id);
+    };
   }, [activeConv]);
 
   const loadConversations = async () => {
@@ -123,7 +123,7 @@ function ChatDashboard() {
       const res = await axios.get(`${BASE}/users/search?q=${q}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setSearchResults(res.data.filter((u: any) => u.id !== currentUser.id));
+      setSearchResults(res.data.filter((u: any) => u.id !== currentUser?.id));
     } catch (e) {
       console.error("User search failed");
     }

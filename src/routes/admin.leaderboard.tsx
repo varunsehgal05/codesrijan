@@ -15,6 +15,7 @@ interface TeamScoreItem {
   totalScore: number;
   memberCount: number;
   status: string;
+  isScored?: boolean;
 }
 
 function AdminLeaderboard() {
@@ -39,15 +40,16 @@ function AdminLeaderboard() {
       const mapped: TeamScoreItem[] = rawTeams.map((t: any) => {
         const teamEvals = evals.filter((e: any) => e.projectId === t.id || e.teamId === t.id);
         const evalScore = teamEvals.reduce((acc: number, cur: any) => acc + (cur.totalScore || 0), 0);
-        const points = Number(t.points) || 0;
+        const isScored = teamEvals.length > 0;
         return {
           id: t.id,
           name: t.name,
-          points,
+          points: 0,
           evalScore,
-          totalScore: points + evalScore,
+          totalScore: evalScore,
           memberCount: (t.memberIds || t.members || []).length,
-          status: t.status || 'active'
+          status: t.status || 'active',
+          isScored
         };
       });
 
@@ -180,11 +182,11 @@ function AdminLeaderboard() {
         </div>
         <div className="bg-pure-white p-6 brutal-border brutal-shadow">
           <p className="font-label-caps text-surface-variant mb-1">TOP CURRENT SCORE</p>
-          <p className="font-display-lg text-3xl text-electric-blue">{teams.length > 0 ? teams[0].totalScore : 0} PTS</p>
+          <p className="font-display-lg text-3xl text-electric-blue">{teams.length > 0 && teams[0] ? teams[0].totalScore : 0} PTS</p>
         </div>
         <div className="bg-pure-white p-6 brutal-border brutal-shadow">
           <p className="font-label-caps text-surface-variant mb-1">LEADING SQUAD</p>
-          <p className="font-headline-sm uppercase text-stark-black truncate">{teams.length > 0 ? teams[0].name : 'N/A'}</p>
+          <p className="font-headline-sm uppercase text-stark-black truncate">{teams.length > 0 && teams[0] ? teams[0].name : 'N/A'}</p>
         </div>
       </div>
 
@@ -195,7 +197,6 @@ function AdminLeaderboard() {
             <tr className="bg-stark-black text-pure-white">
               <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4 w-16 text-center">Rank</th>
               <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Squad Matrix</th>
-              <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4 text-center">Base Points</th>
               <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4 text-center">Eval Score</th>
               <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4 text-center">Total Score</th>
               <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue text-center min-w-[320px]">Points Management</th>
@@ -226,14 +227,15 @@ function AdminLeaderboard() {
                       <div className="font-label-bold text-base text-stark-black uppercase">{t.name}</div>
                       <div className="font-code-snippet text-xs text-text-muted">ID: {t.id} • {t.memberCount}/4 Operatives</div>
                     </td>
-                    <td className="p-4 text-center font-mono font-bold text-base border-r-2 border-stark-black">
-                      {t.points}
-                    </td>
                     <td className="p-4 text-center font-mono text-base border-r-2 border-stark-black text-on-surface-variant">
-                      {t.evalScore}
+                      {t.isScored ? t.evalScore : '-'}
                     </td>
                     <td className="p-4 text-center font-display-lg text-2xl font-bold text-electric-blue border-r-2 border-stark-black">
-                      {t.totalScore}
+                      {t.isScored ? (
+                        t.totalScore
+                      ) : (
+                        <span className="text-surface-variant text-sm font-label-bold uppercase tracking-wider">Pending Evaluation</span>
+                      )}
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-2">

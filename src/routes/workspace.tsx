@@ -146,7 +146,7 @@ function WorkspaceHUD() {
             <p className="font-mono text-sm text-surface-variant flex gap-4 mt-2 font-bold flex-wrap">
               <span className="uppercase text-electric-blue">DESIGNATION: {userTeam.name}</span>
               <span className="hidden md:inline">|</span>
-              <span>EVENT ID: {activeEvent?.slug?.toUpperCase()}</span>
+              <span>EVENT ID: {activeEvent?.id?.toUpperCase()}</span>
             </p>
           </div>
 

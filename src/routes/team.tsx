@@ -37,7 +37,7 @@ function Page6() {
   }, [currentUser, API_URL]);
 
   const currentTeam = currentUser?.teamId ? teams.find(t => t.id === currentUser.teamId) : null;
-  const teamMembers = currentTeam ? currentTeam.members.map(userId => users.find(u => u.id === userId)).filter(Boolean) : [];
+  const teamMembers = currentTeam ? (currentTeam.members || currentTeam.memberIds || []).map(userId => users.find(u => u.id === userId)).filter(Boolean) : [];
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,7 +180,7 @@ function Page6() {
                     ))}
                   </div>
                 </section>
-                {currentTeam.leaderId === currentUser.id && (
+                {currentTeam.leaderId === currentUser?.id && (
                   <section className="bg-surface p-6 neo-brutal-card border-dashed">
                     <h2 className="font-headline-md text-ink-black mb-4 uppercase">Pending Join Requests</h2>
                     {joinRequests.length === 0 ? (

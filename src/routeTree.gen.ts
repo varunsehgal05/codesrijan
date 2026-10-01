@@ -17,6 +17,7 @@ import { Route as AiAssistantRouteImport } from './routes/ai-assistant'
 import { Route as AnnouncementsRouteImport } from './routes/announcements'
 import { Route as CertificatesRouteImport } from './routes/certificates'
 import { Route as ChallengeRouteImport } from './routes/challenge'
+import { Route as ChatRouteImport } from './routes/chat'
 import { Route as CodeOfConductRouteImport } from './routes/code-of-conduct'
 import { Route as CommunityRouteImport } from './routes/community'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -110,6 +111,11 @@ const CertificatesRoute = CertificatesRouteImport.update({
 const ChallengeRoute = ChallengeRouteImport.update({
   id: '/challenge',
   path: '/challenge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatRoute = ChatRouteImport.update({
+  id: '/chat',
+  path: '/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CodeOfConductRoute = CodeOfConductRouteImport.update({
@@ -392,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
+  '/chat': typeof ChatRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
@@ -455,6 +462,7 @@ export interface FileRoutesByTo {
   '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
+  '/chat': typeof ChatRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
@@ -520,6 +528,7 @@ export interface FileRoutesById {
   '/announcements': typeof AnnouncementsRoute
   '/certificates': typeof CertificatesRoute
   '/challenge': typeof ChallengeRoute
+  '/chat': typeof ChatRoute
   '/code-of-conduct': typeof CodeOfConductRoute
   '/community': typeof CommunityRoute
   '/dashboard': typeof DashboardRoute
@@ -586,6 +595,7 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/certificates'
     | '/challenge'
+    | '/chat'
     | '/code-of-conduct'
     | '/community'
     | '/dashboard'
@@ -649,6 +659,7 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/certificates'
     | '/challenge'
+    | '/chat'
     | '/code-of-conduct'
     | '/community'
     | '/dashboard'
@@ -713,6 +724,7 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/certificates'
     | '/challenge'
+    | '/chat'
     | '/code-of-conduct'
     | '/community'
     | '/dashboard'
@@ -778,6 +790,7 @@ export interface RootRouteChildren {
   AnnouncementsRoute: typeof AnnouncementsRoute
   CertificatesRoute: typeof CertificatesRoute
   ChallengeRoute: typeof ChallengeRoute
+  ChatRoute: typeof ChatRoute
   CodeOfConductRoute: typeof CodeOfConductRoute
   CommunityRoute: typeof CommunityRoute
   DashboardRoute: typeof DashboardRoute
@@ -866,6 +879,13 @@ declare module '@tanstack/react-router' {
       path: '/challenge'
       fullPath: '/challenge'
       preLoaderRoute: typeof ChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat': {
+      id: '/chat'
+      path: '/chat'
+      fullPath: '/chat'
+      preLoaderRoute: typeof ChatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/code-of-conduct': {
@@ -1334,6 +1354,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnnouncementsRoute: AnnouncementsRoute,
   CertificatesRoute: CertificatesRoute,
   ChallengeRoute: ChallengeRoute,
+  ChatRoute: ChatRoute,
   CodeOfConductRoute: CodeOfConductRoute,
   CommunityRoute: CommunityRoute,
   DashboardRoute: DashboardRoute,
