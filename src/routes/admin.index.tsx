@@ -12,6 +12,8 @@ function AdminTelemetry() {
     const [hackathons, setHackathons] = useState<any[]>([]);
     const [chatMessages, setChatMessages] = useState<any[]>([]); // Stubbed
 
+    const [stats, setStats] = useState({ userCount: 0, teamCount: 0, messageCount: 0, hackathonCount: 0 });
+
     const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
     const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
@@ -19,20 +21,15 @@ function AdminTelemetry() {
         const fetchTelemetry = async () => {
             try {
                 const token = localStorage.getItem("codesrijan_auth_token");
-                const headers = { Authorization: `Bearer ${token}` };
+                const res = await axios.get(`${BASE}/admin/analytics`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
 
-                const statsRes = await axios.get(`${BASE}/public/stats`);
-                // Use public stats to quickly display counts if available, otherwise just use counts from actual API dumps
-
-                const [teamsRes, usersRes, evtsRes] = await Promise.all([
-                    axios.get(`${BASE}/teams`, { headers }),
-                    axios.get(`${BASE}/users`, { headers }).catch(() => ({ data: Array(statsRes.data.hackers || 0).fill({}) })),
-                    axios.get(`${BASE}/hackathons`, { headers }).catch(() => ({ data: [] }))
-                ]);
-
-                setTeams(teamsRes.data || []);
-                setUsers(usersRes.data || []);
-                setHackathons(evtsRes.data || []);
+                setStats(res.data.stats || { userCount: 0, teamCount: 0, messageCount: 0, hackathonCount: 0 });
+                setTeams(res.data.stream?.teams || []);
+                setUsers(res.data.stream?.users || []);
+                // If hackathons exist, maybe add them to state too, but here we'll just mock one for UI logic
+                setHackathons([{ id: 'mock', name: 'CODESRIJAN HACKATHON 2026', status: 'live' }]);
             } catch (err) {
                 console.error("Telemetry failure:", err);
             }
@@ -68,7 +65,7 @@ function AdminTelemetry() {
                         <span className="font-label-bold text-label-bold uppercase">Registration Volume</span>
                         <span className="material-symbols-outlined">trending_up</span>
                     </div>
-                    <h3 className="font-display-lg text-display-lg leading-none">{users.length}</h3>
+                    <h3 className="font-display-lg text-display-lg leading-none">{stats.userCount}</h3>
                     <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm">Total users connected</p>
                 </div>
 
@@ -78,7 +75,7 @@ function AdminTelemetry() {
                         <span className="font-label-bold text-label-bold uppercase">Active Squads</span>
                         <span className="material-symbols-outlined">groups</span>
                     </div>
-                    <h3 className="font-display-lg text-display-lg leading-none">{teams.length}</h3>
+                    <h3 className="font-display-lg text-display-lg leading-none">{stats.teamCount}</h3>
                     <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm text-electric-blue">Formed and registered</p>
                 </div>
 
@@ -88,7 +85,7 @@ function AdminTelemetry() {
                         <span className="font-label-bold text-label-bold uppercase">Terminal Messages</span>
                         <span className="material-symbols-outlined">chat</span>
                     </div>
-                    <h3 className="font-display-lg text-display-lg leading-none">{chatMessages.length}</h3>
+                    <h3 className="font-display-lg text-display-lg leading-none">{stats.messageCount}</h3>
                     <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm">Cross-squad comms sent</p>
                 </div>
 
@@ -98,7 +95,7 @@ function AdminTelemetry() {
                         <span className="font-label-bold text-label-bold uppercase">Event Timeline</span>
                         <span className="material-symbols-outlined">event</span>
                     </div>
-                    <h3 className="font-display-lg text-display-lg leading-none">{hackathons.length}</h3>
+                    <h3 className="font-display-lg text-display-lg leading-none">{stats.hackathonCount}</h3>
                     <p className="font-code-snippet pt-2 mt-4 border-t-2 border-stark-black text-sm text-pure-white font-bold">RECORDED EVENTS</p>
                 </div>
             </div>

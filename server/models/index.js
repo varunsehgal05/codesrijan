@@ -255,6 +255,44 @@ const projectTaskSchema = new mongoose.Schema({
     priority: { type: String, enum: ['low', 'medium', 'high', 'critical'], default: 'medium' }
 }, { timestamps: true });
 
+// 13. Settings Collection
+const settingSchema = new mongoose.Schema({
+    key: { type: String, unique: true },
+    value: mongoose.Schema.Types.Mixed,
+    description: String,
+    updatedBy: String
+}, { timestamps: true });
+
+// 14. Conversations and Messages (Chat)
+const conversationSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    type: { type: String, enum: ['direct', 'group', 'team', 'support'], default: 'direct' },
+    memberIds: [String],
+    lastMessageAt: Date,
+    title: String
+}, { timestamps: true });
+
+const messageSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    conversationId: String,
+    senderId: String,
+    message: String,
+    messageType: { type: String, default: 'text' },
+    readBy: [String]
+}, { timestamps: true });
+
+// 15. Support Tickets
+const supportTicketSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    userId: String,
+    subject: String,
+    category: String,
+    priority: { type: String, enum: ['low', 'normal', 'high', 'critical'], default: 'normal' },
+    status: { type: String, enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], default: 'open' },
+    assignedTo: String,
+    conversationId: String
+}, { timestamps: true });
+
 // Export logic (prevent overwrite if extremely frequent hot reloading)
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export const Hackathon = mongoose.models.Hackathon || mongoose.model('Hackathon', hackathonSchema);
@@ -269,7 +307,11 @@ export const Submission = mongoose.models.Submission || mongoose.model('Submissi
 export const Evaluation = mongoose.models.Evaluation || mongoose.model('Evaluation', evaluationSchema);
 export const RecruitmentProfile = mongoose.models.RecruitmentProfile || mongoose.model('RecruitmentProfile', recruitmentProfileSchema);
 export const Certificate = mongoose.models.Certificate || mongoose.model('Certificate', certificateSchema);
+export const Setting = mongoose.models.Setting || mongoose.model('Setting', settingSchema);
+export const Conversation = mongoose.models.Conversation || mongoose.model('Conversation', conversationSchema);
+export const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
+export const SupportTicket = mongoose.models.SupportTicket || mongoose.model('SupportTicket', supportTicketSchema);
 
 export default {
-    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile, Certificate
+    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile, Certificate, Setting, Conversation, Message, SupportTicket
 };

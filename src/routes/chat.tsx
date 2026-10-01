@@ -84,6 +84,18 @@ function ChatDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setConversations(res.data);
+      
+      const params = new URLSearchParams(window.location.search);
+      const targetConvId = params.get('conv');
+
+      if (targetConvId) {
+        const target = res.data.find((c: any) => c.id === targetConvId);
+        if (target) {
+            setActiveConv(target);
+            return;
+        }
+      }
+
       if (res.data.length > 0 && !activeConv) {
         setActiveConv(res.data[0]);
       }

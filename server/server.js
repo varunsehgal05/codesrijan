@@ -1606,6 +1606,30 @@ app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), 
     res.json(ticket);
 });
 
+// --- SETTINGS (ADMIN) ---
+app.get('/api/admin/settings', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const settings = await Setting.find();
+        res.json(settings);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch settings." });
+    }
+});
+
+app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { key, value, description } = req.body;
+        const setting = await Setting.findOneAndUpdate(
+            { key },
+            { value, description, updatedBy: req.user.id },
+            { new: true, upsert: true }
+        );
+        res.json(setting);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update setting." });
+    }
+});
+
 // --- NOTIFICATIONS ---
 app.get('/api/notifications', requireAuth, async (req, res) => {
     const notes = await Notification.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(50);
@@ -1615,6 +1639,27 @@ app.get('/api/notifications', requireAuth, async (req, res) => {
 app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
     await Notification.findOneAndUpdate({ id: req.params.id, userId: req.user.id }, { isRead: true });
     res.json({ success: true });
+});
+
+// --- ANALYTICS ---
+app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const userCount = await User.countDocuments();
+        const teamCount = await Team.countDocuments();
+        const messageCount = await Message.countDocuments();
+        const hackathonCount = await Hackathon.countDocuments();
+        
+        const teams = await Team.find().sort({ createdAt: -1 }).limit(20);
+        const users = await User.find().sort({ createdAt: -1 }).limit(20);
+        const submissions = await Submission.find().sort({ createdAt: -1 }).limit(20);
+
+        res.json({
+            stats: { userCount, teamCount, messageCount, hackathonCount },
+            stream: { teams, users, submissions }
+        });
+    } catch (e) {
+        res.status(500).json({ message: "Analytics query failed." });
+    }
 });
 
 // START
