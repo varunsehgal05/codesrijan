@@ -38,19 +38,33 @@ function ChatDashboard() {
     const socketUrl = API_URL.replace('/api', '');
     socketRef.current = io(socketUrl);
     
-    socketRef.current.on('message:new', (newMsg) => {
-      if (activeConv && newMsg.conversationId === activeConv.id) {
-        setMessages((prev) => [...prev, newMsg]);
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      }
-    });
-
+    // message:new listener moved to a separate effect
     return () => {
       socketRef.current?.disconnect();
     };
   }, [currentUser]);
+
+  useEffect(() => {
+    if (!socketRef.current) return;
+    
+    const handleNewMessage = (newMsg: any) => {
+      if (activeConv && newMsg.conversationId === activeConv.id) {
+        setMessages((prev) => {
+          // Prevent duplicates if same message comes twice
+          if (prev.some(m => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg];
+        });
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    };
+
+    socketRef.current.on('message:new', handleNewMessage);
+    return () => {
+      socketRef.current?.off('message:new', handleNewMessage);
+    };
+  }, [activeConv]);
 
   useEffect(() => {
     if (!activeConv || !socketRef.current) return;

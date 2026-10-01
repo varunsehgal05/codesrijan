@@ -590,8 +590,7 @@ app.get('/api/users/search', requireAuth, async (req, res) => {
     if (!q) return res.json([]);
     // Expose only public-safe fields
     const users = await User.find({
-        name: { $regex: q, $options: 'i' },
-        accountStatus: 'active'
+        name: { $regex: q, $options: 'i' }
     }).select('id name role college branch skills githubUrl linkedinUrl profilePicture').limit(20);
     res.json(users);
 });
