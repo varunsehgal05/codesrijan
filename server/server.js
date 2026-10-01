@@ -22,13 +22,21 @@ const io = new Server(httpServer, {
 
 // Configure Realtime Sockets
 io.on('connection', (socket) => {
-    socket.on('join_team', (teamId) => {
-        socket.join(teamId);
+    socket.on('conversation:join', (conversationId) => {
+        socket.join(conversationId);
     });
 
-    socket.on('send_message', (data) => {
-        // data expects: { id, authorId, authorName, teamId, content }
-        io.to(data.teamId).emit('receive_message', data);
+    socket.on('conversation:leave', (conversationId) => {
+        socket.leave(conversationId);
+    });
+
+    socket.on('typing:start', (data) => {
+        // data expects: { conversationId, userId, name }
+        socket.to(data.conversationId).emit('typing:start', data);
+    });
+
+    socket.on('typing:stop', (data) => {
+        socket.to(data.conversationId).emit('typing:stop', data);
     });
 });
 
@@ -37,7 +45,7 @@ app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask } from './models/index.js';
-import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting } from './models/secondary.js';
+import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -1383,6 +1391,135 @@ app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']
         res.status(201).json(evaluation);
     } catch (e) {
         res.status(500).json({ message: "Core error locking evaluation payload." });
+    }
+});
+
+// ==========================================
+// EPIC 4: CONVERSATIONS & CHAT (REST API)
+// ==========================================
+
+app.get('/api/conversations', requireAuth, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const userTeams = await Team.find({ memberIds: userId });
+        const teamIds = userTeams.map(t => t.id);
+        
+        let query = {
+            $or: [
+                { participantIds: userId },
+                { teamId: { $in: teamIds } }
+            ]
+        };
+        
+        if (req.user.role === 'admin') {
+            query = {
+                $or: [
+                    { participantIds: userId },
+                    { teamId: { $in: teamIds } },
+                    { type: 'support' }
+                ]
+            };
+        }
+
+        const conversations = await Conversation.find(query).sort({ updatedAt: -1 });
+        res.json(conversations);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to load conversations.", error: err.message });
+    }
+});
+
+app.post('/api/conversations/direct', requireAuth, async (req, res) => {
+    try {
+        const { targetUserId } = req.body;
+        const userId = req.user.id;
+
+        if (targetUserId === userId) return res.status(400).json({ message: "Cannot create conversation with yourself." });
+
+        const targetUser = await User.findOne({ id: targetUserId });
+        if (!targetUser) return res.status(404).json({ message: "Target operative not found." });
+
+        let conv = await Conversation.findOne({
+            type: 'direct',
+            participantIds: { $all: [userId, targetUserId] }
+        });
+
+        if (!conv) {
+            conv = await Conversation.create({
+                id: 'conv-' + Date.now().toString(),
+                type: 'direct',
+                participantIds: [userId, targetUserId]
+            });
+        }
+        res.json(conv);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to initialize direct transmission." });
+    }
+});
+
+app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+        const convId = req.params.id;
+        const conv = await Conversation.findOne({ id: convId });
+        if (!conv) return res.status(404).json({ message: "Conversation missing." });
+
+        if (req.user.role !== 'admin') {
+            const isParticipant = conv.participantIds && conv.participantIds.includes(req.user.id);
+            let isTeamMember = false;
+            if (conv.teamId) {
+                const team = await Team.findOne({ id: conv.teamId, memberIds: req.user.id });
+                if (team) isTeamMember = true;
+            }
+            if (!isParticipant && !isTeamMember) {
+                return res.status(403).json({ message: "Access Denied: You do not have clearance for this channel." });
+            }
+        }
+
+        const messages = await Message.find({ conversationId: convId }).sort({ createdAt: 1 });
+        res.json(messages);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to load messages." });
+    }
+});
+
+app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
+    try {
+        const { message, attachments, replyTo } = req.body;
+        const convId = req.params.id;
+        
+        const conv = await Conversation.findOne({ id: convId });
+        if (!conv) return res.status(404).json({ message: "Conversation missing." });
+
+        if (req.user.role !== 'admin') {
+            const isParticipant = conv.participantIds && conv.participantIds.includes(req.user.id);
+            let isTeamMember = false;
+            if (conv.teamId) {
+                const team = await Team.findOne({ id: conv.teamId, memberIds: req.user.id });
+                if (team) isTeamMember = true;
+            }
+            if (!isParticipant && !isTeamMember) {
+                return res.status(403).json({ message: "Access Denied." });
+            }
+        }
+
+        const newMsg = await Message.create({
+            id: 'msg-' + Date.now().toString(),
+            conversationId: convId,
+            senderId: req.user.id,
+            message,
+            attachments: attachments || [],
+            replyTo
+        });
+
+        conv.lastMessageId = newMsg.id;
+        conv.lastMessageAt = new Date();
+        await conv.save();
+
+        // Broadcast realtime event
+        io.to(convId).emit('message:new', newMsg);
+
+        res.status(201).json(newMsg);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to transmit message." });
     }
 });
 
