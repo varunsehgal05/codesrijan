@@ -30,9 +30,9 @@ function AdminTelemetry() {
                     axios.get(`${BASE}/hackathons`, { headers }).catch(() => ({ data: [] }))
                 ]);
 
-                setTeams(teamsRes.data);
-                setUsers(usersRes.data);
-                setHackathons(evtsRes.data);
+                setTeams(teamsRes.data || []);
+                setUsers(usersRes.data || []);
+                setHackathons(evtsRes.data || []);
             } catch (err) {
                 console.error("Telemetry failure:", err);
             }
@@ -40,7 +40,7 @@ function AdminTelemetry() {
         fetchTelemetry();
     }, [API_URL]);
 
-    const activeEvent = hackathons[0];
+    const activeEvent = hackathons && hackathons.length > 0 ? hackathons[0] : null;
 
     return (
         <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -118,8 +118,8 @@ function AdminTelemetry() {
                                         <span className="material-symbols-outlined block text-[16px]">group_add</span>
                                     </span>
                                     <div>
-                                        <p className="font-label-bold text-sm">Squad Formation: "{team.name}"</p>
-                                        <p className="font-code-snippet text-xs text-on-surface-variant">{team.members.length} members • System Log</p>
+                                        <p className="font-label-bold text-sm">Squad Formation: "{team.name || 'Unnamed Squad'}"</p>
+                                        <p className="font-code-snippet text-xs text-on-surface-variant">{(team.members || []).length} members • System Log</p>
                                     </div>
                                 </li>
                             ))}
@@ -130,7 +130,7 @@ function AdminTelemetry() {
                                     </span>
                                     <div>
                                         <p className="font-label-bold text-sm">New User Registration</p>
-                                        <p className="font-code-snippet text-xs text-on-surface-variant">@{user.name.toLowerCase().replace(/\s/g, '_')} • System Log</p>
+                                        <p className="font-code-snippet text-xs text-on-surface-variant">@{(user.name || 'Anonymous').toLowerCase().replace(/\s/g, '_')} • System Log</p>
                                     </div>
                                 </li>
                             ))}
