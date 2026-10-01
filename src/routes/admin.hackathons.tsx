@@ -52,7 +52,10 @@ function AdminHackathons() {
                                 <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black uppercase">{h.name}</td>
                                 <td className="p-4 font-code-snippet text-xs border-r-2 border-stark-black">{(h as any).theme || 'N/A'}</td>
                                 <td className="p-4 border-r-2 border-stark-black font-code-snippet text-xs text-on-surface-variant">
-                                    {new Date(h.startDate).toLocaleDateString()} - {new Date(h.endDate).toLocaleDateString()}
+                                    {(!h.startDate || !h.endDate || isNaN(new Date(h.startDate).getTime()) || isNaN(new Date(h.endDate).getTime())) 
+                                        ? 'Date not configured' 
+                                        : `${new Date(h.startDate).toLocaleDateString()} - ${new Date(h.endDate).toLocaleDateString()}`
+                                    }
                                 </td>
                                 <td className="p-4 border-r-2 border-stark-black">
                                     <span className={`inline-flex items-center gap-2 px-2 py-1 font-label-bold text-[10px] uppercase brutal-border ${h.status === 'registration_open' ? 'bg-electric-blue text-pure-white' :

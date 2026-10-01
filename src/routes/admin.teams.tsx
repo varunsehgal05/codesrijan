@@ -6,10 +6,18 @@ import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/teams")({
   component: AdminTeams,
+  errorComponent: ({ error }) => (
+    <div className="p-8 text-center text-error font-mono">
+      <h2 className="text-xl font-bold mb-4">TEAM DIRECTORY UNAVAILABLE</h2>
+      <p>We couldn't retrieve the team directory.</p>
+      <p className="mt-4 opacity-75">Error ID: TEAM-QUERY-104 | {error.message}</p>
+    </div>
+  )
 });
 
 function AdminTeams() {
   const { teams, refetchData } = useAppStore();
+  const safeTeams = Array.isArray(teams) ? teams : [];
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -50,7 +58,7 @@ function AdminTeams() {
           </p>
         </div>
         <div className="bg-stark-black text-pure-white px-6 py-2 font-code-snippet font-bold tracking-widest brutal-border uppercase">
-          Total Quota: {teams.length}
+          Total Quota: {safeTeams.length}
         </div>
       </div>
 
@@ -73,14 +81,14 @@ function AdminTeams() {
             </tr>
           </thead>
           <tbody>
-            {teams.length === 0 ? (
+            {safeTeams.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-12 text-center text-text-muted font-code-snippet uppercase tracking-widest">
                   [SYS] No squad signatures detected in the grid.
                 </td>
               </tr>
             ) : (
-              teams.map((t, i) => (
+              safeTeams.map((t, i) => (
                 <tr key={t.id || i} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
                   <td className="p-4 font-code-snippet text-sm border-r-2 border-stark-black">{t.id}</td>
                   <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black">{t.name}</td>

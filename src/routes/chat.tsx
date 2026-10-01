@@ -126,22 +126,29 @@ function ChatDashboard() {
     }
   };
 
-  const handleSearchUsers = async (q: string) => {
+  const handleSearchUsers = (q: string) => {
     setSearchQuery(q);
-    if (!q) {
-      setSearchResults([]);
-      return;
-    }
-    try {
-      const token = localStorage.getItem("codesrijan_auth_token");
-      const res = await axios.get(`${BASE}/users/search?q=${q}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setSearchResults(res.data.filter((u: any) => u.id !== currentUser?.id));
-    } catch (e) {
-      console.error("User search failed");
-    }
   };
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      try {
+        const token = localStorage.getItem("codesrijan_auth_token");
+        const res = await axios.get(`${BASE}/users/search?q=${searchQuery}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSearchResults(res.data.filter((u: any) => u.id !== currentUser?.id));
+      } catch (e) {
+        console.error("User search failed");
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, currentUser?.id]);
 
   const startDirectMessage = async (userId: string) => {
     try {

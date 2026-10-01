@@ -587,11 +587,27 @@ app.get('/api/problems/:id', async (req, res) => {
 // --- USER DIRECTORY ---
 app.get('/api/users/search', requireAuth, async (req, res) => {
     const q = String(req.query.q || '').trim();
-    if (!q) return res.json([]);
-    // Expose only public-safe fields
-    const users = await User.find({
-        name: { $regex: q, $options: 'i' }
-    }).select('id name role college branch skills githubUrl linkedinUrl profilePicture').limit(20);
+    if (q.length < 2) return res.json([]);
+    
+    const currentUserId = req.user ? req.user.id : null;
+    
+    const query = {
+        $and: [
+            {
+                $or: [
+                    { name: { $regex: q, $options: 'i' } },
+                    { email: { $regex: q, $options: 'i' } },
+                    { id: { $regex: q, $options: 'i' } }
+                ]
+            }
+        ]
+    };
+    
+    if (currentUserId) {
+        query.$and.push({ id: { $ne: currentUserId } });
+    }
+
+    const users = await User.find(query).select('id name email role college branch skills githubUrl linkedinUrl profilePicture').limit(20);
     res.json(users);
 });
 
