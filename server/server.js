@@ -45,7 +45,7 @@ app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask } from './models/index.js';
-import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message } from './models/secondary.js';
+import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
@@ -123,12 +123,8 @@ app.post('/api/auth/register', async (req, res) => {
                     await sendVerificationEmail(normalizedEmail, code);
                     return res.json({ message: "Verification passkey dispatched.", userId: existing.id });
                 } catch (mailError) {
-                    console.log(`[SMTP FAULT] Fallback activated for ${normalizedEmail}:`, mailError.message);
-                    existing.accountStatus = 'active';
-                    existing.emailVerified = true;
-                    await existing.save();
-                    sendWelcomeEmail(normalizedEmail, existing.name, existing.role).catch(() => {});
-                    return res.json({ message: "Account created and instantly verified.", userId: existing.id });
+                    console.error(`[SMTP FAULT] Could not dispatch passkey for ${normalizedEmail}:`, mailError.message);
+                    return res.status(500).json({ message: "We couldn't send your verification email. Please try again later.", userId: existing.id });
                 }
             } else {
                 return res.status(400).json({ message: "An active account with this email already exists. Please proceed to login." });
@@ -166,12 +162,8 @@ app.post('/api/auth/register', async (req, res) => {
             console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
             res.json({ message: "Account created. Verification required.", userId: user.id });
         } catch (mailError) {
-            console.log(`[SMTP FAULT] Transport failed or unconfigured. Auto-verifying fallback activated for ${normalizedEmail}.`, mailError.message);
-            user.accountStatus = 'active';
-            user.emailVerified = true;
-            await user.save();
-            sendWelcomeEmail(normalizedEmail, user.name, user.role).catch(() => {});
-            res.json({ message: "Account created and instantly verified (SMTP offline threshold reached).", userId: user.id });
+            console.error(`[SMTP FAULT] Transport failed for ${normalizedEmail}:`, mailError.message);
+            res.status(500).json({ message: "We couldn't send your verification email. Please try again later.", userId: user.id });
         }
     } catch (e) {
         res.status(500).json({ message: "Registration failed", error: e.message });
@@ -199,12 +191,8 @@ app.post('/api/auth/resend-otp', async (req, res) => {
             await sendVerificationEmail(user.email, code);
             res.json({ message: "Verification passkey re-transmitted.", userId: user.id });
         } catch (mailError) {
-            console.log(`[SMTP FAULT] Auto-verifying identity upon re-transmit for ${user.email}`);
-            user.accountStatus = 'active';
-            user.emailVerified = true;
-            await user.save();
-            sendWelcomeEmail(user.email, user.name, user.role).catch(() => {});
-            res.json({ message: "Identity auto-verified via fallback.", userId: user.id });
+            console.error(`[SMTP FAULT] Transport failed on re-transmit for ${user.email}`, mailError.message);
+            res.status(500).json({ message: "We couldn't send your verification email. Please try again later.", userId: user.id });
         }
     } catch (e) {
         res.status(500).json({ message: "Failed to re-transmit verification code." });
@@ -253,15 +241,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!user) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
 
         if (user.accountStatus === 'pending_verification') {
-            // Hotfix: Auto-verify trapped accounts if the SMTP node was offline previously
-            if (!process.env.EMAIL_USER) {
-                console.log(`[SYSTEM RECOVERY] Auto-activating structurally trapped identity: ${normalizedEmail}`);
-                user.accountStatus = 'active';
-                user.emailVerified = true;
-                await user.save();
-            } else {
-                return res.status(401).json({ message: "Please verify your email before logging in.", needsVerification: true, userId: user.id });
-            }
+            return res.status(401).json({ message: "Please verify your email before logging in.", needsVerification: true, userId: user.id });
         }
         if (user.accountStatus === 'suspended') return res.status(403).json({ message: "Your CodeSrijan account is currently suspended. Please contact support." });
         if (user.accountStatus === 'disabled') return res.status(403).json({ message: "This CodeSrijan account is currently disabled." });
@@ -602,6 +582,25 @@ app.get('/api/problems/:id', async (req, res) => {
         // NOTE: Further role enforcement logic applies upstream with requireRole block. 
     }
     res.json(problem);
+});
+
+// --- USER DIRECTORY ---
+app.get('/api/users/search', requireAuth, async (req, res) => {
+    const q = String(req.query.q || '').trim();
+    if (!q) return res.json([]);
+    // Expose only public-safe fields
+    const users = await User.find({
+        name: { $regex: q, $options: 'i' },
+        accountStatus: 'active'
+    }).select('id name role college branch skills githubUrl linkedinUrl profilePicture').limit(20);
+    res.json(users);
+});
+
+app.get('/api/users/:id', requireAuth, async (req, res) => {
+    const user = await User.findOne({ id: req.params.id })
+        .select('id name role college branch skills githubUrl linkedinUrl profilePicture');
+    if (!user) return res.status(404).json({ message: "User not found." });
+    res.json(user);
 });
 
 // TEAMS
@@ -1534,6 +1533,73 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
     } catch (err) {
         res.status(500).json({ message: "Failed to transmit message." });
     }
+});
+// --- SUPPORT TICKETS ---
+app.post('/api/support', requireAuth, async (req, res) => {
+    try {
+        const { subject, category, description, priority } = req.body;
+        const ticket = await SupportTicket.create({
+            id: 'tkt-' + Date.now().toString(),
+            userId: req.user.id,
+            subject,
+            category,
+            description,
+            priority: priority || 'medium',
+            status: 'open'
+        });
+        
+        // Create matching support conversation
+        const conv = await Conversation.create({
+            id: 'conv-sup-' + ticket.id,
+            type: 'support',
+            participantIds: [req.user.id] // Admin query catches it via type: 'support'
+        });
+        
+        // Auto-post the first message from the student's description
+        const newMsg = await Message.create({
+            id: 'msg-' + Date.now().toString(),
+            conversationId: conv.id,
+            senderId: req.user.id,
+            message: `[Ticket Created] ${description}`
+        });
+        conv.lastMessageId = newMsg.id;
+        await conv.save();
+
+        res.status(201).json(ticket);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create support ticket." });
+    }
+});
+
+app.get('/api/support', requireAuth, async (req, res) => {
+    const tickets = await SupportTicket.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    res.json(tickets);
+});
+
+app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, res) => {
+    const tickets = await SupportTicket.find().sort({ createdAt: -1 });
+    res.json(tickets);
+});
+
+app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), async (req, res) => {
+    const { status } = req.body;
+    const ticket = await SupportTicket.findOneAndUpdate(
+        { id: req.params.id }, 
+        { status },
+        { new: true }
+    );
+    res.json(ticket);
+});
+
+// --- NOTIFICATIONS ---
+app.get('/api/notifications', requireAuth, async (req, res) => {
+    const notes = await Notification.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(50);
+    res.json(notes);
+});
+
+app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
+    await Notification.findOneAndUpdate({ id: req.params.id, userId: req.user.id }, { isRead: true });
+    res.json({ success: true });
 });
 
 // START
