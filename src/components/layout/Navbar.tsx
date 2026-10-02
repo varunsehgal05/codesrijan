@@ -6,11 +6,11 @@ export function Navbar() {
 
     return (
         <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex justify-between items-center px-margin-desktop py-4 max-w-[1200px] mx-auto">
-                <Link to="/" className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright">
+            <div className="flex justify-between items-center px-4 lg:px-margin-desktop py-4 max-w-[1200px] mx-auto overflow-x-auto hide-scrollbar">
+                <Link to="/" className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright shrink-0 mr-4">
                     CodeSrijan
                 </Link>
-                <div className="hidden md:flex gap-8 items-center font-button-text text-button-text">
+                <div className="hidden md:flex gap-3 lg:gap-6 items-center font-button-text text-button-text shrink-0">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-20 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -19,41 +19,41 @@ export function Navbar() {
                         </div>
                     ) : currentUser ? (
                         <>
-                            <Link to="/problems" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Problems</Link>
-                            <Link to="/recruitment" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Recruitment</Link>
-                            <Link to="/announcements" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Announcements</Link>
-                            <Link to="/leaderboard" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Leaderboard</Link>
-                            <Link to="/chat" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Comms</Link>
-                            <Link to="/support" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Help & Support</Link>
+                            <Link to="/problems" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Problems</Link>
+                            <Link to="/recruitment" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Recruitment</Link>
+                            <Link to="/announcements" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Announcements</Link>
+                            <Link to="/leaderboard" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Leaderboard</Link>
+                            <Link to="/chat" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Comms</Link>
+                            <Link to="/support" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>Help & Support</Link>
                         </>
                     ) : (
-                        <Link to="/about" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>About Platform</Link>
+                        <Link to="/about" className="text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap" activeProps={{ className: "text-electric-blue border-b-2 border-electric-blue pb-1" }}>About Platform</Link>
                     )}
                 </div>
-                <div className="hidden md:block">
+                <div className="hidden md:block shrink-0 ml-4">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700"></div>
                             <div className="w-32 h-12 bg-gray-200 dark:bg-gray-700"></div>
                         </div>
                     ) : currentUser ? (
-                        <div className="flex gap-4">
+                        <div className="flex gap-2 lg:gap-4">
                             {currentUser.role === 'admin' && (
-                                <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2">
+                                <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
                                     <span className="material-symbols-outlined text-[18px]">shield_person</span>
                                     Admin Panel
                                 </Link>
                             )}
-                            <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
+                            <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
                                 Go to Dashboard
                             </Link>
                         </div>
                     ) : (
-                        <div className="flex gap-4">
-                            <Link to="/login" className="bg-surface text-ink-black font-button-text text-button-text px-6 py-3 border-2 border-ink-black transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="flex gap-2 lg:gap-4">
+                            <Link to="/login" className="bg-surface text-ink-black font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 border-2 border-ink-black transition-all duration-200 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] whitespace-nowrap">
                                 Login
                             </Link>
-                            <Link to="/register" className="bg-electric-blue text-on-primary font-button-text text-button-text px-6 py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200">
+                            <Link to="/register" className="bg-electric-blue text-on-primary font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
                                 Register Now
                             </Link>
                         </div>
