@@ -46,22 +46,26 @@ function AdminSupport() {
   const openTicketCount = tickets.filter(t => t.status === 'open').length;
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
-      <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center">
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
+      <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center">
         <div>
-          <h2 className="font-display-lg text-headline-xl uppercase text-pure-white bg-error px-2 py-1 inline-block transform -skew-x-6">
+          <h2 className="font-display-lg text-headline-xl uppercase text-pure-white bg-error px-2 py-1 inline-block transform -skew-x-6 tracking-tight leading-none">
             GLOBAL SUPPORT TICKETS
           </h2>
+          <p className="font-code-snippet text-on-surface-variant mt-2 font-bold tracking-widest text-sm uppercase">User Assistance & Issue Tracking</p>
         </div>
-        <div className="font-mono bg-stark-black text-pure-white px-4 py-2 brutal-border">
-          {openTicketCount} ACTIVE ALERTS
+        <div className="font-code-snippet bg-stark-black text-pure-white px-6 py-3 border-2 border-stark-black font-bold uppercase tracking-widest flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-error">warning</span>
+            {openTicketCount} ACTIVE ALERTS
         </div>
       </div>
 
-      <div className="bg-pure-white brutal-border brutal-shadow p-6 text-stark-black">
+      <div className="bg-pure-white brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-0 text-stark-black overflow-hidden">
         {tickets.length === 0 ? (
-          <div className="p-12 text-center font-code-snippet">
-            INFRASTRUCTURE IS NOMINAL. NO USER SUPPORT TICKETS DETECTED.
+          <div className="p-16 text-center flex flex-col items-center justify-center">
+              <span className="material-symbols-outlined text-6xl text-success mb-4">task_alt</span>
+              <h3 className="font-headline-md text-2xl uppercase">INFRASTRUCTURE IS NOMINAL</h3>
+              <p className="font-code-snippet mt-2 uppercase tracking-widest text-xs opacity-70">NO USER SUPPORT TICKETS DETECTED.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">

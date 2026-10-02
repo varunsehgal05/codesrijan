@@ -19,7 +19,7 @@ function RecruitmentMatrix() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const BASE_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+  const BASE_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
   if (!currentUser) return <Navigate to="/login" />;

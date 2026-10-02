@@ -1,133 +1,204 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { useAppStore } from "../lib/store";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
-  head: () => ({
-    meta: [
-      { title: "Leaderboard | CodeSrijan" },
-    ],
-  }),
 });
 
-function LeaderboardPage() {
-  const [rankedTeams, setRankedTeams] = useState<any[]>([]);
+interface LeaderboardItem {
+  id: string;
+  name: string;
+  bonusPoints: number;
+  penaltyPoints: number;
+  evalScore: number;
+  totalScore: number;
+  isScored: boolean;
+  scores: any[]; // The detailed scores from evaluations
+}
 
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+function LeaderboardPage() {
+  const { settings } = useAppStore();
+  const [teams, setTeams] = useState<LeaderboardItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+
+  const isVisible = settings?.leaderboardVisible === 'true' || settings?.leaderboardVisible === true;
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    if (!isVisible) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
       try {
         const [teamsRes, evalsRes] = await Promise.all([
-          axios.get(`${API_URL}/teams`),
-          axios.get(`${API_URL}/evaluations`)
+          axios.get(`${API_BASE}/teams`),
+          axios.get(`${API_BASE}/evaluations`).catch(() => ({ data: [] }))
         ]);
 
-        const teams = teamsRes.data;
-        const evals = evalsRes.data;
+        const rawTeams = teamsRes.data || [];
+        const evals = evalsRes.data || [];
 
-        // Compute scores
-        const scored = teams.map((team: any) => {
-          const teamEvals = evals.filter((e: any) => e.projectId === team.id || e.teamId === team.id);
-          let totalScore = teamEvals.reduce((sum: number, e: any) => sum + (e.totalScore || 0), 0);
+        const mapped: LeaderboardItem[] = rawTeams.map((t: any) => {
+          const teamEvals = evals.filter((e: any) => e.projectId === t.id || e.teamId === t.id);
+          const evalScore = teamEvals.reduce((acc: number, cur: any) => acc + (cur.totalScore || 0), 0);
+          
+          // Combine scores array from evaluations for the breakdown
+          let aggregatedScores: any = {};
+          teamEvals.forEach((e: any) => {
+              (e.scores || []).forEach((sc: any) => {
+                  if (!aggregatedScores[sc.criteriaId]) {
+                      aggregatedScores[sc.criteriaId] = { score: 0, max: 10 };
+                  }
+                  aggregatedScores[sc.criteriaId].score += sc.score;
+              });
+          });
+
+          const bonusPoints = Number(t.bonusPoints) || 0;
+          const penaltyPoints = Number(t.penaltyPoints) || 0;
+          const totalScore = evalScore + bonusPoints - penaltyPoints;
           const isScored = teamEvals.length > 0;
-          return { ...team, totalScore, isScored };
-        }).sort((a: any, b: any) => b.totalScore - a.totalScore); // Show all active squads!
 
-        setRankedTeams(scored);
-      } catch (err) {
+          return {
+            id: t.id,
+            name: t.name,
+            bonusPoints,
+            penaltyPoints,
+            evalScore,
+            totalScore,
+            isScored,
+            scores: Object.entries(aggregatedScores).map(([criteriaId, data]: any) => ({
+                criteriaId,
+                score: data.score
+            }))
+          };
+        });
+
+        // Sort by totalScore descending. Unscored teams go to the bottom.
+        mapped.sort((a, b) => {
+            if (a.isScored && !b.isScored) return -1;
+            if (!a.isScored && b.isScored) return 1;
+            return b.totalScore - a.totalScore;
+        });
+        
+        setTeams(mapped.filter(t => t.isScored)); // Only show scored teams publicly
+        setLoading(false);
+      } catch (err: any) {
         console.error("Leaderboard fetch error", err);
+        setLoading(false);
       }
     };
-    fetchLeaderboard();
-  }, [API_URL]);
+
+    fetchData();
+  }, [isVisible]);
+
+  if (!isVisible) {
+    return (
+      <div className="min-h-screen bg-surface-container-lowest text-on-background flex flex-col items-center justify-center p-8">
+        <div className="bg-pure-white p-12 border-4 border-stark-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] text-center max-w-xl">
+          <span className="material-symbols-outlined text-6xl text-ink-black mb-6">visibility_off</span>
+          <h1 className="font-display-lg text-4xl uppercase text-stark-black mb-4">CLASSIFIED STANDINGS</h1>
+          <p className="font-code-snippet text-on-surface-variant uppercase tracking-widest text-sm">
+            The global leaderboard is currently locked by the administration. Check back after payload evaluation cycles conclude.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background text-on-background">
-      {/*Top Navigation*/}
-      <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24 space-y-24">
-        {/* Global Go Back Navigation */}
-        <div className="w-full mb-6">
-          <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
-            <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
-            GO BACK
-          </button>
-        </div>
-
-        <section>
-          <div className="mb-12 flex flex-col md:flex-row justify-between items-end gap-6">
-            <div>
-              <h1 className="font-headline-lg-mobile md:font-headline-lg text-ink-black uppercase">Live Rankings</h1>
-              <p className="font-body-lg text-on-surface mt-2">The battle for ultimate glory. Updated in real-time.</p>
-            </div>
-            <div className="font-label-caps text-label-caps bg-surface-bright brutal-border px-4 py-2 flex items-center gap-2 brutal-shadow">
-              <span className="w-3 h-3 bg-electric-blue rounded-full animate-pulse block"></span>
-              Live Tracking Engine Active
-            </div>
-          </div>
-
-          <div className="bg-surface-container-lowest brutal-border brutal-shadow-lg overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-surface-container border-b-2 border-ink-black">
-                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black">Rank</th>
-                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black">Team / Hacker</th>
-                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black text-right">Score</th>
-                  <th className="py-4 px-6 font-button-text text-button-text text-ink-black text-center">Trend</th>
-                </tr>
-              </thead>
-              <tbody className="font-body-lg text-body-lg">
-                {rankedTeams.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-12 px-6 text-center text-surface-variant font-label-md">
-                      No teams have been officially scored by the judging panel. Awaiting evaluations completion.
-                    </td>
-                  </tr>
-                ) : (
-                  rankedTeams.map((team, index) => {
-                    const isTopThree = index < 3;
-                    return (
-                      <tr key={team.id} className={`border-b-2 border-ink-black transition-colors hover:bg-surface-container ${index === 0 ? "bg-surface-bright hover:bg-surface-variant" : ""}`}>
-                        <td className={`py-6 px-6 font-headline-md ${index === 0 && team.isScored ? 'text-electric-blue' : 'text-ink-black'}`}>
-                          {team.isScored ? (index + 1).toString().padStart(2, '0') : '-'}
-                        </td>
-                        <td className="py-6 px-6">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 brutal-border flex items-center justify-center ${index === 0 && team.isScored ? 'bg-electric-blue text-on-primary' : 'bg-surface-bright'}`}>
-                              <span className="material-symbols-outlined" data-icon="terminal">{index === 0 && team.isScored ? 'emoji_events' : 'terminal'}</span>
-                            </div>
-                            <span className="font-button-text text-ink-black">{team.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-6 px-6 font-button-text text-right text-ink-black">
-                          {team.isScored ? (
-                            <span className="bg-electric-blue text-pure-white px-3 py-1 brutal-border">{team.totalScore.toLocaleString()}</span>
-                          ) : (
-                            <span className="text-surface-variant text-sm font-label-bold uppercase tracking-wider">Pending Evaluation</span>
-                          )}
-                        </td>
-                        <td className="py-6 px-6 text-center">
-                          {team.isScored ? (
-                            index === 0 ? (
-                              <span className="material-symbols-outlined text-electric-blue font-bold">keyboard_double_arrow_up</span>
-                            ) : (
-                              <span className="material-symbols-outlined text-ink-black">horizontal_rule</span>
-                            )
-                          ) : (
-                            <span className="material-symbols-outlined text-surface-variant">hourglass_empty</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+    <div className="min-h-screen bg-surface-container-lowest text-on-background flex flex-col pb-20">
+      <main className="flex-grow max-w-[1000px] mx-auto px-4 py-12 space-y-12 w-full">
+        <section className="bg-pure-white p-8 border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h1 className="font-display-lg text-headline-lg uppercase text-stark-black border-l-8 border-electric-blue pl-4 mb-2">GLOBAL LEADERBOARD</h1>
+          <p className="font-code-snippet text-on-surface-variant uppercase tracking-widest text-xs">
+            Live evaluation standings. Net score incorporates judge metrics, operational bonuses, and penalty infractions.
+          </p>
         </section>
+
+        {loading ? (
+            <div className="text-center font-code-snippet uppercase tracking-widest animate-pulse p-12 text-stark-black">
+                INITIALIZING RANKING MATRIX...
+            </div>
+        ) : teams.length === 0 ? (
+            <div className="bg-pure-white p-16 border-4 border-stark-black text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <span className="material-symbols-outlined text-4xl mb-4 opacity-50">data_alert</span>
+                <p className="font-code-snippet uppercase text-sm font-bold tracking-widest">No evaluated payloads detected yet.</p>
+            </div>
+        ) : (
+            <div className="flex flex-col gap-4">
+                {teams.map((t, idx) => (
+                    <div key={t.id} className="bg-pure-white border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all">
+                        {/* Main Row */}
+                        <div 
+                            className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer group"
+                            onClick={() => setExpandedTeam(expandedTeam === t.id ? null : t.id)}
+                        >
+                            <div className="flex items-center gap-6">
+                                <div className="font-display-lg text-4xl md:text-5xl text-stark-black w-12 text-center shrink-0">
+                                    {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
+                                </div>
+                                <div>
+                                    <h2 className="font-label-bold uppercase text-2xl md:text-3xl text-stark-black group-hover:text-electric-blue transition-colors line-clamp-1">{t.name}</h2>
+                                    <div className="font-code-snippet text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-2 mt-1">
+                                        <span>Base: {t.evalScore}</span>
+                                        {t.bonusPoints > 0 && <span className="text-success font-bold">+{t.bonusPoints} BNS</span>}
+                                        {t.penaltyPoints > 0 && <span className="text-error font-bold">-{t.penaltyPoints} PNL</span>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 md:mt-0 flex items-center gap-6 self-end md:self-auto">
+                                <div className="text-right">
+                                    <div className="font-label-bold uppercase text-[10px] text-on-surface-variant tracking-widest mb-1">NET SCORE</div>
+                                    <div className="font-display-lg text-4xl text-electric-blue bg-surface-container-lowest px-4 py-1 border-2 border-stark-black">{t.totalScore}</div>
+                                </div>
+                                <span className="material-symbols-outlined text-stark-black transition-transform duration-300" style={{ transform: expandedTeam === t.id ? 'rotate(180deg)' : 'none' }}>
+                                    expand_more
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Expandable Breakdown */}
+                        {expandedTeam === t.id && (
+                            <div className="border-t-4 border-stark-black bg-surface-container-lowest p-6 animate-fade-in">
+                                <h3 className="font-label-bold uppercase text-xs text-stark-black mb-4 tracking-widest bg-pure-white border-2 border-stark-black inline-block px-3 py-1">SCORING BREAKDOWN MATRIX</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                    {t.scores.map((sc: any, sIdx: number) => (
+                                        <div key={sIdx} className="bg-pure-white border-2 border-stark-black p-3 text-center">
+                                            <div className="font-label-bold uppercase text-[10px] text-on-surface-variant line-clamp-1">{sc.criteriaId}</div>
+                                            <div className="font-display-sm text-2xl text-stark-black mt-1">{sc.score}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {(t.bonusPoints > 0 || t.penaltyPoints > 0) && (
+                                    <div className="mt-4 flex gap-4">
+                                        {t.bonusPoints > 0 && (
+                                            <div className="flex-1 bg-pure-white border-2 border-success p-3 text-center text-success">
+                                                <div className="font-label-bold uppercase text-[10px]">Operational Bonus</div>
+                                                <div className="font-display-sm text-2xl">+{t.bonusPoints}</div>
+                                            </div>
+                                        )}
+                                        {t.penaltyPoints > 0 && (
+                                            <div className="flex-1 bg-pure-white border-2 border-error p-3 text-center text-error">
+                                                <div className="font-label-bold uppercase text-[10px]">Infraction Penalty</div>
+                                                <div className="font-display-sm text-2xl">-{t.penaltyPoints}</div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        )}
       </main>
     </div>
   );
 }
-

@@ -1,94 +1,96 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import axios from "axios";
-import { useAppStore } from "../lib/store";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/logs")({
-  component: AdminLogsPage,
+  component: AdminLogs,
 });
 
-function AdminLogsPage() {
-  const { currentUser } = useAppStore();
-  const navigate = useNavigate();
+function AdminLogs() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const fetchLogs = async () => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.get(`${API_BASE}/admin/logs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLogs(res.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Failed to sync audit logs.", err);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'admin') {
-      navigate({ to: "/dashboard" });
-      return;
-    }
-
-    const token = localStorage.getItem("codesrijan_auth_token");
-    axios.get(`${API_URL}/admin/logs`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(res => {
-        setLogs(res.data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Telemetry failure", err);
-        setLoading(false);
-      });
-  }, [currentUser, navigate]);
+    fetchLogs();
+    
+    // Simulate real-time polling every 30s
+    const interval = setInterval(fetchLogs, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-6xl mx-auto h-[calc(100vh-140px)]">
-      <div className="bg-pure-white p-6 brutal-border brutal-shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 flex-shrink-0">
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
+      <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center">
         <div>
-          <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none bg-[#FFD700] px-2 py-1 inline-block transform -skew-x-6">
-            TELEMETRY // LOGS
+          <h2 className="font-display-lg text-headline-xl uppercase text-pure-white tracking-tight leading-none bg-stark-black px-2 py-1 inline-block transform -skew-x-6">
+            SYSTEM AUDIT TRAIL
           </h2>
-          <p className="font-body-md text-on-surface-variant mt-2 font-bold tracking-widest text-sm uppercase flex items-center gap-2">
-            <span className="w-2 h-2 bg-success rounded-full animate-pulse"></span>
-            Live Administrative Audit Trail
+          <p className="font-code-snippet text-on-surface-variant mt-2 font-bold tracking-widest text-sm uppercase flex items-center gap-2">
+            <span className="material-symbols-outlined text-success text-[16px] animate-pulse">radio_button_checked</span>
+            Live Activity Recording Active
           </p>
         </div>
-        <div className="flex gap-4 font-mono text-sm bg-stark-black text-pure-white px-4 py-2 brutal-border">
-          <div>SCANNING: <span className="text-electric-blue">150 NODES</span></div>
+        <div className="bg-stark-black text-pure-white px-6 py-2 font-code-snippet font-bold tracking-widest brutal-border uppercase flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">history</span>
+            Indexed Events: {logs.length}
         </div>
       </div>
 
-      <div className="bg-stark-black brutal-border brutal-shadow-lg p-6 flex-grow flex flex-col overflow-hidden relative">
-        {/* HUD Scanline Effect */}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-10 opacity-30"></div>
-
-        <div className="flex justify-between items-center text-pure-white uppercase font-mono text-xs border-b-2 border-[#333] pb-2 mb-4">
-          <span className="w-1/6">TIMESTAMP</span>
-          <span className="w-1/6">USER ID</span>
-          <span className="w-1/6">ACTION</span>
-          <span className="w-1/2">PAYLOAD / SECTOR</span>
+      <div className="bg-pure-white brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col h-[70vh] relative">
+          
+        <div className="bg-stark-black text-pure-white flex p-4 font-label-bold uppercase tracking-widest text-xs border-b-4 border-stark-black shrink-0">
+            <div className="w-1/6">Timestamp</div>
+            <div className="w-1/6">Initiator ID</div>
+            <div className="w-1/6">Command / Action</div>
+            <div className="w-2/6">System Response / Target</div>
+            <div className="w-1/6 text-right">IP Tracer</div>
         </div>
 
-        <div className="flex-grow overflow-y-auto scrollbar-hide flex flex-col gap-2 relative z-20">
-          {loading ? (
-            <div className="text-electric-blue font-code-snippet animate-pulse py-8">
-              [SYS] INITIATING LOG PULL...
-            </div>
-          ) : logs.length === 0 ? (
-            <div className="text-[#666] font-code-snippet py-8">
-              [SYS] ZERO AUDIT EVENTS DETECTED IN STORAGE MATRIX.
-            </div>
-          ) : (
-            logs.map((log, i) => (
-              <div key={i} className="flex flex-col md:flex-row justify-between items-start md:items-center text-pure-white font-code-snippet text-sm py-2 hover:bg-[#111] transition-colors border-b border-[#222]">
-                <span className="w-full md:w-1/6 text-[#FFD700] opacity-80">
-                  {new Date(log.createdAt).toISOString().replace('T', ' ').substring(0, 19)}
-                </span>
-                <span className="w-full md:w-1/6 opacity-60 truncate pr-4">
-                  {log.userId || 'SYSTEM_NODE'}
-                </span>
-                <span className="w-full md:w-1/6 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[14px] text-electric-blue">chevron_right</span>
-                  {log.action}
-                </span>
-                <span className="w-full md:w-1/2 opacity-90 truncate">
-                  {log.description} [T: {log.entityType}]
-                </span>
-              </div>
-            ))
-          )}
+        <div className="overflow-y-auto flex-grow bg-surface-container-lowest">
+            {loading ? (
+                <div className="flex flex-col items-center justify-center h-full opacity-50 p-12">
+                    <span className="material-symbols-outlined text-6xl mb-4 animate-spin">sync</span>
+                    <p className="font-code-snippet uppercase tracking-widest">Parsing immutable ledger...</p>
+                </div>
+            ) : logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full opacity-70 p-12">
+                    <span className="material-symbols-outlined text-6xl mb-4">gavel</span>
+                    <h3 className="font-headline-md uppercase text-xl">NO ANOMALIES DETECTED</h3>
+                    <p className="font-code-snippet uppercase tracking-widest text-xs mt-2">The system audit trail is currently completely empty.</p>
+                </div>
+            ) : (
+                logs.map((log, i) => (
+                    <div key={log.id || i} className="flex p-4 font-code-snippet text-xs border-b-2 border-surface-variant hover:bg-surface-bright transition-colors text-stark-black">
+                        <div className="w-1/6 truncate pr-4 opacity-70">{new Date(log.createdAt).toLocaleString()}</div>
+                        <div className="w-1/6 truncate pr-4 font-bold uppercase">{log.userId || 'SYSTEM'} <span className="opacity-50 font-normal">[{log.role || 'CORE'}]</span></div>
+                        <div className="w-1/6 truncate pr-4 font-bold text-electric-blue uppercase">{log.action}</div>
+                        <div className="w-2/6 truncate pr-4">{log.description || `Modified ${log.entityType} [${log.entityId}]`}</div>
+                        <div className="w-1/6 text-right truncate opacity-70">{log.ipAddress || '127.0.0.1'}</div>
+                    </div>
+                ))
+            )}
+            
+            {/* Ambient terminal lines effect */}
+            {!loading && logs.length > 0 && (
+                <div className="flex p-4 font-code-snippet text-xs text-stark-black opacity-30">
+                    <div className="w-full truncate">... awaiting further inputs ...</div>
+                </div>
+            )}
         </div>
       </div>
     </div>

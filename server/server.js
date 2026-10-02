@@ -704,17 +704,39 @@ app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), asy
     res.json({ message: "Squad completely dissolved across the network." });
 });
 
+// Admin Team Management
+app.post('/api/admin/teams', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const team = new Team({ ...req.body, id: `team-${Date.now()}` });
+        await team.save();
+        res.json(team);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to construct squad." });
+    }
+});
+
+app.put('/api/admin/teams/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const team = await Team.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        res.json(team);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update squad parameters." });
+    }
+});
+
 app.patch('/api/teams/:id/points', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const { points, delta } = req.body;
+        const { bonusPoints, penaltyPoints } = req.body;
         const team = await Team.findOne({ id: req.params.id });
         if (!team) return res.status(404).json({ message: "Squad matrix missing." });
 
-        if (delta !== undefined) {
-            team.points = (Number(team.points) || 0) + Number(delta);
-        } else if (points !== undefined) {
-            team.points = Number(points);
+        if (bonusPoints !== undefined) {
+            team.bonusPoints = Number(bonusPoints);
         }
+        if (penaltyPoints !== undefined) {
+            team.penaltyPoints = Number(penaltyPoints);
+        }
+        
         await team.save();
         res.json({ message: "Squad points modified successfully.", team });
     } catch (e) {
@@ -1328,7 +1350,47 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (
 
     team.isSubmitted = true;
     await team.save();
+
+    // Create the actual submission record
+    const submission = new Submission({
+        id: `sub-${Date.now()}`,
+        hackathonId: team.hackathonId,
+        projectId: team.problemStatementId,
+        teamId: team.id,
+        submittedBy: req.user.id,
+        version: 1,
+        projectTitle: team.name,
+        githubUrl: team.githubLink || team.repositoryUrl,
+        figmaUrl: team.figmaLink,
+        demoVideoUrl: team.demoLink || team.demoUrl,
+        status: 'locked',
+        lockedAt: new Date()
+    });
+    await submission.save();
+
     res.json(team);
+});
+
+// Admin Submissions Route
+app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (req, res) => {
+    const submissions = await Submission.find().sort({ createdAt: -1 });
+    res.json(submissions);
+});
+
+app.patch('/api/admin/submissions/:id/unlock', requireAuth, requireRole(['admin']), async (req, res) => {
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'submitted', lockedAt: null }, { new: true });
+    if (submission) {
+        await Team.findOneAndUpdate({ id: submission.teamId }, { isSubmitted: false });
+    }
+    res.json(submission);
+});
+
+app.patch('/api/admin/submissions/:id/lock', requireAuth, requireRole(['admin']), async (req, res) => {
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'locked', lockedAt: new Date() }, { new: true });
+    if (submission) {
+        await Team.findOneAndUpdate({ id: submission.teamId }, { isSubmitted: true });
+    }
+    res.json(submission);
 });
 
 app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (req, res) => {
@@ -1628,6 +1690,107 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
     } catch (e) {
         res.status(500).json({ message: "Failed to update setting." });
     }
+});
+// --- ANNOUNCEMENTS ---
+app.get('/api/announcements', async (req, res) => {
+    try {
+        const announcements = await Announcement.find({ isActive: true }).sort({ createdAt: -1 });
+        res.json(announcements);
+    } catch (e) {
+        res.json([]);
+    }
+});
+
+app.get('/api/admin/announcements', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const announcements = await Announcement.find().sort({ createdAt: -1 });
+        res.json(announcements);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch announcements." });
+    }
+});
+
+app.post('/api/admin/announcements', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const newAnnouncement = new Announcement({
+            id: `ann-${Date.now()}`,
+            ...req.body,
+            authorId: req.user.id
+        });
+        await newAnnouncement.save();
+        res.status(201).json(newAnnouncement);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create announcement." });
+    }
+});
+
+app.put('/api/admin/announcements/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const announcement = await Announcement.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        res.json(announcement);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update announcement." });
+    }
+});
+
+app.delete('/api/admin/announcements/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        await Announcement.findOneAndDelete({ id: req.params.id });
+        res.json({ message: "Announcement deleted." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete announcement." });
+    }
+});
+
+// --- ACTIVITY LOGS (Admin Audit) ---
+app.get('/api/admin/logs', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const logs = await ActivityLog.find().sort({ createdAt: -1 }).limit(100);
+        res.json(logs);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch logs." });
+    }
+});
+
+// --- SPONSORS ---
+app.get('/api/sponsors', async (req, res) => {
+    try {
+        const sponsors = await Sponsor.find({ isPublished: true }).sort({ order: 1 });
+        res.json(sponsors);
+    } catch (e) { res.json([]); }
+});
+app.get('/api/admin/sponsors', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const sponsors = await Sponsor.find().sort({ order: 1 });
+        res.json(sponsors);
+    } catch (e) { res.status(500).json({ message: "Error" }); }
+});
+app.post('/api/admin/sponsors', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const sp = new Sponsor({ id: `sp-${Date.now()}`, ...req.body });
+        await sp.save();
+        res.json(sp);
+    } catch (e) { res.status(500).json({ message: "Error" }); }
+});
+app.delete('/api/admin/sponsors/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        await Sponsor.findOneAndDelete({ id: req.params.id });
+        res.json({ message: "Deleted" });
+    } catch (e) { res.status(500).json({ message: "Error" }); }
+});
+
+// --- CERTIFICATES ---
+app.get('/api/admin/certificates', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const certs = await Certificate.find().sort({ createdAt: -1 });
+        res.json(certs);
+    } catch (e) { res.status(500).json({ message: "Error" }); }
+});
+app.post('/api/admin/certificates/batch', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        // mock generation
+        res.json({ message: "Batch generation initiated." });
+    } catch (e) { res.status(500).json({ message: "Error" }); }
 });
 
 // --- NOTIFICATIONS ---

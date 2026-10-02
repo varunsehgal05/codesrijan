@@ -24,7 +24,12 @@ const userSchema = new mongoose.Schema({
     emailVerifiedAt: Date,
     recruitmentStatus: { type: String, enum: ['looking_for_team', 'open_to_invites', 'in_team', 'not_available'], default: 'looking_for_team' },
     lastLoginAt: Date,
-    teamId: String // Quick reference
+    teamId: String, // Quick reference
+    
+    // Admin / Staff Assignments (Judges & Mentors)
+    assignedHackathons: [String],
+    assignedCategories: [String],
+    assignedTeams: [String]
 }, { timestamps: true });
 
 // 2. Hackathons Collection
@@ -120,7 +125,8 @@ const teamSchema = new mongoose.Schema({
     figmaLink: String,
     demoLink: String,
     isSubmitted: { type: Boolean, default: false },
-    points: { type: Number, default: 0 }
+    bonusPoints: { type: Number, default: 0 },
+    penaltyPoints: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // 6. Team Invitations Collection
@@ -267,7 +273,9 @@ const settingSchema = new mongoose.Schema({
 const conversationSchema = new mongoose.Schema({
     id: { type: String, unique: true },
     type: { type: String, enum: ['direct', 'group', 'team', 'support'], default: 'direct' },
-    memberIds: [String],
+    participantIds: [String],
+    teamId: String,
+    hackathonId: String,
     lastMessageAt: Date,
     title: String
 }, { timestamps: true });

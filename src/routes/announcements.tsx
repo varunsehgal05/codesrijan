@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/announcements")({
     component: PublicAnnouncements,
@@ -10,11 +11,8 @@ function PublicAnnouncements() {
     const [announcements, setAnnouncements] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
-    const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-
     useEffect(() => {
-        axios.get(`${BASE}/announcements`)
+        axios.get(`${API_BASE}/announcements`)
             .then(res => {
                 setAnnouncements(res.data);
                 setLoading(false);
@@ -26,51 +24,58 @@ function PublicAnnouncements() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-background text-on-background">
-            <main className="max-w-[1200px] w-full mx-auto px-margin-desktop py-16 flex flex-col gap-12">
+        <div className="min-h-screen bg-surface-container-lowest text-on-background pb-20">
+            <main className="max-w-[1200px] w-full mx-auto px-4 py-12 space-y-12">
 
                 {/* Global Go Back Navigation */}
-                <div className="w-full mb-6">
-                    <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
+                <div className="w-full">
+                    <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-stark-black hover:text-electric-blue transition-all group w-fit cursor-pointer border-2 border-stark-black px-4 py-2 bg-pure-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] uppercase">
                         <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
                         GO BACK
                     </button>
                 </div>
 
-                <header className="flex flex-col gap-4 border-b-4 border-ink-black pb-8">
-                    <h1 className="font-headline-lg text-[48px] text-ink-black uppercase tracking-tighter mb-2 flex items-center gap-4">
+                <header className="bg-pure-white p-8 border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                    <h1 className="font-display-lg text-[48px] text-stark-black uppercase tracking-tighter mb-2 flex items-center gap-4">
                         <span className="material-symbols-outlined text-[48px] text-electric-blue">campaign</span>
-                        System Broadcasts
+                        SYSTEM BROADCASTS
                     </h1>
-                    <p className="font-body-lg text-text-muted">Live synchronization of all official event instructions and network signals.</p>
+                    <p className="font-code-snippet text-on-surface-variant uppercase tracking-widest text-sm border-l-4 border-electric-blue pl-4">Live synchronization of all official event instructions and network signals.</p>
                 </header>
 
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-8">
                     {loading ? (
-                        <div className="bg-surface p-12 brutal-border text-center font-mono opacity-50 uppercase tracking-widest">
+                        <div className="bg-pure-white p-16 border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center font-code-snippet opacity-50 uppercase tracking-widest animate-pulse">
                             Establishing link to broadcast array...
                         </div>
                     ) : announcements.length === 0 ? (
-                        <div className="bg-surface p-12 brutal-border brutal-shadow text-center">
-                            <h2 className="font-headline-md uppercase text-ink-black">No Transmissions Active</h2>
-                            <p className="font-mono text-zinc-500 mt-2">The admin nodes have not dispersed any alerts.</p>
+                        <div className="bg-pure-white p-16 border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center flex flex-col items-center justify-center">
+                            <span className="material-symbols-outlined text-6xl text-on-surface-variant mb-4">notifications_off</span>
+                            <h2 className="font-headline-md text-2xl uppercase text-stark-black">No Transmissions Active</h2>
+                            <p className="font-code-snippet text-on-surface-variant uppercase tracking-widest mt-2">The admin nodes have not dispersed any alerts.</p>
                         </div>
                     ) : (
-                        announcements.map((ann) => (
-                            <article key={ann.id} className="bg-surface brutal-border brutal-shadow p-6 group hover:-translate-y-1 transition-all">
-                                <div className="flex justify-between items-start mb-4">
-                                    <h3 className="font-headline-md uppercase text-2xl group-hover:text-electric-blue transition-colors">{ann.title}</h3>
-                                    <span className="font-code-snippet text-xs bg-stark-black text-pure-white px-2 py-1 text-center border-2 border-transparent">
-                                        {new Date(ann.createdAt).toLocaleDateString()}
-                                    </span>
-                                </div>
-                                <div className="font-code-snippet text-xs uppercase bg-surface-container-high px-2 py-1 w-fit mb-4 brutal-border flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-xs">tag</span>
-                                    {ann.type || 'Notice'}
-                                </div>
-                                <p className="font-body-md whitespace-pre-wrap">{ann.content}</p>
-                            </article>
-                        ))
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {announcements.map((ann) => (
+                                <article key={ann.id} className="bg-pure-white border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col h-full hover:-translate-y-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all">
+                                    <div className={`p-4 border-b-4 border-stark-black flex justify-between items-center ${ann.type === 'global' ? 'bg-stark-black text-pure-white' : 'bg-electric-blue text-pure-white'}`}>
+                                        <div className="font-label-bold uppercase tracking-widest flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[16px]">{ann.type === 'global' ? 'public' : 'group'}</span>
+                                            {ann.type} {ann.targetId ? `(${ann.targetId})` : ''}
+                                        </div>
+                                        <div className="font-code-snippet text-[10px] uppercase">
+                                            {new Date(ann.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <div className="p-6 flex-grow flex flex-col gap-4">
+                                        <h3 className="font-display-sm text-2xl uppercase text-stark-black leading-tight">{ann.title}</h3>
+                                        <div className="font-body-md text-stark-black whitespace-pre-wrap leading-relaxed">
+                                            {ann.content}
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                        </div>
                     )}
                 </div>
             </main>

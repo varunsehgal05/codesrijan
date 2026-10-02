@@ -48,7 +48,7 @@ function DashboardPage() {
     useEffect(() => {
         if (userTeam?.leaderId === currentUser?.id) {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
             const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
             axios.get(`${BASE}/teams/requests/me`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -60,7 +60,7 @@ function DashboardPage() {
         if (!confirm("Are you sure you want to kick this operative?")) return;
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
             const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
             await axios.post(`${BASE}/teams/${userTeam?.id}/kick`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -73,7 +73,7 @@ function DashboardPage() {
         if (!confirm("WARNING: Are you absolutely certain you want to abandon your active squad allocation?")) return;
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
             const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
             await axios.post(`${BASE}/teams/leave`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -86,7 +86,7 @@ function DashboardPage() {
         if (!confirm("CRITICAL WARNING: Are you certain you want to completely DISSOLVE this squad? All assignment tracking for this team will evaporate permanently.")) return;
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
             const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
             await axios.delete(`${BASE}/teams/${userTeam?.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -98,7 +98,7 @@ function DashboardPage() {
     const handleActionRequest = async (reqId: string, action: 'accept' | 'reject') => {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com';
+            const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
             const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
             await axios.post(`${BASE}/teams/requests/${reqId}/${action}`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
