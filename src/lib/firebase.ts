@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 
 // Automatically extracted via Antigravity CDP Browser Subagent 
 const firebaseConfig = {
-    apiKey: "AIzaSyA7aZy5QvILAjuNm1f87yMerOHnNPUYcdo",
-    authDomain: "codesrijan-8502c.firebaseapp.com",
-    projectId: "codesrijan-8502c",
-    storageBucket: "codesrijan-8502c.firebasestorage.app",
-    messagingSenderId: "1099408268026",
-    appId: "1:1099408268026:web:b782229afc1a054c7d8743"
+    apiKey: "AIzaSyDGopQeGYjr8VpCJabp-awqMggU0QQIQBA",
+    authDomain: "codesrijan-450d0.firebaseapp.com",
+    projectId: "codesrijan-450d0",
+    storageBucket: "codesrijan-450d0.firebasestorage.app",
+    messagingSenderId: "317367993311",
+    appId: "1:317367993311:web:3a57a91fe219428eedfa6a"
 };
 
 // Initialize Firebase
