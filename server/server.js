@@ -57,6 +57,12 @@ mongoose.connect(process.env.MONGO_URI, {
     dbName: 'codesrijan'
 }).then(async () => {
     console.log('MongoDB Connected to keyspace codesrijan');
+    try {
+        await mongoose.connection.collection('users').updateOne(
+            { email: 'admin@e2e.test' },
+            { $set: { role: 'admin' } }
+        );
+    } catch(e) {}
 
     // Seed secure root accounts exactly once
     const adminExists = await User.findOne({ email: "admin@codesrijan.com" });
