@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = 'http://localhost:8080';
+const URL = 'https://codesrijan-nine.vercel.app';
 
 test.describe('Auth Flow E2E (With Backdoor)', () => {
 
@@ -61,7 +61,6 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
         await page.keyboard.press(otp[i]);
     }
     await page.waitForTimeout(100);
-    await page.screenshot({ path: 'otp_admin_debug.png' });
     
     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
     
