@@ -729,7 +729,50 @@ app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), asy
     res.json({ message: "Squad completely dissolved across the network." });
 });
 
+app.post('/api/teams/:id/transfer', requireAuth, requireRole(['student']), async (req, res) => {
+    const { newLeaderId } = req.body;
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Only leaders can transfer command." });
+    if (!team.memberIds.includes(newLeaderId)) return res.status(400).json({ message: "New leader must be a member." });
+
+    team.leaderId = newLeaderId;
+    await team.save();
+    res.json({ message: "Command transferred.", team });
+});
+
+app.post('/api/teams/:id/lock', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    const { locked } = req.body;
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.leaderId !== req.user.id && req.user.role !== 'admin') return res.status(403).json({ message: "Only leaders or admins can lock the squad." });
+
+    team.recruitmentOpen = !locked;
+    await team.save();
+    res.json({ message: locked ? "Squad Locked" : "Squad Unlocked", team });
+});
+
 // Admin Team Management
+app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
+    const { reason } = req.body;
+    if (!reason || reason.trim() === '') return res.status(400).json({ message: "Reason is required for disqualification." });
+
+    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'disqualified' }, { new: true });
+    if (!team) return res.status(404).json({ message: "Squad missing." });
+    
+    // Log DQ
+    const dqLog = new Message({ id: `dq-${Date.now()}`, content: reason, authorId: req.user.id, teamId: team.id });
+    await dqLog.save();
+
+    res.json({ message: "Squad Disqualified", team });
+});
+
+app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
+    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'active' }, { new: true });
+    if (!team) return res.status(404).json({ message: "Squad missing." });
+    res.json({ message: "Squad Restored", team });
+});
+
 app.post('/api/admin/teams', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
         const team = new Team({ ...req.body, id: `team-${Date.now()}` });
@@ -840,7 +883,7 @@ app.post('/api/teams/:id/select-problem', requireAuth, requireRole(['student']),
     const problem = await ProblemStatement.findOne({ id: problemId, isPublished: true });
     if (!problem) return res.status(404).json({ message: "Valid published matrix not located." });
     
-    if (problem.hackathonId !== team.hackathonId) {
+    if (problem.hackathonId && problem.hackathonId !== team.hackathonId) {
         return res.status(403).json({ message: "Problem does not belong to this hackathon." });
     }
 
@@ -1434,6 +1477,40 @@ app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (re
 // ==========================================
 // EPIC 5: JUDGE & EVALUATION ENGINE
 // ==========================================
+app.get('/api/evaluations', requireAuth, async (req, res) => {
+    const evals = await Evaluation.find();
+    res.json(evals);
+});
+
+app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    const { hackathonId, totalScore, scores, status } = req.body;
+    
+    // Check if an evaluation already exists for this judge and team
+    let eval = await Evaluation.findOne({ teamId: req.params.teamId, judgeId: req.user.id });
+    
+    if (eval) {
+        if (eval.status === 'submitted') {
+            return res.status(400).json({ message: "Evaluation already submitted and locked." });
+        }
+        eval.totalScore = totalScore;
+        eval.scores = scores;
+        eval.status = status;
+        await eval.save();
+    } else {
+        eval = new Evaluation({
+            id: `eval-${Date.now()}`,
+            hackathonId,
+            teamId: req.params.teamId,
+            judgeId: req.user.id,
+            totalScore,
+            scores,
+            status: status || 'draft'
+        });
+        await eval.save();
+    }
+    
+    res.json(eval);
+});
 
 // GET Submissions Queue (Only returns teams that have transmitted payload)
 app.get('/api/submissions', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {

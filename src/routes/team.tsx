@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
 
@@ -8,9 +9,12 @@ export const Route = createFileRoute("/team")({
 });
 
 function Page6() {
-  const { currentUser, teams, users, hackathons, createTeam, joinTeam } = useAppStore();
+  const { currentUser, teams, users, hackathons, problems, createTeam, joinTeam, refetchData } = useAppStore();
+  const navigate = useNavigate();
   const [newTeamName, setNewTeamName] = useState("");
   const [joinTeamId, setJoinTeamId] = useState("");
+  const [selectedHackathon, setSelectedHackathon] = useState("");
+  const [selectedProblem, setSelectedProblem] = useState("");
 
   const [invitations, setInvitations] = useState<any[]>([]);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
@@ -42,9 +46,9 @@ function Page6() {
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName || !currentUser) return;
-    const activeHackathonId = hackathons[0]?.id;
-    if (!activeHackathonId) return alert("No active hackathon to form a squad in.");
-    createTeam(newTeamName, currentUser.id, activeHackathonId);
+    if (!selectedHackathon) return alert("Select a hackathon to form a squad in.");
+    if (!selectedProblem) return alert("Select a problem statement.");
+    createTeam(newTeamName, currentUser.id, selectedHackathon, selectedProblem);
   };
 
   const handleJoinTeam = (e: React.FormEvent) => {
@@ -64,6 +68,53 @@ function Page6() {
       console.error(err);
       alert("Failed to confirm invitation");
     }
+  };
+
+  const handleLeaveTeam = async () => {
+    if(!window.confirm("Are you sure you want to leave the team?")) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/leave`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await refetchData();
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to leave");
+    }
+  };
+
+  const handleTransfer = async (newLeaderId: string) => {
+    if(!window.confirm("Transfer leadership?")) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/${currentTeam?.id}/transfer`, { newLeaderId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await refetchData();
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to transfer");
+    }
+  };
+
+  const handleLock = async (locked: boolean) => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/${currentTeam?.id}/lock`, { locked }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await refetchData();
+      window.location.reload();
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to lock/unlock");
+    }
+  };
+
+  const copyInvite = () => {
+     const link = `${window.location.origin}/invite/${currentTeam?.id}`;
+     navigator.clipboard.writeText(link);
+     alert("Invite link copied!");
   };
 
   const actOnRequest = async (reqId: string, action: 'accept' | 'reject') => {
@@ -92,18 +143,43 @@ function Page6() {
 
         {!currentTeam ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Create Team */}
             <div className="bg-surface p-8 neo-brutal-card">
               <h1 className="font-display-lg text-headline-lg text-ink-black mb-4">Create Team</h1>
               <form onSubmit={handleCreateTeam} className="flex flex-col gap-4">
                 <input
                   type="text"
                   placeholder="Team Name"
+                  required
                   value={newTeamName}
                   onChange={e => setNewTeamName(e.target.value)}
                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
                 />
-                <button type="submit" className="bg-electric-blue text-on-primary font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                
+                <select 
+                   required
+                   value={selectedHackathon} 
+                   onChange={e => setSelectedHackathon(e.target.value)} 
+                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
+                >
+                    <option value="">Select Hackathon</option>
+                    {hackathons.map((h: any) => (
+                        <option key={h.id} value={h.id}>{h.name}</option>
+                    ))}
+                </select>
+
+                <select 
+                   required
+                   value={selectedProblem} 
+                   onChange={e => setSelectedProblem(e.target.value)} 
+                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
+                >
+                    <option value="">Select Problem Statement</option>
+                    {problems.filter((p: any) => p.hackathonId === selectedHackathon || !p.hackathonId).map((p: any) => (
+                        <option key={h.id} value={p.id}>{p.title}</option>
+                    ))}
+                </select>
+
+                <button type="submit" className="bg-electric-blue text-on-primary font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mt-2">
                   CREATE SQUAD
                 </button>
               </form>
@@ -115,12 +191,13 @@ function Page6() {
               <form onSubmit={handleJoinTeam} className="flex flex-col gap-4">
                 <input
                   type="text"
-                  placeholder="Team ID (e.g., t-12345)"
+                  placeholder="Team Invite Code (e.g. t-12345)"
+                  required
                   value={joinTeamId}
                   onChange={e => setJoinTeamId(e.target.value)}
                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
                 />
-                <button type="submit" className="bg-ink-black text-pure-white font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                <button type="submit" className="bg-ink-black text-pure-white font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mt-2">
                   JOIN PUBLIC SQUAD
                 </button>
               </form>

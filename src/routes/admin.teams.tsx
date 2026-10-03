@@ -29,6 +29,8 @@ function AdminTeams() {
   // Modal State
   const [editingTeam, setEditingTeam] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dqTeam, setDqTeam] = useState<any | null>(null);
+  const [dqReason, setDqReason] = useState("");
 
   // Filtered Teams
   const filteredTeams = useMemo(() => {
@@ -40,26 +42,42 @@ function AdminTeams() {
     });
   }, [safeTeams, searchQuery, statusFilter]);
 
-  const handleDisqualify = async (teamId: string, teamName: string) => {
-    if (!window.confirm(`ACTION CONFIRMATION: Are you sure you want to disqualify squad "${teamName}" [ID: ${teamId}]? All operative associations will be dissolved.`)) {
-      return;
-    }
+  const executeDisqualify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dqReason.trim() || !dqTeam) return;
 
-    setLoadingId(teamId);
+    setLoadingId(dqTeam.id);
     setStatusMsg(null);
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.delete(`${API_BASE}/teams/${teamId}`, {
+      await axios.post(`${API_BASE}/admin/teams/${dqTeam.id}/disqualify`, { reason: dqReason }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setStatusMsg({ type: 'success', text: `Squad "${teamName}" successfully disqualified and dissolved across grid.` });
+      setStatusMsg({ type: 'success', text: `Squad "${dqTeam.name}" has been DISQUALIFIED.` });
+      setDqTeam(null);
+      setDqReason("");
       await refetchData();
     } catch (err: any) {
-      setStatusMsg({
-        type: 'error',
-        text: err.response?.data?.message || `Failed to disqualify squad ${teamName}.`
+      setStatusMsg({ type: 'error', text: err.response?.data?.message || "Failed to disqualify." });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
+  const handleUndoDisqualify = async (teamId: string, teamName: string) => {
+    if (!window.confirm(`Restore squad "${teamName}"?`)) return;
+
+    setLoadingId(teamId);
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_BASE}/admin/teams/${teamId}/undo-disqualify`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      setStatusMsg({ type: 'success', text: `Squad "${teamName}" restored.` });
+      await refetchData();
+    } catch (err: any) {
+      setStatusMsg({ type: 'error', text: err.response?.data?.message || "Failed to restore." });
     } finally {
       setLoadingId(null);
     }
@@ -220,6 +238,33 @@ function AdminTeams() {
       </div>
 
       {/* Editor Modal */}
+      {dqTeam && (
+        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-pure-white max-w-xl w-full border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-0">
+            <div className="bg-error p-4 border-b-4 border-stark-black flex justify-between items-center">
+              <h3 className="font-display-lg text-2xl uppercase text-pure-white tracking-widest">DISQUALIFY TEAM</h3>
+              <button onClick={() => setDqTeam(null)} className="text-pure-white hover:text-stark-black">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <form onSubmit={executeDisqualify} className="p-8 flex flex-col gap-6">
+              <div>
+                <label className="font-code-snippet uppercase tracking-widest text-xs font-bold text-on-surface-variant block mb-2">Team</label>
+                <input type="text" value={dqTeam.name} disabled className="w-full bg-surface-container p-4 font-code-snippet border-2 border-stark-black opacity-50" />
+              </div>
+              <div>
+                <label className="font-code-snippet uppercase tracking-widest text-xs font-bold text-on-surface-variant block mb-2">Reason (Required)</label>
+                <textarea required value={dqReason} onChange={e => setDqReason(e.target.value)} rows={3} className="w-full bg-pure-white p-4 font-code-snippet border-2 border-stark-black focus:outline-none focus:border-electric-blue focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"></textarea>
+              </div>
+              <div className="flex gap-4 pt-4 border-t-2 border-dashed border-stark-black">
+                <button type="button" onClick={() => setDqTeam(null)} className="flex-1 bg-surface-container font-label-bold uppercase py-4 border-2 border-stark-black hover:bg-zinc-200">CANCEL</button>
+                <button type="submit" className="flex-1 bg-error text-pure-white font-label-bold uppercase py-4 border-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">DISQUALIFY TEAM</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isModalOpen && editingTeam && (
         <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
             <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">

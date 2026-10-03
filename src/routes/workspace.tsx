@@ -166,7 +166,35 @@ function WorkspaceHUD() {
 
         {/* Kanban Grid */}
         <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-8">
-          <h2 className="font-headline-lg uppercase text-electric-blue border-b-4 border-ink-black pb-2 mb-6">Active Operations Vectors</h2>
+          <div className="flex justify-between items-center border-b-4 border-ink-black pb-2 mb-6">
+              <h2 className="font-headline-lg uppercase text-electric-blue">Active Operations Vectors</h2>
+              {!userTeam.isSubmitted && <button onClick={() => setIsCreating(true)} className="bg-electric-blue text-white font-bold py-2 px-4 border-2 border-black hover:-translate-y-1 brutal-shadow transition-transform text-sm">+ CREATE TASK</button>}
+          </div>
+          
+          {(isCreating || editingTask) && (
+              <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                  <div className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6">
+                      <h3 className="font-display-lg text-2xl uppercase mb-4">{isCreating ? 'CREATE TASK' : 'EDIT TASK'}</h3>
+                      <form onSubmit={isCreating ? handleTaskCreate : handleTaskUpdate} className="flex flex-col gap-4">
+                          <input required placeholder="Task Title" value={isCreating ? createForm.title : editForm.title} onChange={e => isCreating ? setCreateForm({...createForm, title: e.target.value}) : setEditForm({...editForm, title: e.target.value})} className="border-2 border-black p-3 bg-surface-container" />
+                          <textarea placeholder="Description" value={isCreating ? createForm.description : editForm.description} onChange={e => isCreating ? setCreateForm({...createForm, description: e.target.value}) : setEditForm({...editForm, description: e.target.value})} className="border-2 border-black p-3 bg-surface-container"></textarea>
+                          <select value={isCreating ? createForm.priority : editForm.priority} onChange={e => isCreating ? setCreateForm({...createForm, priority: e.target.value}) : setEditForm({...editForm, priority: e.target.value})} className="border-2 border-black p-3 bg-surface-container">
+                              <option value="low">Low Priority</option>
+                              <option value="medium">Medium Priority</option>
+                              <option value="high">High Priority</option>
+                              <option value="critical">Critical Priority</option>
+                          </select>
+                          <input placeholder="Assign To (Username or ID)" value={isCreating ? createForm.assignedTo : editForm.assignedTo} onChange={e => isCreating ? setCreateForm({...createForm, assignedTo: e.target.value}) : setEditForm({...editForm, assignedTo: e.target.value})} className="border-2 border-black p-3 bg-surface-container" />
+                          <input type="date" value={isCreating ? createForm.dueDate : editForm.dueDate} onChange={e => isCreating ? setCreateForm({...createForm, dueDate: e.target.value}) : setEditForm({...editForm, dueDate: e.target.value})} className="border-2 border-black p-3 bg-surface-container" />
+                          <div className="flex gap-4 mt-4">
+                              <button type="submit" className="flex-1 bg-electric-blue text-white font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">SAVE TASK</button>
+                              <button type="button" onClick={() => { setIsCreating(false); setEditingTask(null); }} className="flex-1 bg-zinc-300 text-black font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">CANCEL</button>
+                          </div>
+                      </form>
+                  </div>
+              </div>
+          )}
+          
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {kanbanColumns.map((col, idx) => (

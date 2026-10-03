@@ -1,4 +1,5 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import React from "react";
 
 export const Route = createFileRoute("/invite/$token")({
     component: TeamInviteComponent,
@@ -38,11 +39,11 @@ function TeamInviteComponent() {
                     </h1>
 
                     <p className="font-body-lg text-on-surface-variant max-w-md mx-auto mb-8">
-                        Your tactical skills are required. <strong className="text-stark-black">{teamContext.inviter}</strong> has invited you to join the hack squad:
+                        Your tactical skills are required. a squad leader has invited you to join the hack squad:
                     </p>
 
                     <div className="bg-surface-container w-full p-6 brutal-border">
-                        <h3 className="font-display-lg text-headline-md uppercase text-deep-navy mb-2">"{teamContext.teamName}"</h3>
+                        <h3 className="font-display-lg text-headline-md uppercase text-deep-navy mb-2">"{team.name}"</h3>
                         <div className="inline-block bg-stark-black text-pure-white font-label-caps tracking-widest px-4 py-2 mt-2">
                             ROLE: {teamContext.roleNeeded}
                         </div>

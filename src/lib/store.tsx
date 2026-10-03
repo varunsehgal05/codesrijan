@@ -89,7 +89,7 @@ interface StoreContextType extends StoreState {
     register: (user: User) => Promise<any>;
     verifyEmail: (userId: string, code: string) => Promise<boolean>;
     logout: () => void;
-    createTeam: (name: string, leaderId: string, hackathonId: string) => void;
+    createTeam: (name: string, leaderId: string, hackathonId: string, problemStatementId: string) => void;
     joinTeam: (teamId: string, userId: string) => void;
     assignProblem: (teamId: string, problemId: string) => void;
     submitProject: (teamId: string, repositoryUrl: string, demoUrl: string) => void;
@@ -279,16 +279,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("codesrijan_auth_token");
     };
 
-    const createTeam = async (name: string, leaderId: string, hackathonId: string) => {
+    const createTeam = async (name: string, leaderId: string, hackathonId: string, problemStatementId: string) => {
         try {
+            const token = localStorage.getItem("codesrijan_auth_token");
             const payload = {
                 name,
                 leaderId,
                 hackathonId,
+                problemStatementId,
                 description: "",
                 recruitmentOpen: true
             };
-            await axios.post(`${API_URL}/teams`, payload);
+            await axios.post(`${API_URL}/teams`, payload, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
             await refetchData();
             // Re-sync current user via the `/auth/me` pipeline
             const meRes = await axios.get(`${API_URL}/auth/me`);
