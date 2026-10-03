@@ -62,7 +62,7 @@ export function ChatBotWidget() {
     };
 
     const parseMessageNodes = (text: string) => {
-        // Find things like [Open Submission] and turn them into Action Buttons
+        // Find things like [Open Submission -> /workspace] and turn them into Action Buttons
         const buttonRegex = /\[(.*?)\]/g;
         const parts = [];
         let lastIndex = 0;
@@ -74,16 +74,23 @@ export function ChatBotWidget() {
                 parts.push(<span key={lastIndex}>{text.substring(lastIndex, match.index)}</span>);
             }
 
-            const buttonText = match[1] || "";
+            const rawText = match[1] || "";
+            let buttonText = rawText;
             let targetPath = "/";
 
-            // Action Router
-            if (buttonText.includes("Support")) targetPath = "/support";
-            if (buttonText.includes("Submission") || buttonText.includes("My Team")) targetPath = "/workspace";
-            if (buttonText.includes("Find a Squad") || buttonText.includes("Create Team")) targetPath = "/recruitment";
-            if (buttonText.includes("Dashboard")) targetPath = "/admin";
-            if (buttonText.includes("Evaluations")) targetPath = "/evaluations";
-            if (buttonText.includes("Schedule")) targetPath = "/about";
+            if (rawText.includes("->")) {
+                const split = rawText.split("->");
+                buttonText = split[0].trim();
+                targetPath = split[1].trim();
+            } else {
+                // Fallback Action Router for old static links
+                if (buttonText.includes("Support")) targetPath = "/support";
+                if (buttonText.includes("Submission") || buttonText.includes("My Team") || buttonText.includes("Workspace")) targetPath = "/workspace";
+                if (buttonText.includes("Find a Squad") || buttonText.includes("Create Team")) targetPath = "/recruitment";
+                if (buttonText.includes("Dashboard")) targetPath = "/admin";
+                if (buttonText.includes("Evaluations")) targetPath = "/evaluations";
+                if (buttonText.includes("Schedule")) targetPath = "/about";
+            }
 
             parts.push(
                 <Link key={match.index} to={targetPath} className="mt-2 block w-full text-center bg-electric-blue text-on-primary py-2 font-button-text text-button-text brutal-hover brutal-border">

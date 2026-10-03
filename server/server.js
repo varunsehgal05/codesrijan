@@ -1318,53 +1318,73 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
     }
 });
 
-// SRIJANBOT AI CHAT ENGINE (Rule-based NLP Simulator)
+// SRIJANBOT AI CHAT ENGINE (Groq LLM Integration)
 app.post('/api/ai/chat', async (req, res) => {
     try {
         const { message, context } = req.body;
-        // context payload expects: { path, role, email, name, teamId, userId }
-        const input = String(message).toLowerCase();
-        let reply = "I couldn't find an official answer to this question. [Create Support Ticket]";
+        const groqApiKey = process.env.GROQ_API_KEY;
 
-        if (input.includes('deadline') || input.includes('when is submission')) {
-            reply = "Your project must be submitted by **18 September 2026 at 11:59 PM**. After the deadline, submissions are locked. [Open Submission]";
+        if (!groqApiKey) {
+            return res.status(500).json({ reply: "SYSTEM FAULT. AI processor is offline (Missing API Key)." });
         }
-        else if (input.includes('team') && input.includes('my')) {
-            if (context.teamId) {
-                const team = await Team.findOne({ id: context.teamId });
-                reply = team ? `You're currently a member of **${team.name}**. [Open My Team]` : "You do not appear to be in a team yet. [Find a Squad]";
-            } else {
-                reply = "You are not currently in a squad. [Find a Squad]";
-            }
+
+        const systemPrompt = `You are SrijanBot, the official AI guide and navigator for the CodeSrijan hackathon platform.
+CodeSrijan Site Map:
+🏠 Home (/dashboard): View the current hackathon, deadlines and announcements.
+🧩 Problems (/problems): Browse and select hackathon challenges.
+👥 Team (/recruitment): Create a team, select a problem, and manage members.
+💻 Workspace (/workspace): Build your project, manage tasks and prepare your submission.
+💬 Comms (/chat): Chat with teammates, mentors and support.
+📤 Submission (/workspace): Submit your final project (it is located inside the Kanban Workspace).
+🏆 Leaderboard (/leaderboard): View published results.
+🎓 Certificates (/certificates): View and download your certificates.
+🤝 Recruitment (/recruitment): Find teammates, join squads, and network.
+❓ Help & Support (/support): Get FAQs, SrijanBot help or contact admins.
+
+Current User Context:
+Role: ${context?.role || 'Guest'}
+Name: ${context?.name || 'Operative'}
+Email: ${context?.email || 'N/A'}
+Current Page: ${context?.path || '/'}
+Team ID: ${context?.teamId || 'None'}
+
+Your behavior rules:
+1. EXPLAIN & GUIDE: Act as an interactive guide. Give complete step-by-step instructions.
+2. NAVIGATE: At the VERY END of your response, provide exactly ONE navigation button if applicable, formatted EXACTLY as [Button Text -> /path] (e.g. [Open Workspace -> /workspace], [Create Team -> /recruitment], [Go to Dashboard -> /admin]).
+3. NEVER invent a page, button, or action that doesn't exist on CodeSrijan.
+4. Keep responses concise, structured, and in the "Neo-Brutalist" CodeSrijan tone (professional, direct, slight hacker aesthetic).
+5. If asked to do something you cannot do (like directly creating a team in DB), explain how the user can do it themselves using the UI.
+6. For submission, explicitly tell them to go to the Workspace and fill in the GitHub/Demo links payload.`;
+
+        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${groqApiKey}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama3-8b-8192", 
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message }
+                ],
+                temperature: 0.2,
+                max_tokens: 500
+            })
+        });
+
+        if (!response.ok) {
+            console.error("Groq API error:", await response.text());
+            throw new Error("Groq API request failed");
         }
-        else if (input.includes('create a team') || input.includes('new squad')) {
-            reply = "You can create a team from the Recruitment matrix or your Profile. [Create Team]";
-        }
-        else if (input.includes('certificate')) {
-            reply = "Your participation certificate is not ready yet. They will be generated at the end of the hackathon.";
-        }
-        else if (input.includes('missing') || input.includes('what do i need')) {
-            reply = "Your submission currently requires:\n- Project description\n- GitHub repository URL\n- Interactive Demo link\n[Complete Submission]";
-        }
-        else if (context.role === 'admin' && (input.includes('how many') || input.includes('stats'))) {
-            const teamCount = await Team.countDocuments();
-            const userCount = await User.countDocuments();
-            reply = `Currently, we have ${userCount} registered operatives and ${teamCount} active squads. [Admin Dashboard]`;
-        }
-        else if (context.role === 'judge' && (input.includes('project') || input.includes('evaluate'))) {
-            reply = "Welcome Judge. You can evaluate assigned projects via the Evaluations dashboard matrix. [Open Evaluations]";
-        }
-        else if (input.includes('problem') && context.path === '/problems') {
-            reply = "These are the active challenge statements. Read the requirements carefully and hit 'Select' when your squad is ready! [View Schedule]";
-        }
-        else if (input.includes('hello') || input.includes('hi')) {
-            reply = `SYSTEM WAKE. Greetings, ${context.name || 'Operative'}. I am SrijanBot. How can I assist your navigation today?`;
-        }
+
+        const data = await response.json();
+        let reply = data.choices[0]?.message?.content || "I couldn't process that command.";
 
         res.json({ reply });
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ reply: "SYSTEM FAULT. Processing node offline." });
+        console.error("AI Error:", e);
+        res.status(500).json({ reply: "SYSTEM FAULT. Neural link to Groq severed. Please try again later." });
     }
 });
 
