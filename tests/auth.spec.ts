@@ -31,7 +31,7 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
         await otpInputs.nth(i).fill(otp[i]);
     }
     
-    await page.click('button:has-text("GENERATE IDENTITY")');
+    await page.click('button:has-text("AUTHORIZE OVERRIDE")');
     
     // 5. Verify auto-redirect to workspace for student
     await page.waitForURL('**/workspace');
@@ -56,7 +56,7 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
         await otpInputs.nth(i).fill(otp[i]);
     }
     
-    await page.click('button:has-text("GENERATE IDENTITY")');
+    await page.click('button:has-text("AUTHORIZE OVERRIDE")');
     
     // Admin should auto-redirect to /admin
     await page.waitForURL('**/admin');
