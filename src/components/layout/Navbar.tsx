@@ -36,14 +36,14 @@ export function Navbar() {
 
     return (
         <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex justify-between items-center px-4 xl:px-margin-desktop py-4 max-w-[1200px] mx-auto">
+            <div className="flex justify-between items-center px-4 xl:px-8 py-4 max-w-[1400px] mx-auto overflow-x-visible">
                 {/* Logo */}
                 <Link to="/" className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright shrink-0">
                     CodeSrijan
                 </Link>
 
                 {/* Desktop Nav Links */}
-                <div className="hidden xl:flex gap-6 items-center font-button-text text-button-text shrink-0 mx-4">
+                <div className="hidden xl:flex gap-4 2xl:gap-6 items-center font-button-text text-button-text mx-4 flex-wrap justify-center">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-20 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -54,7 +54,7 @@ export function Navbar() {
                 </div>
 
                 {/* Desktop Buttons */}
-                <div className="hidden xl:flex shrink-0 gap-4">
+                <div className="hidden xl:flex shrink-0 gap-3 2xl:gap-4 pr-1">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700"></div>
