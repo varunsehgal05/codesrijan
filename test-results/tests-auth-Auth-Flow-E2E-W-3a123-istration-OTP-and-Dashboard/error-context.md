@@ -7,7 +7,7 @@
 # Test info
 
 - Name: tests\auth.spec.ts >> Auth Flow E2E (With Backdoor) >> Admin Registration, OTP, and Dashboard
-- Location: tests\auth.spec.ts:42:3
+- Location: tests\auth.spec.ts:41:3
 
 # Error details
 
@@ -29,7 +29,7 @@ Call log:
       - element is not enabled
     - retrying click action
       - waiting 100ms
-    40 × waiting for element to be visible, enabled and stable
+    42 × waiting for element to be visible, enabled and stable
        - element is not enabled
      - retrying click action
        - waiting 500ms
@@ -61,10 +61,10 @@ Call log:
       - generic [ref=e19]:
         - textbox "0" [ref=e20]
         - textbox "0" [ref=e21]
-        - textbox "0" [ref=e22]: "3"
-        - textbox "0" [ref=e23]: "4"
-        - textbox "0" [ref=e24]: "5"
-        - textbox "0" [active] [ref=e25]: "6"
+        - textbox "0" [ref=e22]
+        - textbox "0" [ref=e23]
+        - textbox "0" [ref=e24]
+        - textbox "0" [ref=e25]
       - button "AUTHORIZE OVERRIDE" [disabled] [ref=e26] [cursor=pointer]
       - button "Re-transmit Code" [ref=e28] [cursor=pointer]
   - contentinfo [ref=e29]:
@@ -111,47 +111,45 @@ Call log:
   27 |     await expect(otpInputs).toHaveCount(6);
   28 |     
   29 |     const otp = '123456';
-  30 |     for (let i = 0; i < 6; i++) {
-  31 |         await otpInputs.nth(i).fill(otp[i]);
-  32 |         await page.waitForTimeout(50); // allow react state to settle
-  33 |     }
-  34 |     
-  35 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
-  36 |     
-  37 |     // 5. Verify auto-redirect to workspace for student
-  38 |     await page.waitForURL('**/workspace');
-  39 |     await expect(page.locator('h1').first()).toContainText('Workspace');
-  40 |   });
-  41 | 
-  42 |   test('Admin Registration, OTP, and Dashboard', async ({ page }) => {
-  43 |     await page.goto(`${URL}/register`);
-  44 |     
-  45 |     const adminEmail = `admin.qa.${Date.now()}@codesrijan.test`;
-  46 |     
-  47 |     await page.fill('input[placeholder="John"]', 'QA Auto Admin');
-  48 |     await page.fill('input[type="email"]', adminEmail);
-  49 |     await page.fill('input[type="password"]', 'TestPass123!');
-  50 |     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
-  51 |     await page.fill('input[placeholder="CS"]', 'CS');
-  52 |     await page.fill('input[placeholder="3"]', '3');
-  53 |     await page.click('button:has-text("GENERATE IDENTITY")');
-  54 |     await page.waitForURL('**/auth/otp**');
-  55 |     
-  56 |     const otpInputs = page.locator('input[type="text"]');
-  57 |     const otp = '123456';
-  58 |     for (let i = 0; i < 6; i++) {
-  59 |         await otpInputs.nth(i).fill(otp[i]);
-  60 |         await page.waitForTimeout(50); // allow react state to settle
-  61 |     }
-  62 |     
-> 63 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
+  30 |     await otpInputs.nth(0).focus();
+  31 |     await page.keyboard.type(otp, { delay: 50 });
+  32 |     await page.waitForTimeout(100);
+  33 |     
+  34 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
+  35 |     
+  36 |     // 5. Verify auto-redirect to workspace for student
+  37 |     await page.waitForURL('**/workspace');
+  38 |     await expect(page.locator('h1').first()).toContainText('Workspace');
+  39 |   });
+  40 | 
+  41 |   test('Admin Registration, OTP, and Dashboard', async ({ page }) => {
+  42 |     await page.goto(`${URL}/register`);
+  43 |     
+  44 |     const adminEmail = `admin.qa.${Date.now()}@codesrijan.test`;
+  45 |     
+  46 |     await page.fill('input[placeholder="John"]', 'QA Auto Admin');
+  47 |     await page.fill('input[type="email"]', adminEmail);
+  48 |     await page.fill('input[type="password"]', 'TestPass123!');
+  49 |     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
+  50 |     await page.fill('input[placeholder="CS"]', 'CS');
+  51 |     await page.fill('input[placeholder="3"]', '3');
+  52 |     await page.click('button:has-text("GENERATE IDENTITY")');
+  53 |     await page.waitForURL('**/auth/otp**');
+  54 |     
+  55 |     const otpInputs = page.locator('input[type="text"]');
+  56 |     const otp = '123456';
+  57 |     await otpInputs.nth(0).focus();
+  58 |     await page.keyboard.type(otp, { delay: 50 });
+  59 |     await page.waitForTimeout(100);
+  60 |     
+> 61 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
      |                ^ Error: page.click: Test timeout of 30000ms exceeded.
-  64 |     
-  65 |     // Admin should auto-redirect to /admin
-  66 |     await page.waitForURL('**/admin');
-  67 |     await expect(page.locator('h1').first()).toContainText('Dashboard');
-  68 |   });
+  62 |     
+  63 |     // Admin should auto-redirect to /admin
+  64 |     await page.waitForURL('**/admin');
+  65 |     await expect(page.locator('h1').first()).toContainText('Dashboard');
+  66 |   });
+  67 | 
+  68 | });
   69 | 
-  70 | });
-  71 | 
 ```

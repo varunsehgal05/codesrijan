@@ -1486,18 +1486,18 @@ app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']
     const { hackathonId, totalScore, scores, status } = req.body;
     
     // Check if an evaluation already exists for this judge and team
-    let eval = await Evaluation.findOne({ teamId: req.params.teamId, judgeId: req.user.id });
+    let evaluation = await Evaluation.findOne({ teamId: req.params.teamId, judgeId: req.user.id });
     
-    if (eval) {
-        if (eval.status === 'submitted') {
+    if (evaluation) {
+        if (evaluation.status === 'submitted') {
             return res.status(400).json({ message: "Evaluation already submitted and locked." });
         }
-        eval.totalScore = totalScore;
-        eval.scores = scores;
-        eval.status = status;
-        await eval.save();
+        evaluation.totalScore = totalScore;
+        evaluation.scores = scores;
+        evaluation.status = status;
+        await evaluation.save();
     } else {
-        eval = new Evaluation({
+        evaluation = new Evaluation({
             id: `eval-${Date.now()}`,
             hackathonId,
             teamId: req.params.teamId,
@@ -1506,7 +1506,7 @@ app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']
             scores,
             status: status || 'draft'
         });
-        await eval.save();
+        await evaluation.save();
     }
     
     res.json(eval);
