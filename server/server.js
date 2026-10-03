@@ -576,8 +576,16 @@ app.get('/api/problems', async (req, res) => {
 });
 
 app.get('/api/hackathons/:id/problems', async (req, res) => {
-    // Extract published problems for this hackathon
-    const problems = await ProblemStatement.find({ hackathonId: req.params.id, isPublished: true });
+    // Extract published problems for this hackathon OR global problems
+    const problems = await ProblemStatement.find({ 
+        isPublished: true,
+        $or: [
+            { hackathonId: req.params.id },
+            { hackathonId: '' },
+            { hackathonId: null },
+            { hackathonId: { $exists: false } }
+        ]
+    });
     res.json(problems);
 });
 
