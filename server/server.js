@@ -241,7 +241,25 @@ app.post('/api/auth/verify-email', async (req, res) => {
             sendWelcomeEmail(updatedUser.email, updatedUser.name, updatedUser.role).catch(() => {});
         }
 
-        res.json({ message: "Email verified successfully." });
+        const sessionToken = crypto.randomBytes(32).toString('hex');
+        const sessionTokenHash = crypto.createHash('sha256').update(sessionToken).digest('hex');
+        const session = new Session({
+            userId: updatedUser.id,
+            sessionTokenHash,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60000)
+        });
+        await session.save();
+
+        res.json({ 
+            message: "Email verified successfully.",
+            token: sessionToken,
+            user: {
+                id: updatedUser.id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role
+            }
+        });
     } catch (e) {
         res.status(500).json({ message: "Verification failed." });
     }
