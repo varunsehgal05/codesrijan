@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 
@@ -14,22 +14,43 @@ function AdminUsers() {
     const [editingUser, setEditingUser] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
+    // Filters and Tabs
+    const [activeTab, setActiveTab] = useState<'Active' | 'Suspended'>('Active');
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterRole, setFilterRole] = useState("all");
+
     // Form states
     const [formData, setFormData] = useState({ name: '', email: '', role: 'student', status: 'Active' });
 
     const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
-    const displayUsers = users.map(u => {
-        const userTeam = teams.find(t => t.id === u.teamId);
-        return {
-            id: u.id,
-            name: (u.name) || ((u as any).firstName + ' ' + (u as any).lastName) || "Unknown User",
-            email: u.email,
-            team: userTeam ? userTeam.name : "Free Agent",
-            role: (u.role || 'student').toLowerCase(),
-            status: ((u as any).accountStatus === 'active' || u.role) ? 'Active' : 'Inactive',
-        };
-    });
+    const displayUsers = useMemo(() => {
+        return users.map(u => {
+            const userTeam = teams.find(t => t.id === u.teamId);
+            const status = ((u as any).accountStatus === 'suspended' || u.status === 'Suspended') ? 'Suspended' : 'Active';
+            return {
+                id: u.id,
+                name: (u.name) || ((u as any).firstName + ' ' + (u as any).lastName) || "Unknown User",
+                email: u.email,
+                team: userTeam ? userTeam.name : "Free Agent",
+                role: (u.role || 'student').toLowerCase(),
+                status: status,
+            };
+        });
+    }, [users, teams]);
+
+    const filteredUsers = useMemo(() => {
+        return displayUsers.filter(u => {
+            if (activeTab === 'Active' && u.status === 'Suspended') return false;
+            if (activeTab === 'Suspended' && u.status !== 'Suspended') return false;
+            if (filterRole !== 'all' && u.role !== filterRole) return false;
+            if (searchQuery) {
+                const q = searchQuery.toLowerCase();
+                return u.name.toLowerCase().includes(q) || (u.email && u.email.toLowerCase().includes(q)) || u.id.toLowerCase().includes(q);
+            }
+            return true;
+        });
+    }, [displayUsers, activeTab, filterRole, searchQuery]);
 
     const handleForceAdd = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +89,7 @@ function AdminUsers() {
     };
 
     return (
-        <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto relative">
+        <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto relative pb-20">
 
             {/* INJECTION MODAL (FORCE ADD) */}
             {isAddOpen && (
@@ -156,6 +177,49 @@ function AdminUsers() {
                 </button>
             </div>
 
+            {/* Controls Bar */}
+            <div className="bg-pure-white p-4 brutal-border flex flex-col md:flex-row justify-between items-center gap-4">
+                <div className="flex gap-2 w-full md:w-auto">
+                    <button 
+                        onClick={() => setActiveTab('Active')} 
+                        className={`px-6 py-2 font-label-bold uppercase brutal-border transition-all ${activeTab === 'Active' ? 'bg-stark-black text-pure-white brutal-shadow' : 'bg-surface hover:bg-surface-container'}`}
+                    >
+                        Active Users
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('Suspended')} 
+                        className={`px-6 py-2 font-label-bold uppercase brutal-border transition-all ${activeTab === 'Suspended' ? 'bg-error text-pure-white brutal-shadow' : 'bg-surface hover:bg-surface-container'}`}
+                    >
+                        Suspended Users
+                    </button>
+                </div>
+                
+                <div className="flex gap-4 w-full md:w-auto items-center">
+                    <select 
+                        value={filterRole} 
+                        onChange={(e) => setFilterRole(e.target.value)} 
+                        className="p-2 border-2 border-stark-black font-code-snippet focus:outline-none"
+                    >
+                        <option value="all">All Roles</option>
+                        <option value="student">Student</option>
+                        <option value="judge">Judge</option>
+                        <option value="mentor">Mentor</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    
+                    <div className="flex items-center border-2 border-stark-black p-2 bg-surface">
+                        <span className="material-symbols-outlined mr-2">search</span>
+                        <input 
+                            type="text" 
+                            placeholder="Search name, email, ID..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-transparent focus:outline-none font-code-snippet w-64"
+                        />
+                    </div>
+                </div>
+            </div>
+
             {/* Data Grid HUD */}
             <div className="bg-pure-white brutal-border brutal-shadow overflow-x-auto z-10 relative">
                 <table className="w-full text-left border-collapse min-w-[800px]">
@@ -170,7 +234,13 @@ function AdminUsers() {
                         </tr>
                     </thead>
                     <tbody>
-                        {displayUsers.map((u, i) => (
+                        {filteredUsers.length === 0 ? (
+                            <tr>
+                                <td colSpan={6} className="p-8 text-center font-code-snippet text-on-surface-variant uppercase">
+                                    No users found matching current filters.
+                                </td>
+                            </tr>
+                        ) : filteredUsers.map((u, i) => (
                             <tr key={u.id || i} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
                                 <td className="p-4 font-code-snippet text-sm border-r-2 border-stark-black truncate max-w-[120px]">{u.id}</td>
                                 <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black truncate">{u.name}</td>

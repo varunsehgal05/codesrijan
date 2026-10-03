@@ -105,9 +105,9 @@ function AdminSupport() {
                     </td>
                     <td className="p-4">
                       {/* Navigate to Chat UI for this support ticket */}
-                      <a href="/chat" className="text-electric-blue font-label-bold uppercase text-xs hover:underline">
+                      <Link to="/chat" className="text-electric-blue font-label-bold uppercase text-xs hover:underline">
                         Open Comms
-                      </a>
+                      </Link>
                     </td>
                   </tr>
                 ))}
