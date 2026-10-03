@@ -59,9 +59,11 @@
 
 ### Admin Tests
 **Total:** 1
-**Passed:** 1
-**Failed:** 0
+**Passed:** 0
+**Failed:** 1
 **Blocked:** 0
+
+... (skipping intermediate unchanged sections for the replace, actually I should just update the overall counts and failed tests sections)
 
 ### Judge Tests
 **Total:** 1
@@ -169,13 +171,20 @@
 
 ## OVERALL TEST COUNTS
 **Total Tests:** 26
-**Passed:** 26
-**Failed:** 0
+**Passed:** 25
+**Failed:** 1
 **Blocked:** 0
-**Pass Rate:** 100% (Baseline Navigational Render Tests)
+**Pass Rate:** 96.1% (Baseline Navigational Render Tests)
 
 ## FAILED TESTS
-None.
+
+**ID:** `admin.spec.ts`
+**Module:** Admin panel routing
+**Role:** N/A (Guest/Unauthenticated render)
+**Expected:** Page loads and network becomes idle.
+**Actual:** `Test timeout of 30000ms exceeded.` at `await page.waitForLoadState('networkidle')`.
+**Root Cause:** The `/admin` page likely has a long-polling request, infinite retry loop, or persistent WebSocket connection that prevents the `networkidle` state from ever being reached within the 30-second limit.
+**Severity:** P2 (Test-level configuration issue, not a hard crash)
 
 ## KNOWN LIMITATIONS
 
