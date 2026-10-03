@@ -267,8 +267,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const verifyEmail = async (userId: string, code: string) => {
         try {
-            await axios.post(`${API_URL}/auth/verify-email`, { userId, code });
-            return true;
+            const res = await axios.post(`${API_URL}/auth/verify-email`, { userId, code });
+            const { user: u, token } = res.data;
+            if (u && token) {
+                setState(prev => ({ ...prev, currentUser: u }));
+                localStorage.setItem("codesrijan_auth_token", token);
+                socket.emit('authenticate', token);
+            }
+            return res.data;
         } catch (e: any) {
             throw new Error(e.response?.data?.message || "Verification failed");
         }
