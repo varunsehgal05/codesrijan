@@ -163,7 +163,7 @@ function Page6() {
                 >
                     <option value="">Select Hackathon</option>
                     {hackathons.map((h: any) => (
-                        <option key={h.id} value={h.id}>{h.name}</option>
+                        <option key={h.id} value={h.id}>{h.title || h.name}</option>
                     ))}
                 </select>
 
@@ -175,7 +175,7 @@ function Page6() {
                 >
                     <option value="">Select Problem Statement</option>
                     {problems.filter((p: any) => p.hackathonId === selectedHackathon || !p.hackathonId).map((p: any) => (
-                        <option key={h.id} value={p.id}>{p.title}</option>
+                        <option key={p.id} value={p.id}>{p.title}</option>
                     ))}
                 </select>
 
