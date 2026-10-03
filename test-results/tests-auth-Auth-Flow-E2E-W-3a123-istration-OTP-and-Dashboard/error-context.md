@@ -75,7 +75,7 @@ waiting for navigation to "**/auth/otp**" until "load"
             - textbox "3" [ref=e45]
         - generic [ref=e46]:
           - generic [ref=e47]: Secure Email
-          - textbox "comm_link@codesrijan.com" [ref=e48]: admin.qa.1790991327144@codesrijan.test
+          - textbox "comm_link@codesrijan.com" [ref=e48]: admin.qa.1790994292029@codesrijan.test
         - generic [ref=e49]:
           - generic [ref=e50]: Password Matrix
           - textbox "Create a strong password" [ref=e51]: TestPass123!

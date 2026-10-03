@@ -52,9 +52,13 @@ function OTPVerification() {
         setSuccessMsg("");
 
         try {
-            await verifyEmail(pendingId, fullCode);
-            // After successful verification, user goes to login
-            navigate({ to: "/login" });
+            const res = await verifyEmail(pendingId, fullCode);
+            if (res.user) {
+                if (res.user.role === 'admin') navigate({ to: "/admin" });
+                else navigate({ to: "/workspace" });
+            } else {
+                navigate({ to: "/login" });
+            }
         } catch (e: any) {
             setErrorMsg(e.message || "Invalid or expired verification packet.");
         } finally {

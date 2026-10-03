@@ -18,7 +18,7 @@ Test timeout of 30000ms exceeded.
 ```
 Error: page.waitForURL: Test timeout of 30000ms exceeded.
 =========================== logs ===========================
-waiting for navigation to "**/auth/otp**" until "load"
+waiting for navigation to "**/workspace" until "load"
 ============================================================
 ```
 
@@ -39,66 +39,30 @@ waiting for navigation to "**/auth/otp**" until "load"
           - /url: /register
   - generic [ref=e12]:
     - generic [ref=e13]:
-      - link "arrow_back CodeSrijan Registration" [ref=e14] [cursor=pointer]:
-        - /url: /
-        - generic [ref=e15]: arrow_back
-        - text: CodeSrijan Registration
-      - generic [ref=e16]: person_add
-    - generic [ref=e17]:
-      - button "arrow_back GO BACK" [ref=e19] [cursor=pointer]:
-        - generic [ref=e20]: arrow_back
-        - text: GO BACK
-      - heading "JOIN THE RESISTANCE" [level=1] [ref=e21]
-      - paragraph [ref=e22]: Create your hacker profile and start building.
-      - generic [ref=e23]:
-        - generic [ref=e24]: warning
-        - generic [ref=e25]: We couldn't send your verification email. Please try again later.
-      - generic [ref=e26]:
-        - generic [ref=e27]:
-          - generic [ref=e28]:
-            - generic [ref=e29]: Given Name
-            - textbox "John" [ref=e30]: QA Auto Student
-          - generic [ref=e31]:
-            - generic [ref=e32]: Surname
-            - textbox "Doe" [ref=e33]
-        - generic [ref=e34]:
-          - generic [ref=e35]: Preferred Hacker Handle
-          - generic [ref=e36]:
-            - generic [ref=e37]: "@"
-            - textbox "phantom_coder" [ref=e38]
-        - generic [ref=e39]:
-          - generic [ref=e40]:
-            - generic [ref=e41]: College
-            - textbox "Institute of Tech" [ref=e42]: QA Institute
-          - generic [ref=e43]:
-            - generic [ref=e44]: Branch
-            - textbox "CS" [ref=e45]
-          - generic [ref=e46]:
-            - generic [ref=e47]: Year
-            - textbox "3" [ref=e48]
-        - generic [ref=e49]:
-          - generic [ref=e50]: Secure Email
-          - textbox "comm_link@codesrijan.com" [ref=e51]: student.qa.1790991297285@codesrijan.test
-        - generic [ref=e52]:
-          - generic [ref=e53]: Password Matrix
-          - textbox "Create a strong password" [ref=e54]: TestPass123!
-        - button "GENERATE IDENTITY how_to_reg" [active] [ref=e55]:
-          - text: GENERATE IDENTITY
-          - generic [ref=e56]: how_to_reg
-      - paragraph [ref=e58]:
-        - text: ALREADY DRAFTED?
-        - link "INITIALIZE SESSION" [ref=e59] [cursor=pointer]:
-          - /url: /login
-  - contentinfo [ref=e60]:
-    - generic [ref=e61]: CodeSrijan
-    - generic [ref=e62]:
-      - link "Sponsors" [ref=e63] [cursor=pointer]:
+      - heading "Identity Config" [level=1] [ref=e14]
+      - generic [ref=e15]: fingerprint
+    - generic [ref=e16]:
+      - heading "VERIFY EMAIL" [level=2] [ref=e17]
+      - paragraph [ref=e18]: Enter the 6-digit confirmation code sent to your email to activate your account.
+      - generic [ref=e19]:
+        - textbox "0" [ref=e20]
+        - textbox "0" [ref=e21]
+        - textbox "0" [ref=e22]
+        - textbox "0" [ref=e23]
+        - textbox "0" [ref=e24]
+        - textbox "0" [ref=e25]
+      - button "AUTHORIZE OVERRIDE" [disabled] [ref=e26] [cursor=pointer]
+      - button "Re-transmit Code" [ref=e28] [cursor=pointer]
+  - contentinfo [ref=e29]:
+    - generic [ref=e30]: CodeSrijan
+    - generic [ref=e31]:
+      - link "Sponsors" [ref=e32] [cursor=pointer]:
         - /url: /sponsors
-      - link "Privacy Policy" [ref=e64] [cursor=pointer]:
+      - link "Privacy Policy" [ref=e33] [cursor=pointer]:
         - /url: /privacy-policy
-      - link "Code of Conduct" [ref=e65] [cursor=pointer]:
+      - link "Code of Conduct" [ref=e34] [cursor=pointer]:
         - /url: /code-of-conduct
-    - generic [ref=e66]: © 2026 CodeSrijan. Built for the community.
+    - generic [ref=e35]: © 2026 CodeSrijan. Built for the community.
 ```
 
 # Test source
@@ -126,8 +90,7 @@ waiting for navigation to "**/auth/otp**" until "load"
   20 |     await page.fill('input[placeholder="3"]', '3');
   21 |     await page.click('button:has-text("GENERATE IDENTITY")');
   22 |     // 3. Wait for OTP page
-> 23 |     await page.waitForURL('**/auth/otp**');
-     |                ^ Error: page.waitForURL: Test timeout of 30000ms exceeded.
+  23 |     await page.waitForURL('**/auth/otp**');
   24 |     
   25 |     // 4. Enter backdoor OTP
   26 |     const otpInputs = page.locator('input[type="text"]');
@@ -141,7 +104,8 @@ waiting for navigation to "**/auth/otp**" until "load"
   34 |     await page.click('button:has-text("GENERATE IDENTITY")');
   35 |     
   36 |     // 5. Verify auto-redirect to workspace for student
-  37 |     await page.waitForURL('**/workspace');
+> 37 |     await page.waitForURL('**/workspace');
+     |                ^ Error: page.waitForURL: Test timeout of 30000ms exceeded.
   38 |     await expect(page.locator('h1').first()).toContainText('Workspace');
   39 |   });
   40 | 
