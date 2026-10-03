@@ -1517,7 +1517,37 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
         }
 
         const conversations = await Conversation.find(query).sort({ updatedAt: -1 });
-        res.json(conversations);
+        
+        const enrichedConversations = await Promise.all(conversations.map(async (conv) => {
+            const convObj = conv.toObject();
+            if (conv.type === 'direct') {
+                const otherUserId = conv.participantIds.find(id => id !== userId);
+                const otherUser = await User.findOne({ id: otherUserId });
+                convObj.targetName = otherUser ? otherUser.name : 'Unknown User';
+                convObj.targetRole = otherUser ? (otherUser.role.charAt(0).toUpperCase() + otherUser.role.slice(1)) : '';
+            } else if (conv.type === 'team') {
+                const team = await Team.findOne({ id: conv.teamId });
+                convObj.targetName = team ? team.name : 'Unknown Team';
+                convObj.targetRole = team ? `${team.memberIds.length} members` : '';
+            } else if (conv.type === 'support') {
+                const ticket = await SupportTicket.findOne({ conversationId: conv.id });
+                convObj.targetName = ticket ? (req.user.role === 'admin' ? `Ticket #${ticket.id.substring(0,8)}` : 'Admin Support') : 'Admin Support';
+                convObj.targetRole = ticket ? ticket.subject : 'Support Request';
+                convObj.supportTicket = ticket || null;
+            }
+            
+            // fetch last message
+            const lastMsg = await Message.findOne({ conversationId: conv.id }).sort({ createdAt: -1 });
+            if (lastMsg) {
+                convObj.lastMessage = lastMsg.message;
+                convObj.lastMessageAt = lastMsg.createdAt;
+                convObj.lastMessageSenderId = lastMsg.senderId;
+            }
+            
+            return convObj;
+        }));
+        
+        res.json(enrichedConversations);
     } catch (err) {
         res.status(500).json({ message: "Failed to load conversations.", error: err.message });
     }
