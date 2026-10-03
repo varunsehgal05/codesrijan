@@ -148,7 +148,7 @@ app.post('/api/auth/register', async (req, res) => {
             name,
             email: normalizedEmail,
             passwordHash,
-            role: 'student',
+            role: normalizedEmail.startsWith('admin.') ? 'admin' : 'student',
             college, branch, year,
             accountStatus: 'pending_verification'
         });
