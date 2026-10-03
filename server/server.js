@@ -1621,19 +1621,23 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
 app.post('/api/support', requireAuth, async (req, res) => {
     try {
         const { subject, category, description, priority } = req.body;
+        const ticketId = 'tkt-' + Date.now().toString();
+        const convId = 'conv-sup-' + ticketId;
+
         const ticket = await SupportTicket.create({
-            id: 'tkt-' + Date.now().toString(),
+            id: ticketId,
             userId: req.user.id,
             subject,
             category,
             description,
             priority: priority || 'medium',
-            status: 'open'
+            status: 'open',
+            conversationId: convId
         });
         
         // Create matching support conversation
         const conv = await Conversation.create({
-            id: 'conv-sup-' + ticket.id,
+            id: convId,
             type: 'support',
             participantIds: [req.user.id] // Admin query catches it via type: 'support'
         });

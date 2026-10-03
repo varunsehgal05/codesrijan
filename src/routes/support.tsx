@@ -176,7 +176,8 @@ function SupportPage() {
                   <p className="font-code-snippet text-xs text-on-surface-variant mt-1 line-clamp-1">{t.description}</p>
                 </div>
                 <Link 
-                  to={`/chat?conv=conv-sup-${t.id}`}
+                  to="/chat"
+                  search={{ conv: t.conversationId }}
                   className="bg-surface-bright text-stark-black px-4 py-2 text-xs font-label-bold uppercase border-2 border-stark-black hover:bg-electric-blue hover:text-pure-white transition-colors flex items-center gap-2 whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0"
                 >
                   <span className="material-symbols-outlined text-[16px]">forum</span>
