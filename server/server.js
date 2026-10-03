@@ -168,8 +168,12 @@ app.post('/api/auth/register', async (req, res) => {
 
         // Dispatch Verification Email
         try {
-            await sendVerificationEmail(normalizedEmail, code);
-            console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
+            if (!normalizedEmail.endsWith('@codesrijan.test')) {
+                await sendVerificationEmail(normalizedEmail, code);
+                console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
+            } else {
+                console.log(`[TEST COMMS] Bypassing SMTP for test account ${normalizedEmail}. Code: ${code}`);
+            }
             res.json({ message: "Account created. Verification required.", userId: user.id });
         } catch (mailError) {
             console.error(`[SMTP FAULT] Transport failed for ${normalizedEmail}:`, mailError.message);
@@ -199,7 +203,9 @@ app.post('/api/auth/resend-otp', async (req, res) => {
         });
 
         try {
-            await sendVerificationEmail(user.email, code);
+            if (!user.email.endsWith('@codesrijan.test')) {
+                await sendVerificationEmail(user.email, code);
+            }
             res.json({ message: "Verification passkey re-transmitted.", userId: user.id });
         } catch (mailError) {
             console.error(`[SMTP FAULT] Transport failed on re-transmit for ${user.email}`, mailError.message);
