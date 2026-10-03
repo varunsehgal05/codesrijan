@@ -20,9 +20,6 @@ const ADMIN_LINKS = [
     { label: "Recruitment", path: "/admin/recruitment", icon: "work" },
     { label: "Support", path: "/admin/support", icon: "support_agent" },
     { label: "Sponsors", path: "/admin/sponsors", icon: "payments" },
-    { label: "Gallery", path: "/admin/gallery", icon: "photo_library" },
-    { label: "Analytics", path: "/admin/analytics", icon: "analytics" },
-    { label: "Event Schedule", path: "/admin/schedule", icon: "event_note" },
     { label: "Activity Logs", path: "/admin/logs", icon: "history" },
     { label: "Settings", path: "/admin/settings", icon: "settings" },
 ];
