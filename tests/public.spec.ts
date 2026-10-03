@@ -8,7 +8,7 @@ test.describe('Public Website E2E Tests', () => {
     await page.goto(URL);
     
     // Check main title
-    await expect(page.locator('h1').first()).toContainText('CodeSrijan');
+    await expect(page.locator('h1').first()).toContainText('Build.Break.Innovate.');
     
     // Check navigation links
     const navBar = page.locator('nav');
@@ -17,25 +17,23 @@ test.describe('Public Website E2E Tests', () => {
     await expect(navBar.locator('text=Comms')).toBeVisible();
   });
 
-  test('Problems page displays catalog', async ({ page }) => {
+  test('Problems page requires authentication', async ({ page }) => {
     await page.goto(`${URL}/problems`);
-    await expect(page.locator('h1').first()).toContainText('Problems');
-    
-    // Check if the search bar is present
-    await expect(page.locator('input[placeholder="Search problems..."]')).toBeVisible();
+    await page.waitForURL('**/login*');
+    await expect(page.locator('h1').first()).toContainText('Welcome Back');
   });
 
   test('Leaderboard page loads without errors', async ({ page }) => {
     await page.goto(`${URL}/leaderboard`);
-    await expect(page.locator('h1').first()).toContainText('Leaderboard');
+    await expect(page.locator('h1').first()).toContainText('CLASSIFIED STANDINGS');
   });
 
   test('Timeline and Rules display', async ({ page }) => {
     await page.goto(`${URL}/timeline`);
     await expect(page.locator('body')).toContainText('Timeline');
 
-    await page.goto(`${URL}/rules`);
-    await expect(page.locator('body')).toContainText('Rules');
+    await page.goto(`${URL}/about`);
+    await expect(page.locator('h1').first()).toContainText('ABOUT');
   });
 
   test('Help and Support routing is protected for guests', async ({ page }) => {
