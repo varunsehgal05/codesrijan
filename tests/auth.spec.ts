@@ -18,11 +18,7 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
     await page.fill('input[placeholder="Institute of Tech"]', 'QA Institute');
     await page.fill('input[placeholder="CS"]', 'CS');
     await page.fill('input[placeholder="3"]', '3');
-    
-    await page.check('input[type="checkbox"]');
-    
-    await page.click('button[type="submit"]');
-    
+    await page.click('button:has-text("GENERATE IDENTITY")');
     // 3. Wait for OTP page
     await page.waitForURL('**/auth/otp**');
     
@@ -51,10 +47,7 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
     await page.fill('input[type="email"]', adminEmail);
     await page.fill('input[type="password"]', 'TestPass123!');
     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
-    
-    await page.check('input[type="checkbox"]');
-    await page.click('button[type="submit"]');
-    
+    await page.click('button:has-text("GENERATE IDENTITY")');
     await page.waitForURL('**/auth/otp**');
     
     const otpInputs = page.locator('input[type="text"]');
