@@ -518,6 +518,26 @@ Verify Admin UI mutations properly control and mutate the public User/Student UI
 ## PRODUCTION BLOCKERS
 None in source codebase.
 
+## FUTURE TESTS
+
+**DISQ-001**
+Admin selects Disqualify → Reason required
+
+**DISQ-002**
+Disqualification → Team notified
+
+**DISQ-003**
+Team appears in Disqualified list
+
+**DISQ-004**
+Admin Undisqualifies
+
+**DISQ-005**
+Team restored
+
+**ANAL-001**
+Analytics MongoDB Aggregation → Live metrics replace visual mockups
+
 ## FINAL STATUS
 **READY WITH DOCUMENTED LIMITATIONS**
 *(Subject to Manual Human QA Validation)*
