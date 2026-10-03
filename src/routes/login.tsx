@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/login")({
@@ -7,8 +7,16 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
-    const { login } = useAppStore();
+    const { login, currentUser } = useAppStore();
     const navigate = useNavigate({ from: "/login" });
+    
+    useEffect(() => {
+        if (currentUser) {
+            if (currentUser.role === 'admin') navigate({ to: "/admin" });
+            else navigate({ to: "/workspace" });
+        }
+    }, [currentUser, navigate]);
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
