@@ -38,7 +38,7 @@ test.describe('Public Website E2E Tests', () => {
 
   test('Help and Support routing is protected for guests', async ({ page }) => {
     await page.goto(`${URL}/support`);
-    // Should auto-redirect or show a login prompt
-    await expect(page).toHaveURL(/.*login.*/);
+    // Shows an inline unauthorized message instead of redirecting
+    await expect(page.locator('body')).toContainText('PLEASE AUTHENTICATE TO ACCESS SECURE COMM CHANNELS.');
   });
 });
