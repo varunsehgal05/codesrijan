@@ -1363,7 +1363,7 @@ Your behavior rules:
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "llama3-8b-8192", 
+                model: "mixtral-8x7b-32768", 
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: message }
