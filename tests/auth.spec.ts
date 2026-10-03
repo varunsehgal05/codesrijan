@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = 'http://localhost:5173';
+const URL = 'https://codesrijan-nine.vercel.app';
 
 test.describe('Auth Flow E2E (With Backdoor)', () => {
 
