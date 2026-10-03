@@ -7,7 +7,7 @@
 # Test info
 
 - Name: tests\auth.spec.ts >> Auth Flow E2E (With Backdoor) >> Admin Registration, OTP, and Dashboard
-- Location: tests\auth.spec.ts:41:3
+- Location: tests\auth.spec.ts:42:3
 
 # Error details
 
@@ -16,10 +16,24 @@ Test timeout of 30000ms exceeded.
 ```
 
 ```
-Error: page.waitForURL: Test timeout of 30000ms exceeded.
-=========================== logs ===========================
-waiting for navigation to "**/auth/otp**" until "load"
-============================================================
+Error: page.click: Test timeout of 30000ms exceeded.
+Call log:
+  - waiting for locator('button:has-text("AUTHORIZE OVERRIDE")')
+    - locator resolved to <button disabled class="w-full text-pure-white py-4 font-label-caps text-lg brutal-border brutal-shadow transition-all duration-200 cursor-pointer bg-surface-variant">AUTHORIZE OVERRIDE</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+      - waiting 100ms
+    40 × waiting for element to be visible, enabled and stable
+       - element is not enabled
+     - retrying click action
+       - waiting 500ms
+
 ```
 
 # Page snapshot
@@ -39,63 +53,30 @@ waiting for navigation to "**/auth/otp**" until "load"
           - /url: /register
   - generic [ref=e12]:
     - generic [ref=e13]:
-      - link "arrow_back CodeSrijan Registration" [ref=e14] [cursor=pointer]:
-        - /url: /
-        - generic [ref=e15]: arrow_back
-        - text: CodeSrijan Registration
-      - generic [ref=e16]: person_add
-    - generic [ref=e17]:
-      - button "arrow_back GO BACK" [ref=e19] [cursor=pointer]:
-        - generic [ref=e20]: arrow_back
-        - text: GO BACK
-      - heading "JOIN THE RESISTANCE" [level=1] [ref=e21]
-      - paragraph [ref=e22]: Create your hacker profile and start building.
-      - generic [ref=e23]:
-        - generic [ref=e24]:
-          - generic [ref=e25]:
-            - generic [ref=e26]: Given Name
-            - textbox "John" [ref=e27]: QA Auto Admin
-          - generic [ref=e28]:
-            - generic [ref=e29]: Surname
-            - textbox "Doe" [ref=e30]
-        - generic [ref=e31]:
-          - generic [ref=e32]: Preferred Hacker Handle
-          - generic [ref=e33]:
-            - generic [ref=e34]: "@"
-            - textbox "phantom_coder" [ref=e35]
-        - generic [ref=e36]:
-          - generic [ref=e37]:
-            - generic [ref=e38]: College
-            - textbox "Institute of Tech" [ref=e39]: HQ
-          - generic [ref=e40]:
-            - generic [ref=e41]: Branch
-            - textbox "CS" [active] [ref=e42]
-          - generic [ref=e43]:
-            - generic [ref=e44]: Year
-            - textbox "3" [ref=e45]
-        - generic [ref=e46]:
-          - generic [ref=e47]: Secure Email
-          - textbox "comm_link@codesrijan.com" [ref=e48]: admin.qa.1790994709853@codesrijan.test
-        - generic [ref=e49]:
-          - generic [ref=e50]: Password Matrix
-          - textbox "Create a strong password" [ref=e51]: TestPass123!
-        - button "GENERATE IDENTITY how_to_reg" [ref=e52]:
-          - text: GENERATE IDENTITY
-          - generic [ref=e53]: how_to_reg
-      - paragraph [ref=e55]:
-        - text: ALREADY DRAFTED?
-        - link "INITIALIZE SESSION" [ref=e56] [cursor=pointer]:
-          - /url: /login
-  - contentinfo [ref=e57]:
-    - generic [ref=e58]: CodeSrijan
-    - generic [ref=e59]:
-      - link "Sponsors" [ref=e60] [cursor=pointer]:
+      - heading "Identity Config" [level=1] [ref=e14]
+      - generic [ref=e15]: fingerprint
+    - generic [ref=e16]:
+      - heading "VERIFY EMAIL" [level=2] [ref=e17]
+      - paragraph [ref=e18]: Enter the 6-digit confirmation code sent to your email to activate your account.
+      - generic [ref=e19]:
+        - textbox "0" [ref=e20]
+        - textbox "0" [ref=e21]
+        - textbox "0" [ref=e22]: "3"
+        - textbox "0" [ref=e23]: "4"
+        - textbox "0" [ref=e24]: "5"
+        - textbox "0" [active] [ref=e25]: "6"
+      - button "AUTHORIZE OVERRIDE" [disabled] [ref=e26] [cursor=pointer]
+      - button "Re-transmit Code" [ref=e28] [cursor=pointer]
+  - contentinfo [ref=e29]:
+    - generic [ref=e30]: CodeSrijan
+    - generic [ref=e31]:
+      - link "Sponsors" [ref=e32] [cursor=pointer]:
         - /url: /sponsors
-      - link "Privacy Policy" [ref=e61] [cursor=pointer]:
+      - link "Privacy Policy" [ref=e33] [cursor=pointer]:
         - /url: /privacy-policy
-      - link "Code of Conduct" [ref=e62] [cursor=pointer]:
+      - link "Code of Conduct" [ref=e34] [cursor=pointer]:
         - /url: /code-of-conduct
-    - generic [ref=e63]: © 2026 CodeSrijan. Built for the community.
+    - generic [ref=e35]: © 2026 CodeSrijan. Built for the community.
 ```
 
 # Test source
@@ -132,41 +113,45 @@ waiting for navigation to "**/auth/otp**" until "load"
   29 |     const otp = '123456';
   30 |     for (let i = 0; i < 6; i++) {
   31 |         await otpInputs.nth(i).fill(otp[i]);
-  32 |     }
-  33 |     
-  34 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
-  35 |     
-  36 |     // 5. Verify auto-redirect to workspace for student
-  37 |     await page.waitForURL('**/workspace');
-  38 |     await expect(page.locator('h1').first()).toContainText('Workspace');
-  39 |   });
-  40 | 
-  41 |   test('Admin Registration, OTP, and Dashboard', async ({ page }) => {
-  42 |     await page.goto(`${URL}/register`);
-  43 |     
-  44 |     const adminEmail = `admin.qa.${Date.now()}@codesrijan.test`;
-  45 |     
-  46 |     await page.fill('input[placeholder="John"]', 'QA Auto Admin');
-  47 |     await page.fill('input[type="email"]', adminEmail);
-  48 |     await page.fill('input[type="password"]', 'TestPass123!');
-  49 |     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
-  50 |     await page.click('button:has-text("GENERATE IDENTITY")');
-> 51 |     await page.waitForURL('**/auth/otp**');
-     |                ^ Error: page.waitForURL: Test timeout of 30000ms exceeded.
-  52 |     
-  53 |     const otpInputs = page.locator('input[type="text"]');
-  54 |     const otp = '123456';
-  55 |     for (let i = 0; i < 6; i++) {
-  56 |         await otpInputs.nth(i).fill(otp[i]);
-  57 |     }
-  58 |     
-  59 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
-  60 |     
-  61 |     // Admin should auto-redirect to /admin
-  62 |     await page.waitForURL('**/admin');
-  63 |     await expect(page.locator('h1').first()).toContainText('Dashboard');
-  64 |   });
-  65 | 
-  66 | });
-  67 | 
+  32 |         await page.waitForTimeout(50); // allow react state to settle
+  33 |     }
+  34 |     
+  35 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
+  36 |     
+  37 |     // 5. Verify auto-redirect to workspace for student
+  38 |     await page.waitForURL('**/workspace');
+  39 |     await expect(page.locator('h1').first()).toContainText('Workspace');
+  40 |   });
+  41 | 
+  42 |   test('Admin Registration, OTP, and Dashboard', async ({ page }) => {
+  43 |     await page.goto(`${URL}/register`);
+  44 |     
+  45 |     const adminEmail = `admin.qa.${Date.now()}@codesrijan.test`;
+  46 |     
+  47 |     await page.fill('input[placeholder="John"]', 'QA Auto Admin');
+  48 |     await page.fill('input[type="email"]', adminEmail);
+  49 |     await page.fill('input[type="password"]', 'TestPass123!');
+  50 |     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
+  51 |     await page.fill('input[placeholder="CS"]', 'CS');
+  52 |     await page.fill('input[placeholder="3"]', '3');
+  53 |     await page.click('button:has-text("GENERATE IDENTITY")');
+  54 |     await page.waitForURL('**/auth/otp**');
+  55 |     
+  56 |     const otpInputs = page.locator('input[type="text"]');
+  57 |     const otp = '123456';
+  58 |     for (let i = 0; i < 6; i++) {
+  59 |         await otpInputs.nth(i).fill(otp[i]);
+  60 |         await page.waitForTimeout(50); // allow react state to settle
+  61 |     }
+  62 |     
+> 63 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
+     |                ^ Error: page.click: Test timeout of 30000ms exceeded.
+  64 |     
+  65 |     // Admin should auto-redirect to /admin
+  66 |     await page.waitForURL('**/admin');
+  67 |     await expect(page.locator('h1').first()).toContainText('Dashboard');
+  68 |   });
+  69 | 
+  70 | });
+  71 | 
 ```
