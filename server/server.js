@@ -1363,7 +1363,7 @@ Your behavior rules:
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                model: "mixtral-8x7b-32768", 
+                model: "llama3-8b-8192", 
                 messages: [
                     { role: "system", content: systemPrompt },
                     { role: "user", content: message }
@@ -1386,6 +1386,14 @@ Your behavior rules:
         console.error("AI Error:", e);
         res.status(500).json({ reply: "SYSTEM FAULT. Neural link to Groq severed. Please try again later." });
     }
+});
+
+app.get('/api/admin/logs', requireAuth, requireAdmin, async (req, res) => {
+    const simulatedLogs = [
+        { id: 1, createdAt: new Date(Date.now() - 1000 * 60 * 5), userId: "admin@codesrijan.com", role: "ADMIN", action: "SYSTEM_BOOT", description: "Core systems initialized and ready.", ipAddress: "127.0.0.1" },
+        { id: 2, createdAt: new Date(Date.now() - 1000 * 60 * 2), userId: "SYSTEM", role: "CORE", action: "SYNC", description: "Synchronized with primary database cluster.", ipAddress: "10.0.0.1" }
+    ];
+    res.json(simulatedLogs);
 });
 
 // --- EPIC 4: SQUAD WORKSPACE KANBAN ---
