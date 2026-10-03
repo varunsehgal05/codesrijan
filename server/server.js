@@ -1377,8 +1377,9 @@ Your behavior rules:
         });
 
         if (!response.ok) {
-            console.error("Groq API error:", await response.text());
-            throw new Error("Groq API request failed");
+            const errText = await response.text();
+            console.error("Groq API error:", response.status, errText);
+            throw new Error(`Groq API ${response.status}: ${errText}`);
         }
 
         const data = await response.json();
@@ -1386,8 +1387,8 @@ Your behavior rules:
 
         res.json({ reply });
     } catch (e) {
-        console.error("AI Error:", e);
-        res.status(500).json({ reply: "SYSTEM FAULT. Neural link to Groq severed. Please try again later." });
+        console.error("AI Error:", e.message);
+        res.status(500).json({ reply: "SYSTEM FAULT. Neural link to Groq severed. Please try again later.", debug: e.message });
     }
 });
 
