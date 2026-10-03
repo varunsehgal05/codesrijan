@@ -20,72 +20,145 @@ const getTransporter = () => {
 };
 
 export const sendVerificationEmail = async (to, code) => {
-    const transporter = getTransporter();
-    const mailOptions = {
-        from: '"CodeSrijan Protocol" <codesrijan@gmail.com>',
-        to,
-        subject: 'CodeSrijan Identity Verification Code',
-        html: `
-            <div style="font-family: monospace, sans-serif; max-width: 600px; margin: 0 auto; background-color: #FAFAFA; border: 4px solid #141416; padding: 32px;">
-                <div style="background-color: #0047FF; color: white; padding: 16px; border-bottom: 4px solid #141416; margin-bottom: 24px;">
-                    <h1 style="margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 20px;">Identity Verification Protocol</h1>
-                </div>
-                
-                <h2 style="color: #141416; text-transform: uppercase; font-size: 18px;">Incoming Transmission...</h2>
-                <p style="color: #333333; font-size: 15px; line-height: 1.5;">This email address was registered at CodeSrijan. Your one-time verification passkey is generated below. Do not disclose this code under any circumstances.</p>
-                
-                <div style="background-color: #F0F4FF; padding: 24px; border: 4px dashed #0047FF; text-align: center; margin: 28px 0;">
-                    <p style="font-size: 13px; text-transform: uppercase; color: #555555; margin-top: 0; letter-spacing: 1px;">Secure Passkey</p>
-                    <h1 style="font-size: 44px; letter-spacing: 10px; margin: 8px 0; color: #0047FF;">${code}</h1>
-                    <p style="font-size: 12px; color: #888888; margin-bottom: 0;">Expires in 15 minutes</p>
-                </div>
-                
-                <p style="color: #666666; font-size: 13px; border-top: 2px solid #DDDDDD; padding-top: 16px;">If you did not initiate this sequence, you may safely ignore this transmission.</p>
-            </div>
-        `
-    };
+    try {
+        const transporter = getTransporter();
+        const mailOptions = {
+            from: '"CodeSrijan System" <codesrijan@gmail.com>',
+            to,
+            subject: 'CodeSrijan [OTP VERIFICATION]',
+            html: `
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                    <tr>
+                        <td align="center">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                                
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background-color: #0047FF; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
+                                        <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
+                                        <p style="margin: 8px 0 0 0; color: #FFFFFF; font-size: 12px; font-family: monospace; letter-spacing: 1px;">IDENTITY_VERIFICATION_PROTOCOL</p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Body -->
+                                <tr>
+                                    <td style="padding: 40px 32px;">
+                                        <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Incoming Transmission</h2>
+                                        <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
+                                            This email address was registered at CodeSrijan. To finalize your authorization, use the secure passkey below.
+                                        </p>
+                                        
+                                        <!-- OTP Box -->
+                                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; border: 4px dashed #0047FF;">
+                                            <tr>
+                                                <td align="center" style="padding: 32px;">
+                                                    <p style="margin: 0 0 12px 0; color: #71717A; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Secure Passkey</p>
+                                                    <h1 style="margin: 0; color: #0047FF; font-size: 48px; font-family: monospace; font-weight: 900; letter-spacing: 12px;">${code}</h1>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <p style="margin: 32px 0 0 0; color: #71717A; font-size: 14px; font-weight: 500;">
+                                            This code expires in <strong>15 minutes</strong>. Do not disclose this code under any circumstances.
+                                        </p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #141416; padding: 24px; text-align: center;">
+                                        <p style="margin: 0; color: #A1A1AA; font-size: 12px; font-family: monospace;">If you did not initiate this sequence, you may safely ignore this transmission.</p>
+                                    </td>
+                                </tr>
+                                
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            `
+        };
 
-    const info = await transporter.sendMail(mailOptions);
-    console.log('[SECURE COMMS] Verification Email dispatched: %s', info.messageId);
-    return true;
+        const info = await transporter.sendMail(mailOptions);
+        console.log('[SECURE COMMS] Verification Email dispatched: %s', info.messageId);
+        return true;
+    } catch (e) {
+        console.warn('[SECURE COMMS] Verification email deferred or failed:', e.message);
+        return false;
+    }
 };
 
 export const sendWelcomeEmail = async (to, name, role = 'student') => {
     try {
         const transporter = getTransporter();
         const mailOptions = {
-            from: '"CodeSrijan Command" <codesrijan@gmail.com>',
+            from: '"CodeSrijan System" <codesrijan@gmail.com>',
             to,
-            subject: 'CodeSrijan — Operative Access Clearance Granted',
+            subject: 'CodeSrijan [ACCESS APPROVED]',
             html: `
-                <div style="font-family: monospace, sans-serif; max-width: 600px; margin: 0 auto; background-color: #FAFAFA; border: 4px solid #141416; padding: 32px;">
-                    <div style="background-color: #141416; color: white; padding: 20px; border-bottom: 4px solid #0047FF; margin-bottom: 24px;">
-                        <h1 style="margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 22px; color: #0047FF;">CODESRIJAN // ACCESS APPROVED</h1>
-                    </div>
-                    
-                    <h2 style="color: #141416; text-transform: uppercase; font-size: 18px;">Welcome to the Platform, Operative ${name || 'Hacker'}!</h2>
-                    <p style="color: #333333; font-size: 15px; line-height: 1.6;">
-                        Your cryptographic identity has been fully verified and enrolled into the CodeSrijan network with role clearance: <strong style="color: #0047FF; text-transform: uppercase;">${role}</strong>.
-                    </p>
-                    
-                    <div style="background-color: #FFFFFF; border: 3px solid #141416; padding: 20px; margin: 24px 0;">
-                        <h3 style="margin-top: 0; text-transform: uppercase; font-size: 15px;">Next Operational Directives:</h3>
-                        <ul style="color: #444444; line-height: 1.8; font-size: 14px; padding-left: 20px; margin-bottom: 0;">
-                            <li>Assemble or join a Hackathon Squad in the Recruitment Node.</li>
-                            <li>Review published Problem Statement directives.</li>
-                            <li>Initialize your team's Kanban workspace.</li>
-                            <li>Track live progress on the Global Leaderboard.</li>
-                        </ul>
-                    </div>
-
-                    <div style="text-align: center; margin: 32px 0;">
-                        <a href="https://codesrijan-sable.vercel.app/login" style="background-color: #0047FF; color: white; padding: 14px 28px; text-decoration: none; font-weight: bold; text-transform: uppercase; border: 3px solid #141416; display: inline-block;">Initialize Session &rarr;</a>
-                    </div>
-                    
-                    <p style="color: #666666; font-size: 12px; border-top: 2px solid #DDDDDD; padding-top: 16px; margin-bottom: 0;">
-                        CodeSrijan Hackathon Infrastructure • Automated Terminal Dispatch
-                    </p>
-                </div>
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+                    <tr>
+                        <td align="center">
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                                
+                                <!-- Header -->
+                                <tr>
+                                    <td style="background-color: #FF3366; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
+                                        <h1 style="margin: 0; color: #141416; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
+                                        <p style="margin: 8px 0 0 0; color: #141416; font-size: 12px; font-family: monospace; font-weight: 700; letter-spacing: 1px;">ACCESS_CLEARANCE_GRANTED</p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Body -->
+                                <tr>
+                                    <td style="padding: 40px 32px;">
+                                        <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Welcome to the Platform, ${name || 'Operative'}!</h2>
+                                        <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
+                                            Your cryptographic identity has been fully verified and enrolled into the CodeSrijan network with role clearance: <strong style="color: #0047FF; text-transform: uppercase; padding: 2px 6px; border: 2px solid #0047FF;">${role}</strong>.
+                                        </p>
+                                        
+                                        <!-- Directives Box -->
+                                        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FAFAFA; border: 4px solid #141416; margin-bottom: 32px;">
+                                            <tr>
+                                                <td style="background-color: #141416; padding: 12px 16px;">
+                                                    <h3 style="margin: 0; color: #FFFFFF; font-size: 14px; font-family: monospace; font-weight: 700; text-transform: uppercase;">Next Operational Directives:</h3>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 24px;">
+                                                    <ul style="margin: 0; padding-left: 20px; color: #141416; font-size: 15px; line-height: 1.8; font-weight: 600;">
+                                                        <li>Assemble or join a Hackathon Squad in the Recruitment Node.</li>
+                                                        <li>Review published Problem Statement directives.</li>
+                                                        <li>Initialize your team's Kanban workspace.</li>
+                                                        <li>Track live progress on the Global Leaderboard.</li>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        
+                                        <!-- Action Button -->
+                                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                                            <tr>
+                                                <td align="center">
+                                                    <a href="https://codesrijan-nine.vercel.app/login" style="background-color: #0047FF; color: #FFFFFF; padding: 16px 32px; font-size: 16px; font-weight: 900; text-decoration: none; text-transform: uppercase; letter-spacing: 1px; border: 4px solid #141416; display: inline-block;">
+                                                        Initialize Session &rarr;
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="background-color: #141416; padding: 24px; text-align: center;">
+                                        <p style="margin: 0; color: #A1A1AA; font-size: 12px; font-family: monospace;">CodeSrijan Hackathon Infrastructure • Automated Terminal Dispatch</p>
+                                    </td>
+                                </tr>
+                                
+                            </table>
+                        </td>
+                    </tr>
+                </table>
             `
         };
 
