@@ -75,7 +75,7 @@ waiting for navigation to "**/auth/otp**" until "load"
             - textbox "3" [ref=e45]
         - generic [ref=e46]:
           - generic [ref=e47]: Secure Email
-          - textbox "comm_link@codesrijan.com" [ref=e48]: admin.qa.1790994292029@codesrijan.test
+          - textbox "comm_link@codesrijan.com" [ref=e48]: admin.qa.1790994709853@codesrijan.test
         - generic [ref=e49]:
           - generic [ref=e50]: Password Matrix
           - textbox "Create a strong password" [ref=e51]: TestPass123!
@@ -134,7 +134,7 @@ waiting for navigation to "**/auth/otp**" until "load"
   31 |         await otpInputs.nth(i).fill(otp[i]);
   32 |     }
   33 |     
-  34 |     await page.click('button:has-text("GENERATE IDENTITY")');
+  34 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
   35 |     
   36 |     // 5. Verify auto-redirect to workspace for student
   37 |     await page.waitForURL('**/workspace');
@@ -160,7 +160,7 @@ waiting for navigation to "**/auth/otp**" until "load"
   56 |         await otpInputs.nth(i).fill(otp[i]);
   57 |     }
   58 |     
-  59 |     await page.click('button:has-text("GENERATE IDENTITY")');
+  59 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
   60 |     
   61 |     // Admin should auto-redirect to /admin
   62 |     await page.waitForURL('**/admin');

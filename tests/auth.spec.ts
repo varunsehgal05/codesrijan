@@ -47,6 +47,8 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
     await page.fill('input[type="email"]', adminEmail);
     await page.fill('input[type="password"]', 'TestPass123!');
     await page.fill('input[placeholder="Institute of Tech"]', 'HQ');
+    await page.fill('input[placeholder="CS"]', 'CS');
+    await page.fill('input[placeholder="3"]', '3');
     await page.click('button:has-text("GENERATE IDENTITY")');
     await page.waitForURL('**/auth/otp**');
     

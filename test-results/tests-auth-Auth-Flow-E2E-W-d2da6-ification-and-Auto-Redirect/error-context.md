@@ -16,10 +16,24 @@ Test timeout of 30000ms exceeded.
 ```
 
 ```
-Error: page.waitForURL: Test timeout of 30000ms exceeded.
-=========================== logs ===========================
-waiting for navigation to "**/workspace" until "load"
-============================================================
+Error: page.click: Test timeout of 30000ms exceeded.
+Call log:
+  - waiting for locator('button:has-text("AUTHORIZE OVERRIDE")')
+    - locator resolved to <button disabled class="w-full text-pure-white py-4 font-label-caps text-lg brutal-border brutal-shadow transition-all duration-200 cursor-pointer bg-surface-variant">AUTHORIZE OVERRIDE</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not enabled
+    - retrying click action
+      - waiting 100ms
+    42 × waiting for element to be visible, enabled and stable
+       - element is not enabled
+     - retrying click action
+       - waiting 500ms
+
 ```
 
 # Page snapshot
@@ -101,11 +115,11 @@ waiting for navigation to "**/workspace" until "load"
   31 |         await otpInputs.nth(i).fill(otp[i]);
   32 |     }
   33 |     
-  34 |     await page.click('button:has-text("GENERATE IDENTITY")');
+> 34 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
+     |                ^ Error: page.click: Test timeout of 30000ms exceeded.
   35 |     
   36 |     // 5. Verify auto-redirect to workspace for student
-> 37 |     await page.waitForURL('**/workspace');
-     |                ^ Error: page.waitForURL: Test timeout of 30000ms exceeded.
+  37 |     await page.waitForURL('**/workspace');
   38 |     await expect(page.locator('h1').first()).toContainText('Workspace');
   39 |   });
   40 | 
@@ -127,7 +141,7 @@ waiting for navigation to "**/workspace" until "load"
   56 |         await otpInputs.nth(i).fill(otp[i]);
   57 |     }
   58 |     
-  59 |     await page.click('button:has-text("GENERATE IDENTITY")');
+  59 |     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
   60 |     
   61 |     // Admin should auto-redirect to /admin
   62 |     await page.waitForURL('**/admin');

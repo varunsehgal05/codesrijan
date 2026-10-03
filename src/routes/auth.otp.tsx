@@ -27,9 +27,11 @@ function OTPVerification() {
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
         const val = e.target.value.replace(/[^0-9]/g, "");
-        const newCode = [...code];
-        newCode[index] = val;
-        setCode(newCode);
+        setCode(prev => {
+            const newCode = [...prev];
+            newCode[index] = val;
+            return newCode;
+        });
 
         if (val && index < 5) {
             inputs.current[index + 1]?.focus();
