@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 const getTransporter = () => {
     const user = process.env.EMAIL_USER || 'codesrijan@gmail.com';
-    const pass = process.env.EMAIL_PASS || 'jvss tyro mfvd adyj';
+    const pass = process.env.EMAIL_PASS || 'jvsstyromfvdadyj';
 
     // Prefer port 587 with STARTTLS and timeout controls to prevent hanging on cloud hosts
     return nodemailer.createTransport({
@@ -13,9 +13,9 @@ const getTransporter = () => {
         tls: {
             rejectUnauthorized: false
         },
-        connectionTimeout: 8000,
-        greetingTimeout: 5000,
-        socketTimeout: 8000
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 15000
     });
 };
 

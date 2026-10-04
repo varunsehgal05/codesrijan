@@ -18,6 +18,7 @@ function RegisterPage() {
     }, [currentUser, navigate]);
 
     const [name, setName] = useState("");
+    const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [college, setCollege] = useState("");
@@ -34,7 +35,7 @@ function RegisterPage() {
         try {
             const resData = await register({
                 id: "", // Managed explicitly by backend now
-                name,
+                name: lastName ? `${name} ${lastName}` : name,
                 email,
                 password,
                 role: "student",
@@ -93,7 +94,7 @@ function RegisterPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="flex flex-col gap-2">
-                                <label className="font-label-bold text-stark-black uppercase">Given Name</label>
+                                <label className="font-label-bold text-stark-black uppercase">First Name</label>
                                 <input
                                     type="text"
                                     value={name}
@@ -104,9 +105,11 @@ function RegisterPage() {
                                 />
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="font-label-bold text-stark-black uppercase">Surname</label>
+                                <label className="font-label-bold text-stark-black uppercase">Last Name</label>
                                 <input
                                     type="text"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
                                     placeholder="Doe"
                                     className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
                                 />
@@ -132,11 +135,27 @@ function RegisterPage() {
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="font-label-bold text-stark-black uppercase">Branch</label>
-                                <input type="text" value={branch} onChange={e => setBranch(e.target.value)} placeholder="CS" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                                <select value={branch} onChange={e => setBranch(e.target.value)} className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required>
+                                    <option value="" disabled>Select Branch</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="IT">IT</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EE">EE</option>
+                                    <option value="ME">ME</option>
+                                    <option value="CE">CE</option>
+                                    <option value="Other">Other</option>
+                                </select>
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="font-label-bold text-stark-black uppercase">Year</label>
-                                <input type="text" value={year} onChange={e => setYear(e.target.value)} placeholder="3" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                                <select value={year} onChange={e => setYear(e.target.value)} className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required>
+                                    <option value="" disabled>Select Year</option>
+                                    <option value="1">1st Year</option>
+                                    <option value="2">2nd Year</option>
+                                    <option value="3">3rd Year</option>
+                                    <option value="4">4th Year</option>
+                                    <option value="5">5th Year / Dual</option>
+                                </select>
                             </div>
                         </div>
 
