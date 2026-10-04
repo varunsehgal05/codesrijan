@@ -1,0 +1,37 @@
+services:
+  # Backend API
+  - type: web
+    name: codesrijan-api
+    env: node
+    buildCommand: "cd server && npm install"
+    startCommand: "cd server && npm start"
+    envVars:
+      - key: MONGO_URI
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PORT
+        value: "5001"
+      - key: NODE_ENV
+        value: "production"
+
+  # Frontend Web App
+  - type: web
+    name: codesrijan-web
+    env: node
+    buildCommand: "npm install && npm run build"
+    startCommand: "node .output/server/index.mjs"
+    envVars:
+      - key: NITRO_PRESET
+        value: "node-server"
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: codesrijan-api
+          envVarKey: RENDER_EXTERNAL_URL
