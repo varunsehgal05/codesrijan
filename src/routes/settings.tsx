@@ -12,7 +12,7 @@ function SettingsPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     if (!currentUser) {
         return <div className="p-8 text-center text-white bg-black min-h-screen">Identity not found. Navigate to gateway.</div>;

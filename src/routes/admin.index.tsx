@@ -14,7 +14,7 @@ function AdminTelemetry() {
 
     const [stats, setStats] = useState({ userCount: 0, teamCount: 0, messageCount: 0, hackathonCount: 0 });
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
     const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
     useEffect(() => {

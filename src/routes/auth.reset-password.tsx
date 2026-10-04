@@ -19,7 +19,7 @@ function ResetPasswordPage() {
     const token = search.token;
     const uid = search.uid;
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

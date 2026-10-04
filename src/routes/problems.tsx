@@ -25,7 +25,7 @@ function Page12() {
   const activeEvent = hackathons[0];
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
   useEffect(() => {
     if (activeEvent?.id) {
