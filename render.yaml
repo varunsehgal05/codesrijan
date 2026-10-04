@@ -2,6 +2,7 @@ services:
   # Backend API
   - type: web
     name: codesrijan-api
+    plan: free
     env: node
     buildCommand: "cd server && npm install"
     startCommand: "cd server && npm start"
@@ -24,6 +25,7 @@ services:
   # Frontend Web App
   - type: web
     name: codesrijan-web
+    plan: free
     env: node
     buildCommand: "npm install && npm run build"
     startCommand: "node .output/server/index.mjs"
