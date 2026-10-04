@@ -21,7 +21,7 @@ function HackathonRegistrationPage() {
     const [branch, setBranch] = useState((currentUser as any)?.branch || "");
     const [year, setYear] = useState((currentUser as any)?.year || "");
 
-    const API_URL = (import.meta.env['VITE_API_URL'] ? (import.meta.env['VITE_API_URL'].endsWith('/api') ? import.meta.env['VITE_API_URL'] : import.meta.env['VITE_API_URL'] + '/api') : 'https://codesrijan-api.onrender.com/api');
+    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
 
     useEffect(() => {
         if (!currentUser) {
