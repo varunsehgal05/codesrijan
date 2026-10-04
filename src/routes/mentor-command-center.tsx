@@ -16,7 +16,7 @@ function Page5() {
   const { currentUser } = useAppStore();
   const [teams, setTeams] = useState<any[]>([]);
 
-  const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+  const API_URL = (import.meta.env['VITE_API_URL'] ? (import.meta.env['VITE_API_URL'].endsWith('/api') ? import.meta.env['VITE_API_URL'] : import.meta.env['VITE_API_URL'] + '/api') : 'https://codesrijan-api.onrender.com/api');
 
   useEffect(() => {
     if (currentUser?.role === 'mentor' || currentUser?.role === 'admin') {

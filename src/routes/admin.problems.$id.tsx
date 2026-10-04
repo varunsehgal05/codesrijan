@@ -13,7 +13,7 @@ function AdminProblemDetail() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const API_URL = import.meta.env['VITE_API_URL'] || 'https://codesrijan-api.onrender.com/api';
+    const API_URL = (import.meta.env['VITE_API_URL'] ? (import.meta.env['VITE_API_URL'].endsWith('/api') ? import.meta.env['VITE_API_URL'] : import.meta.env['VITE_API_URL'] + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     const fetchProblem = async () => {
         try {
