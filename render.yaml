@@ -33,7 +33,4 @@ services:
       - key: NITRO_PRESET
         value: "node-server"
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: codesrijan-api
-          envVarKey: RENDER_EXTERNAL_URL
+        value: "https://codesrijan-api.onrender.com/api"
