@@ -1,30 +1,22 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
-const getTransporter = () => {
-    const user = process.env.EMAIL_USER || 'codesrijan@gmail.com';
-    const pass = process.env.EMAIL_PASS || 'jvsstyromfvdadyj';
-
-    // Prefer port 587 with STARTTLS and timeout controls to prevent hanging on cloud hosts
-    return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // true for 465, false for 587
-        auth: { user, pass },
-        tls: {
-            rejectUnauthorized: false
-        },
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 15000
-    });
+const getResend = () => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+        throw new Error('RESEND_API_KEY environment variable is not set');
+    }
+    return new Resend(apiKey);
 };
+
+// Resend free tier uses onboarding@resend.dev as sender
+const FROM_EMAIL = 'CodeSrijan <onboarding@resend.dev>';
 
 export const sendVerificationEmail = async (to, code) => {
     try {
-        const transporter = getTransporter();
-        const mailOptions = {
-            from: '"CodeSrijan System" <codesrijan@gmail.com>',
-            to,
+        const resend = getResend();
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [to],
             subject: 'CodeSrijan [OTP VERIFICATION]',
             html: `
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -76,10 +68,14 @@ export const sendVerificationEmail = async (to, code) => {
                     </tr>
                 </table>
             `
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('[SECURE COMMS] Verification Email dispatched: %s', info.messageId);
+        if (error) {
+            console.error('[SECURE COMMS] Resend API error:', error);
+            throw new Error(error.message || 'Resend API error');
+        }
+
+        console.log('[SECURE COMMS] Verification Email dispatched via Resend: %s', data?.id);
         return true;
     } catch (e) {
         console.error('[SECURE COMMS] Verification email failed:', e.message);
@@ -89,10 +85,10 @@ export const sendVerificationEmail = async (to, code) => {
 
 export const sendWelcomeEmail = async (to, name, role = 'student') => {
     try {
-        const transporter = getTransporter();
-        const mailOptions = {
-            from: '"CodeSrijan System" <codesrijan@gmail.com>',
-            to,
+        const resend = getResend();
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [to],
             subject: 'CodeSrijan [ACCESS APPROVED]',
             html: `
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
@@ -160,10 +156,14 @@ export const sendWelcomeEmail = async (to, name, role = 'student') => {
                     </tr>
                 </table>
             `
-        };
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('[SECURE COMMS] Welcome transmission dispatched to %s: %s', to, info.messageId);
+        if (error) {
+            console.warn('[SECURE COMMS] Welcome email Resend error:', error);
+            return false;
+        }
+
+        console.log('[SECURE COMMS] Welcome transmission dispatched via Resend to %s: %s', to, data?.id);
         return true;
     } catch (e) {
         console.warn('[SECURE COMMS] Welcome email deferred or failed:', e.message);
