@@ -166,18 +166,18 @@ app.post('/api/auth/register', async (req, res) => {
         });
         await verification.save();
 
-        // Dispatch Verification Email
+        // Dispatch Verification Email in background (non-blocking)
         try {
             if (!normalizedEmail.endsWith('@codesrijan.test')) {
-                await sendVerificationEmail(normalizedEmail, code);
-                console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`);
+                sendVerificationEmail(normalizedEmail, code)
+                    .then(() => console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`))
+                    .catch(mailError => console.error(`[SMTP FAULT] Transport failed for ${normalizedEmail}:`, mailError.message));
             } else {
                 console.log(`[TEST COMMS] Bypassing SMTP for test account ${normalizedEmail}. Code: ${code}`);
             }
             res.json({ message: "Account created. Verification required.", userId: user.id });
-        } catch (mailError) {
-            console.error(`[SMTP FAULT] Transport failed for ${normalizedEmail}:`, mailError.message);
-            res.status(500).json({ message: "We couldn't send your verification email. Please try again later.", userId: user.id });
+        } catch (err) {
+            res.status(500).json({ message: "Failed to finalize registration.", error: err.message });
         }
     } catch (e) {
         res.status(500).json({ message: "Registration failed", error: e.message });
@@ -219,12 +219,13 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 
         try {
             if (!user.email.endsWith('@codesrijan.test')) {
-                await sendVerificationEmail(user.email, code);
+                sendVerificationEmail(user.email, code)
+                    .then(() => console.log(`[SECURE COMMS] Re-transmit fired for ${user.email}.`))
+                    .catch(mailError => console.error(`[SMTP FAULT] Transport failed on re-transmit for ${user.email}`, mailError.message));
             }
             res.json({ message: "Verification passkey re-transmitted.", userId: user.id });
-        } catch (mailError) {
-            console.error(`[SMTP FAULT] Transport failed on re-transmit for ${user.email}`, mailError.message);
-            res.status(500).json({ message: "We couldn't send your verification email. Please try again later.", userId: user.id });
+        } catch (err) {
+            res.status(500).json({ message: "Failed to process re-transmit request." });
         }
     } catch (e) {
         res.status(500).json({ message: "Failed to re-transmit verification code." });
