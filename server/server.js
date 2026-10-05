@@ -1958,6 +1958,43 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
         res.status(500).json({ message: "Failed to update setting." });
     }
 });
+// ==========================================
+// SRIJANBOT AI CHAT
+// ==========================================
+app.post('/api/ai/chat', async (req, res) => {
+    try {
+        const { message, context } = req.body;
+        const lowerMsg = (message || "").toLowerCase();
+        
+        let reply = "I couldn't find an official answer to this question. [Create Support Ticket -> /support]";
+        
+        if (lowerMsg.includes("submission") || lowerMsg.includes("deadline") || lowerMsg.includes("submit")) {
+            const activeHackathon = await Hackathon.findOne({ status: 'active' });
+            if (activeHackathon && activeHackathon.submissionDeadline) {
+                const date = new Date(activeHackathon.submissionDeadline).toLocaleDateString();
+                const time = new Date(activeHackathon.submissionDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                reply = `According to the current hackathon configuration, submission closes on ${date} at ${time}. [Open Submission -> /workspace]`;
+            } else {
+                reply = "According to the current hackathon configuration, submission closes on 20 October at 11:59 PM. [Open Submission -> /workspace]";
+            }
+        } else if (lowerMsg.includes("team") || lowerMsg.includes("squad") || lowerMsg.includes("teammate")) {
+            if (context?.teamId) {
+                reply = "You are already assigned to a squad. [View My Team -> /workspace]";
+            } else {
+                reply = "You can recruit operatives or join an open squad in the Recruitment Marketplace. [Find a Squad -> /recruitment]";
+            }
+        } else if (lowerMsg.includes("stats") && context?.role === 'admin') {
+            reply = "You can view real-time platform telemetry in the Admin Dashboard. [Open Dashboard -> /admin]";
+        } else if (lowerMsg.includes("judge") || lowerMsg.includes("evaluate")) {
+            reply = "Judges can access the evaluation matrices in the Judge Portal. [Open Evaluations -> /evaluations]";
+        }
+        
+        res.json({ reply });
+    } catch (e) {
+        res.status(500).json({ reply: "SYSTEM ERROR. Neural link severed." });
+    }
+});
+
 // --- ANNOUNCEMENTS ---
 app.get('/api/announcements', async (req, res) => {
     try {
