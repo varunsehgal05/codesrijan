@@ -21,6 +21,7 @@ export function Navbar() {
         if (currentUser) {
             return (
                 <>
+                    <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Hackathons</Link>
                     <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Problems</Link>
                     <Link to="/recruitment" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Recruitment</Link>
                     <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Announcements</Link>
