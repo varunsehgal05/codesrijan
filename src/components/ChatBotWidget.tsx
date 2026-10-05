@@ -44,7 +44,8 @@ export function ChatBotWidget() {
             // In a pure local setup without the backend running, we gracefully fallback
             let responseText = "I couldn't find an official answer to this question. [Create Support Ticket]";
             try {
-                const res = await axios.post(`${apiBaseUrl}/api/ai/chat`, payload);
+                const url = apiBaseUrl.endsWith('/api') ? apiBaseUrl.replace('/api', '/api/ai/chat') : `${apiBaseUrl}/api/ai/chat`;
+                const res = await axios.post(url, payload);
                 if (res.data?.reply) responseText = res.data.reply;
             } catch (e) {
                 console.warn("Backend AI unreachable, returning simulated text.");
