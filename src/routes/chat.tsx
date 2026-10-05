@@ -400,7 +400,6 @@ function ChatDashboard() {
                           
                           <div className={`flex items-center gap-1 mt-1.5 text-[10px] font-label-bold uppercase tracking-widest ${isMine ? 'justify-end text-text-muted' : 'justify-start text-text-muted pl-1'}`}>
                              {formatTime(msg.createdAt)}
-                             {isMine && <span className="material-symbols-outlined text-[14px] text-electric-blue ml-1" title="Read">done_all</span>}
                           </div>
                         </div>
                       </div>

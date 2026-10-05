@@ -644,6 +644,11 @@ app.get('/api/problems/:id', async (req, res) => {
 });
 
 // --- USER DIRECTORY ---
+app.get('/api/users', requireAuth, async (req, res) => {
+    const users = await User.find().select('-password');
+    res.json(users);
+});
+
 app.get('/api/users/search', requireAuth, async (req, res) => {
     const q = String(req.query.q || '').trim();
     if (q.length < 2) return res.json([]);
@@ -1501,6 +1506,74 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (
 app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (req, res) => {
     const submissions = await Submission.find().sort({ createdAt: -1 });
     res.json(submissions);
+});
+
+// Admin Analytics Route
+app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req, res) => {
+    const userCount = await User.countDocuments();
+    const teamCount = await Team.countDocuments();
+    const messageCount = await Message.countDocuments();
+    const hackathonCount = await Hackathon.countDocuments();
+    const users = await User.find().select('-password').limit(50);
+    const teams = await Team.find().limit(50);
+    
+    res.json({
+        stats: { userCount, teamCount, messageCount, hackathonCount },
+        stream: { users, teams }
+    });
+});
+
+// Admin Support Routes
+app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const tickets = await mongoose.model('SupportTicket').find().sort({ createdAt: -1 });
+        res.json(tickets);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch tickets" });
+    }
+});
+
+app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { status } = req.body;
+        const ticket = await mongoose.model('SupportTicket').findOneAndUpdate(
+            { id: req.params.id }, 
+            { status }, 
+            { new: true }
+        );
+        res.json(ticket);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update ticket" });
+    }
+});
+
+// Admin Settings Routes
+app.get('/api/admin/settings', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const settings = await mongoose.model('Setting').find();
+        res.json(settings);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch settings" });
+    }
+});
+
+app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { key, value, description } = req.body;
+        let setting = await mongoose.model('Setting').findOne({ key });
+        if (setting) {
+            setting.value = value;
+            if (description) setting.description = description;
+            setting.updatedBy = req.user.id;
+            await setting.save();
+        } else {
+            setting = new (mongoose.model('Setting'))({ key, value, description, updatedBy: req.user.id });
+            await setting.save();
+        }
+        res.json(setting);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update setting" });
+    }
 });
 
 app.patch('/api/admin/submissions/:id/unlock', requireAuth, requireRole(['admin']), async (req, res) => {

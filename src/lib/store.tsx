@@ -305,6 +305,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             setState(prev => ({ ...prev, currentUser: meRes.data.user }));
         } catch (e: any) {
             console.error("Create Team Error:", e.response?.data || e);
+            throw e;
         }
     };
 
@@ -332,8 +333,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         try {
             await axios.post(`${API_URL}/teams/${teamId}/problem`, { problemId });
             await refetchData();
-        } catch (e) {
+        } catch (e: any) {
             console.error("Assign Problem Error:", e);
+            throw e;
         }
     };
 

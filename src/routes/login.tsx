@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import toast from "react-hot-toast";
 
 export const Route = createFileRoute("/login")({
     component: LoginPage,
@@ -21,14 +22,20 @@ function LoginPage() {
     const [password, setPassword] = useState("");
 
     const [errorMsg, setErrorMsg] = useState("");
+    const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
-        if (!email) return;
+        setLoading(true);
+        if (!email) {
+            setLoading(false);
+            return;
+        }
 
         try {
             const user = await login(email, password);
+            toast.success("Identity Verified. Initiating Handshake.");
             if (user.role === 'admin') navigate({ to: "/admin" });
             else navigate({ to: "/workspace" });
         } catch (err: any) {
@@ -39,7 +46,10 @@ function LoginPage() {
                     return;
                 }
             } catch (e) { }
+            toast.error(err.message || "Failed to initialize session.");
             setErrorMsg(err.message || "Failed to initialize session.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -110,8 +120,17 @@ function LoginPage() {
                             />
                         </div>
 
-                        <button type="submit" className="mt-4 w-full bg-stark-black text-pure-white py-5 font-headline-md italic uppercase brutal-border brutal-shadow-lg transition-all hover:bg-electric-blue hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3">
-                            INITIALIZE SESSION <span className="material-symbols-outlined">power_settings_new</span>
+                        <button disabled={loading} type="submit" className={`mt-4 w-full bg-stark-black text-pure-white py-5 font-headline-md italic uppercase brutal-border brutal-shadow-lg transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-wait' : 'hover:bg-electric-blue hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'}`}>
+                            {loading ? (
+                                <>
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    VERIFYING...
+                                </>
+                            ) : (
+                                <>
+                                    INITIALIZE SESSION <span className="material-symbols-outlined">power_settings_new</span>
+                                </>
+                            )}
                         </button>
                     </form>
 

@@ -13,7 +13,7 @@ export const Route = createFileRoute("/recruitment")({
 });
 
 function RecruitmentMatrix() {
-  const { currentUser, teams, users, refetchData } = useAppStore();
+  const { currentUser, teams, users, refetchData, createTeam, hackathons } = useAppStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'find' | 'join' | 'create'>('find');
   const [loading, setLoading] = useState(false);
@@ -50,15 +50,12 @@ function RecruitmentMatrix() {
     setErrorMsg("");
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    const token = localStorage.getItem("codesrijan_auth_token");
     try {
-      await axios.post(`${API_URL}/teams`, { name, description }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      await refetchData();
+      const activeEvent = hackathons[0] || { id: 'hack-demo-1' };
+      await createTeam(name, currentUser.id, activeEvent.id, "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
     } finally {
       setLoading(false);
     }

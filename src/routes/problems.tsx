@@ -20,7 +20,7 @@ export const Route = createFileRoute("/problems")({
 });
 
 function Page12() {
-  const { currentUser, hackathons, teams } = useAppStore();
+  const { currentUser, hackathons, teams, assignProblem } = useAppStore();
   const [problems, setProblems] = useState<any[]>([]);
   const activeEvent = hackathons[0];
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
@@ -49,17 +49,11 @@ function Page12() {
       if (!confirm("Your squad already has an active tracking vector. Switching vectors will overwrite your objective. Proceed?")) return;
     }
     try {
-      const token = localStorage.getItem("codesrijan_auth_token");
-      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-
-      await axios.post(`${BASE}/teams/${userTeam.id}/select-problem`, { problemId }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
+      await assignProblem(userTeam.id, problemId);
       alert("Problem Statement Locked. Return to Dashboard workspace to begin.");
       window.location.reload(); // Force full state refresh
     } catch (e: any) {
-      alert(e.response?.data?.message || "Failed to select problem.");
+      alert(e.response?.data?.message || e.message || "Failed to select problem.");
     }
   };
 

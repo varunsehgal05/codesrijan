@@ -15,6 +15,7 @@ import { ChatBotWidget } from "../components/ChatBotWidget";
 import { AppStoreProvider } from "../lib/store";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
+import { Toaster } from "react-hot-toast";
 
 function NotFoundComponent() {
   return (
@@ -137,6 +138,16 @@ function RootComponent() {
           <Footer />
         </div>
         <ChatBotWidget />
+        <Toaster position="bottom-right" toastOptions={{
+          className: 'brutal-border font-label-bold rounded-none',
+          style: {
+            background: '#0a0a0a',
+            color: '#fff',
+            border: '2px solid #0a0a0a',
+            borderRadius: '0px',
+            boxShadow: '4px 4px 0px 0px rgba(10, 10, 10, 1)',
+          },
+        }} />
       </AppStoreProvider>
     </QueryClientProvider>
   );

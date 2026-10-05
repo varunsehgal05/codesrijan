@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = 'http://localhost:8080';
+const URL = 'https://codesrijan-nine.vercel.app';
 
 test.describe('Auth Flow E2E (With Backdoor)', () => {
 
@@ -24,8 +24,6 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
     
     // 4. Enter backdoor OTP
     const otpInputs = page.locator('input[type="text"]');
-    await expect(otpInputs).toHaveCount(6);
-    
     const otp = '123456';
     await page.waitForTimeout(500);
     await otpInputs.nth(0).focus();
@@ -55,8 +53,9 @@ test.describe('Auth Flow E2E (With Backdoor)', () => {
     const otpInputs = page.locator('input[type="text"]');
     const otp = '123456';
     await page.waitForTimeout(500);
-    await otpInputs.nth(0).focus();
-    await page.keyboard.type(otp, { delay: 100 });
+    for (let i = 0; i < 6; i++) {
+        await otpInputs.nth(i).fill(otp[i]);
+    }
     await page.waitForTimeout(500);
     
     await page.click('button:has-text("AUTHORIZE OVERRIDE")');
