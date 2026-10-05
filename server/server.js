@@ -1511,12 +1511,14 @@ app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (re
 
 // Admin Analytics Route
 app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req, res) => {
-    const userCount = await User.countDocuments();
-    const teamCount = await Team.countDocuments();
-    const messageCount = await Message.countDocuments();
-    const hackathonCount = await Hackathon.countDocuments();
-    const users = await User.find().select('-password').limit(50);
-    const teams = await Team.find().limit(50);
+    const [userCount, teamCount, messageCount, hackathonCount, users, teams] = await Promise.all([
+        User.countDocuments(),
+        Team.countDocuments(),
+        Message.countDocuments(),
+        Hackathon.countDocuments(),
+        User.find().select('-password').limit(50),
+        Team.find().limit(50)
+    ]);
     
     res.json({
         stats: { userCount, teamCount, messageCount, hackathonCount },

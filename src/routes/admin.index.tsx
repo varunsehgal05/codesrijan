@@ -34,8 +34,12 @@ function AdminTelemetry() {
                 console.error("Telemetry failure:", err);
             }
         };
-        fetchTelemetry();
-    }, [API_URL]);
+        fetchTelemetry(); // Initial fetch
+
+        // Setup real-time polling every 10 seconds
+        const intervalId = setInterval(fetchTelemetry, 10000);
+        return () => clearInterval(intervalId);
+    }, [API_URL, BASE]);
 
     const activeEvent = hackathons && hackathons.length > 0 ? hackathons[0] : null;
 
