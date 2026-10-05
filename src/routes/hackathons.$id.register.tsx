@@ -10,7 +10,7 @@ export const Route = createFileRoute("/hackathons/$id/register")({
 function HackathonRegistrationPage() {
     const { id } = Route.useParams();
     const navigate = useNavigate();
-    const { currentUser } = useAppStore();
+    const { currentUser, isLoaded } = useAppStore();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -24,6 +24,8 @@ function HackathonRegistrationPage() {
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     useEffect(() => {
+        if (!isLoaded) return;
+        
         if (!currentUser) {
             alert("You must be logged in as a student to register for a hackathon.");
             navigate({ to: '/login' });
@@ -31,7 +33,7 @@ function HackathonRegistrationPage() {
             alert("Only students can register to participate.");
             window.history.back();
         }
-    }, [currentUser, navigate]);
+    }, [currentUser, isLoaded, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
