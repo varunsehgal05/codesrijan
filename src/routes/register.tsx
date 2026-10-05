@@ -24,6 +24,8 @@ function RegisterPage() {
     const [college, setCollege] = useState("");
     const [branch, setBranch] = useState("");
     const [year, setYear] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const [errorMsg, setErrorMsg] = useState("");
 
@@ -32,6 +34,7 @@ function RegisterPage() {
         setErrorMsg("");
         if (!name || !email || !password) return;
 
+        setLoading(true);
         try {
             const resData = await register({
                 id: "", // Managed explicitly by backend now
@@ -47,6 +50,8 @@ function RegisterPage() {
             navigate({ to: '/auth/otp', search: { uid: resData.userId, email } });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to generate identity.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -131,7 +136,7 @@ function RegisterPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="flex flex-col gap-2">
                                 <label className="font-label-bold text-stark-black uppercase">College</label>
-                                <input type="text" value={college} onChange={e => setCollege(e.target.value)} placeholder="Institute of Tech" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
+                                <input type="text" value={college} onChange={e => setCollege(e.target.value)} autoComplete="organization" placeholder="Institute of Tech" className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border focus:ring-2 focus:ring-electric-blue focus:outline-none" required />
                             </div>
                             <div className="flex flex-col gap-2">
                                 <label className="font-label-bold text-stark-black uppercase">Branch</label>
@@ -165,6 +170,7 @@ function RegisterPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                autoComplete="username"
                                 placeholder="comm_link@codesrijan.com"
                                 className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
                                 required
@@ -173,18 +179,32 @@ function RegisterPage() {
 
                         <div className="flex flex-col gap-2">
                             <label className="font-label-bold text-stark-black uppercase">Password Matrix</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Create a strong password"
-                                className="w-full bg-surface py-3 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="new-password"
+                                    placeholder="Create a strong password"
+                                    className="w-full bg-surface py-3 px-4 pr-12 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                    required
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-gray hover:text-electric-blue"
+                                >
+                                    <span className="material-symbols-outlined text-xl">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <button type="submit" className="mt-8 w-full bg-electric-blue text-pure-white py-5 font-headline-md italic uppercase brutal-border brutal-shadow-lg transition-all hover:bg-stark-black hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-3">
-                            GENERATE IDENTITY <span className="material-symbols-outlined">how_to_reg</span>
+                        <button 
+                            type="submit" 
+                            disabled={loading}
+                            className={`mt-8 w-full text-pure-white py-5 font-headline-md italic uppercase brutal-border brutal-shadow-lg transition-all flex items-center justify-center gap-3 disabled:opacity-50 ${loading ? 'bg-surface-variant text-slate-gray' : 'bg-electric-blue hover:bg-stark-black hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'}`}
+                        >
+                            {loading ? 'GENERATING...' : 'GENERATE IDENTITY'} {!loading && <span className="material-symbols-outlined">how_to_reg</span>}
                         </button>
                     </form>
 
