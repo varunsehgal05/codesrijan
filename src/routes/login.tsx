@@ -35,7 +35,7 @@ function LoginPage() {
             try {
                 const parsed = JSON.parse(err.message);
                 if (parsed.type === "verification_required") {
-                    navigate({ to: '/auth/otp', search: { uid: parsed.userId } });
+                    navigate({ to: '/auth/otp', search: { uid: parsed.userId, email } });
                     return;
                 }
             } catch (e) { }

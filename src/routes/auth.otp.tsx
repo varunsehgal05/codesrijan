@@ -103,7 +103,7 @@ function OTPVerification() {
                         VERIFY EMAIL
                     </h2>
                     <p className="font-body-md text-on-surface-variant text-center mb-6">
-                        Enter the 6-digit confirmation code sent to your email to activate your account.
+                        Enter the 6-digit confirmation code sent to {new URLSearchParams(window.location.search).get("email") ? <strong className="text-electric-blue">{new URLSearchParams(window.location.search).get("email")}</strong> : "your email"} to activate your account.
                     </p>
 
                     {errorMsg && (

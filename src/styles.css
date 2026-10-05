@@ -1,4 +1,4 @@
-﻿@import "tailwindcss" source(none);
+@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
@@ -349,7 +349,10 @@ body {
 .brutal-active:active,
 .neo-hover-btn:active,
 .neo-brutal-button:active,
-.neo-btn:active {
+.neo-btn:active,
+.brutal-shadow:active,
+.brutal-shadow-hover:active,
+.brutal-shadow-lg:active {
   box-shadow: 0 0 0 0 #000;
   transform: translate(4px, 4px);
 }

@@ -82,8 +82,8 @@ export const sendVerificationEmail = async (to, code) => {
         console.log('[SECURE COMMS] Verification Email dispatched: %s', info.messageId);
         return true;
     } catch (e) {
-        console.warn('[SECURE COMMS] Verification email deferred or failed:', e.message);
-        return false;
+        console.error('[SECURE COMMS] Verification email failed:', e.message);
+        throw e;
     }
 };
 

@@ -44,7 +44,7 @@ function RegisterPage() {
                 branch,
                 year
             });
-            navigate({ to: '/auth/otp', search: { uid: resData.userId } });
+            navigate({ to: '/auth/otp', search: { uid: resData.userId, email } });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to generate identity.");
         }
