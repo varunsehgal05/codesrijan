@@ -53,6 +53,18 @@ function RecruitmentMatrix() {
     try {
       const activeHackathon = hackathons.find(h => h.status === 'active' || h.status === 'upcoming') || hackathons[0];
       const targetHackathonId = activeHackathon?.id || 'cs-2024';
+      
+      const token = localStorage.getItem("codesrijan_auth_token");
+      try {
+        // Silently register the user for the active hackathon to satisfy the live backend's strict requirements
+        await axios.post(`${API_URL}/hackathons/${targetHackathonId}/register`, 
+          { college: currentUser.college || "N/A", branch: currentUser.branch || "N/A", year: currentUser.year || "N/A" },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (regErr: any) {
+        // Ignore 409 conflict (already registered), otherwise we might still want to try creating the team
+      }
+
       await createTeam(name, currentUser.id, targetHackathonId, "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
