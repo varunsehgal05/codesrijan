@@ -51,7 +51,9 @@ function RecruitmentMatrix() {
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     try {
-      await createTeam(name, currentUser.id, "", "");
+      const activeHackathon = hackathons.find(h => h.status === 'active' || h.status === 'upcoming') || hackathons[0];
+      const targetHackathonId = activeHackathon?.id || 'cs-2024';
+      await createTeam(name, currentUser.id, targetHackathonId, "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
