@@ -51,7 +51,7 @@ function RecruitmentMatrix() {
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
     try {
-      const activeHackathon = hackathons.find(h => h.status === 'active' || h.status === 'upcoming') || hackathons[0];
+      const activeHackathon = hackathons.find(h => h.status === 'registration_open' || h.status === 'active' || h.status === 'upcoming') || hackathons[0];
       const targetHackathonId = activeHackathon?.id || 'cs-2024';
       
       const token = localStorage.getItem("codesrijan_auth_token");
