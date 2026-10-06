@@ -220,6 +220,20 @@ app.post('/api/auth/register', async (req, res) => {
     }
 });
 
+app.put('/api/users/profile', requireAuth, async (req, res) => {
+    try {
+        const { bio, techStack } = req.body;
+        const user = await User.findOneAndUpdate(
+            { id: req.user.id },
+            { bio, techStack },
+            { new: true }
+        );
+        res.json(user);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/nuke-users', async (req, res) => {
     try {
         const keepEmails = [

@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
+import { useState } from "react";
+import axios from "axios";
 
 export const Route = createFileRoute("/profile")({
   component: Page7,
@@ -18,8 +20,35 @@ export const Route = createFileRoute("/profile")({
 });
 
 function Page7() {
-  const { currentUser } = useAppStore();
+  const { currentUser, refetchData } = useAppStore();
   const userName = currentUser?.name || "Alex Chen";
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [bio, setBio] = useState(currentUser?.bio || "Full-stack wizard building the future. Focused on decentralized web technologies and high-performance computing.");
+  const [techStack, setTechStack] = useState(currentUser?.techStack?.join(", ") || "React, Rust, WebAssembly, Tailwind");
+  const [saving, setSaving] = useState(false);
+
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+        const token = localStorage.getItem("codesrijan_auth_token");
+        await axios.put(`${API_URL}/users/profile`, {
+            bio,
+            techStack: techStack.split(',').map(s => s.trim()).filter(Boolean)
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (refetchData) await refetchData();
+        setIsEditing(false);
+    } catch (err) {
+        console.error("Failed to save profile", err);
+        alert("Failed to save profile.");
+    } finally {
+        setSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-on-background">
@@ -27,33 +56,59 @@ function Page7() {
 <main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-desktop py-16 flex flex-col gap-16 md:gap-24">
 
         {/* Global Go Back Navigation */}
-        <div className="w-full mb-6">
+        <div className="w-full mb-6 flex justify-between items-center">
           <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue transition-all group w-fit cursor-pointer">
             <span className="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
             GO BACK
           </button>
+          {!isEditing ? (
+            <button onClick={() => setIsEditing(true)} className="border-2 border-ink-black px-4 py-2 font-bold hover:bg-electric-blue hover:text-white transition-colors brutal-shadow">
+                EDIT PROFILE
+            </button>
+          ) : (
+            <div className="flex gap-2">
+                <button onClick={() => setIsEditing(false)} className="border-2 border-ink-black px-4 py-2 font-bold hover:bg-gray-200 transition-colors brutal-shadow" disabled={saving}>
+                    CANCEL
+                </button>
+                <button onClick={handleSave} className="border-2 border-ink-black px-4 py-2 font-bold bg-electric-blue text-white hover:bg-blue-600 transition-colors brutal-shadow" disabled={saving}>
+                    {saving ? 'SAVING...' : 'SAVE CHANGES'}
+                </button>
+            </div>
+          )}
         </div>
 
         {/*Profile Hero*/}
         <section className="flex flex-col md:flex-row items-start gap-8 bg-surface-container-lowest border-2 border-ink-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <div className="shrink-0 relative">
-            <img className="w-40 h-40 object-cover border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" data-alt="A striking neo-brutalist digital portrait of a young tech wizard. The avatar features a stylized, vibrant, vector-art style face with electric blue highlights against a crisp white background. Thick black outlines define the features, exuding a modern, high-octane hacker aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuARxT0_L0dJOF7V_0PDgEWc39tPJBTMiHfgT7ctM62RX9I9WOMp4cLOdOqBoEfDMV6Iio00ydGtvtNlAiHtKy0YPlPK_tl-jabKvUkwbo2AMiPO9NiR9hmMpl1wnQzhEqAAqt0I6rthhXp0C8YUOCwNJNqlD0XjpxX3sG4nPyqc9kWAcPaJiFLt-TDnhFuOu6-nfQDF_N1LIHKo6MJLkATYN0EjfEpa57agOCPSMiqRnYIhHUWyAyDT" />
+            <img className="w-40 h-40 object-cover border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" data-alt="A striking neo-brutalist digital portrait of a young tech wizard. The avatar features a stylized, vibrant, vector-art style face with electric blue highlights against a crisp white background. Thick black outlines define the features, exuding a modern, high-octane hacker aesthetic." src={currentUser?.profileImage || "https://lh3.googleusercontent.com/aida-public/AB6AXuARxT0_L0dJOF7V_0PDgEWc39tPJBTMiHfgT7ctM62RX9I9WOMp4cLOdOqBoEfDMV6Iio00ydGtvtNlAiHtKy0YPlPK_tl-jabKvUkwbo2AMiPO9NiR9hmMpl1wnQzhEqAAqt0I6rthhXp0C8YUOCwNJNqlD0XjpxX3sG4nPyqc9kWAcPaJiFLt-TDnhFuOu6-nfQDF_N1LIHKo6MJLkATYN0EjfEpa57agOCPSMiqRnYIhHUWyAyDT"} />
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 w-full">
             <div>
               <h1 className="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-ink-black tracking-tight">{userName}</h1>
-              <p className="font-body-lg text-body-lg text-text-muted mt-2 max-w-2xl">Full-stack wizard building the future. Focused on decentralized web technologies and high-performance computing.</p>
+              {isEditing ? (
+                  <textarea className="w-full mt-2 p-2 border-2 border-ink-black font-body-lg text-body-lg" rows={3} value={bio} onChange={e => setBio(e.target.value)} placeholder="Write your bio..." />
+              ) : (
+                  <p className="font-body-lg text-body-lg text-text-muted mt-2 max-w-2xl">{bio}</p>
+              )}
             </div>
             <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps mt-2">
               <span className="material-symbols-outlined" data-icon="location_on" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
-              <span>San Francisco, CA</span>
+              <span>{currentUser?.college || "San Francisco, CA"}</span>
             </div>
             {/*Tech Stack Grid*/}
-            <div className="flex flex-wrap gap-3 mt-4">
-              <span className="px-4 py-2 bg-yellow-300 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">React</span>
-              <span className="px-4 py-2 bg-orange-400 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">Rust</span>
-              <span className="px-4 py-2 bg-purple-400 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">WebAssembly</span>
-              <span className="px-4 py-2 bg-cyan-400 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">Tailwind</span>
+            <div className="flex flex-col gap-2 mt-4">
+              {isEditing ? (
+                  <div>
+                    <label className="font-bold text-sm uppercase">Tech Stack (Comma Separated)</label>
+                    <input className="w-full mt-1 p-2 border-2 border-ink-black font-body-md" value={techStack} onChange={e => setTechStack(e.target.value)} placeholder="React, Node.js, Python..." />
+                  </div>
+              ) : (
+                  <div className="flex flex-wrap gap-3">
+                    {techStack.split(',').map((tech, idx) => (
+                        <span key={idx} className="px-4 py-2 bg-yellow-300 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">{tech.trim()}</span>
+                    ))}
+                  </div>
+              )}
             </div>
           </div>
         </section>
