@@ -50,9 +50,8 @@ function RecruitmentMatrix() {
     setErrorMsg("");
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    const hackathonId = formData.get("hackathonId") as string;
     try {
-      await createTeam(name, currentUser.id, hackathonId, "");
+      await createTeam(name, currentUser.id, "", "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
@@ -231,15 +230,7 @@ function RecruitmentMatrix() {
               <h2 className="font-headline-md uppercase mb-2">Initialize New Squad</h2>
               <p className="font-body-md text-text-muted mb-6">You will automatically be locked in as the designated Team Leader.</p>
               <form onSubmit={handleCreateSquad} className="flex flex-col gap-6">
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-bold uppercase">Target Hackathon</label>
-                  <select name="hackathonId" className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none uppercase" required defaultValue="">
-                     <option value="" disabled>SELECT A TARGET MATRIX...</option>
-                     {hackathons.filter(h => h.status === 'active' || h.status === 'registration_open').map(h => (
-                         <option key={h.id} value={h.id}>{h.name || h.id}</option>
-                     ))}
-                  </select>
-                </div>
+
                 <div className="flex flex-col gap-2">
                   <label className="font-label-bold uppercase">Squad Designation</label>
                   <input name="name" type="text" className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required placeholder="Cyber Punks" />

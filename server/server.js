@@ -773,17 +773,8 @@ app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (re
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
     }
-    const { hackathonId, ...restBody } = req.body;
-    if (!hackathonId) return res.status(400).json({ message: "Hackathon ID is required to form a squad." });
-
-    const hackathon = await Hackathon.findOne({ id: hackathonId });
-    if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
-
-    // Removed strict registration check so hackers can form squads dynamically
-
     const team = new Team({
-        ...restBody, // { name: string, description: string } (optional extra fields)
-        hackathonId,
+        ...req.body, // { name: string, description: string }
         id: `t-${Date.now()}`,
         leaderId: req.user.id,
         memberIds: [req.user.id] // Auto-assign as member 1
