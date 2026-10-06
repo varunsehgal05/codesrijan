@@ -2112,6 +2112,22 @@ app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, r
     res.json(tickets);
 });
 
+app.patch('/api/support/:id/status', requireAuth, async (req, res) => {
+    try {
+        const { status } = req.body;
+        const ticket = await SupportTicket.findOne({ id: req.params.id });
+        if (!ticket) return res.status(404).json({ message: "Ticket missing" });
+        if (req.user.role !== 'admin' && ticket.userId !== req.user.id) {
+            return res.status(403).json({ message: "Unauthorized" });
+        }
+        ticket.status = status;
+        await ticket.save();
+        res.json(ticket);
+    } catch (e) {
+        res.status(500).json({ message: "Error updating status" });
+    }
+});
+
 app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), async (req, res) => {
     const { status } = req.body;
     const ticket = await SupportTicket.findOneAndUpdate(

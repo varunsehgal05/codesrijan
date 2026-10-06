@@ -100,6 +100,7 @@ function AdminSupport() {
               <thead className="bg-ink-black text-pure-white uppercase font-label-bold">
                 <tr>
                   <th className="p-4 border-2 border-ink-black">Ticket ID</th>
+                  <th className="p-4 border-2 border-ink-black">User (Total Tickets)</th>
                   <th className="p-4 border-2 border-ink-black">Subject</th>
                   <th className="p-4 border-2 border-ink-black">Category</th>
                   <th className="p-4 border-2 border-ink-black">Priority</th>
@@ -108,9 +109,17 @@ function AdminSupport() {
                 </tr>
               </thead>
               <tbody>
-                {tickets.map(ticket => (
+                {tickets.map(ticket => {
+                  const userTicketCount = tickets.filter(t => t.userId === ticket.userId).length;
+                  return (
                   <tr key={ticket.id} className="border-b-2 border-ink-black hover:bg-surface-container">
                     <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">{ticket.id.substring(0,12)}</td>
+                    <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">
+                      {ticket.userId.substring(0,8)} 
+                      <span className="ml-2 inline-block bg-surface-container-high px-2 py-0.5 rounded text-error font-bold" title="Total tickets created by this user">
+                         {userTicketCount}
+                      </span>
+                    </td>
                     <td className="p-4 border-r-2 border-ink-black font-label-bold">{ticket.subject}</td>
                     <td className="p-4 border-r-2 border-ink-black">{ticket.category}</td>
                     <td className="p-4 border-r-2 border-ink-black">
@@ -122,7 +131,7 @@ function AdminSupport() {
                       <select 
                         value={ticket.status} 
                         onChange={(e) => updateStatus(ticket.id, e.target.value)}
-                        className={`p-1 border-2 border-ink-black text-xs font-label-bold uppercase focus:outline-none ${ticket.status === 'in_progress' ? 'bg-[#FFD700] text-stark-black' : ticket.status === 'resolved' ? 'bg-success text-pure-white' : 'bg-pure-white text-stark-black'}`}
+                        className={`p-1 border-2 border-ink-black text-xs font-label-bold uppercase focus:outline-none ${ticket.status === 'in_progress' ? 'bg-[#FFD700] text-stark-black' : ticket.status === 'resolved' || ticket.status === 'closed' ? 'bg-success text-pure-white' : 'bg-pure-white text-stark-black'}`}
                       >
                         <option value="open">OPEN</option>
                         <option value="in_progress">PROCESSING (IN PROGRESS)</option>
@@ -144,7 +153,7 @@ function AdminSupport() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                )})}
               </tbody>
             </table>
           </div>

@@ -156,6 +156,26 @@ function ChatDashboard() {
     }
   };
 
+  const toggleTicketStatus = async () => {
+    if (!activeConv || !activeConv.supportTicket) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const newStatus = activeConv.supportTicket.status === 'open' ? 'closed' : 'open';
+      const res = await axios.patch(`${BASE}/support/${activeConv.supportTicket.id}/status`, 
+        { status: newStatus },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Update local state
+      setActiveConv({
+          ...activeConv,
+          supportTicket: res.data
+      });
+      // Optionally update conversation list if it's there, but it will sync on reload
+    } catch (e) {
+      console.error("Failed to update ticket status");
+    }
+  };
+
   const handleSearchUsers = (q: string) => {
     setSearchQuery(q);
   };
@@ -500,10 +520,16 @@ function ChatDashboard() {
                   </div>
                 </div>
                 
-                <div className="mt-12 pt-6 border-t-2 border-ink-black border-dashed">
+                <div className="mt-12 pt-6 border-t-2 border-ink-black border-dashed flex flex-col gap-3">
+                  <button onClick={toggleTicketStatus} className={`w-full flex items-center justify-center gap-2 text-pure-white px-4 py-3 border-4 border-ink-black font-label-bold uppercase hover:-translate-y-1 transition-transform shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] ${activeConv.supportTicket.status === 'open' ? 'bg-error' : 'bg-success'}`}>
+                    <span className="material-symbols-outlined text-[18px]">
+                      {activeConv.supportTicket.status === 'open' ? 'cancel' : 'check_circle'}
+                    </span>
+                    {activeConv.supportTicket.status === 'open' ? 'Close Ticket' : 'Reopen Ticket'}
+                  </button>
                   <Link to="/support" className="w-full flex items-center justify-center gap-2 bg-pure-white text-stark-black px-4 py-3 border-4 border-ink-black font-label-bold uppercase hover:-translate-y-1 transition-transform shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] hover:bg-ink-black hover:text-pure-white">
                     <span className="material-symbols-outlined text-[18px]">open_in_new</span>
-                    Manage Ticket
+                    Support Dashboard
                   </Link>
                 </div>
              </div>
