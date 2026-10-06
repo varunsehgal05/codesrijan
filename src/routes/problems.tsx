@@ -28,13 +28,33 @@ function Page12() {
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
   useEffect(() => {
-    if (activeEvent?.id) {
+    if (hackathons.length > 0) {
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-      axios.get(`${BASE}/hackathons/${activeEvent.id}/problems`)
-        .then(r => setProblems(r.data))
-        .catch(console.error);
+      const now = new Date();
+      
+      const fetchAllProblems = async () => {
+        try {
+          const promises = hackathons.map(async (hackathon: any) => {
+            const startDate = new Date(hackathon.startDate);
+            // Only fetch problems if the hackathon time has started
+            if (now >= startDate) {
+              const res = await axios.get(`${BASE}/hackathons/${hackathon.id}/problems`);
+              return res.data.map((p: any) => ({ ...p, hackathonName: hackathon.name || hackathon.title }));
+            }
+            return [];
+          });
+          
+          const results = await Promise.all(promises);
+          const allProblems = results.flat();
+          setProblems(allProblems);
+        } catch (e) {
+          console.error("Error fetching problems", e);
+        }
+      };
+      
+      fetchAllProblems();
     }
-  }, [activeEvent]);
+  }, [hackathons, API_URL]);
 
   if (!currentUser) return <Navigate to="/login" />;
 
@@ -109,7 +129,10 @@ function Page12() {
                   </div>
                   <div className="flex justify-between items-start gap-4">
                     <div className="flex flex-col gap-2">
-                      <span className="font-label-caps text-label-caps text-electric-blue">{prob.domain || prob.category}</span>
+                      <div className="flex gap-2 items-center">
+                        <span className="font-label-caps text-label-caps text-electric-blue">{prob.domain || prob.category}</span>
+                        <span className="bg-ink-black text-white text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">{prob.hackathonName}</span>
+                      </div>
                       <h3 className="font-headline-md text-headline-md text-ink-black line-clamp-2">{prob.title}</h3>
                     </div>
                   </div>

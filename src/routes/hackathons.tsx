@@ -14,7 +14,7 @@ function HackathonsHubPage() {
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     useEffect(() => {
-        axios.get(`${API_URL}/timeline`)
+        axios.get(`${API_URL}/hackathons`)
             .then(res => {
                 const sorted = res.data.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
                 setEvents(sorted);
@@ -65,12 +65,12 @@ function HackathonsHubPage() {
                                             {evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}
                                         </span>
                                     </div>
-                                    <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-2">{evt.title}</h3>
+                                    <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-2">{evt.name || evt.title}</h3>
                                     <p className="font-body-md text-on-surface-variant text-sm line-clamp-3 mb-6">{evt.description}</p>
                                 </div>
                                 <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
                                     <span className="font-code-snippet text-xs font-bold uppercase">{evt.location || 'Online Arena'}</span>
-                                    <Link to="/register" className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
+                                    <Link to={`/hackathons/${evt.id}/register`} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
                                         ENTER ARENA
                                     </Link>
                                 </div>

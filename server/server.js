@@ -858,7 +858,60 @@ app.post('/api/teams/:id/lock', requireAuth, requireRole(['student', 'admin']), 
     res.json({ message: locked ? "Squad Locked" : "Squad Unlocked", team });
 });
 
+app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (req, res) => {
+    const { githubLink, figmaLink, demoLink } = req.body;
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (!team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Not authorized." });
+    if (team.isSubmitted) return res.status(403).json({ message: "Cannot edit links after submission." });
+
+    team.githubLink = githubLink;
+    team.figmaLink = figmaLink;
+    team.demoLink = demoLink;
+    await team.save();
+    res.json(team);
+});
+
+app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
+        return res.status(403).json({ message: "Only leaders can authorize final submission." });
+    }
+    
+    team.isSubmitted = true;
+    team.status = 'submitted';
+    await team.save();
+    
+    const submission = new Submission({
+        id: `sub-${Date.now()}`,
+        teamId: team.id,
+        hackathonId: team.hackathonId,
+        projectTitle: team.name,
+        description: team.description || "Final submission",
+        repositoryUrl: team.githubLink,
+        demoUrl: team.demoLink,
+        submittedAt: new Date()
+    });
+    await submission.save();
+
+    res.json({ message: "Final submission successful.", team });
+});
+
 // Admin Team Management
+app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (req, res) => {
+    const submissions = await Submission.find().sort({ submittedAt: -1 });
+    res.json(submissions);
+});
+
+app.patch('/api/admin/submissions/:id/:action', requireAuth, requireRole(['admin']), async (req, res) => {
+    const { action } = req.params;
+    const isLocked = action === 'lock';
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { isLocked }, { new: true });
+    if (!submission) return res.status(404).json({ message: "Submission not found." });
+    res.json(submission);
+});
+
 app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
     const { reason } = req.body;
     if (!reason || reason.trim() === '') return res.status(400).json({ message: "Reason is required for disqualification." });
