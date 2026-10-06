@@ -21,7 +21,7 @@ export function Navbar() {
         if (currentUser) {
             return (
                 <>
-                    <Link to="/timeline" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                    <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                         <span className="material-symbols-outlined text-sm">trophy</span> Hackathons
                     </Link>
                     <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Problems</Link>
@@ -37,7 +37,7 @@ export function Navbar() {
         
         return (
             <>
-                <Link to="/timeline" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                     <span className="material-symbols-outlined text-sm">trophy</span> Hackathons Hub
                 </Link>
                 <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Sponsors</Link>
