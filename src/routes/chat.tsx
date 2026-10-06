@@ -218,7 +218,7 @@ function ChatDashboard() {
       <div className="max-w-7xl mx-auto flex h-[85vh] border-4 border-ink-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-pure-white overflow-hidden">
         
         {/* Sidebar */}
-        <div className="w-full md:w-1/3 lg:w-1/4 border-r-4 border-ink-black flex flex-col bg-surface z-10 shrink-0">
+        <div className={`w-full md:w-1/3 lg:w-1/4 border-r-4 border-ink-black flex-col bg-surface z-10 shrink-0 ${activeConv ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b-4 border-ink-black bg-stark-black flex justify-between items-center text-pure-white">
             <h2 className="font-display-lg text-lg uppercase tracking-tight">Communications</h2>
             <button onClick={() => setIsSearchOpen(true)} className="bg-primary text-stark-black w-8 h-8 flex items-center justify-center border-2 border-transparent font-bold brutal-hover" title="New Message">
@@ -302,19 +302,22 @@ function ChatDashboard() {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1 flex flex-col bg-surface-container-low relative min-w-0">
+        <div className={`flex-1 flex-col bg-surface-container-low relative min-w-0 ${!activeConv ? 'hidden md:flex' : 'flex'}`}>
           {activeConv ? (
             <>
               {/* Header */}
               <div className="p-4 border-b-4 border-ink-black bg-pure-white flex justify-between items-center shadow-sm z-10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-stark-black rounded-full flex items-center justify-center text-pure-white font-display-lg text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
+                <div className="flex items-center gap-2 md:gap-4">
+                  <button onClick={() => setActiveConv(null)} className="md:hidden p-2 -ml-2 text-ink-black hover:bg-surface-container rounded-full flex items-center justify-center">
+                    <span className="material-symbols-outlined">arrow_back</span>
+                  </button>
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-stark-black rounded-full flex items-center justify-center text-pure-white font-display-lg text-lg md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
                      {activeConv.type === 'support' ? <span className="material-symbols-outlined">headset_mic</span> : 
                       activeConv.type === 'team' ? <span className="material-symbols-outlined">diversity_3</span> : 
                       (activeConv.targetName ? activeConv.targetName.charAt(0) : 'U')}
                   </div>
                   <div>
-                    <h3 className="font-display-lg uppercase tracking-wider flex items-center gap-2 text-stark-black text-lg">
+                    <h3 className="font-display-lg uppercase tracking-wider flex items-center gap-2 text-stark-black text-base md:text-lg">
                       {activeConv.targetName || activeConv.id}
                     </h3>
                     <p className="font-code-snippet text-xs text-on-surface-variant mt-0.5 uppercase tracking-widest flex items-center gap-2">

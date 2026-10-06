@@ -96,11 +96,11 @@ function Page14() {
             <p className="font-body-lg text-body-lg text-on-surface-variant max-w-md">
               Join CodeSrijan for 48 hours of intense coding, networking, and building the future. Ready to make your mark?
             </p>
-            <div className="flex gap-4 mt-4">
-              <Link to={currentUser ? "/dashboard" : "/register"} className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-8 py-4 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-lg flex items-center gap-2 block hover:-translate-y-1">
+            <div className="flex flex-wrap gap-4 mt-4">
+              <Link to={currentUser ? "/dashboard" : "/register"} className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-6 py-4 md:px-8 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-base md:text-lg flex items-center justify-center gap-2 hover:-translate-y-1 flex-1 min-w-[200px]">
                 Start Building <span className="material-symbols-outlined font-bold">arrow_forward</span>
               </Link>
-              <Link to="/about" className="bg-surface-container text-stark-black font-label-bold text-label-bold px-8 py-4 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-lg block hover:-translate-y-1">
+              <Link to="/about" className="bg-surface-container text-stark-black font-label-bold text-label-bold px-6 py-4 md:px-8 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-base md:text-lg flex items-center justify-center gap-2 hover:-translate-y-1 flex-1 min-w-[200px]">
                 View Schedule
               </Link>
             </div>
