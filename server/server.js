@@ -131,6 +131,22 @@ mongoose.connect(MONGO_URI, {
     } else {
         await User.updateOne({ email: "student@codesrijan.com" }, { passwordHash: studentHash, role: "student", accountStatus: "active" });
     }
+
+    const defaultSponsorIds = ["sp-1", "sp-2", "sp-3", "sp-4", "sp-5"];
+    const existingDefaults = await Sponsor.countDocuments({ id: { $in: defaultSponsorIds } });
+    
+    if (existingDefaults < 5) {
+        await Sponsor.deleteMany({ id: { $in: defaultSponsorIds } }); // clear partials
+        const defaultSponsors = [
+            { id: "sp-1", name: "Google Cloud", tier: "Title Sponsor", logo: "https://www.gstatic.com/images/branding/product/1x/avatar_square_cloud_512dp.png", description: "Providing AI & Cloud Computing infrastructure for hackathon projects.", website: "https://cloud.google.com", isPublished: true, order: 1 },
+            { id: "sp-2", name: "Vercel", tier: "Platinum", logo: "https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png", description: "Empowering developers to build and deploy web applications instantly.", website: "https://vercel.com", isPublished: true, order: 2 },
+            { id: "sp-3", name: "Firebase", tier: "Gold", logo: "https://www.gstatic.com/devrel-devsite/prod/v3e29f3aa13ca48efdfbd3ff31c03bfeb02db66619dfd700e12fd97779d71bc20/firebase/images/touchicon-180.png", description: "Realtime backend identity & database infrastructure.", website: "https://firebase.google.com", isPublished: true, order: 3 },
+            { id: "sp-4", name: "GitHub", tier: "Gold", logo: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", description: "The premier developer platform for version control & collaboration.", website: "https://github.com", isPublished: true, order: 4 },
+            { id: "sp-5", name: "Intel", tier: "Hardware Partner", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282020%29.svg/1024px-Intel_logo_%282020%29.svg.png", description: "Sponsoring high-performance computing hardware prizes.", website: "https://intel.com", isPublished: true, order: 5 }
+        ];
+        await Sponsor.insertMany(defaultSponsors);
+        console.log("[SYSTEM] Missing Default Corporate Sponsors seeded.");
+    }
 }).catch(err => console.error(err));
 
 // --- Routes ---
