@@ -577,7 +577,7 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
         const hackathon = await Hackathon.findOne({ id: hackathonId });
         if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
 
-        const statusLower = hackathon.status ? hackathon.status.toLowerCase() : '';
+        const statusLower = hackathon.status ? hackathon.status.toLowerCase().trim() : '';
         if (statusLower !== 'registration_open' && statusLower !== 'active') {
             return res.status(403).json({ message: `Registration is currently closed for this event (Status: ${hackathon.status}).` });
         }
