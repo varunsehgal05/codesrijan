@@ -24,6 +24,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EvaluationsRouteImport } from './routes/evaluations'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GalleryRouteImport } from './routes/gallery'
+import { Route as HackathonsRouteImport } from './routes/hackathons'
 import { Route as HighlightsRouteImport } from './routes/highlights'
 import { Route as HostEventRouteImport } from './routes/host-event'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -146,6 +147,11 @@ const FaqRoute = FaqRouteImport.update({
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HackathonsRoute = HackathonsRouteImport.update({
+  id: '/hackathons',
+  path: '/hackathons',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HighlightsRoute = HighlightsRouteImport.update({
@@ -384,9 +390,9 @@ const AdminProblemsCreateRoute = AdminProblemsCreateRouteImport.update({
   getParentRoute: () => AdminProblemsRoute,
 } as any)
 const HackathonsIdRegisterRoute = HackathonsIdRegisterRouteImport.update({
-  id: '/hackathons/$id/register',
-  path: '/hackathons/$id/register',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/register',
+  path: '/$id/register',
+  getParentRoute: () => HackathonsRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -405,6 +411,7 @@ export interface FileRoutesByFullPath {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -535,6 +543,7 @@ export interface FileRoutesById {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
+  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -602,6 +611,7 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
+    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -666,6 +676,7 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
+    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -731,6 +742,7 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
+    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -797,6 +809,7 @@ export interface RootRouteChildren {
   EvaluationsRoute: typeof EvaluationsRoute
   FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
+  HackathonsRoute: typeof HackathonsRouteWithChildren
   HighlightsRoute: typeof HighlightsRoute
   HostEventRoute: typeof HostEventRoute
   LeaderboardRoute: typeof LeaderboardRoute
@@ -820,7 +833,6 @@ export interface RootRouteChildren {
   AuthOtpRoute: typeof AuthOtpRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
-  HackathonsIdRegisterRoute: typeof HackathonsIdRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -928,6 +940,13 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hackathons': {
+      id: '/hackathons'
+      path: '/hackathons'
+      fullPath: '/hackathons'
+      preLoaderRoute: typeof HackathonsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/highlights': {
@@ -1261,10 +1280,10 @@ declare module '@tanstack/react-router' {
     }
     '/hackathons/$id/register': {
       id: '/hackathons/$id/register'
-      path: '/hackathons/$id/register'
+      path: '/$id/register'
       fullPath: '/hackathons/$id/register'
       preLoaderRoute: typeof HackathonsIdRegisterRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof HackathonsRoute
     }
   }
 }
@@ -1345,6 +1364,18 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface HackathonsRouteChildren {
+  HackathonsIdRegisterRoute: typeof HackathonsIdRegisterRoute
+}
+
+const HackathonsRouteChildren: HackathonsRouteChildren = {
+  HackathonsIdRegisterRoute: HackathonsIdRegisterRoute,
+}
+
+const HackathonsRouteWithChildren = HackathonsRoute._addFileChildren(
+  HackathonsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1361,6 +1392,7 @@ const rootRouteChildren: RootRouteChildren = {
   EvaluationsRoute: EvaluationsRoute,
   FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
+  HackathonsRoute: HackathonsRouteWithChildren,
   HighlightsRoute: HighlightsRoute,
   HostEventRoute: HostEventRoute,
   LeaderboardRoute: LeaderboardRoute,
@@ -1384,7 +1416,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthOtpRoute: AuthOtpRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
-  HackathonsIdRegisterRoute: HackathonsIdRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

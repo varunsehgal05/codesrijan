@@ -11,8 +11,8 @@ export function Navbar() {
 
     const renderNavLinks = (isMobile = false) => {
         const linkClasses = isMobile 
-            ? "block text-ink-black dark:text-surface-bright text-lg py-2" 
-            : "text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap";
+            ? "block text-ink-black dark:text-surface-bright text-lg py-2 font-bold" 
+            : "text-ink-black dark:text-surface-bright hover:text-electric-blue hover:-translate-y-0.5 transition-transform duration-200 whitespace-nowrap font-bold flex items-center gap-1";
         
         const activeClasses = isMobile ? "text-electric-blue font-bold" : "text-electric-blue border-b-2 border-electric-blue pb-1";
 
@@ -21,9 +21,12 @@ export function Navbar() {
         if (currentUser) {
             return (
                 <>
-                    <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Hackathons</Link>
+                    <Link to="/timeline" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                        <span className="material-symbols-outlined text-sm">trophy</span> Hackathons
+                    </Link>
                     <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Problems</Link>
                     <Link to="/recruitment" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Recruitment</Link>
+                    <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Sponsors</Link>
                     <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Announcements</Link>
                     <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Leaderboard</Link>
                     <Link to="/chat" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Comms</Link>
@@ -32,19 +35,28 @@ export function Navbar() {
             );
         }
         
-        return <Link to="/about" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>About Platform</Link>;
+        return (
+            <>
+                <Link to="/timeline" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                    <span className="material-symbols-outlined text-sm">trophy</span> Hackathons Hub
+                </Link>
+                <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Sponsors</Link>
+                <Link to="/host-event" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Host Event</Link>
+                <Link to="/about" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>About Platform</Link>
+            </>
+        );
     };
 
     return (
         <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <div className="flex justify-between items-center px-4 xl:px-8 py-4 max-w-[1400px] mx-auto overflow-x-visible">
+            <div className="flex justify-between items-center px-4 xl:px-6 py-3 max-w-[1500px] mx-auto overflow-x-visible">
                 {/* Logo */}
                 <Link to="/" className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright shrink-0">
                     CodeSrijan
                 </Link>
 
                 {/* Desktop Nav Links */}
-                <div className="hidden xl:flex gap-4 2xl:gap-6 items-center font-button-text text-button-text mx-4 flex-wrap justify-center">
+                <div className="hidden lg:flex gap-2.5 xl:gap-4 2xl:gap-5 items-center font-button-text text-sm mx-2 flex-nowrap shrink whitespace-nowrap">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-20 h-6 bg-gray-200 dark:bg-gray-700 rounded"></div>
@@ -55,7 +67,7 @@ export function Navbar() {
                 </div>
 
                 {/* Desktop Buttons */}
-                <div className="hidden xl:flex shrink-0 gap-3 2xl:gap-4 pr-1">
+                <div className="hidden lg:flex shrink-0 gap-2 xl:gap-3 pr-1">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700"></div>

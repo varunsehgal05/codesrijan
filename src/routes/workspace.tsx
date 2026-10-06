@@ -16,6 +16,26 @@ function WorkspaceHUD() {
   const [figmaLink, setFigmaLink] = useState("");
   const [demoLink, setDemoLink] = useState("");
 
+  const [isCreating, setIsCreating] = useState(false);
+  const [editingTask, setEditingTask] = useState<any>(null);
+  const [createForm, setCreateForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
+  const [editForm, setEditForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
+
+  const handleTaskUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingTask) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      if (!userTeam) return;
+      await axios.put(`${API_URL}/teams/${userTeam.id}/tasks/${editingTask.id}`, editForm, { headers: { Authorization: `Bearer ${token}` } });
+      setIsCreating(false);
+      setEditingTask(null);
+      refetchData();
+    } catch (err: any) {
+      alert(`Error updating task: ${err.message}`);
+    }
+  };
+
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
   const activeEvent = hackathons[0];
 

@@ -43,7 +43,7 @@ function TeamInviteComponent() {
                     </p>
 
                     <div className="bg-surface-container w-full p-6 brutal-border">
-                        <h3 className="font-display-lg text-headline-md uppercase text-deep-navy mb-2">"{team.name}"</h3>
+                        <h3 className="font-display-lg text-headline-md uppercase text-deep-navy mb-2">"{teamContext.teamName}"</h3>
                         <div className="inline-block bg-stark-black text-pure-white font-label-caps tracking-widest px-4 py-2 mt-2">
                             ROLE: {teamContext.roleNeeded}
                         </div>

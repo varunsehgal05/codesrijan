@@ -11,13 +11,18 @@ function AdminUsers() {
     const { users, teams } = useAppStore();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<any>(null);
+    const [infoUser, setInfoUser] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
     // Filters and Tabs
     const [activeTab, setActiveTab] = useState<'Active' | 'Suspended'>('Active');
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRole, setFilterRole] = useState("all");
+
+    // Multi-Selection and Bulk Deletion State
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
     // Form states
     const [formData, setFormData] = useState({ name: '', email: '', role: 'student', status: 'Active' });
@@ -27,14 +32,21 @@ function AdminUsers() {
     const displayUsers = useMemo(() => {
         return users.map(u => {
             const userTeam = teams.find(t => t.id === u.teamId);
-            const status = ((u as any).accountStatus === 'suspended' || u.status === 'Suspended') ? 'Suspended' : 'Active';
+            const status = ((u as any).accountStatus === 'suspended' || (u as any).status === 'Suspended') ? 'Suspended' : 'Active';
             return {
                 id: u.id,
                 name: (u.name) || ((u as any).firstName + ' ' + (u as any).lastName) || "Unknown User",
                 email: u.email,
+                phone: (u as any).phone || (u as any).phoneNumber || (u as any).mobile || "Not provided",
+                college: (u as any).college || "Not specified",
+                branch: (u as any).branch || "N/A",
+                year: (u as any).year || "N/A",
+                emailVerified: (u as any).emailVerified !== undefined ? (u as any).emailVerified : true,
+                createdAt: (u as any).createdAt || (u as any).joinedAt || "N/A",
                 team: userTeam ? userTeam.name : "Free Agent",
                 role: (u.role || 'student').toLowerCase(),
                 status: status,
+                raw: u
             };
         });
     }, [users, teams]);
@@ -86,6 +98,67 @@ function AdminUsers() {
         setEditingUser(u);
         setFormData({ name: u.name, email: u.email, role: u.role, status: u.status });
         setIsEditOpen(true);
+    };
+
+    const handleDeleteUser = async (user: any) => {
+        const confirmDelete = window.confirm(`PERMANENT PURGE WARNING:\n\nAre you sure you want to permanently delete user "${user.name}" (${user.email})?\n\nThis will remove their identity permanently from the database and Firebase.`);
+        if (!confirmDelete) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            await axios.delete(`${API_URL}/admin/users/${user.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            alert(`SUCCESS: Account ${user.email} permanently purged from database.`);
+            window.location.reload();
+        } catch (e: any) {
+            alert(`FAIL to delete account: ${e.response?.data?.message || e.message}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const toggleSelectUser = (id: string) => {
+        setSelectedUserIds(prev => 
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleSelectAll = () => {
+        const visibleIds = filteredUsers.map(u => u.id);
+        const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedUserIds.includes(id));
+        if (allSelected) {
+            setSelectedUserIds(prev => prev.filter(id => !visibleIds.includes(id)));
+        } else {
+            setSelectedUserIds(prev => Array.from(new Set([...prev, ...visibleIds])));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedUserIds.length === 0) return;
+        const confirmBulk = window.confirm(`PERMANENT BULK DELETE WARNING:\n\nAre you sure you want to permanently delete ${selectedUserIds.length} selected participant(s)?\n\nThis action will remove all selected identities permanently from the database and Firebase.`);
+        if (!confirmBulk) return;
+
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            await Promise.all(
+                selectedUserIds.map(id => 
+                    axios.delete(`${API_URL}/admin/users/${id}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                )
+            );
+            alert(`SUCCESS: ${selectedUserIds.length} participant account(s) permanently purged.`);
+            setSelectedUserIds([]);
+            window.location.reload();
+        } catch (e: any) {
+            alert(`Bulk deletion process completed with warnings: ${e.message}`);
+            window.location.reload();
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -161,6 +234,79 @@ function AdminUsers() {
                 </div>
             )}
 
+            {/* FULL USER INFO MODAL */}
+            {isInfoOpen && infoUser && (
+                <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-pure-white w-full max-w-xl brutal-border brutal-shadow-lg p-8 flex flex-col gap-6 relative max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center border-b-4 border-stark-black pb-4">
+                            <div>
+                                <span className="font-code-snippet text-xs text-electric-blue font-bold uppercase block">OPERATIVE SPECIFICATION</span>
+                                <h3 className="font-display-lg text-2xl uppercase bg-electric-blue text-pure-white px-2 py-0.5 inline-block transform -skew-x-6">
+                                    {infoUser.name}
+                                </h3>
+                            </div>
+                            <button type="button" onClick={() => setIsInfoOpen(false)} className="text-3xl hover:text-error hover:rotate-90 transition-all font-bold">&times;</button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-code-snippet text-sm">
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Operative ID</span>
+                                <span className="font-bold text-stark-black break-all">{infoUser.id}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Clearance Role</span>
+                                <span className="font-bold uppercase text-electric-blue">{infoUser.role}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1 col-span-1 md:col-span-2">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Email Address</span>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-stark-black break-all">{infoUser.email}</span>
+                                    <button onClick={() => { navigator.clipboard.writeText(infoUser.email); alert("Email copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
+                                </div>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1 col-span-1 md:col-span-2">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Phone / Contact Number</span>
+                                <div className="flex items-center justify-between">
+                                    <span className="font-bold text-stark-black">{infoUser.phone}</span>
+                                    {infoUser.phone !== 'Not provided' && (
+                                        <button onClick={() => { navigator.clipboard.writeText(infoUser.phone); alert("Phone copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1 col-span-1 md:col-span-2">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">College / Institution</span>
+                                <span className="font-bold text-stark-black">{infoUser.college}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Branch</span>
+                                <span className="font-bold text-stark-black">{infoUser.branch}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Academic Year</span>
+                                <span className="font-bold text-stark-black">{infoUser.year}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Assigned Squad</span>
+                                <span className="font-bold text-electric-blue">{infoUser.team}</span>
+                            </div>
+                            <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1">
+                                <span className="text-xs text-on-surface-variant font-bold uppercase">Account Status</span>
+                                <span className={`font-bold uppercase ${infoUser.status === 'Active' ? 'text-success' : 'text-error'}`}>{infoUser.status}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-4 border-t-2 border-stark-black">
+                            <button onClick={() => { setIsInfoOpen(false); openEditModal(infoUser); }} className="bg-[#FFD700] text-stark-black font-label-bold uppercase px-4 py-2 brutal-border brutal-shadow-hover text-xs">
+                                Edit Operative
+                            </button>
+                            <button type="button" onClick={() => setIsInfoOpen(false)} className="bg-stark-black text-pure-white font-label-bold uppercase px-6 py-2 brutal-border text-xs">
+                                Close Panel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header Panel */}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center z-10 relative">
                 <div>
@@ -179,7 +325,7 @@ function AdminUsers() {
 
             {/* Controls Bar */}
             <div className="bg-pure-white p-4 brutal-border flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex gap-2 w-full md:w-auto">
+                <div className="flex gap-2 w-full md:w-auto items-center">
                     <button 
                         onClick={() => setActiveTab('Active')} 
                         className={`px-6 py-2 font-label-bold uppercase brutal-border transition-all ${activeTab === 'Active' ? 'bg-stark-black text-pure-white brutal-shadow' : 'bg-surface hover:bg-surface-container'}`}
@@ -192,6 +338,15 @@ function AdminUsers() {
                     >
                         Suspended Users
                     </button>
+                    {selectedUserIds.length > 0 && (
+                        <button
+                            onClick={handleBulkDelete}
+                            className="bg-error text-pure-white px-4 py-2 font-label-bold uppercase brutal-border brutal-shadow hover:bg-stark-black transition-all flex items-center gap-2 animate-bounce"
+                        >
+                            <span className="material-symbols-outlined text-sm">delete_forever</span>
+                            Purge Selected ({selectedUserIds.length})
+                        </button>
+                    )}
                 </div>
                 
                 <div className="flex gap-4 w-full md:w-auto items-center">
@@ -222,26 +377,43 @@ function AdminUsers() {
 
             {/* Data Grid HUD */}
             <div className="bg-pure-white brutal-border brutal-shadow overflow-x-auto z-10 relative">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+                <table className="w-full text-left border-collapse min-w-[850px]">
                     <thead>
                         <tr className="bg-stark-black text-pure-white">
+                            <th className="p-4 border-r-2 border-electric-blue border-b-4 text-center w-12">
+                                <input 
+                                    type="checkbox" 
+                                    onChange={handleSelectAll} 
+                                    checked={filteredUsers.length > 0 && filteredUsers.every(u => selectedUserIds.includes(u.id))}
+                                    className="w-4 h-4 accent-electric-blue cursor-pointer"
+                                    title="Select All Visible Participants"
+                                />
+                            </th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">ID</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Hacker Name</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Squad</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Role Focus</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue">Status</th>
-                            <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue border-l-2 bg-electric-blue text-pure-white text-center">Actions</th>
+                            <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue border-l-2 bg-electric-blue text-pure-white text-center min-w-[180px]">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredUsers.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="p-8 text-center font-code-snippet text-on-surface-variant uppercase">
+                                <td colSpan={7} className="p-8 text-center font-code-snippet text-on-surface-variant uppercase">
                                     No users found matching current filters.
                                 </td>
                             </tr>
                         ) : filteredUsers.map((u, i) => (
-                            <tr key={u.id || i} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
+                            <tr key={u.id || i} className={`border-b-2 border-stark-black hover:bg-surface-container transition-colors group ${selectedUserIds.includes(u.id) ? 'bg-electric-blue/10' : ''}`}>
+                                <td className="p-4 border-r-2 border-stark-black text-center">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={selectedUserIds.includes(u.id)}
+                                        onChange={() => toggleSelectUser(u.id)}
+                                        className="w-4 h-4 accent-electric-blue cursor-pointer"
+                                    />
+                                </td>
                                 <td className="p-4 font-code-snippet text-sm border-r-2 border-stark-black truncate max-w-[120px]">{u.id}</td>
                                 <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black truncate">{u.name}</td>
                                 <td className="p-4 font-body-md border-r-2 border-stark-black truncate">{u.team}</td>
@@ -260,9 +432,17 @@ function AdminUsers() {
                                     </span>
                                 </td>
                                 <td className="p-4 text-center">
-                                    <button onClick={() => openEditModal(u)} className="bg-stark-black text-[#FFD700] px-6 py-2 font-label-caps text-xs brutal-border hover:-translate-y-0.5 transition-all w-full flex items-center justify-center tracking-widest font-bold">
-                                        EDIT
-                                    </button>
+                                    <div className="flex gap-1.5 justify-center flex-wrap">
+                                        <button onClick={() => { setInfoUser(u); setIsInfoOpen(true); }} className="bg-electric-blue text-pure-white px-2.5 py-1.5 font-label-caps text-xs brutal-border hover:-translate-y-0.5 transition-all flex items-center gap-1 tracking-widest font-bold">
+                                            <span className="material-symbols-outlined text-[14px]">info</span> INFO
+                                        </button>
+                                        <button onClick={() => openEditModal(u)} className="bg-stark-black text-[#FFD700] px-2.5 py-1.5 font-label-caps text-xs brutal-border hover:-translate-y-0.5 transition-all flex items-center gap-1 tracking-widest font-bold">
+                                            <span className="material-symbols-outlined text-[14px]">edit</span> EDIT
+                                        </button>
+                                        <button onClick={() => handleDeleteUser(u)} className="bg-error text-pure-white px-2.5 py-1.5 font-label-caps text-xs brutal-border hover:-translate-y-0.5 transition-all flex items-center gap-1 tracking-widest font-bold hover:bg-stark-black">
+                                            <span className="material-symbols-outlined text-[14px]">delete</span> DELETE
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

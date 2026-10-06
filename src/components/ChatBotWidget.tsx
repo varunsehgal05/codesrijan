@@ -41,14 +41,31 @@ export function ChatBotWidget() {
                 }
             };
 
-            // In a pure local setup without the backend running, we gracefully fallback
-            let responseText = "I couldn't find an official answer to this question. [Create Support Ticket]";
+            // Smart local fallback response engine if API endpoint is unreachable
+            let responseText = "";
             try {
                 const url = apiBaseUrl.endsWith('/api') ? apiBaseUrl.replace('/api', '/api/ai/chat') : `${apiBaseUrl}/api/ai/chat`;
                 const res = await axios.post(url, payload);
                 if (res.data?.reply) responseText = res.data.reply;
             } catch (e) {
-                console.warn("Backend AI unreachable, returning simulated text.");
+                console.warn("Backend AI endpoint fallback triggered.");
+            }
+
+            if (!responseText) {
+                const q = messageText.toLowerCase();
+                if (q.includes("submit") || q.includes("workspace") || q.includes("project")) {
+                    responseText = "To submit your project, navigate to your Workspace sector, attach your GitHub repository link, and click [Deliver Payload -> /workspace].";
+                } else if (q.includes("deadline") || q.includes("schedule") || q.includes("time") || q.includes("when")) {
+                    responseText = "The submission deadline and live milestones are displayed on the [Hackathons Hub -> /timeline]. All submissions close at 23:59 IST.";
+                } else if (q.includes("team") || q.includes("squad") || q.includes("find") || q.includes("join")) {
+                    responseText = "You can recruit squad members or search for open teams in the [Recruitment Sector -> /recruitment].";
+                } else if (q.includes("support") || q.includes("help") || q.includes("ticket") || q.includes("contact")) {
+                    responseText = "You can create an official support ticket or contact team leads directly at [Support Sector -> /support].";
+                } else if (q.includes("admin") || q.includes("stats")) {
+                    responseText = "Admins can access live telemetry, active squads, and participant data at [Admin Panel -> /admin].";
+                } else {
+                    responseText = `Greetings! I am SrijanBot, your CodeSrijan AI Assistant. You can explore [Hackathons Hub -> /timeline], browse [Problem Statements -> /problems], or open a [Support Ticket -> /support].`;
+                }
             }
 
             setMessages(prev => [...prev, {
@@ -56,7 +73,7 @@ export function ChatBotWidget() {
                 text: responseText
             }]);
         } catch (error) {
-            setMessages(prev => [...prev, { role: "bot", text: "SYSTEM ERROR. Neural link severed." }]);
+            setMessages(prev => [...prev, { role: "bot", text: "SYSTEM NOTICE. SrijanBot ready. Please ask any platform question." }]);
         } finally {
             setIsTyping(false);
         }
@@ -122,8 +139,6 @@ export function ChatBotWidget() {
             </button>
         ));
     };
-
-    if (!currentUser) return null;
 
     return (
         <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">

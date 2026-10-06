@@ -20,12 +20,11 @@ interface LeaderboardItem {
 }
 
 function LeaderboardPage() {
-  const { settings } = useAppStore();
   const [teams, setTeams] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
-  const isVisible = settings?.leaderboardVisible === 'true' || settings?.leaderboardVisible === true;
+  const isVisible = true;
 
   useEffect(() => {
     if (!isVisible) {

@@ -325,8 +325,8 @@ function ChatDashboard() {
                 </div>
                 <div className="flex gap-2">
                   {activeConv.type === 'support' && (
-                    <Link to="/support" className="hidden sm:flex bg-surface-bright text-stark-black px-4 py-2 font-label-bold text-xs uppercase hover:bg-electric-blue hover:text-pure-white border-2 border-stark-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0">
-                      View Ticket
+                    <Link to={currentUser?.role === 'admin' ? "/admin/support" : "/support"} className="hidden sm:flex bg-surface-bright text-stark-black px-4 py-2 font-label-bold text-xs uppercase hover:bg-electric-blue hover:text-pure-white border-2 border-stark-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0">
+                      View Ticket Details
                     </Link>
                   )}
                   <button className="text-stark-black p-2 hover:bg-surface-container rounded-full transition-colors flex items-center"><span className="material-symbols-outlined">more_vert</span></button>

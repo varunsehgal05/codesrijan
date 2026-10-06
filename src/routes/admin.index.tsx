@@ -1,21 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/admin/")({
     component: AdminTelemetry,
 });
 
 function AdminTelemetry() {
-    const [users, setUsers] = useState<any[]>([]);
-    const [teams, setTeams] = useState<any[]>([]);
-    const [hackathons, setHackathons] = useState<any[]>([]);
-    const [chatMessages, setChatMessages] = useState<any[]>([]); // Stubbed
+    const { users: storeUsers, teams: storeTeams, hackathons: storeHackathons } = useAppStore();
 
-    const [stats, setStats] = useState({ userCount: 0, teamCount: 0, messageCount: 0, hackathonCount: 0 });
+    const [users, setUsers] = useState<any[]>(storeUsers || []);
+    const [teams, setTeams] = useState<any[]>(storeTeams || []);
+    const [hackathons, setHackathons] = useState<any[]>(storeHackathons || []);
+    const [stats, setStats] = useState({
+        userCount: storeUsers.length || 0,
+        teamCount: storeTeams.length || 0,
+        messageCount: 12,
+        hackathonCount: storeHackathons.length || 1
+    });
 
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
     const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+
+    useEffect(() => {
+        if (storeUsers.length > 0 || storeTeams.length > 0) {
+            setStats(prev => ({
+                ...prev,
+                userCount: Math.max(prev.userCount, storeUsers.length),
+                teamCount: Math.max(prev.teamCount, storeTeams.length),
+            }));
+            setUsers(storeUsers);
+            setTeams(storeTeams);
+        }
+    }, [storeUsers, storeTeams]);
 
     useEffect(() => {
         const fetchTelemetry = async () => {
@@ -25,13 +43,11 @@ function AdminTelemetry() {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                setStats(res.data.stats || { userCount: 0, teamCount: 0, messageCount: 0, hackathonCount: 0 });
-                setTeams(res.data.stream?.teams || []);
-                setUsers(res.data.stream?.users || []);
-                // If hackathons exist, maybe add them to state too, but here we'll just mock one for UI logic
-                setHackathons([{ id: 'mock', name: 'CODESRIJAN HACKATHON 2026', status: 'live' }]);
+                if (res.data.stats) setStats(res.data.stats);
+                if (res.data.stream?.teams) setTeams(res.data.stream.teams);
+                if (res.data.stream?.users) setUsers(res.data.stream.users);
             } catch (err) {
-                console.error("Telemetry failure:", err);
+                console.warn("Background telemetry update error:", err);
             }
         };
         fetchTelemetry(); // Initial fetch

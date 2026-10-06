@@ -43,6 +43,33 @@ function AdminSupport() {
     }
   };
 
+  const handleCloneTicket = async (id: string) => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${BASE}/admin/support/${id}/clone`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("SUCCESS: Support ticket cloned.");
+      await loadTickets();
+    } catch (e) {
+      alert("Failed to clone ticket.");
+    }
+  };
+
+  const handleDeleteTicket = async (id: string) => {
+    if (!window.confirm("Are you sure you want to permanently remove/delete this support ticket?")) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.delete(`${BASE}/admin/support/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("SUCCESS: Ticket permanently removed.");
+      await loadTickets();
+    } catch (e) {
+      alert("Failed to remove ticket.");
+    }
+  };
+
   const openTicketCount = tickets.filter(t => t.status === 'open').length;
 
   return (
@@ -95,19 +122,26 @@ function AdminSupport() {
                       <select 
                         value={ticket.status} 
                         onChange={(e) => updateStatus(ticket.id, e.target.value)}
-                        className="p-1 border-2 border-ink-black text-xs font-label-bold uppercase bg-pure-white focus:outline-none"
+                        className={`p-1 border-2 border-ink-black text-xs font-label-bold uppercase focus:outline-none ${ticket.status === 'in_progress' ? 'bg-[#FFD700] text-stark-black' : ticket.status === 'resolved' ? 'bg-success text-pure-white' : 'bg-pure-white text-stark-black'}`}
                       >
                         <option value="open">OPEN</option>
-                        <option value="in_progress">IN PROGRESS</option>
+                        <option value="in_progress">PROCESSING (IN PROGRESS)</option>
                         <option value="resolved">RESOLVED</option>
                         <option value="closed">CLOSED</option>
                       </select>
                     </td>
                     <td className="p-4">
-                      {/* Navigate to Chat UI for this support ticket */}
-                      <Link to="/chat" search={{ conv: ticket.conversationId }} className="text-electric-blue font-label-bold uppercase text-xs hover:underline">
-                        Open Comms
-                      </Link>
+                      <div className="flex gap-2 items-center">
+                        <Link to="/chat" search={{ conv: ticket.conversationId }} className="bg-electric-blue text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all">
+                          Comms
+                        </Link>
+                        <button onClick={() => handleCloneTicket(ticket.id)} className="bg-stark-black text-[#FFD700] px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all">
+                          Clone
+                        </button>
+                        <button onClick={() => handleDeleteTicket(ticket.id)} className="bg-error text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:bg-stark-black transition-all">
+                          Remove
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

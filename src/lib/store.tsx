@@ -195,9 +195,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                         headers: { Authorization: `Bearer ${storedToken}` }
                     });
 
-                    // We only load global data once the auth context is confirmed strictly via API
-                    await refetchData();
-                    setState(prev => ({ ...prev, currentUser: meRes.data.user }));
+                    // Set user & mark loaded immediately for instant UI render
+                    setState(prev => ({ ...prev, currentUser: meRes.data.user, isLoaded: true }));
+                    
+                    // Fetch auxiliary collections asynchronously in background
+                    refetchData();
                 } catch (e: any) {
                     if (e.response?.status === 401 || e.response?.status === 403) {
                         console.error("Token explicitly invalid or expired. Purging local identity.");
@@ -205,11 +207,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     } else {
                         console.warn("Network error verifying session, server might be spinning up. Keeping token intact.");
                     }
+                    setState(prev => ({ ...prev, isLoaded: true }));
                     refetchData();
                 }
             };
             loadWithToken();
         } else {
+            setState(prev => ({ ...prev, isLoaded: true }));
             refetchData();
         }
     }, []);
@@ -237,6 +241,29 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (email: string, password?: string) => {
         try {
+            // Attempt Firebase Auth sign-in if password provided
+            if (password) {
+                try {
+                    const { getAuth, signInWithEmailAndPassword } = await import("firebase/auth");
+                    const firebaseApp = (await import("./firebase")).default;
+                    const auth = getAuth(firebaseApp);
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const idToken = await userCredential.user.getIdToken();
+                    
+                    localStorage.setItem("codesrijan_auth_token", idToken);
+                    const meRes = await axios.get(`${API_URL}/auth/me`, {
+                        headers: { Authorization: `Bearer ${idToken}` }
+                    });
+
+                    const u = meRes.data.user;
+                    setState(prev => ({ ...prev, currentUser: u }));
+                    socket.emit('authenticate', idToken);
+                    return u;
+                } catch (fbErr: any) {
+                    console.warn("Firebase Client Auth bypass/fallback to Express API:", fbErr.message);
+                }
+            }
+
             const res = await axios.post(`${API_URL}/auth/login`, { email, password });
 
             if (res.data.needsVerification) {
