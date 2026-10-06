@@ -12,6 +12,7 @@ function ForgotPasswordPage() {
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
+    const [directResetInfo, setDirectResetInfo] = useState<{ token: string; uid: string } | null>(null);
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -19,7 +20,10 @@ function ForgotPasswordPage() {
         if (!email) return;
         setLoading(true);
         try {
-            await axios.post(`${API_URL}/auth/forgot-password`, { email });
+            const res = await axios.post(`${API_URL}/auth/forgot-password`, { email });
+            if (res.data?.resetToken && res.data?.userId) {
+                setDirectResetInfo({ token: res.data.resetToken, uid: res.data.userId });
+            }
             setSubmitted(true);
         } catch (err) {
             console.error(err);
@@ -38,12 +42,25 @@ function ForgotPasswordPage() {
                 </p>
 
                 {submitted ? (
-                    <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue">
+                    <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue space-y-4">
                         <h3 className="text-electric-blue font-bold uppercase mb-2">Transmission Dispatched</h3>
                         <p className="text-sm text-zinc-300">If your identity exists in our matrices, you will receive an encrypted transmission shortly containing the recovery sequence.</p>
+                        
+                        {directResetInfo && (
+                            <div className="pt-2 border-t border-electric-blue/30">
+                                <p className="text-xs font-mono text-yellow-400 mb-2">[DIRECT RECOVERY KEY GENERATED]</p>
+                                <button
+                                    onClick={() => navigate({ to: '/auth/reset-password', search: { token: directResetInfo.token, uid: directResetInfo.uid } })}
+                                    className="w-full font-mono text-xs uppercase px-4 py-3 bg-electric-blue text-black font-black hover:bg-white transition-colors"
+                                >
+                                    Proceed to Reset Password Now &rarr;
+                                </button>
+                            </div>
+                        )}
+
                         <button
                             onClick={() => navigate({ to: '/login' })}
-                            className="mt-6 font-mono text-sm uppercase px-4 py-2 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors"
+                            className="mt-4 font-mono text-sm uppercase px-4 py-2 bg-zinc-800 text-white font-bold hover:bg-zinc-700 transition-colors"
                         >
                             Return to Gateway
                         </button>

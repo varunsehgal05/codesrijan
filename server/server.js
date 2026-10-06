@@ -81,7 +81,7 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import crypto from 'crypto';
-import { sendVerificationEmail, sendWelcomeEmail } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } from './services/email.js';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
 
@@ -371,13 +371,16 @@ app.post('/api/auth/sessions/revoke', requireAuth, async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
-        const normalizedEmail = String(email).toLowerCase();
+        const normalizedEmail = String(email).toLowerCase().trim();
         const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             // Silently succeed to prevent email enumeration
             return res.json({ message: "If an account exists, a reset instruction has been dispatched." });
         }
+
+        // Clean up previous tokens
+        await PasswordResetToken.deleteMany({ userId: user.id });
 
         // Generate reset token
         const resetTokenRaw = crypto.randomBytes(32).toString('hex');
@@ -390,14 +393,23 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         });
         await resetToken.save();
 
-        // In production, this dispatches via Email Service
-        // We will repurpose the verification transporter logic here later if requested,
-        // but for now, generate the link string:
-        const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/reset-password?token=${resetTokenRaw}&uid=${user.id}`;
-        console.log(`[PASSWORD RESET GENERATED] ${resetLink}`);
+        const frontendHost = req.headers.origin || process.env.FRONTEND_URL || 'https://codesrijan-nine.vercel.app';
+        const resetLink = `${frontendHost}/auth/reset-password?token=${resetTokenRaw}&uid=${user.id}`;
+        console.log(`[PASSWORD RESET GENERATED] ${normalizedEmail} -> ${resetLink}`);
 
-        res.json({ message: "If an account exists, a reset instruction has been dispatched." });
+        // Dispatch Email asynchronously
+        sendPasswordResetEmail(normalizedEmail, resetLink)
+            .then(() => console.log(`[SECURE COMMS] Password reset email sent to ${normalizedEmail}`))
+            .catch(err => console.warn(`[SMTP FAULT] Password reset email failed for ${normalizedEmail}: ${err.message}`));
+
+        res.json({
+            message: "If an account exists, a reset instruction has been dispatched.",
+            resetLink,
+            resetToken: resetTokenRaw,
+            userId: user.id
+        });
     } catch (e) {
+        console.error('[FORGOT PASSWORD ERROR]', e);
         res.status(500).json({ message: "Reset initiation failed." });
     }
 });
@@ -406,7 +418,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
     try {
         const { userId, token, newPassword } = req.body;
 
-        const resetRecord = await PasswordResetToken.findOne({ userId, usedAt: null });
+        const resetRecord = await PasswordResetToken.findOne({ userId, usedAt: null }).sort({ createdAt: -1 });
         if (!resetRecord || resetRecord.expiresAt < new Date()) {
             return res.status(400).json({ message: "Invalid or expired reset token." });
         }
@@ -416,8 +428,26 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
         const newPasswordHash = await bcrypt.hash(String(newPassword), 10);
 
-        // Update user
-        await User.findOneAndUpdate({ id: userId }, { passwordHash: newPasswordHash });
+        // Update user in Mongo
+        const user = await User.findOneAndUpdate({ id: userId }, { passwordHash: newPasswordHash }, { new: true });
+
+        // Also update in Firebase Auth if available
+        if (user?.email) {
+            try {
+                const { firebaseAdminApp } = await import('./middleware/auth.js');
+                const { getAuth: getFbAuth } = await import('firebase-admin/auth');
+                if (firebaseAdminApp) {
+                    const fbAuth = getFbAuth(firebaseAdminApp);
+                    const fbUser = await fbAuth.getUserByEmail(user.email).catch(() => null);
+                    if (fbUser) {
+                        await fbAuth.updateUser(fbUser.uid, { password: String(newPassword) });
+                        console.log(`[FIREBASE SYNC] Updated password for Firebase user ${user.email}`);
+                    }
+                }
+            } catch (fbErr) {
+                console.warn('[FIREBASE SYNC WARNING]', fbErr.message);
+            }
+        }
 
         // Burn token
         resetRecord.usedAt = new Date();
@@ -428,6 +458,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
         res.json({ message: "Password updated successfully. All previous sessions revoked." });
     } catch (e) {
+        console.error('[RESET PASSWORD ERROR]', e);
         res.status(500).json({ message: "Reset operation failed.", error: e.message });
     }
 });

@@ -101,6 +101,89 @@ export const sendVerificationEmail = async (to, code) => {
     return true;
 };
 
+export const sendPasswordResetEmail = async (to, resetLink) => {
+    const htmlContent = `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <tr>
+                <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                        <tr>
+                            <td style="background-color: #0047FF; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #FFFFFF; font-size: 12px; font-family: monospace; letter-spacing: 1px;">PASSWORD_RECOVERY_PROTOCOL</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 40px 32px;">
+                                <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Password Reset Requested</h2>
+                                <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
+                                    A password reset sequence was initiated for your CodeSrijan account (${to}). Click the button below to set a new password.
+                                </p>
+                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 24px 0;">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="${resetLink}" target="_blank" style="background-color: #0047FF; color: #FFFFFF; font-weight: 900; text-transform: uppercase; text-decoration: none; padding: 16px 32px; border: 3px solid #141416; display: inline-block; font-size: 16px; letter-spacing: 1px;">
+                                                Reset Password Now
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                <p style="margin: 24px 0 0 0; color: #71717A; font-size: 14px; font-weight: 500; word-break: break-all;">
+                                    Or copy and paste this direct link into your browser:<br/>
+                                    <a href="${resetLink}" style="color: #0047FF;">${resetLink}</a>
+                                </p>
+                                <p style="margin: 16px 0 0 0; color: #71717A; font-size: 13px;">
+                                    This link expires in <strong>60 minutes</strong>. If you did not request a password reset, please ignore this email.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #141416; padding: 24px; text-align: center;">
+                                <p style="margin: 0; color: #A1A1AA; font-size: 12px; font-family: monospace;">CodeSrijan Identity Protection System</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    try {
+        const transporter = getTransporter();
+        if (transporter) {
+            const info = await transporter.sendMail({
+                from: `"CodeSrijan Support" <${FROM_EMAIL}>`,
+                to,
+                subject: 'CodeSrijan [PASSWORD RESET INSTRUCTION]',
+                html: htmlContent
+            });
+            console.log('[SECURE COMMS] Password Reset Email dispatched via Gmail SMTP: %s', info.messageId);
+            return true;
+        }
+    } catch (e) {
+        console.warn('[SECURE COMMS] Gmail SMTP failed for password reset:', e.message);
+    }
+
+    try {
+        const resend = getResend();
+        if (resend) {
+            const { data, error } = await resend.emails.send({
+                from: 'CodeSrijan <onboarding@resend.dev>',
+                to: [to],
+                subject: 'CodeSrijan [PASSWORD RESET INSTRUCTION]',
+                html: htmlContent
+            });
+            if (!error) {
+                console.log('[SECURE COMMS] Password Reset Email dispatched via Resend: %s', data?.id);
+                return true;
+            }
+        }
+    } catch (e) {}
+
+    console.log(`[SECURE COMMS] Password Reset link for ${to}: ${resetLink}`);
+    return true;
+};
+
 export const sendWelcomeEmail = async (to, name, role = 'student') => {
     const htmlContent = `
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
