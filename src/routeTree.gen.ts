@@ -24,7 +24,6 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as EvaluationsRouteImport } from './routes/evaluations'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GalleryRouteImport } from './routes/gallery'
-import { Route as HackathonsRouteImport } from './routes/hackathons'
 import { Route as HighlightsRouteImport } from './routes/highlights'
 import { Route as HostEventRouteImport } from './routes/host-event'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -67,6 +66,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth.forgot-password'
 import { Route as AuthOtpRouteImport } from './routes/auth.otp'
 import { Route as AuthResetPasswordRouteImport } from './routes/auth.reset-password'
+import { Route as HackathonsIndexRouteImport } from './routes/hackathons.index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AdminHackathonsIdRouteImport } from './routes/admin.hackathons.$id'
 import { Route as AdminHackathonsCreateRouteImport } from './routes/admin.hackathons.create'
@@ -147,11 +147,6 @@ const FaqRoute = FaqRouteImport.update({
 const GalleryRoute = GalleryRouteImport.update({
   id: '/gallery',
   path: '/gallery',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HackathonsRoute = HackathonsRouteImport.update({
-  id: '/hackathons',
-  path: '/hackathons',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HighlightsRoute = HighlightsRouteImport.update({
@@ -364,6 +359,11 @@ const AuthResetPasswordRoute = AuthResetPasswordRouteImport.update({
   path: '/auth/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HackathonsIndexRoute = HackathonsIndexRouteImport.update({
+  id: '/hackathons/',
+  path: '/hackathons/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InviteTokenRoute = InviteTokenRouteImport.update({
   id: '/invite/$token',
   path: '/invite/$token',
@@ -411,7 +411,6 @@ export interface FileRoutesByFullPath {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -455,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/hackathons/': typeof HackathonsIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/admin/problems/$id': typeof AdminProblemsIdRoute
@@ -476,7 +476,6 @@ export interface FileRoutesByTo {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -520,6 +519,7 @@ export interface FileRoutesByTo {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin': typeof AdminIndexRoute
+  '/hackathons': typeof HackathonsIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/admin/problems/$id': typeof AdminProblemsIdRoute
@@ -543,7 +543,6 @@ export interface FileRoutesById {
   '/evaluations': typeof EvaluationsRoute
   '/faq': typeof FaqRoute
   '/gallery': typeof GalleryRoute
-  '/hackathons': typeof HackathonsRouteWithChildren
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
   '/leaderboard': typeof LeaderboardRoute
@@ -587,6 +586,7 @@ export interface FileRoutesById {
   '/auth/reset-password': typeof AuthResetPasswordRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/': typeof AdminIndexRoute
+  '/hackathons/': typeof HackathonsIndexRoute
   '/admin/hackathons/$id': typeof AdminHackathonsIdRoute
   '/admin/hackathons/create': typeof AdminHackathonsCreateRoute
   '/admin/problems/$id': typeof AdminProblemsIdRoute
@@ -611,7 +611,6 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
-    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -655,6 +654,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/hackathons/'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/admin/problems/$id'
@@ -676,7 +676,6 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
-    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -720,6 +719,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin'
+    | '/hackathons'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/admin/problems/$id'
@@ -742,7 +742,6 @@ export interface FileRouteTypes {
     | '/evaluations'
     | '/faq'
     | '/gallery'
-    | '/hackathons'
     | '/highlights'
     | '/host-event'
     | '/leaderboard'
@@ -786,6 +785,7 @@ export interface FileRouteTypes {
     | '/auth/reset-password'
     | '/invite/$token'
     | '/admin/'
+    | '/hackathons/'
     | '/admin/hackathons/$id'
     | '/admin/hackathons/create'
     | '/admin/problems/$id'
@@ -809,7 +809,6 @@ export interface RootRouteChildren {
   EvaluationsRoute: typeof EvaluationsRoute
   FaqRoute: typeof FaqRoute
   GalleryRoute: typeof GalleryRoute
-  HackathonsRoute: typeof HackathonsRouteWithChildren
   HighlightsRoute: typeof HighlightsRoute
   HostEventRoute: typeof HostEventRoute
   LeaderboardRoute: typeof LeaderboardRoute
@@ -833,6 +832,7 @@ export interface RootRouteChildren {
   AuthOtpRoute: typeof AuthOtpRoute
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  HackathonsIndexRoute: typeof HackathonsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -940,13 +940,6 @@ declare module '@tanstack/react-router' {
       path: '/gallery'
       fullPath: '/gallery'
       preLoaderRoute: typeof GalleryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/hackathons': {
-      id: '/hackathons'
-      path: '/hackathons'
-      fullPath: '/hackathons'
-      preLoaderRoute: typeof HackathonsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/highlights': {
@@ -1243,6 +1236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthResetPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/hackathons/': {
+      id: '/hackathons/'
+      path: '/hackathons'
+      fullPath: '/hackathons/'
+      preLoaderRoute: typeof HackathonsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/invite/$token': {
       id: '/invite/$token'
       path: '/invite/$token'
@@ -1364,18 +1364,6 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
-interface HackathonsRouteChildren {
-  HackathonsIdRegisterRoute: typeof HackathonsIdRegisterRoute
-}
-
-const HackathonsRouteChildren: HackathonsRouteChildren = {
-  HackathonsIdRegisterRoute: HackathonsIdRegisterRoute,
-}
-
-const HackathonsRouteWithChildren = HackathonsRoute._addFileChildren(
-  HackathonsRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -1392,7 +1380,6 @@ const rootRouteChildren: RootRouteChildren = {
   EvaluationsRoute: EvaluationsRoute,
   FaqRoute: FaqRoute,
   GalleryRoute: GalleryRoute,
-  HackathonsRoute: HackathonsRouteWithChildren,
   HighlightsRoute: HighlightsRoute,
   HostEventRoute: HostEventRoute,
   LeaderboardRoute: LeaderboardRoute,
@@ -1416,6 +1403,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthOtpRoute: AuthOtpRoute,
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
+  HackathonsIndexRoute: HackathonsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

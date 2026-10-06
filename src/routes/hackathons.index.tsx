@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/hackathons")({
+export const Route = createFileRoute("/hackathons/")({
     component: HackathonsHubPage,
 });
 
