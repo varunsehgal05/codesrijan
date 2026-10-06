@@ -9,7 +9,7 @@ export const Route = createFileRoute("/admin/support")({
 
 function AdminSupport() {
   const [tickets, setTickets] = useState<any[]>([]);
-  const { currentUser } = useAppStore();
+  const { currentUser, users } = useAppStore();
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
   const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -40,19 +40,6 @@ function AdminSupport() {
       await loadTickets();
     } catch (e) {
       alert("Failed to update status");
-    }
-  };
-
-  const handleCloneTicket = async (id: string) => {
-    try {
-      const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${BASE}/admin/support/${id}/clone`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      alert("SUCCESS: Support ticket cloned.");
-      await loadTickets();
-    } catch (e) {
-      alert("Failed to clone ticket.");
     }
   };
 
@@ -111,13 +98,15 @@ function AdminSupport() {
               <tbody>
                 {tickets.map(ticket => {
                   const userTicketCount = tickets.filter(t => t.userId === ticket.userId).length;
+                  const ticketUser = users.find(u => u.id === ticket.userId);
                   return (
                   <tr key={ticket.id} className="border-b-2 border-ink-black hover:bg-surface-container">
                     <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">{ticket.id.substring(0,12)}</td>
                     <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">
-                      {ticket.userId.substring(0,8)} 
-                      <span className="ml-2 inline-block bg-surface-container-high px-2 py-0.5 rounded text-error font-bold" title="Total tickets created by this user">
-                         {userTicketCount}
+                      <div className="font-bold">{ticketUser ? ticketUser.name : ticket.userId.substring(0,8)}</div>
+                      <div className="opacity-70 text-[10px]">{ticketUser ? ticketUser.email : 'Unknown'}</div>
+                      <span className="mt-1 inline-block bg-surface-container-high px-2 py-0.5 rounded text-error font-bold" title="Total tickets created by this user">
+                         {userTicketCount} TICKETS
                       </span>
                     </td>
                     <td className="p-4 border-r-2 border-ink-black font-label-bold">{ticket.subject}</td>
@@ -144,9 +133,6 @@ function AdminSupport() {
                         <Link to="/chat" search={{ conv: ticket.conversationId }} className="bg-electric-blue text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all">
                           Comms
                         </Link>
-                        <button onClick={() => handleCloneTicket(ticket.id)} className="bg-stark-black text-[#FFD700] px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all">
-                          Clone
-                        </button>
                         <button onClick={() => handleDeleteTicket(ticket.id)} className="bg-error text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:bg-stark-black transition-all">
                           Remove
                         </button>

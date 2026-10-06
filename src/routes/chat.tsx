@@ -19,7 +19,7 @@ const formatTime = (isoString?: string) => {
 };
 
 function ChatDashboard() {
-  const { currentUser } = useAppStore();
+  const { currentUser, users } = useAppStore();
   const navigate = useNavigate();
 
   const [conversations, setConversations] = useState<any[]>([]);
@@ -511,11 +511,11 @@ function ChatDashboard() {
                   <p className="font-label-bold text-[10px] text-text-muted uppercase tracking-widest mb-1.5">REQUESTER</p>
                   <div className="flex items-center gap-3 bg-surface p-3 border-2 border-ink-black">
                      <div className="w-8 h-8 bg-stark-black rounded-full text-pure-white flex items-center justify-center font-bold">
-                        {activeConv.supportTicket.userId.substring(0,1).toUpperCase()}
+                        {users.find(u => u.id === activeConv.supportTicket.userId)?.name?.substring(0,1).toUpperCase() || activeConv.supportTicket.userId.substring(0,1).toUpperCase()}
                      </div>
                      <div>
-                        <p className="font-code-snippet text-xs font-bold">{activeConv.supportTicket.userId.substring(0,8)}</p>
-                        <p className="font-label-bold text-[10px] opacity-70">STUDENT</p>
+                        <p className="font-code-snippet text-xs font-bold">{users.find(u => u.id === activeConv.supportTicket.userId)?.name || activeConv.supportTicket.userId.substring(0,8)}</p>
+                        <p className="font-label-bold text-[10px] opacity-70 truncate max-w-[150px]">{users.find(u => u.id === activeConv.supportTicket.userId)?.email || 'STUDENT'}</p>
                      </div>
                   </div>
                 </div>
