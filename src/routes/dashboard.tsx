@@ -200,14 +200,7 @@ function DashboardPage() {
                                 {userTeam && <span className="text-xs bg-success text-on-primary px-2 py-1 font-label-bold">ACTIVE ALLIANCE</span>}
                             </h2>
 
-                            {!(registrations || []).some(r => r.hackathonId === activeEvent?.id) ? (
-                                <div className="bg-electric-blue text-on-primary p-6 brutal-border">
-                                    <span className="material-symbols-outlined text-4xl mb-2">how_to_reg</span>
-                                    <h3 className="font-label-bold text-xl uppercase mb-2">REGISTRATION REQUIRED</h3>
-                                    <p className="font-body-md mb-6">You are not registered for the {activeEvent?.id || 'Active'} Hackathon. Registration is mandatory to proceed.</p>
-                                    <a href={`/hackathons/${activeEvent?.id}/register`} className="bg-white text-ink-black py-3 px-6 font-label-bold text-center block brutal-hover shadow-black drop-shadow-xl hover:-translate-y-1">ENROLL IN THE MAINFRAME</a>
-                                </div>
-                            ) : !userTeam ? (
+                            {!userTeam ? (
                                 <div className="bg-error text-on-primary p-6 brutal-border">
                                     <span className="material-symbols-outlined text-4xl mb-2">warning</span>
                                     <h3 className="font-label-bold text-xl uppercase mb-2">LONE WOLF DETECTED</h3>
