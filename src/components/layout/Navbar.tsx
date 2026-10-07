@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { useAppStore } from "../../lib/store";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { NotificationBell } from "../NotificationBell";
 
 export function Navbar() {
     const { currentUser, isLoaded } = useAppStore();
@@ -81,6 +82,7 @@ export function Navbar() {
                                     Admin Panel
                                 </Link>
                             )}
+                            <NotificationBell />
                             <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
                                 Go to Dashboard
                             </Link>

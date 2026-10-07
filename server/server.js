@@ -1020,6 +1020,17 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
             receiverId
         });
         await invite.save();
+        
+        const notification = new Notification({
+            id: `notif-${Date.now()}`,
+            userId: receiverId,
+            title: 'Squad Invitation',
+            message: `You have been invited to join the squad (${team.name}).`,
+            type: 'team_invite',
+            relatedId: invite.id
+        });
+        await notification.save();
+
         res.json(invite);
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -1087,6 +1098,17 @@ app.post('/api/teams/:id/request', requireAuth, requireRole(['student', 'admin']
             status: 'pending'
         });
         await reqData.save();
+
+        const notification = new Notification({
+            id: `notif-${Date.now()}`,
+            userId: team.leaderId,
+            title: 'New Join Request',
+            message: `${req.user.name || 'A user'} wants to join your squad (${team.name}).`,
+            type: 'join_request',
+            relatedId: reqData.id
+        });
+        await notification.save();
+
         res.json(reqData);
     } catch (e) { res.status(500).json({ error: e.message }) }
 });
@@ -1125,8 +1147,28 @@ app.post('/api/teams/requests/:id/:action', requireAuth, requireRole(['student',
             await student.save();
 
             request.status = 'approved';
+            
+            const notification = new Notification({
+                id: `notif-${Date.now()}`,
+                userId: request.userId,
+                title: 'Join Request Accepted',
+                message: `You have been accepted into the squad (${team.name}).`,
+                type: 'system',
+                relatedId: team.id
+            });
+            await notification.save();
         } else {
             request.status = 'rejected';
+
+            const notification = new Notification({
+                id: `notif-${Date.now()}`,
+                userId: request.userId,
+                title: 'Join Request Rejected',
+                message: `Your request to join the squad (${team.name}) was rejected.`,
+                type: 'system',
+                relatedId: team.id
+            });
+            await notification.save();
         }
         await request.save();
         res.json({ message: `Signature ${action}ed.` });
