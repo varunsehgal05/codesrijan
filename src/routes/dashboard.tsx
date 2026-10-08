@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/dashboard")({
     component: DashboardPage,
@@ -66,7 +67,7 @@ function DashboardPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             window.location.reload();
-        } catch (e: any) { alert(e.response?.data?.message || "Failed to kick."); }
+        } catch (e: any) { toast.error(e.response?.data?.message || "Failed to kick."); }
     };
 
     const handleLeaveTeam = async () => {
@@ -79,7 +80,7 @@ function DashboardPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             window.location.reload();
-        } catch (e: any) { alert(e.response?.data?.message || "Leave protocol denied."); }
+        } catch (e: any) { toast.error(e.response?.data?.message || "Leave protocol denied."); }
     };
 
     const handleDissolveTeam = async () => {
@@ -92,7 +93,7 @@ function DashboardPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             window.location.reload();
-        } catch (e: any) { alert(e.response?.data?.message || "Dissolve sequence interrupted."); }
+        } catch (e: any) { toast.error(e.response?.data?.message || "Dissolve sequence interrupted."); }
     };
 
     const handleActionRequest = async (reqId: string, action: 'accept' | 'reject') => {
@@ -104,7 +105,7 @@ function DashboardPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             window.location.reload();
-        } catch (e: any) { alert(e.response?.data?.message || "Failed to process request."); }
+        } catch (e: any) { toast.error(e.response?.data?.message || "Failed to process request."); }
     };
 
     // Calculate Rank

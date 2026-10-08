@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/recruitment")({
   component: AdminRecruitment,
@@ -11,7 +12,7 @@ function AdminRecruitment() {
   const mockMatch = () => {
       setMatching(true);
       setTimeout(() => {
-          alert("Auto-matching algorithm complete. 0 orphans found.");
+          toast("Auto-matching algorithm complete. 0 orphans found.");
           setMatching(false);
       }, 1500);
   };

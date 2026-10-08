@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE } from "../lib/utils";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/evaluations")({
     component: EvaluationsPage,
@@ -74,7 +75,7 @@ function EvaluationsPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            alert(`Evaluation submitted for ${activeSub?.projectTitle}!\nTotal Score: ${totalScore}/50`);
+            toast(`Evaluation submitted for ${activeSub?.projectTitle}!\nTotal Score: ${totalScore}/50`);
             setSelectedSub(null);
             setScores({
                 innovation: { score: 0, max: 10, comment: '' },
@@ -87,7 +88,7 @@ function EvaluationsPage() {
             // Remove from queue visually
             setSubmissions(prev => prev.filter(s => s.id !== activeSub.id));
         } catch (err: any) {
-            alert(err.response?.data?.message || "Error transmitting evaluation matrix.");
+            toast.error(err.response?.data?.message || "Error transmitting evaluation matrix.");
         }
     };
 

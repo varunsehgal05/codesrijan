@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/problems")({
   component: Page12,
@@ -60,20 +61,20 @@ function Page12() {
 
   const selectProblem = async (problemId: string) => {
     if (!userTeam) {
-      return alert("You must join a squad before selecting a problem statement.");
+      return toast("You must join a squad before selecting a problem statement.");
     }
     if (userTeam.leaderId !== currentUser.id) {
-      return alert("Only squad leaders can deploy the problem selection directive.");
+      return toast("Only squad leaders can deploy the problem selection directive.");
     }
     if (userTeam.problemId) {
       if (!confirm("Your squad already has an active tracking vector. Switching vectors will overwrite your objective. Proceed?")) return;
     }
     try {
       await assignProblem(userTeam.id, problemId);
-      alert("Problem Statement Locked. Return to Dashboard workspace to begin.");
+      toast("Problem Statement Locked. Return to Dashboard workspace to begin.");
       window.location.reload(); // Force full state refresh
     } catch (e: any) {
-      alert(e.response?.data?.message || e.message || "Failed to select problem.");
+      toast.error(e.response?.data?.message || e.message || "Failed to select problem.");
     }
   };
 

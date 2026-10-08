@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/settings")({
     component: SettingsPage,
@@ -24,11 +25,11 @@ function SettingsPage() {
         setLoading(true);
         try {
             await axios.post(`${API_URL}/auth/sessions/revoke`);
-            alert("All sessions have been forcibly terminated.");
+            toast("All sessions have been forcibly terminated.");
             localStorage.removeItem("codesrijan_auth_token");
             window.location.href = '/login';
         } catch (e) {
-            alert("System fault during termination sequence.");
+            toast("System fault during termination sequence.");
         } finally {
             setLoading(false);
         }

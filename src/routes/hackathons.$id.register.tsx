@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/hackathons/$id/register")({
     component: HackathonRegistrationPage,
@@ -27,10 +28,10 @@ function HackathonRegistrationPage() {
         if (!isLoaded) return;
         
         if (!currentUser) {
-            alert("You must be logged in as a student to register for a hackathon.");
+            toast("You must be logged in as a student to register for a hackathon.");
             navigate({ to: '/login' });
         } else if (currentUser.role !== 'student') {
-            alert("Only students can register to participate.");
+            toast("Only students can register to participate.");
             window.history.back();
         }
     }, [currentUser, isLoaded, navigate]);
@@ -98,7 +99,17 @@ function HackathonRegistrationPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Branch Specialization</label>
-                            <input type="text" required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors" value={branch} onChange={(e) => setBranch(e.target.value)} />
+                            <select required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors" value={branch} onChange={(e) => setBranch(e.target.value)}>
+                                <option value="">Select Branch</option>
+                                <option value="CSE">Computer Science & Engineering (CSE)</option>
+                                <option value="IT">Information Technology (IT)</option>
+                                <option value="ECE">Electronics & Communication (ECE)</option>
+                                <option value="EE">Electrical Engineering (EE)</option>
+                                <option value="ME">Mechanical Engineering (ME)</option>
+                                <option value="CE">Civil Engineering (CE)</option>
+                                <option value="BCA/MCA">BCA / MCA</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
 
                         <div className="space-y-2">

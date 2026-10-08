@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/payment")({
     component: PaymentPage,
@@ -68,7 +69,7 @@ function PaymentPage() {
                             </div>
                             <h3 className="font-headline-md uppercase text-ink-black mb-1">Cards / Netbanking</h3>
                             <p className="font-body-sm text-text-muted">Debit, Credit, Wallets</p>
-                            <button onClick={() => alert("Redirecting to Secure Payment Gateway...")} className="mt-4 w-full bg-ink-black text-white font-button-text py-2 neo-border hover:bg-surface-variant hover:text-ink-black transition-colors">
+                            <button onClick={() => toast("Redirecting to Secure Payment Gateway...")} className="mt-4 w-full bg-ink-black text-white font-button-text py-2 neo-border hover:bg-surface-variant hover:text-ink-black transition-colors">
                                 Proceed to Gateway
                             </button>
                         </div>

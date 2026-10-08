@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/support")({
   component: AdminSupport,
@@ -39,7 +40,7 @@ function AdminSupport() {
       );
       await loadTickets();
     } catch (e) {
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 
@@ -50,10 +51,10 @@ function AdminSupport() {
       await axios.delete(`${BASE}/admin/support/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("SUCCESS: Ticket permanently removed.");
+      toast.success("SUCCESS: Ticket permanently removed.");
       await loadTickets();
     } catch (e) {
-      alert("Failed to remove ticket.");
+      toast.error("Failed to remove ticket.");
     }
   };
 

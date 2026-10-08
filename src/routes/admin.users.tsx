@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/users")({
     component: AdminUsers,
@@ -70,10 +71,10 @@ function AdminUsers() {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             await axios.post(`${API_URL}/admin/users`, formData, { headers: { Authorization: `Bearer ${token}` } });
-            alert("SUCCESS: Operative successfully injected into the matrix.");
+            toast.success("SUCCESS: Operative successfully injected into the matrix.");
             window.location.reload();
         } catch (e: any) {
-            alert(`FAIL: ${e.response?.data?.message || e.message}`);
+            toast.error(`FAIL: ${e.response?.data?.message || e.message}`);
         } finally {
             setLoading(false);
         }
@@ -85,10 +86,10 @@ function AdminUsers() {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             await axios.put(`${API_URL}/admin/users/${editingUser.id}`, formData, { headers: { Authorization: `Bearer ${token}` } });
-            alert(`SUCCESS: Modifications applied to ${editingUser.id}`);
+            toast.success(`SUCCESS: Modifications applied to ${editingUser.id}`);
             window.location.reload();
         } catch (e: any) {
-            alert(`FAIL: ${e.response?.data?.message || e.message}`);
+            toast.error(`FAIL: ${e.response?.data?.message || e.message}`);
         } finally {
             setLoading(false);
         }
@@ -110,10 +111,10 @@ function AdminUsers() {
             await axios.delete(`${API_URL}/admin/users/${user.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert(`SUCCESS: Account ${user.email} permanently purged from database.`);
+            toast.success(`SUCCESS: Account ${user.email} permanently purged from database.`);
             window.location.reload();
         } catch (e: any) {
-            alert(`FAIL to delete account: ${e.response?.data?.message || e.message}`);
+            toast.error(`FAIL to delete account: ${e.response?.data?.message || e.message}`);
         } finally {
             setLoading(false);
         }
@@ -150,11 +151,11 @@ function AdminUsers() {
                     })
                 )
             );
-            alert(`SUCCESS: ${selectedUserIds.length} participant account(s) permanently purged.`);
+            toast.success(`SUCCESS: ${selectedUserIds.length} participant account(s) permanently purged.`);
             setSelectedUserIds([]);
             window.location.reload();
         } catch (e: any) {
-            alert(`Bulk deletion process completed with warnings: ${e.message}`);
+            toast(`Bulk deletion process completed with warnings: ${e.message}`);
             window.location.reload();
         } finally {
             setLoading(false);
@@ -261,7 +262,7 @@ function AdminUsers() {
                                 <span className="text-xs text-on-surface-variant font-bold uppercase">Email Address</span>
                                 <div className="flex items-center justify-between">
                                     <span className="font-bold text-stark-black break-all">{infoUser.email}</span>
-                                    <button onClick={() => { navigator.clipboard.writeText(infoUser.email); alert("Email copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
+                                    <button onClick={() => { navigator.clipboard.writeText(infoUser.email); toast("Email copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
                                 </div>
                             </div>
                             <div className="bg-surface-container p-4 brutal-border flex flex-col gap-1 col-span-1 md:col-span-2">
@@ -269,7 +270,7 @@ function AdminUsers() {
                                 <div className="flex items-center justify-between">
                                     <span className="font-bold text-stark-black">{infoUser.phone}</span>
                                     {infoUser.phone !== 'Not provided' && (
-                                        <button onClick={() => { navigator.clipboard.writeText(infoUser.phone); alert("Phone copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
+                                        <button onClick={() => { navigator.clipboard.writeText(infoUser.phone); toast("Phone copied!"); }} className="text-xs bg-stark-black text-pure-white px-2 py-1 brutal-border">COPY</button>
                                     )}
                                 </div>
                             </div>

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/support")({
   component: SupportPage,
@@ -54,7 +55,7 @@ function SupportPage() {
       setSubject("");
       setDescription("");
     } catch (e) {
-      alert("Failed to submit ticket.");
+      toast.error("Failed to submit ticket.");
     } finally {
       setLoading(false);
     }

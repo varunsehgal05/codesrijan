@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/")({
     component: AdminTelemetry,
@@ -181,7 +182,7 @@ function AdminTelemetry() {
                                     <h4 className="font-headline-md text-ink-black uppercase">{activeEvent ? activeEvent.name : 'NO ACTIVE EVENT'}</h4>
                                     <p className="font-body-sm text-text-muted">{activeEvent ? `Status: ${activeEvent.status}` : 'Configure a Hackathon to begin.'}</p>
                                 </div>
-                                <button onClick={() => alert("Advancing to the next event stage...")} className="bg-electric-blue text-white p-2 border-2 border-ink-black hover:-translate-y-1 transition-transform uppercase font-label-bold">
+                                <button onClick={() => toast("Advancing to the next event stage...")} className="bg-electric-blue text-white p-2 border-2 border-ink-black hover:-translate-y-1 transition-transform uppercase font-label-bold">
                                     Next Stage
                                 </button>
                             </div>
@@ -195,7 +196,7 @@ function AdminTelemetry() {
                                     <div key={`s-${team.id}`} className="flex justify-between items-center bg-surface-bright p-2 border border-ink-black">
                                         <span className="font-body-sm text-ink-black">Team: {team.name}</span>
                                         <div className="flex gap-2">
-                                            <button onClick={() => alert(`Opening repo: ${team.repositoryUrl}`)} className="bg-[#00FF00] text-ink-black px-2 border-2 border-ink-black text-xs font-bold">REPO</button>
+                                            <button onClick={() => toast(`Opening repo: ${team.repositoryUrl}`)} className="bg-[#00FF00] text-ink-black px-2 border-2 border-ink-black text-xs font-bold">REPO</button>
                                         </div>
                                     </div>
                                 ))}

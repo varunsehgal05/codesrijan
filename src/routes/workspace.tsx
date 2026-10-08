@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/workspace")({
   component: WorkspaceHUD,
@@ -61,7 +62,7 @@ function WorkspaceHUD() {
       setIsRequestingMentor(false);
       setMentorRequestForm({ topic: '', description: '' });
       fetchMentorRequests();
-    } catch (e: any) { alert(e.response?.data?.message || "Failed to request mentor."); }
+    } catch (e: any) { toast.error(e.response?.data?.message || "Failed to request mentor."); }
   };
 
   const handleTaskUpdate = async (e: React.FormEvent) => {
@@ -75,7 +76,7 @@ function WorkspaceHUD() {
       setEditingTask(null);
       refetchData();
     } catch (err: any) {
-      alert(`Error updating task: ${err.message}`);
+      toast.error(`Error updating task: ${err.message}`);
     }
   };
 
@@ -116,7 +117,7 @@ function WorkspaceHUD() {
   const handleTaskCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -128,11 +129,11 @@ function WorkspaceHUD() {
       );
       setNewTaskTitle("");
       await refetchData(); // Re-poll tasks automatically
-    } catch (e: any) { alert(e.response?.data?.message || "Task generation failed."); }
+    } catch (e: any) { toast.error(e.response?.data?.message || "Task generation failed."); }
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -142,11 +143,11 @@ function WorkspaceHUD() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await refetchData();
-    } catch (e) { alert("State transmission fault."); }
+    } catch (e) { toast("State transmission fault."); }
   };
 
   const deleteTask = async (taskId: string) => {
-    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -155,11 +156,11 @@ function WorkspaceHUD() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await refetchData();
-    } catch (e: any) { alert(e.response?.data?.message || "Destruction protocol fault."); }
+    } catch (e: any) { toast.error(e.response?.data?.message || "Destruction protocol fault."); }
   };
 
   const handleSaveLinks = async () => {
-    if (userTeam.isSubmitted) return alert("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -169,14 +170,14 @@ function WorkspaceHUD() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await refetchData();
-      alert("Payload links safely registered.");
-    } catch (e) { alert("Failed to store structural payloads."); }
+      toast("Payload links safely registered.");
+    } catch (e) { toast.error("Failed to store structural payloads."); }
   };
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!submissionForm.githubLink && !submissionForm.figmaLink && !submissionForm.demoLink) {
-      return alert("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
+      return toast("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
     }
     if (!confirm("ABSOLUTE WARNING: Transmitting final payload permanently LOCKS this workspace. No operatives may leave, and tasks cannot be altered. Initiate sequence?")) return;
 
@@ -194,7 +195,7 @@ function WorkspaceHUD() {
       );
       setIsSubmitting(false);
       await refetchData();
-    } catch (e: any) { alert(e.response?.data?.message || "Transmission completely denied by server."); }
+    } catch (e: any) { toast.error(e.response?.data?.message || "Transmission completely denied by server."); }
   };
 
   const kanbanColumns = ['todo', 'in-progress', 'review', 'completed'];

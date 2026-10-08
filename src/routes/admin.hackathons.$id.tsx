@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-r
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 
 const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
@@ -47,7 +48,7 @@ function AdminHackathonDetail() {
             await loadData();
             await refetchData(); // Sync global state
         } catch (err: any) {
-            alert(err.response?.data?.message || "Action failed.");
+            toast.error(err.response?.data?.message || "Action failed.");
         }
     };
 

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/gallery")({
   component: AdminGallery,
@@ -11,7 +12,7 @@ function AdminGallery() {
   const mockUpload = () => {
       setLoadingId("uploading");
       setTimeout(() => {
-          alert("Media pipeline currently offline. Please use CLI bucket upload.");
+          toast("Media pipeline currently offline. Please use CLI bucket upload.");
           setLoadingId(null);
       }, 1000);
   };

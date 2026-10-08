@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/profile")({
   component: Page7,
@@ -44,7 +45,7 @@ function Page7() {
         setIsEditing(false);
     } catch (err) {
         console.error("Failed to save profile", err);
-        alert("Failed to save profile.");
+        toast.error("Failed to save profile.");
     } finally {
         setSaving(false);
     }

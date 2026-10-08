@@ -2,6 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/mentor")({
   component: Page2,
@@ -85,12 +86,12 @@ function Page2() {
                       />
                       <button 
                         onClick={async () => {
-                          if (!meetLink || activeReqId !== req.id) return alert("Provide a meet link first!");
+                          if (!meetLink || activeReqId !== req.id) return toast("Provide a meet link first!");
                           try {
                             const token = localStorage.getItem("codesrijan_auth_token");
                             await axios.post(`${API_URL}/mentor/requests/${req.id}/accept`, { meetLink }, { headers: { Authorization: `Bearer ${token}` } });
                             window.location.reload();
-                          } catch(e) { alert("Failed to accept"); }
+                          } catch(e) { toast.error("Failed to accept"); }
                         }}
                         className="bg-electric-blue text-white px-3 font-bold hover:bg-black transition-colors"
                       >

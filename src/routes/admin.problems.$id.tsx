@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/problems/$id")({
     component: AdminProblemDetail,
@@ -45,7 +46,7 @@ function AdminProblemDetail() {
             );
             fetchProblem();
         } catch (e: any) {
-            alert("Publish execution failed.");
+            toast.error("Publish execution failed.");
         }
     };
 
@@ -60,7 +61,7 @@ function AdminProblemDetail() {
             );
             fetchProblem();
         } catch (e: any) {
-            alert("Lock execution failed.");
+            toast.error("Lock execution failed.");
         }
     };
 
@@ -75,7 +76,7 @@ function AdminProblemDetail() {
             });
             navigate({ to: '/admin/problems' });
         } catch (e: any) {
-            alert("Deletion aborted.");
+            toast("Deletion aborted.");
         }
     };
 

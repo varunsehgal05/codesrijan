@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/certificates")({
     component: CertificatesPage,
@@ -38,7 +39,7 @@ function CertificatesPage() {
 
     const handleGenerate = async () => {
         if (!isEligible) {
-            alert("You need to submit a project before generating a certificate!");
+            toast("You need to submit a project before generating a certificate!");
             return;
         }
 
@@ -47,9 +48,9 @@ function CertificatesPage() {
             const res = await axios.post(`${API_URL}/certificates/generate`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            alert(`Certificate Generated!\n\nName: ${res.data.userName}\nID: ${res.data.id}\n(Mock PDF Download Triggered)`);
+            toast(`Certificate Generated!\n\nName: ${res.data.userName}\nID: ${res.data.id}\n(Mock PDF Download Triggered)`);
         } catch (err: any) {
-            alert(err.response?.data?.message || "Error generating cryptographic certificate block.");
+            toast.error(err.response?.data?.message || "Error generating cryptographic certificate block.");
         }
     };
 

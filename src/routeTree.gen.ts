@@ -390,9 +390,9 @@ const AdminProblemsCreateRoute = AdminProblemsCreateRouteImport.update({
   getParentRoute: () => AdminProblemsRoute,
 } as any)
 const HackathonsIdRegisterRoute = HackathonsIdRegisterRouteImport.update({
-  id: '/$id/register',
-  path: '/$id/register',
-  getParentRoute: () => HackathonsRoute,
+  id: '/hackathons/$id/register',
+  path: '/hackathons/$id/register',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -833,6 +833,7 @@ export interface RootRouteChildren {
   AuthResetPasswordRoute: typeof AuthResetPasswordRoute
   InviteTokenRoute: typeof InviteTokenRoute
   HackathonsIndexRoute: typeof HackathonsIndexRoute
+  HackathonsIdRegisterRoute: typeof HackathonsIdRegisterRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1280,10 +1281,10 @@ declare module '@tanstack/react-router' {
     }
     '/hackathons/$id/register': {
       id: '/hackathons/$id/register'
-      path: '/$id/register'
+      path: '/hackathons/$id/register'
       fullPath: '/hackathons/$id/register'
       preLoaderRoute: typeof HackathonsIdRegisterRouteImport
-      parentRoute: typeof HackathonsRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -1404,6 +1405,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthResetPasswordRoute: AuthResetPasswordRoute,
   InviteTokenRoute: InviteTokenRoute,
   HackathonsIndexRoute: HackathonsIndexRoute,
+  HackathonsIdRegisterRoute: HackathonsIdRegisterRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

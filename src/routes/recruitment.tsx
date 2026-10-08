@@ -2,6 +2,7 @@ import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/recruitment")({
   component: RecruitmentMatrix,
@@ -82,7 +83,7 @@ function RecruitmentMatrix() {
       await axios.post(`${API_URL}/teams/${teamId}/request`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Join signature transmitted! Await Squad Leader approval.");
+      toast("Join signature transmitted! Await Squad Leader approval.");
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to transmit request.");
     } finally {
@@ -98,7 +99,7 @@ function RecruitmentMatrix() {
       await axios.post(`${API_URL}/teams/${currentUser.teamId}/invite`, { receiverId: userId }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert("Invite dispatched to Operative.");
+      toast("Invite dispatched to Operative.");
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to dispatch invite.");
     } finally {

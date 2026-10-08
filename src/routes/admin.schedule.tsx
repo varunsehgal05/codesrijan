@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/schedule")({
     component: AdminSchedule,
@@ -26,7 +27,7 @@ function AdminSchedule() {
                     <div className="border-l-4 border-error pl-4">
                         <p className="font-bold">Round 2: Evaluation</p>
                         <p className="font-code-snippet text-xs opacity-75 text-error font-bold">ACTIVE NOW</p>
-                        <button onClick={() => alert("Closing Round 2 Submissions...")} className="bg-destructive text-white px-3 py-1 mt-2 font-label-caps border-2 border-ink-black hover:-translate-y-1 transition-transform">
+                        <button onClick={() => toast("Closing Round 2 Submissions...")} className="bg-destructive text-white px-3 py-1 mt-2 font-label-caps border-2 border-ink-black hover:-translate-y-1 transition-transform">
                             FORCE CLOSE
                         </button>
                     </div>

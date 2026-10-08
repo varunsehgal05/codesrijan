@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/team")({
   component: Page6,
@@ -46,8 +47,8 @@ function Page6() {
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName || !currentUser) return;
-    if (!selectedHackathon) return alert("Select a hackathon to form a squad in.");
-    if (!selectedProblem) return alert("Select a problem statement.");
+    if (!selectedHackathon) return toast("Select a hackathon to form a squad in.");
+    if (!selectedProblem) return toast("Select a problem statement.");
     createTeam(newTeamName, currentUser.id, selectedHackathon, selectedProblem);
   };
 
@@ -66,7 +67,7 @@ function Page6() {
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert("Failed to confirm invitation");
+      toast.error("Failed to confirm invitation");
     }
   };
 
@@ -80,7 +81,7 @@ function Page6() {
       await refetchData();
       window.location.reload();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to leave");
+      toast.error(err.response?.data?.message || "Failed to leave");
     }
   };
 
@@ -94,7 +95,7 @@ function Page6() {
       await refetchData();
       window.location.reload();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to transfer");
+      toast.error(err.response?.data?.message || "Failed to transfer");
     }
   };
 
@@ -107,14 +108,14 @@ function Page6() {
       await refetchData();
       window.location.reload();
     } catch (err: any) {
-      alert(err.response?.data?.message || "Failed to lock/unlock");
+      toast.error(err.response?.data?.message || "Failed to lock/unlock");
     }
   };
 
   const copyInvite = () => {
      const link = `${window.location.origin}/invite/${currentTeam?.id}`;
      navigator.clipboard.writeText(link);
-     alert("Invite link copied!");
+     toast("Invite link copied!");
   };
 
   const actOnRequest = async (reqId: string, action: 'accept' | 'reject') => {
@@ -126,7 +127,7 @@ function Page6() {
       window.location.reload();
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || `Failed to ${action} request`);
+      toast.error(err.response?.data?.message || `Failed to ${action} request`);
     }
   };
 
