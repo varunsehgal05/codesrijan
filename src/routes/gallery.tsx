@@ -12,19 +12,24 @@ export const Route = createFileRoute("/gallery")({
 });
 
 function Page3() {
-  const [gallery, setGallery] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState<any[]>([]);
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
   useEffect(() => {
+    // Fetch media gallery (optional mock or real)
     axios.get(`${API_URL}/gallery`)
+      .then(res => { setGallery(res.data); })
+      .catch(err => { console.error("No media gallery"); });
+
+    // Fetch submitted projects
+    axios.get(`${API_URL}/gallery/projects`)
       .then(res => {
-        setGallery(res.data);
+        setProjects(res.data);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Failed to load gallery");
+        console.error("Failed to load projects");
         setLoading(false);
       });
   }, [API_URL]);
@@ -104,49 +109,41 @@ function Page3() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Project 1 */}
-            <div className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 group cursor-pointer hover:-translate-y-2 transition-transform">
-              <div className="aspect-video bg-ink-black flex items-center justify-center p-4 w-full">
-                <span className="material-symbols-outlined text-[64px] text-electric-blue">public</span>
+            {loading ? (
+              <div className="col-span-full text-center font-mono opacity-50 py-20">[LOADING PROJECTS...]</div>
+            ) : projects.length === 0 ? (
+              <div className="col-span-full text-center bg-zinc-200 border-2 border-stark-black p-12">
+                <span className="material-symbols-outlined text-4xl mb-4">public_off</span>
+                <h2 className="font-headline-md text-ink-black uppercase">No Projects Yet</h2>
+                <p className="font-mono text-zinc-500 mt-2">Projects will appear here once teams lock in their final submissions.</p>
               </div>
-              <div>
-                <h3 className="font-headline-md text-ink-black uppercase mb-1">NeoNet</h3>
-                <p className="font-body-sm text-text-muted">A fully decentralized peer-to-peer voting mechanism.</p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <span className="font-label-caps text-[10px] bg-electric-blue text-white px-2 py-0.5 border border-ink-black">1st Runner Up</span>
-                <span className="font-label-caps text-[10px] bg-white text-ink-black px-2 py-0.5 border border-ink-black">Web3</span>
-              </div>
-            </div>
-
-            {/* Project 2 */}
-            <div className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 group cursor-pointer hover:-translate-y-2 transition-transform">
-              <div className="aspect-video bg-[#FFE100] flex items-center justify-center p-4 border-2 border-ink-black w-full">
-                <span className="material-symbols-outlined text-[64px] text-ink-black">psychology</span>
-              </div>
-              <div>
-                <h3 className="font-headline-md text-ink-black uppercase mb-1">BrainWave AI</h3>
-                <p className="font-body-sm text-text-muted">Predictive models for hardware failure utilizing local LLMs.</p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <span className="font-label-caps text-[10px] bg-[#FFA500] text-ink-black px-2 py-0.5 border border-ink-black">Winner: Best AI</span>
-                <span className="font-label-caps text-[10px] bg-white text-ink-black px-2 py-0.5 border border-ink-black">Machine Learning</span>
-              </div>
-            </div>
-
-            {/* Project 3 */}
-            <div className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 group cursor-pointer hover:-translate-y-2 transition-transform">
-              <div className="aspect-video bg-electric-blue flex items-center justify-center p-4 border-2 border-ink-black w-full">
-                <span className="material-symbols-outlined text-[64px] text-white">satellite_alt</span>
-              </div>
-              <div>
-                <h3 className="font-headline-md text-ink-black uppercase mb-1">AstroSync</h3>
-                <p className="font-body-sm text-text-muted">Low-orbit satellite data visualization tool built in Rust.</p>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <span className="font-label-caps text-[10px] bg-white text-ink-black px-2 py-0.5 border border-ink-black">Hardware Interfacing</span>
-              </div>
-            </div>
+            ) : (
+              projects.map((proj, idx) => (
+                <div key={proj.teamId} className="bg-surface neo-border neo-shadow p-6 flex flex-col gap-4 group cursor-pointer hover:-translate-y-2 transition-transform">
+                  <div className={`aspect-video flex items-center justify-center p-4 w-full border-2 border-ink-black ${idx % 3 === 0 ? 'bg-electric-blue text-white' : idx % 3 === 1 ? 'bg-[#FFE100] text-ink-black' : 'bg-ink-black text-white'}`}>
+                    <span className="material-symbols-outlined text-[64px]">{idx % 3 === 0 ? 'satellite_alt' : idx % 3 === 1 ? 'psychology' : 'public'}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-headline-md text-ink-black uppercase mb-1">{proj.teamName}</h3>
+                    <p className="font-body-sm text-text-muted">{proj.description}</p>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <span className="font-label-caps text-[10px] bg-white text-ink-black px-2 py-0.5 border border-ink-black">{proj.problemTitle}</span>
+                  </div>
+                  <div className="mt-auto pt-4 flex gap-2 flex-wrap border-t-2 border-ink-black border-dashed">
+                    {proj.githubLink && (
+                      <a href={proj.githubLink} target="_blank" className="font-label-bold text-xs bg-ink-black text-white px-3 py-1 hover:bg-electric-blue transition-colors">GITHUB</a>
+                    )}
+                    {proj.demoLink && (
+                      <a href={proj.demoLink} target="_blank" className="font-label-bold text-xs bg-ink-black text-white px-3 py-1 hover:bg-electric-blue transition-colors">LIVE DEMO</a>
+                    )}
+                    {proj.figmaLink && (
+                      <a href={proj.figmaLink} target="_blank" className="font-label-bold text-xs bg-ink-black text-white px-3 py-1 hover:bg-electric-blue transition-colors">FIGMA</a>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
       </main>

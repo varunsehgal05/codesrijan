@@ -15,6 +15,16 @@ function WorkspaceHUD() {
   const [githubLink, setGithubLink] = useState("");
   const [figmaLink, setFigmaLink] = useState("");
   const [demoLink, setDemoLink] = useState("");
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionForm, setSubmissionForm] = useState({
+    description: "",
+    technologies: "",
+    githubLink: "",
+    figmaLink: "",
+    demoLink: "",
+    demoVideoUrl: ""
+  });
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
@@ -163,8 +173,9 @@ function WorkspaceHUD() {
     } catch (e) { alert("Failed to store structural payloads."); }
   };
 
-  const handleFinalSubmit = async () => {
-    if (!githubLink && !figmaLink && !demoLink) {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!submissionForm.githubLink && !submissionForm.figmaLink && !submissionForm.demoLink) {
       return alert("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
     }
     if (!confirm("ABSOLUTE WARNING: Transmitting final payload permanently LOCKS this workspace. No operatives may leave, and tasks cannot be altered. Initiate sequence?")) return;
@@ -173,9 +184,15 @@ function WorkspaceHUD() {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
+      const techArray = submissionForm.technologies.split(',').map(t => t.trim()).filter(Boolean);
+
       await axios.post(`${BASE}/teams/${userTeam.id}/submit`,
-        {}, { headers: { Authorization: `Bearer ${token}` } }
+        {
+          ...submissionForm,
+          technologies: techArray
+        }, { headers: { Authorization: `Bearer ${token}` } }
       );
+      setIsSubmitting(false);
       await refetchData();
     } catch (e: any) { alert(e.response?.data?.message || "Transmission completely denied by server."); }
   };
@@ -372,7 +389,17 @@ function WorkspaceHUD() {
                 <span className="material-symbols-outlined text-error text-6xl mb-4 animate-pulse">crisis_alert</span>
                 <h3 className="font-display-lg uppercase text-error text-4xl md:text-3xl mb-4 leading-none mx-auto max-w-[250px]">TRANSMIT PAYLOAD</h3>
                 <p className="font-mono text-sm mb-8 px-4 opacity-80">Execute this action ONLY when your squad has finalized structural construction. This will lockdown your Kanban arrays indefinitely.</p>
-                <button onClick={handleFinalSubmit} className="bg-error text-pure-white font-headline-md uppercase px-8 py-4 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs">
+                <button onClick={() => {
+                  setSubmissionForm({
+                    description: userTeam.description || "",
+                    technologies: "",
+                    githubLink: githubLink,
+                    figmaLink: figmaLink,
+                    demoLink: demoLink,
+                    demoVideoUrl: ""
+                  });
+                  setIsSubmitting(true);
+                }} className="bg-error text-pure-white font-headline-md uppercase px-8 py-4 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs">
                   INITIATE LOCKDOWN
                 </button>
               </>
@@ -385,6 +412,61 @@ function WorkspaceHUD() {
             )}
           </div>
         </div>
+        
+        {/* Rich Submission Modal */}
+        {isSubmitting && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border-4 border-black brutal-shadow max-w-3xl w-full p-8 my-8">
+              <h3 className="font-display-lg text-4xl uppercase mb-6 text-stark-black border-l-8 border-success pl-4">FINAL TRANSMISSION</h3>
+              <p className="font-code-snippet text-on-surface-variant mb-6 uppercase tracking-widest">
+                Prepare your payload for evaluation. This action is irreversible. Provide detailed context for the judges.
+              </p>
+              <form onSubmit={handleFinalSubmit} className="flex flex-col gap-6">
+                
+                <div>
+                  <label className="font-label-bold uppercase text-xs mb-1 block">Project Description (Markdown Supported)</label>
+                  <textarea required placeholder="# How we built it..." value={submissionForm.description} onChange={e => setSubmissionForm({...submissionForm, description: e.target.value})} className="w-full border-2 border-black p-4 bg-surface-container font-code-snippet min-h-[150px]"></textarea>
+                </div>
+
+                <div>
+                  <label className="font-label-bold uppercase text-xs mb-1 block">Technologies Used (Comma separated)</label>
+                  <input required placeholder="React, Node.js, MongoDB, Rust" value={submissionForm.technologies} onChange={e => setSubmissionForm({...submissionForm, technologies: e.target.value})} className="w-full border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="font-label-bold uppercase text-xs mb-1 block">GitHub Repository URL</label>
+                    <input placeholder="https://github.com/..." value={submissionForm.githubLink} onChange={e => setSubmissionForm({...submissionForm, githubLink: e.target.value})} className="w-full border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                  </div>
+                  <div>
+                    <label className="font-label-bold uppercase text-xs mb-1 block">Figma Design URL</label>
+                    <input placeholder="https://figma.com/..." value={submissionForm.figmaLink} onChange={e => setSubmissionForm({...submissionForm, figmaLink: e.target.value})} className="w-full border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                  </div>
+                  <div>
+                    <label className="font-label-bold uppercase text-xs mb-1 block">Live Demo / App URL</label>
+                    <input placeholder="https://app.vercel.com/..." value={submissionForm.demoLink} onChange={e => setSubmissionForm({...submissionForm, demoLink: e.target.value})} className="w-full border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                  </div>
+                  <div>
+                    <label className="font-label-bold uppercase text-xs mb-1 block">Pitch Video (YouTube/Loom URL)</label>
+                    <input placeholder="https://youtube.com/watch?v=..." value={submissionForm.demoVideoUrl} onChange={e => setSubmissionForm({...submissionForm, demoVideoUrl: e.target.value})} className="w-full border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                  </div>
+                </div>
+
+                <div className="bg-warning/20 border-2 border-warning p-4 mt-2">
+                  <p className="font-code-snippet text-xs text-ink-black font-bold uppercase">
+                    WARNING: Ensure all access permissions (GitHub, Figma, Videos) are set to PUBLIC or accessible via link.
+                  </p>
+                </div>
+
+                <div className="flex gap-4 mt-4">
+                  <button type="submit" className="flex-1 bg-success text-white font-bold py-4 text-xl border-2 border-black hover:-translate-y-1 brutal-shadow">LOCK PAYLOAD & SUBMIT</button>
+                  <button type="button" onClick={() => setIsSubmitting(false)} className="bg-zinc-300 text-black font-bold py-4 px-8 border-2 border-black hover:-translate-y-1 brutal-shadow">CANCEL</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

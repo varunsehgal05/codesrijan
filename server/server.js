@@ -1693,12 +1693,13 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (
     if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Command Directive: Only squad leaders can trigger payload transmission." });
     if (team.isSubmitted) return res.status(400).json({ message: "Payload already locked." });
 
-    // Require at least one payload link before enabling lockdown
-    if (!team.githubLink && !team.figmaLink && !team.demoLink) {
-        return res.status(400).json({ message: "Cannot initiate transmit: No structural payload linked. Add a GitHub repository, Figma prototype, or Demo video." });
-    }
+    const { description, technologies, githubLink, figmaLink, demoLink, demoVideoUrl } = req.body;
 
     team.isSubmitted = true;
+    team.githubLink = githubLink || team.githubLink;
+    team.figmaLink = figmaLink || team.figmaLink;
+    team.demoLink = demoLink || team.demoLink;
+    team.description = description || team.description;
     await team.save();
 
     // Create the actual submission record
@@ -1710,9 +1711,12 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (
         submittedBy: req.user.id,
         version: 1,
         projectTitle: team.name,
+        description: description,
+        technologies: technologies || [],
         githubUrl: team.githubLink || team.repositoryUrl,
         figmaUrl: team.figmaLink,
-        demoVideoUrl: team.demoLink || team.demoUrl,
+        liveDemoUrl: team.demoLink || team.demoUrl,
+        demoVideoUrl: demoVideoUrl,
         status: 'locked',
         lockedAt: new Date()
     });
@@ -2507,6 +2511,82 @@ app.post('/api/mentor/requests/:id/resolve', requireAuth, async (req, res) => {
         await reqDoc.save();
         res.json(reqDoc);
     } catch (e) { res.status(500).json({ message: "Error resolving request." }); }
+});
+
+// --- PUBLIC GALLERY ---
+app.get('/api/gallery/projects', async (req, res) => {
+    try {
+        // Find teams that have submitted
+        const teams = await Team.find({ isSubmitted: true }).sort({ createdAt: -1 }).limit(50);
+        const galleryProjects = [];
+
+        for (const team of teams) {
+            // Find their problem statement
+            const problem = await ProblemStatement.findOne({ id: team.problemStatementId });
+            galleryProjects.push({
+                teamId: team.id,
+                teamName: team.name,
+                problemTitle: problem ? problem.title : 'Open Innovation',
+                description: team.description || 'Awesome project built at CodeSrijan.',
+                githubLink: team.githubLink || team.repositoryUrl,
+                demoLink: team.demoLink || team.demoUrl,
+                figmaLink: team.figmaLink,
+                computedScore: (team.isSubmitted ? 8000 : 2000) + ((team.name || '').length * 100) // Dummy logic for highlight
+            });
+        }
+        res.json(galleryProjects);
+    } catch (e) { res.status(500).json({ message: "Failed to fetch gallery projects." }); }
+});
+
+// --- PUBLIC LEADERBOARD ---
+app.get('/api/leaderboard', async (req, res) => {
+    try {
+        const teams = await Team.find({ isSubmitted: true });
+        const evals = await Evaluation.find();
+
+        const leaderboardData = teams.map((t) => {
+            const teamEvals = evals.filter(e => e.projectId === t.id || e.teamId === t.id);
+            const evalScore = teamEvals.reduce((acc, cur) => acc + (cur.totalScore || 0), 0);
+            
+            let aggregatedScores = {};
+            teamEvals.forEach(e => {
+                (e.scores || []).forEach(sc => {
+                    if (!aggregatedScores[sc.criteriaId]) {
+                        aggregatedScores[sc.criteriaId] = { score: 0 };
+                    }
+                    aggregatedScores[sc.criteriaId].score += sc.score;
+                });
+            });
+
+            const bonusPoints = Number(t.bonusPoints) || 0;
+            const penaltyPoints = Number(t.penaltyPoints) || 0;
+            const totalScore = evalScore + bonusPoints - penaltyPoints;
+
+            return {
+                id: t.id,
+                name: t.name,
+                bonusPoints,
+                penaltyPoints,
+                evalScore,
+                totalScore,
+                isScored: teamEvals.length > 0,
+                scores: Object.entries(aggregatedScores).map(([criteriaId, data]) => ({
+                    criteriaId,
+                    score: data.score
+                }))
+            };
+        });
+
+        // Sort descending
+        leaderboardData.sort((a, b) => b.totalScore - a.totalScore);
+        
+        // Filter out unscored teams if we only want evaluated ones
+        const scoredOnly = leaderboardData.filter(t => t.isScored);
+
+        res.json(scoredOnly);
+    } catch (e) {
+        res.status(500).json({ message: "Leaderboard error" });
+    }
 });
 
 // START

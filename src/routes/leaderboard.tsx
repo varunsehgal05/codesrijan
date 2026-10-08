@@ -34,57 +34,8 @@ function LeaderboardPage() {
 
     const fetchData = async () => {
       try {
-        const [teamsRes, evalsRes] = await Promise.all([
-          axios.get(`${API_BASE}/teams`),
-          axios.get(`${API_BASE}/evaluations`).catch(() => ({ data: [] }))
-        ]);
-
-        const rawTeams = teamsRes.data || [];
-        const evals = evalsRes.data || [];
-
-        const mapped: LeaderboardItem[] = rawTeams.map((t: any) => {
-          const teamEvals = evals.filter((e: any) => e.projectId === t.id || e.teamId === t.id);
-          const evalScore = teamEvals.reduce((acc: number, cur: any) => acc + (cur.totalScore || 0), 0);
-          
-          // Combine scores array from evaluations for the breakdown
-          let aggregatedScores: any = {};
-          teamEvals.forEach((e: any) => {
-              (e.scores || []).forEach((sc: any) => {
-                  if (!aggregatedScores[sc.criteriaId]) {
-                      aggregatedScores[sc.criteriaId] = { score: 0, max: 10 };
-                  }
-                  aggregatedScores[sc.criteriaId].score += sc.score;
-              });
-          });
-
-          const bonusPoints = Number(t.bonusPoints) || 0;
-          const penaltyPoints = Number(t.penaltyPoints) || 0;
-          const totalScore = evalScore + bonusPoints - penaltyPoints;
-          const isScored = teamEvals.length > 0;
-
-          return {
-            id: t.id,
-            name: t.name,
-            bonusPoints,
-            penaltyPoints,
-            evalScore,
-            totalScore,
-            isScored,
-            scores: Object.entries(aggregatedScores).map(([criteriaId, data]: any) => ({
-                criteriaId,
-                score: data.score
-            }))
-          };
-        });
-
-        // Sort by totalScore descending. Unscored teams go to the bottom.
-        mapped.sort((a, b) => {
-            if (a.isScored && !b.isScored) return -1;
-            if (!a.isScored && b.isScored) return 1;
-            return b.totalScore - a.totalScore;
-        });
-        
-        setTeams(mapped.filter(t => t.isScored)); // Only show scored teams publicly
+        const res = await axios.get(`${API_BASE}/leaderboard`);
+        setTeams(res.data || []);
         setLoading(false);
       } catch (err: any) {
         console.error("Leaderboard fetch error", err);
