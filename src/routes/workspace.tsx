@@ -21,6 +21,39 @@ function WorkspaceHUD() {
   const [createForm, setCreateForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
   const [editForm, setEditForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
 
+  const [isRequestingMentor, setIsRequestingMentor] = useState(false);
+  const [mentorRequestForm, setMentorRequestForm] = useState({ topic: '', description: '' });
+  const [activeMentorRequests, setActiveMentorRequests] = useState<any[]>([]);
+
+  const fetchMentorRequests = async () => {
+    try {
+      if (!userTeam) return;
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      const res = await axios.get(`${BASE}/teams/${userTeam.id}/mentor-requests`, { headers: { Authorization: `Bearer ${token}` } });
+      setActiveMentorRequests(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    if (userTeam) fetchMentorRequests();
+  }, [userTeam]);
+
+  const handleMentorRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mentorRequestForm.topic) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      await axios.post(`${BASE}/mentor/requests`, mentorRequestForm, { headers: { Authorization: `Bearer ${token}` } });
+      setIsRequestingMentor(false);
+      setMentorRequestForm({ topic: '', description: '' });
+      fetchMentorRequests();
+    } catch (e: any) { alert(e.response?.data?.message || "Failed to request mentor."); }
+  };
+
   const handleTaskUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTask) return;
@@ -172,17 +205,57 @@ function WorkspaceHUD() {
 
           <div className="flex flex-col items-start md:items-end gap-2 mt-6 md:mt-0">
             <span className="font-label-bold uppercase text-surface-variant">Framework Status</span>
-            {userTeam.isSubmitted ? (
-              <span className="bg-success text-pure-white px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-success brutal-shadow-sm">
-                <span className="material-symbols-outlined">lock</span> PAYLOAD DELIVERED
-              </span>
-            ) : (
-              <span className="bg-warning text-ink-black px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-ink-black brutal-shadow-sm">
-                <span className="material-symbols-outlined">shield</span> SYSTEMS UNLOCKED
-              </span>
+            <div className="flex gap-4 items-center">
+              {userTeam.isSubmitted ? (
+                <span className="bg-success text-pure-white px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-success brutal-shadow-sm">
+                  <span className="material-symbols-outlined">lock</span> PAYLOAD DELIVERED
+                </span>
+              ) : (
+                <span className="bg-warning text-ink-black px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-ink-black brutal-shadow-sm">
+                  <span className="material-symbols-outlined">shield</span> SYSTEMS UNLOCKED
+                </span>
+              )}
+              <button 
+                onClick={() => setIsRequestingMentor(true)} 
+                className="bg-error text-pure-white px-4 py-2 font-label-bold uppercase tracking-widest flex items-center gap-2 border-2 border-error brutal-shadow-sm brutal-hover hover:-translate-y-1"
+              >
+                <span className="material-symbols-outlined">sos</span> REQUEST MENTOR
+              </button>
+            </div>
+            
+            {activeMentorRequests.length > 0 && (
+              <div className="mt-2 text-right">
+                <span className="font-label-bold uppercase text-xs text-surface-variant block mb-1">Active SOS Tickets</span>
+                {activeMentorRequests.map(req => (
+                  <div key={req.id} className="bg-surface p-2 border-2 border-ink-black flex flex-col items-end gap-1 mb-1">
+                    <span className="font-label-bold text-xs uppercase">{req.topic} - <span className={req.status === 'accepted' ? 'text-success' : 'text-warning'}>{req.status}</span></span>
+                    {req.meetLink && <a href={req.meetLink} target="_blank" className="text-electric-blue text-xs font-bold underline">JOIN MEET</a>}
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>
+
+        {/* Mentor Request Modal */}
+        {isRequestingMentor && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6">
+              <h3 className="font-display-lg text-2xl uppercase mb-4 text-error flex items-center gap-2">
+                <span className="material-symbols-outlined text-3xl">sos</span> SOS MENTOR DISPATCH
+              </h3>
+              <p className="font-body-md text-surface-variant mb-4 font-bold">Stuck on a technical blocker? Broadcast a distress signal to all active mentors.</p>
+              <form onSubmit={handleMentorRequest} className="flex flex-col gap-4">
+                <input required placeholder="Topic (e.g., MongoDB Connection Error)" value={mentorRequestForm.topic} onChange={e => setMentorRequestForm({...mentorRequestForm, topic: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet" />
+                <textarea required placeholder="Describe what you tried..." value={mentorRequestForm.description} onChange={e => setMentorRequestForm({...mentorRequestForm, description: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet min-h-[100px]"></textarea>
+                <div className="flex gap-4 mt-4">
+                  <button type="submit" className="flex-1 bg-error text-white font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">TRANSMIT SIGNAL</button>
+                  <button type="button" onClick={() => setIsRequestingMentor(false)} className="flex-1 bg-zinc-300 text-black font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">CANCEL</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Kanban Grid */}
         <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-8">

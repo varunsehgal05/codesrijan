@@ -15,6 +15,9 @@ export const Route = createFileRoute("/mentor")({
 function Page2() {
   const { currentUser } = useAppStore();
   const [teams, setTeams] = useState<any[]>([]);
+  const [mentorRequests, setMentorRequests] = useState<any[]>([]);
+  const [meetLink, setMeetLink] = useState("");
+  const [activeReqId, setActiveReqId] = useState("");
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
@@ -26,6 +29,12 @@ function Page2() {
       })
         .then(res => setTeams(res.data))
         .catch(err => console.error("Could not fetch teams for mentor view", err));
+        
+      axios.get(`${API_URL}/mentor/requests/all`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => setMentorRequests(res.data))
+        .catch(err => console.error("Could not fetch mentor requests", err));
     }
   }, [currentUser, API_URL]);
 
@@ -42,12 +51,64 @@ function Page2() {
             <h1 className="font-headline-xl text-headline-xl max-md:font-headline-lg-mobile max-md:text-headline-lg-mobile text-ink-black uppercase">Mentor Control</h1>
           </div>
           <div className="flex gap-2">
-            <button className="bg-surface text-ink-black font-label-mono-bold text-label-mono-bold px-4 py-2 hard-border flex items-center gap-2 hover:bg-surface-variant transition-colors">
+            <button onClick={() => window.location.reload()} className="bg-surface text-ink-black font-label-mono-bold text-label-mono-bold px-4 py-2 hard-border flex items-center gap-2 hover:bg-surface-variant transition-colors">
               <span className="material-symbols-outlined text-[20px]">refresh</span>
               SYNC DATA
             </button>
           </div>
         </header>
+
+        {/* SOS Signals Grid */}
+        <section className="flex flex-col gap-stack-md">
+          <h2 className="font-headline-md text-headline-md border-b-2 border-error pb-2 flex items-center gap-2 text-error">
+            <span className="material-symbols-outlined">sos</span>
+            Active SOS Dispatch Signals
+          </h2>
+          {mentorRequests.length === 0 ? (
+            <div className="bg-studio-white hard-border hard-shadow p-6 text-center font-label-mono-bold">NO DISTRESS SIGNALS DETECTED.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mentorRequests.map(req => (
+                <article key={req.id} className="bg-studio-white hard-border hard-shadow flex flex-col p-4 border-l-4 border-l-error">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-label-mono-bold text-xs uppercase bg-error text-white px-2">SQUAD: {req.teamId}</span>
+                    <span className={`font-label-mono-bold text-[10px] uppercase px-2 ${req.status === 'pending' ? 'bg-warning' : 'bg-success text-white'}`}>{req.status}</span>
+                  </div>
+                  <h3 className="font-body-lg font-bold uppercase truncate">{req.topic}</h3>
+                  <p className="font-body-md text-on-surface-variant text-sm mt-2 line-clamp-3 mb-4 flex-grow">{req.description}</p>
+                  
+                  {req.status === 'pending' && (
+                    <div className="flex gap-2">
+                      <input type="text" placeholder="Meet/Zoom Link" className="w-full bg-surface-container font-code-snippet text-xs p-2 border border-ink-black" 
+                        onChange={(e) => { setMeetLink(e.target.value); setActiveReqId(req.id); }} 
+                        value={activeReqId === req.id ? meetLink : ""}
+                      />
+                      <button 
+                        onClick={async () => {
+                          if (!meetLink || activeReqId !== req.id) return alert("Provide a meet link first!");
+                          try {
+                            const token = localStorage.getItem("codesrijan_auth_token");
+                            await axios.post(`${API_URL}/mentor/requests/${req.id}/accept`, { meetLink }, { headers: { Authorization: `Bearer ${token}` } });
+                            window.location.reload();
+                          } catch(e) { alert("Failed to accept"); }
+                        }}
+                        className="bg-electric-blue text-white px-3 font-bold hover:bg-black transition-colors"
+                      >
+                        ACCEPT
+                      </button>
+                    </div>
+                  )}
+                  {req.status === 'accepted' && (
+                    <div className="bg-surface p-2 mt-2 font-code-snippet text-xs border border-ink-black break-all">
+                      Meeting Linked: {req.meetLink}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
         {/*Bento Grid Layout*/}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
           {/*Assigned Teams (Primary - Spans 8 cols on md)*/}

@@ -312,6 +312,20 @@ const notificationSchema = new mongoose.Schema({
     isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 
+// 17. Mentor Requests Collection
+const mentorRequestSchema = new mongoose.Schema({
+    id: { type: String, unique: true },
+    teamId: String,
+    hackathonId: String,
+    requestedBy: String,
+    mentorId: String,
+    topic: String,
+    description: String,
+    status: { type: String, enum: ['pending', 'accepted', 'resolved', 'cancelled'], default: 'pending' },
+    meetLink: String,
+    acceptedAt: Date
+}, { timestamps: true });
+
 // Export logic (prevent overwrite if extremely frequent hot reloading)
 export const User = mongoose.models.User || mongoose.model('User', userSchema);
 export const Hackathon = mongoose.models.Hackathon || mongoose.model('Hackathon', hackathonSchema);
@@ -331,7 +345,8 @@ export const Conversation = mongoose.models.Conversation || mongoose.model('Conv
 export const Message = mongoose.models.Message || mongoose.model('Message', messageSchema);
 export const SupportTicket = mongoose.models.SupportTicket || mongoose.model('SupportTicket', supportTicketSchema);
 export const Notification = mongoose.models.Notification || mongoose.model('Notification', notificationSchema);
+export const MentorRequest = mongoose.models.MentorRequest || mongoose.model('MentorRequest', mentorRequestSchema);
 
 export default {
-    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile, Certificate, Setting, Conversation, Message, SupportTicket, Notification
+    User, Hackathon, Registration, ProblemStatement, Team, TeamInvitation, TeamJoinRequest, Project, Submission, Evaluation, RecruitmentProfile, Certificate, Setting, Conversation, Message, SupportTicket, Notification, MentorRequest
 };

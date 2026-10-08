@@ -75,7 +75,7 @@ app.use(cors());
 app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
-import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask } from './models/index.js';
+import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask, MentorRequest } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
@@ -2420,6 +2420,93 @@ app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req,
     } catch (e) {
         res.status(500).json({ message: "Analytics query failed." });
     }
+});
+
+// --- MENTOR REQUESTS ---
+app.post('/api/mentor/requests', requireAuth, async (req, res) => {
+    try {
+        if (!req.user.teamId) return res.status(403).json({ message: "You must be in a squad to request mentor support." });
+        
+        const { topic, description } = req.body;
+        const mentorReq = new MentorRequest({
+            id: 'mr-' + Date.now().toString(),
+            teamId: req.user.teamId,
+            requestedBy: req.user.id,
+            topic,
+            description,
+            status: 'pending'
+        });
+        await mentorReq.save();
+
+        // Broadcast a notification to all mentors (mocking it by just keeping it pending)
+        // Note: Realistically, you'd create a Notification doc for all users where role='mentor'
+        const mentors = await User.find({ role: 'mentor' });
+        for (const mentor of mentors) {
+            await Notification.create({
+                id: 'notif-' + Date.now() + Math.random(),
+                userId: mentor.id,
+                title: 'New Mentor Request',
+                message: `Team ${req.user.teamId} requested help regarding: ${topic}`,
+                type: 'mentor',
+                relatedId: mentorReq.id
+            });
+        }
+
+        res.json(mentorReq);
+    } catch (e) { res.status(500).json({ message: "Failed to request mentor." }); }
+});
+
+app.get('/api/mentor/requests/all', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const reqs = await MentorRequest.find().sort({ createdAt: -1 });
+        res.json(reqs);
+    } catch (e) { res.status(500).json({ message: "Error fetching mentor requests." }); }
+});
+
+app.get('/api/teams/:id/mentor-requests', requireAuth, async (req, res) => {
+    try {
+        const reqs = await MentorRequest.find({ teamId: req.params.id }).sort({ createdAt: -1 });
+        res.json(reqs);
+    } catch (e) { res.status(500).json({ message: "Error fetching team mentor requests." }); }
+});
+
+app.post('/api/mentor/requests/:id/accept', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const { meetLink } = req.body;
+        const reqDoc = await MentorRequest.findOne({ id: req.params.id });
+        if (!reqDoc) return res.status(404).json({ message: "Request not found" });
+
+        reqDoc.status = 'accepted';
+        reqDoc.mentorId = req.user.id;
+        reqDoc.meetLink = meetLink;
+        reqDoc.acceptedAt = new Date();
+        await reqDoc.save();
+
+        // Notify the team leader
+        const team = await Team.findOne({ id: reqDoc.teamId });
+        if (team) {
+            await Notification.create({
+                id: 'notif-' + Date.now(),
+                userId: team.leaderId,
+                title: 'Mentor Request Accepted!',
+                message: `A mentor has accepted your request. Join the Meet link!`,
+                type: 'mentor',
+                relatedId: reqDoc.id
+            });
+        }
+
+        res.json(reqDoc);
+    } catch (e) { res.status(500).json({ message: "Error accepting request." }); }
+});
+
+app.post('/api/mentor/requests/:id/resolve', requireAuth, async (req, res) => {
+    try {
+        const reqDoc = await MentorRequest.findOne({ id: req.params.id });
+        if (!reqDoc) return res.status(404).json({ message: "Request not found" });
+        reqDoc.status = 'resolved';
+        await reqDoc.save();
+        res.json(reqDoc);
+    } catch (e) { res.status(500).json({ message: "Error resolving request." }); }
 });
 
 // START
