@@ -99,6 +99,20 @@ function Page6() {
     }
   };
 
+  const handleKickMember = async (memberId: string) => {
+    if(!window.confirm("Are you sure you want to kick this member?")) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.delete(`${API_URL}/teams/${currentTeam?.id}/members/${memberId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Member kicked");
+      await refetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to kick member");
+    }
+  };
+
   const handleLock = async (locked: boolean) => {
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -199,9 +213,27 @@ function Page6() {
                   className="w-full bg-surface-bright py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none"
                 />
                 <button type="submit" className="bg-ink-black text-pure-white font-headline-md px-6 py-4 border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] mt-2">
-                  JOIN PUBLIC SQUAD
+                  JOIN WITH CODE
                 </button>
               </form>
+              <div className="mt-8 border-t-2 border-ink-black pt-6">
+                <h2 className="font-headline-md text-ink-black mb-4 uppercase">Public Teams Directory</h2>
+                <div className="flex flex-col gap-4 max-h-64 overflow-y-auto pr-2">
+                  {teams.length === 0 ? (
+                     <p className="font-mono text-zinc-500 uppercase tracking-widest text-xs">No public teams available</p>
+                  ) : (
+                     teams.map(team => (
+                        <div key={team.id} className="p-4 border-2 border-ink-black bg-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center">
+                           <div>
+                             <span className="font-bold uppercase text-electric-blue">{team.name}</span>
+                             <span className="text-xs ml-2 text-text-muted">({(team.members || team.memberIds || []).length} members)</span>
+                           </div>
+                           <button onClick={() => { setJoinTeamId(team.id); handleJoinTeam({ preventDefault: () => {} } as any); }} className="bg-electric-blue text-white font-bold text-xs px-3 py-1 border-2 border-ink-black hover:-translate-y-0.5">REQUEST JOIN</button>
+                        </div>
+                     ))
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Invitations Panel */}
@@ -263,6 +295,9 @@ function Page6() {
                           <div className="font-headline-md text-body-lg font-bold">{member?.name}</div>
                           <div className="font-label-caps text-label-caps text-text-muted">{currentTeam.leaderId === member?.id ? "Team Leader" : "Member"}</div>
                         </div>
+                        {currentTeam.leaderId === currentUser?.id && currentTeam.leaderId !== member?.id && (
+                          <button onClick={() => handleKickMember(member?.id)} className="bg-error text-white font-bold text-xs px-3 py-1 border-2 border-ink-black hover:-translate-y-0.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] mr-2">KICK</button>
+                        )}
                         <div className="w-3 h-3 rounded-full bg-electric-blue border border-ink-black" title="Online"></div>
                       </div>
                     ))}
