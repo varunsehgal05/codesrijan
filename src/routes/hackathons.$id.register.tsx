@@ -21,6 +21,8 @@ function HackathonRegistrationPage() {
     const [college, setCollege] = useState((currentUser as any)?.college || "");
     const [branch, setBranch] = useState((currentUser as any)?.branch || "");
     const [year, setYear] = useState((currentUser as any)?.year || "");
+    const [hackathonStatus, setHackathonStatus] = useState<string | null>(null);
+    const [statusLoading, setStatusLoading] = useState(true);
 
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
 
@@ -33,8 +35,21 @@ function HackathonRegistrationPage() {
         } else if (currentUser.role !== 'student') {
             toast("Only students can register to participate.");
             window.history.back();
+        } else {
+            // Fetch hackathon status
+            axios.get(`${API_URL}/hackathons/${id}`)
+                .then(res => {
+                    setHackathonStatus(res.data.status?.toLowerCase().trim() || '');
+                })
+                .catch(err => {
+                    console.error("Failed to fetch hackathon status:", err);
+                    setError("Failed to fetch hackathon status.");
+                })
+                .finally(() => setStatusLoading(false));
         }
-    }, [currentUser, isLoaded, navigate]);
+    }, [currentUser, isLoaded, navigate, id, API_URL]);
+
+    const isClosed = hackathonStatus && hackathonStatus !== 'registration_open' && hackathonStatus !== 'active' && id !== 'hack-demo-2';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -87,6 +102,15 @@ function HackathonRegistrationPage() {
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
+                        {statusLoading && <div className="text-electric-blue mb-4">Checking event status...</div>}
+                        
+                        {isClosed && !statusLoading && (
+                            <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6">
+                                <h3 className="text-red-500 font-bold uppercase mb-1">Registration Closed</h3>
+                                <p className="text-sm text-zinc-300">Registration is currently closed for this event (Status: {hackathonStatus}).</p>
+                            </div>
+                        )}
+
                         <div className="space-y-2">
                             <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Hackathon ID</label>
                             <input type="text" disabled className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-zinc-500 cursor-not-allowed" value={id} />
@@ -94,12 +118,12 @@ function HackathonRegistrationPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Academic Institution</label>
-                            <input type="text" required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors" value={college} onChange={(e) => setCollege(e.target.value)} />
+                            <input type="text" disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={college} onChange={(e) => setCollege(e.target.value)} />
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Branch Specialization</label>
-                            <select required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors" value={branch} onChange={(e) => setBranch(e.target.value)}>
+                            <select disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={branch} onChange={(e) => setBranch(e.target.value)}>
                                 <option value="">Select Branch</option>
                                 <option value="CSE">Computer Science & Engineering (CSE)</option>
                                 <option value="IT">Information Technology (IT)</option>
@@ -114,7 +138,7 @@ function HackathonRegistrationPage() {
 
                         <div className="space-y-2">
                             <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Academic Year</label>
-                            <select required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors" value={year} onChange={(e) => setYear(e.target.value)}>
+                            <select disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={year} onChange={(e) => setYear(e.target.value)}>
                                 <option value="">Select Year</option>
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -132,10 +156,10 @@ function HackathonRegistrationPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || !college || !branch || !year}
-                            className="w-full bg-electric-blue text-black font-black uppercase tracking-widest py-4 border-2 border-transparent hover:bg-transparent hover:text-electric-blue hover:border-electric-blue transition-all disabled:opacity-50 mt-4"
+                            disabled={loading || !college || !branch || !year || !!isClosed || statusLoading}
+                            className="w-full bg-electric-blue text-black font-black uppercase tracking-widest py-4 border-2 border-transparent hover:bg-transparent hover:text-electric-blue hover:border-electric-blue transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                         >
-                            {loading ? 'Transmitting...' : 'Confirm Enrollment'}
+                            {loading ? 'Transmitting...' : (isClosed ? 'Registration Closed' : 'Confirm Enrollment')}
                         </button>
                     </form>
                 )}

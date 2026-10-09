@@ -14,11 +14,14 @@ export const Route = createFileRoute("/recruitment")({
 });
 
 function RecruitmentMatrix() {
-  const { currentUser, teams, users, refetchData, createTeam, hackathons } = useAppStore();
+  const { currentUser, teams, users, refetchData, createTeam, hackathons, registrations } = useAppStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'find' | 'join' | 'create'>('find');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  
+  // Default to the first registration if available
+  const [selectedHackathonId, setSelectedHackathonId] = useState(registrations?.[0]?.hackathonId || "");
 
   const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
@@ -51,22 +54,15 @@ function RecruitmentMatrix() {
     setErrorMsg("");
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
-    try {
-      const activeHackathon = hackathons.find(h => h.status === 'registration_open' || h.status === 'active' || h.status === 'upcoming') || hackathons[0];
-      const targetHackathonId = activeHackathon?.id || 'cs-2024';
-      
-      const token = localStorage.getItem("codesrijan_auth_token");
-      try {
-        // Silently register the user for the active hackathon to satisfy the live backend's strict requirements
-        await axios.post(`${API_URL}/hackathons/${targetHackathonId}/register`, 
-          { college: currentUser.college || "N/A", branch: currentUser.branch || "N/A", year: currentUser.year || "N/A" },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } catch (regErr: any) {
-        // Ignore 409 conflict (already registered), otherwise we might still want to try creating the team
-      }
+    
+    if (!selectedHackathonId) {
+      setErrorMsg("You must select a hackathon to form a squad for.");
+      setLoading(false);
+      return;
+    }
 
-      await createTeam(name, currentUser.id, targetHackathonId, "");
+    try {
+      await createTeam(name, currentUser.id, selectedHackathonId, "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
@@ -244,7 +240,32 @@ function RecruitmentMatrix() {
             <section className="max-w-2xl mx-auto w-full bg-surface brutal-border brutal-shadow p-8">
               <h2 className="font-headline-md uppercase mb-2">Initialize New Squad</h2>
               <p className="font-body-md text-text-muted mb-6">You will automatically be locked in as the designated Team Leader.</p>
+              
+              {!registrations || registrations.length === 0 ? (
+                <div className="p-6 bg-red-500/10 text-red-500 font-label-bold uppercase brutal-border mb-4">
+                  ERR: YOU MUST REGISTER FOR A HACKATHON BEFORE FORMING A SQUAD. 
+                  <br/><br/>
+                  <a href="/hackathons" className="underline hover:text-red-400">View available hackathons</a>
+                </div>
+              ) : (
               <form onSubmit={handleCreateSquad} className="flex flex-col gap-6">
+
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-bold uppercase">Target Hackathon</label>
+                  <select 
+                    className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" 
+                    value={selectedHackathonId} 
+                    onChange={(e) => setSelectedHackathonId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select a Hackathon</option>
+                    {registrations.map((reg: any) => (
+                      <option key={reg.hackathonId} value={reg.hackathonId}>
+                        {hackathons.find(h => h.id === reg.hackathonId)?.name || reg.hackathonId}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="font-label-bold uppercase">Squad Designation</label>
@@ -258,6 +279,7 @@ function RecruitmentMatrix() {
                   {loading ? 'DEPLOYING SQUAD...' : 'DEPLOY SQUAD'}
                 </button>
               </form>
+              )}
             </section>
           )}
 
