@@ -60,7 +60,7 @@ function HackathonRegistrationPage() {
         }
     };
 
-    if (!currentUser) return null;
+    if (!currentUser) return <div className="min-h-screen bg-background" />;
 
     return (
         <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 font-mono">

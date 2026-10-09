@@ -231,7 +231,7 @@ function ChatDashboard() {
     return true;
   });
 
-  if (!currentUser) return null;
+  if (!currentUser) return <div className="min-h-screen bg-background" />;
 
   return (
     <div className="min-h-screen bg-background p-6">

@@ -97,7 +97,7 @@ function WorkspaceHUD() {
     if (!currentUser) navigate({ to: "/login" });
   }, [currentUser]);
 
-  if (!currentUser) return null;
+  if (!currentUser) return <div className="min-h-screen bg-background" />;
 
   if (!userTeam) {
     return (
