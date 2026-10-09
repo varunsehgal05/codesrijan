@@ -49,7 +49,7 @@ function HackathonRegistrationPage() {
         }
     }, [currentUser, isLoaded, navigate, id, API_URL]);
 
-    const isClosed = hackathonStatus && hackathonStatus !== 'registration_open' && hackathonStatus !== 'active' && id !== 'hack-demo-2';
+    const isClosed = hackathonStatus && hackathonStatus !== 'registration_open' && hackathonStatus !== 'active' && hackathonStatus !== 'upcoming' && id !== 'hack-demo-2';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

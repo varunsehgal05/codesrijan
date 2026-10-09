@@ -549,13 +549,13 @@ const changeHackathonState = async (id, userId, newState, validPreviousStates, r
 };
 
 app.post('/api/hackathons/:id/publish', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['draft', 'cancelled'], res)
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['draft', 'cancelled', 'upcoming'], res)
 );
 app.post('/api/hackathons/:id/unpublish', requireAuth, requireRole(['admin']), (req, res) =>
     changeHackathonState(req.params.id, req.user.id, 'draft', ['registration_open', 'registration_closed'], res)
 );
 app.post('/api/hackathons/:id/open-registration', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['registration_closed', 'draft'], res)
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['registration_closed', 'draft', 'upcoming'], res)
 );
 app.post('/api/hackathons/:id/close-registration', requireAuth, requireRole(['admin']), (req, res) =>
     changeHackathonState(req.params.id, req.user.id, 'registration_closed', ['registration_open'], res)
@@ -579,7 +579,7 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
         if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
 
         const statusLower = hackathon.status ? hackathon.status.toLowerCase().trim() : '';
-        if (statusLower !== 'registration_open' && statusLower !== 'active' && hackathonId !== 'hack-demo-2') {
+        if (statusLower !== 'registration_open' && statusLower !== 'active' && statusLower !== 'upcoming' && hackathonId !== 'hack-demo-2') {
             return res.status(403).json({ message: `Registration is currently closed for this event (Status: ${hackathon.status}).` });
         }
 
