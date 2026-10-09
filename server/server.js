@@ -1570,7 +1570,7 @@ app.post('/api/ai/chat', async (req, res) => {
         const groqApiKey = process.env.GROQ_API_KEY;
 
         if (!groqApiKey) {
-            return res.status(500).json({ reply: "SYSTEM FAULT. AI processor is offline (Missing API Key)." });
+            return handleAIFallback(req, res);
         }
 
         const systemPrompt = `You are SrijanBot, the official AI guide and navigator for the CodeSrijan hackathon platform.
@@ -1630,9 +1630,49 @@ Your behavior rules:
         res.json({ reply });
     } catch (e) {
         console.error("AI Error:", e.message);
-        res.status(500).json({ reply: "SYSTEM FAULT. Neural link to Groq severed. Please try again later.", debug: e.message });
+        return handleAIFallback(req, res);
     }
 });
+
+async function handleAIFallback(req, res) {
+    try {
+        const { message, context } = req.body;
+        const lowerMsg = (message || "").toLowerCase();
+        let reply = "I couldn't process that command completely. [Create Support Ticket -> /support]";
+        
+        if (lowerMsg.includes("submission") || lowerMsg.includes("deadline") || lowerMsg.includes("submit")) {
+            const activeHackathon = await Hackathon.findOne({ status: 'active' });
+            if (activeHackathon && activeHackathon.submissionDeadline) {
+                const date = new Date(activeHackathon.submissionDeadline).toLocaleDateString();
+                const time = new Date(activeHackathon.submissionDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                reply = `According to the current hackathon configuration, submission closes on ${date} at ${time}. [Open Submission -> /workspace]`;
+            } else {
+                reply = "According to the current hackathon configuration, submission closes on 20 October at 11:59 PM. [Open Submission -> /workspace]";
+            }
+        } else if (lowerMsg.includes("team") || lowerMsg.includes("squad") || lowerMsg.includes("teammate")) {
+            if (context?.teamId) {
+                reply = "You are already assigned to a squad. [View My Team -> /workspace]";
+            } else {
+                reply = "You can recruit operatives or join an open squad in the Recruitment Marketplace. [Find a Squad -> /recruitment]";
+            }
+        } else if (lowerMsg.includes("stats") || lowerMsg.includes("admin")) {
+            if (context?.role === 'admin') {
+                reply = "You can view real-time platform telemetry in the Admin Dashboard. [Open Dashboard -> /admin]";
+            } else {
+                reply = "ACCESS DENIED. You do not have admin privileges. If you need assistance, please open a support ticket. [Open Support -> /support]";
+            }
+        } else if (lowerMsg.includes("judge") || lowerMsg.includes("evaluate")) {
+            if (context?.role === 'admin' || context?.role === 'judge') {
+                reply = "Judges can access the evaluation matrices in the Judge Portal. [Open Evaluations -> /evaluations]";
+            } else {
+                reply = "Only authorized judges can evaluate submissions. If you are a participant, please await your results. [View Leaderboard -> /leaderboard]";
+            }
+        }
+        res.json({ reply });
+    } catch (e) {
+        res.status(500).json({ reply: "SYSTEM FAULT. Neural link severed." });
+    }
+}
 
 // --- EPIC 4: SQUAD WORKSPACE KANBAN ---
 app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {
@@ -2257,42 +2297,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
         res.status(500).json({ message: "Failed to update setting." });
     }
 });
-// ==========================================
-// SRIJANBOT AI CHAT
-// ==========================================
-app.post('/api/ai/chat', async (req, res) => {
-    try {
-        const { message, context } = req.body;
-        const lowerMsg = (message || "").toLowerCase();
-        
-        let reply = "I couldn't find an official answer to this question. [Create Support Ticket -> /support]";
-        
-        if (lowerMsg.includes("submission") || lowerMsg.includes("deadline") || lowerMsg.includes("submit")) {
-            const activeHackathon = await Hackathon.findOne({ status: 'active' });
-            if (activeHackathon && activeHackathon.submissionDeadline) {
-                const date = new Date(activeHackathon.submissionDeadline).toLocaleDateString();
-                const time = new Date(activeHackathon.submissionDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                reply = `According to the current hackathon configuration, submission closes on ${date} at ${time}. [Open Submission -> /workspace]`;
-            } else {
-                reply = "According to the current hackathon configuration, submission closes on 20 October at 11:59 PM. [Open Submission -> /workspace]";
-            }
-        } else if (lowerMsg.includes("team") || lowerMsg.includes("squad") || lowerMsg.includes("teammate")) {
-            if (context?.teamId) {
-                reply = "You are already assigned to a squad. [View My Team -> /workspace]";
-            } else {
-                reply = "You can recruit operatives or join an open squad in the Recruitment Marketplace. [Find a Squad -> /recruitment]";
-            }
-        } else if (lowerMsg.includes("stats") && context?.role === 'admin') {
-            reply = "You can view real-time platform telemetry in the Admin Dashboard. [Open Dashboard -> /admin]";
-        } else if (lowerMsg.includes("judge") || lowerMsg.includes("evaluate")) {
-            reply = "Judges can access the evaluation matrices in the Judge Portal. [Open Evaluations -> /evaluations]";
-        }
-        
-        res.json({ reply });
-    } catch (e) {
-        res.status(500).json({ reply: "SYSTEM ERROR. Neural link severed." });
-    }
-});
+// (Duplicate AI Chat Route Removed)
 
 // --- ANNOUNCEMENTS ---
 app.get('/api/announcements', async (req, res) => {

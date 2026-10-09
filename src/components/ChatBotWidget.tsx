@@ -62,7 +62,17 @@ export function ChatBotWidget() {
                 } else if (q.includes("support") || q.includes("help") || q.includes("ticket") || q.includes("contact")) {
                     responseText = "You can create an official support ticket or contact team leads directly at [Support Sector -> /support].";
                 } else if (q.includes("admin") || q.includes("stats")) {
-                    responseText = "Admins can access live telemetry, active squads, and participant data at [Admin Panel -> /admin].";
+                    if (currentUser?.role === 'admin') {
+                        responseText = "Admins can access live telemetry, active squads, and participant data at [Admin Panel -> /admin].";
+                    } else {
+                        responseText = "ACCESS DENIED. You do not have the required clearance to access the Admin Panel. [Go to Dashboard -> /dashboard]";
+                    }
+                } else if (q.includes("judge") || q.includes("evaluate") || q.includes("score")) {
+                    if (currentUser?.role === 'admin' || currentUser?.role === 'judge') {
+                        responseText = "Judges can access the evaluation matrices in the Judge Portal. [Open Evaluations -> /evaluations]";
+                    } else {
+                        responseText = "Evaluation access is restricted to official judges. Participant results will be posted on the leaderboard. [View Leaderboard -> /leaderboard]";
+                    }
                 } else {
                     responseText = `Greetings! I am SrijanBot, your CodeSrijan AI Assistant. You can explore [Hackathons Hub -> /timeline], browse [Problem Statements -> /problems], or open a [Support Ticket -> /support].`;
                 }
