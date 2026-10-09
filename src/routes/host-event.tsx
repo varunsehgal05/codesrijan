@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/host-event")({
     component: HostEventPage,
@@ -30,7 +31,11 @@ function HostEventPage() {
             `Looking forward to partnering with you.\n\nBest Regards,\n${formData.institutionName} Coordinator`
         );
 
-        window.location.href = `mailto:codesrijan@gmail.com?subject=${subject}&body=${body}`;
+        toast.success("Proposal ready! Opening your email client...", { position: "bottom-right" });
+
+        setTimeout(() => {
+            window.location.href = `mailto:codesrijan@gmail.com?subject=${subject}&body=${body}`;
+        }, 1000);
     };
 
     return (
