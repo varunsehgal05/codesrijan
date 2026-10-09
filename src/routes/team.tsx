@@ -230,6 +230,16 @@ function Page6() {
               <div>
                 <h1 className="font-display-lg text-display-lg text-ink-black mb-2">{currentTeam.name}</h1>
                 <p className="font-body-lg text-body-lg text-text-muted">Team ID: <span className="font-code-snippet text-electric-blue">{currentTeam.id}</span></p>
+                <div className="mt-4 flex gap-4">
+                  <button onClick={handleLeaveTeam} className="px-4 py-2 bg-error text-white font-bold text-sm uppercase hover:bg-black transition-colors">
+                    {currentTeam.leaderId === currentUser?.id && (currentTeam.members || currentTeam.memberIds || []).length === 1 ? 'DISBAND SQUAD' : 'LEAVE SQUAD'}
+                  </button>
+                  {currentTeam.leaderId === currentUser?.id && (
+                     <button onClick={copyInvite} className="px-4 py-2 bg-electric-blue text-black font-bold text-sm uppercase hover:bg-black hover:text-white transition-colors">
+                        COPY INVITE LINK
+                     </button>
+                  )}
+                </div>
               </div>
               <div className="flex flex-col gap-2 text-right">
                 <span className="font-label-caps text-label-caps text-electric-blue">Active Challenge</span>
