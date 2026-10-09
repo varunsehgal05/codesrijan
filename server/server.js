@@ -250,21 +250,6 @@ app.put('/api/users/profile', requireAuth, async (req, res) => {
     }
 });
 
-app.get('/api/nuke-users', async (req, res) => {
-    try {
-        const keepEmails = [
-            'admin@codesrijan.com',
-            'student@codesrijan.com',
-            'varunsehgal2005@ggmial.com',
-            'varunsehgal2005@gmail.com'
-        ];
-        const result = await User.deleteMany({ email: { $nin: keepEmails } });
-        res.json({ message: "Nuked", deletedCount: result.deletedCount });
-    } catch(e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
 app.post('/api/auth/resend-otp', async (req, res) => {
     try {
         const { userId, email } = req.body;
