@@ -21,8 +21,9 @@ export const Route = createFileRoute("/profile")({
 });
 
 function Page7() {
-  const { currentUser, refetchData } = useAppStore();
+  const { currentUser, teams, refetchData } = useAppStore();
   const userName = currentUser?.name || "Alex Chen";
+  const currentTeam = teams.find(t => t.id === currentUser?.teamId);
   
   const [isEditing, setIsEditing] = useState(false);
   const [bio, setBio] = useState(currentUser?.bio || "Full-stack wizard building the future. Focused on decentralized web technologies and high-performance computing.");
@@ -92,9 +93,17 @@ function Page7() {
                   <p className="font-body-lg text-body-lg text-text-muted mt-2 max-w-2xl">{bio}</p>
               )}
             </div>
-            <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps mt-2">
-              <span className="material-symbols-outlined" data-icon="location_on" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
-              <span>{currentUser?.college || "San Francisco, CA"}</span>
+            <div className="flex flex-col gap-2 mt-2">
+              <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
+                <span className="material-symbols-outlined" data-icon="location_on" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                <span>{currentUser?.college || "San Francisco, CA"}</span>
+              </div>
+              {currentTeam && (
+                <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
+                  <span className="material-symbols-outlined" data-icon="group" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
+                  <span>Squad: <span className="font-bold text-electric-blue">{currentTeam.name}</span> ({currentTeam.id})</span>
+                </div>
+              )}
             </div>
             {/*Tech Stack Grid*/}
             <div className="flex flex-col gap-2 mt-4">
