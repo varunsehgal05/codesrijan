@@ -1,6 +1,6 @@
 import { test, expect, request } from '@playwright/test';
 
-const URL = 'https://codesrijan-nine.vercel.app';
+const URL = 'http://localhost:5173';
 const API_URL = 'https://codesrijan-api.onrender.com/api';
 
 test.describe('Live Production E2E Suite', () => {

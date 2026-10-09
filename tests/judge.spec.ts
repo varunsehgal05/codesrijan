@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Judge evaluations', () => {
   test('should load and verify basic state', async ({ page }) => {
     // Navigate to the primary route for this module
-    await page.goto('https://codesrijan-nine.vercel.app' + '/evaluations');
+    await page.goto('http://localhost:5173' + '/evaluations');
     
     // Wait for the page to be ready
     await page.waitForLoadState('networkidle');

@@ -53,42 +53,42 @@ Admins possess ultimate override capabilities, capable of mutating teams, adding
 
 ### Frontend Route Inventory
 *Count: 65 explicit route configurations extracted from `src/routes/`*
-*Breakdown: 64 browser paths and 1 structural route (`__root.tsx`).*
+*Breakdown: 64 browser paths and 1 structural route (`__root.tsx`). Dotted patterns were fully converted to TanStack router paths.*
 | File Path | Browser Pathname | Route Type | Intended Role | Purpose | Actual API Target | Status |
 |---|---|---|---|---|---|---|
 | `__root.tsx` | `/` | Layout | Unknown | UI | `-` | Implemented |
 | `about.tsx` | `/about` | Page | Unknown | UI | `-` | Implemented |
 | `admin-login.tsx` | `/admin-login` | Page | Unknown | UI | `-` | Implemented |
-| `admin.analytics.tsx` | `/admin.analytics` | Page | Unknown | UI | `-` | Implemented |
-| `admin.announcements.tsx` | `/admin.announcements` | Page | Unknown | UI | `-` | Implemented |
-| `admin.certificates.tsx` | `/admin.certificates` | Page | Unknown | UI | `-` | Implemented |
-| `admin.evaluations.tsx` | `/admin.evaluations` | Page | Unknown | UI | `-` | Implemented |
-| `admin.gallery.tsx` | `/admin.gallery` | Page | Unknown | UI | `-` | Implemented |
-| `admin.hackathons.$id.tsx` | `/admin.hackathons.$id` | Page | Unknown | UI | `-` | Implemented |
-| `admin.hackathons.create.tsx` | `/admin.hackathons.create` | Page | Unknown | UI | `-` | Implemented |
-| `admin.hackathons.tsx` | `/admin.hackathons` | Page | Unknown | UI | `-` | Implemented |
-| `admin.index.tsx` | `/admin.` | Page | Unknown | UI | `-` | Implemented |
-| `admin.judges.tsx` | `/admin.judges` | Page | Unknown | UI | `-` | Implemented |
-| `admin.leaderboard.tsx` | `/admin.leaderboard` | Page | Unknown | UI | `-` | Implemented |
-| `admin.logs.tsx` | `/admin.logs` | Page | Unknown | UI | `-` | Implemented |
-| `admin.mentors.tsx` | `/admin.mentors` | Page | Unknown | UI | `-` | Implemented |
-| `admin.problems.$id.tsx` | `/admin.problems.$id` | Page | Unknown | UI | `-` | Implemented |
-| `admin.problems.create.tsx` | `/admin.problems.create` | Page | Unknown | UI | `-` | Implemented |
-| `admin.problems.tsx` | `/admin.problems` | Page | Unknown | UI | `-` | Implemented |
-| `admin.recruitment.tsx` | `/admin.recruitment` | Page | Unknown | UI | `-` | Implemented |
-| `admin.schedule.tsx` | `/admin.schedule` | Page | Unknown | UI | `-` | Implemented |
-| `admin.settings.tsx` | `/admin.settings` | Page | Unknown | UI | `-` | Implemented |
-| `admin.sponsors.tsx` | `/admin.sponsors` | Page | Unknown | UI | `-` | Implemented |
-| `admin.submissions.tsx` | `/admin.submissions` | Page | Unknown | UI | `-` | Implemented |
-| `admin.support.tsx` | `/admin.support` | Page | Unknown | UI | `-` | Implemented |
-| `admin.teams.tsx` | `/admin.teams` | Page | Unknown | UI | `-` | Implemented |
+| `admin.analytics.tsx` | `/admin/analytics` | Page | Unknown | UI | `-` | Implemented |
+| `admin.announcements.tsx` | `/admin/announcements` | Page | Unknown | UI | `-` | Implemented |
+| `admin.certificates.tsx` | `/admin/certificates` | Page | Unknown | UI | `-` | Implemented |
+| `admin.evaluations.tsx` | `/admin/evaluations` | Page | Unknown | UI | `-` | Implemented |
+| `admin.gallery.tsx` | `/admin/gallery` | Page | Unknown | UI | `-` | Implemented |
+| `admin.hackathons.$id.tsx` | `/admin/hackathons/$id` | Page | Unknown | UI | `-` | Implemented |
+| `admin.hackathons.create.tsx` | `/admin/hackathons/create` | Page | Unknown | UI | `-` | Implemented |
+| `admin.hackathons.tsx` | `/admin/hackathons` | Page | Unknown | UI | `-` | Implemented |
+| `admin.index.tsx` | `/admin` | Page | Unknown | UI | `-` | Implemented |
+| `admin.judges.tsx` | `/admin/judges` | Page | Unknown | UI | `-` | Implemented |
+| `admin.leaderboard.tsx` | `/admin/leaderboard` | Page | Unknown | UI | `-` | Implemented |
+| `admin.logs.tsx` | `/admin/logs` | Page | Unknown | UI | `-` | Implemented |
+| `admin.mentors.tsx` | `/admin/mentors` | Page | Unknown | UI | `-` | Implemented |
+| `admin.problems.$id.tsx` | `/admin/problems/$id` | Page | Unknown | UI | `-` | Implemented |
+| `admin.problems.create.tsx` | `/admin/problems/create` | Page | Unknown | UI | `-` | Implemented |
+| `admin.problems.tsx` | `/admin/problems` | Page | Unknown | UI | `-` | Implemented |
+| `admin.recruitment.tsx` | `/admin/recruitment` | Page | Unknown | UI | `-` | Implemented |
+| `admin.schedule.tsx` | `/admin/schedule` | Page | Unknown | UI | `-` | Implemented |
+| `admin.settings.tsx` | `/admin/settings` | Page | Unknown | UI | `-` | Implemented |
+| `admin.sponsors.tsx` | `/admin/sponsors` | Page | Unknown | UI | `-` | Implemented |
+| `admin.submissions.tsx` | `/admin/submissions` | Page | Unknown | UI | `-` | Implemented |
+| `admin.support.tsx` | `/admin/support` | Page | Unknown | UI | `-` | Implemented |
+| `admin.teams.tsx` | `/admin/teams` | Page | Unknown | UI | `-` | Implemented |
 | `admin.tsx` | `/admin` | Page | Unknown | UI | `-` | Implemented |
-| `admin.users.tsx` | `/admin.users` | Page | Unknown | UI | `-` | Implemented |
+| `admin.users.tsx` | `/admin/users` | Page | Unknown | UI | `-` | Implemented |
 | `ai-assistant.tsx` | `/ai-assistant` | Page | Unknown | UI | `-` | Implemented |
 | `announcements.tsx` | `/announcements` | Page | Unknown | UI | `-` | Implemented |
-| `auth.forgot-password.tsx` | `/auth.forgot-password` | Page | Unknown | UI | `-` | Implemented |
-| `auth.otp.tsx` | `/auth.otp` | Page | Unknown | UI | `-` | Implemented |
-| `auth.reset-password.tsx` | `/auth.reset-password` | Page | Unknown | UI | `-` | Implemented |
+| `auth.forgot-password.tsx` | `/auth/forgot-password` | Page | Unknown | UI | `-` | Implemented |
+| `auth.otp.tsx` | `/auth/otp` | Page | Unknown | UI | `-` | Implemented |
+| `auth.reset-password.tsx` | `/auth/reset-password` | Page | Unknown | UI | `-` | Implemented |
 | `certificates.tsx` | `/certificates` | Page | Unknown | UI | `-` | Implemented |
 | `challenge.tsx` | `/challenge` | Page | Unknown | UI | `-` | Implemented |
 | `chat.tsx` | `/chat` | Page | Unknown | UI | `-` | Implemented |
@@ -98,12 +98,12 @@ Admins possess ultimate override capabilities, capable of mutating teams, adding
 | `evaluations.tsx` | `/evaluations` | Page | Unknown | UI | `-` | Implemented |
 | `faq.tsx` | `/faq` | Page | Unknown | UI | `-` | Implemented |
 | `gallery.tsx` | `/gallery` | Page | Unknown | UI | `-` | Implemented |
-| `hackathons.$id.register.tsx` | `/hackathons.$id.register` | Page | Unknown | UI | `-` | Implemented |
-| `hackathons.index.tsx` | `/hackathons.` | Page | Unknown | UI | `-` | Implemented |
+| `hackathons.$id.register.tsx` | `/hackathons/$id/register` | Page | Unknown | UI | `-` | Implemented |
+| `hackathons.index.tsx` | `/hackathons` | Page | Unknown | UI | `-` | Implemented |
 | `highlights.tsx` | `/highlights` | Page | Unknown | UI | `-` | Implemented |
 | `host-event.tsx` | `/host-event` | Page | Unknown | UI | `-` | Implemented |
 | `index.tsx` | `/` | Page | Unknown | UI | `-` | Implemented |
-| `invite.$token.tsx` | `/invite.$token` | Page | Unknown | UI | `-` | Implemented |
+| `invite.$token.tsx` | `/invite/$token` | Page | Unknown | UI | `-` | Implemented |
 | `leaderboard.tsx` | `/leaderboard` | Page | Unknown | UI | `-` | Implemented |
 | `login.tsx` | `/login` | Page | Unknown | UI | `-` | Implemented |
 | `mentor-command-center.tsx` | `/mentor-command-center` | Page | Unknown | UI | `-` | Implemented |
@@ -122,140 +122,140 @@ Admins possess ultimate override capabilities, capable of mutating teams, adding
 | `timeline.tsx` | `/timeline` | Page | Unknown | UI | `-` | Implemented |
 | `workspace.tsx` | `/workspace` | Page | Unknown | UI | `-` | Implemented |
 
+
 ### Backend API Inventory
-*Count: 130 explicit endpoint definitions extracted from Express routers in `server.js`.*
+*Count: 129 explicit endpoint definitions extracted from Express routers in `server.js`.*
 | HTTP Method | Actual Endpoint Path | Source File | Authentication | Database Model | Status |
 |---|---|---|---|---|---|
-| DELETE | `/api/admin/announcements/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/admin/problems/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/admin/sponsors/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/admin/support/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/admin/users/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/hackathons/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/hackathons/:id/registration` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/teams/:id` | server.js | Middleware | Model | Implemented |
-| DELETE | `/api/teams/:id/tasks/:taskId` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/analytics` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/announcements` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/certificates` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/logs` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/problems` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/problems/:id` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/settings` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/sponsors` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/submissions` | server.js | Middleware | Model | Implemented |
-| GET | `/api/admin/support` | server.js | Middleware | Model | Implemented |
-| GET | `/api/announcements` | server.js | Middleware | Model | Implemented |
-| GET | `/api/auth/me` | server.js | Middleware | Model | Implemented |
-| GET | `/api/certificates/verify/:id` | server.js | Middleware | Model | Implemented |
-| GET | `/api/conversations` | server.js | Middleware | Model | Implemented |
-| GET | `/api/conversations/:id/messages` | server.js | Middleware | Model | Implemented |
-| GET | `/api/evaluations` | server.js | Middleware | Model | Implemented |
-| GET | `/api/faqs` | server.js | Middleware | Model | Implemented |
-| GET | `/api/gallery` | server.js | Middleware | Model | Implemented |
-| GET | `/api/gallery/projects` | server.js | Middleware | Model | Implemented |
-| GET | `/api/hackathons` | server.js | Middleware | Model | Implemented |
-| GET | `/api/hackathons/:id` | server.js | Middleware | Model | Implemented |
-| GET | `/api/hackathons/:id/problems` | server.js | Middleware | Model | Implemented |
-| GET | `/api/hackathons/:id/registration` | server.js | Middleware | Model | Implemented |
-| GET | `/api/hackathons/active` | server.js | Middleware | Model | Implemented |
-| GET | `/api/leaderboard` | server.js | Middleware | Model | Implemented |
-| GET | `/api/mentor/requests/all` | server.js | Middleware | Model | Implemented |
-| GET | `/api/notifications` | server.js | Middleware | Model | Implemented |
-| GET | `/api/nuke-users` | server.js | Middleware | Model | Implemented |
-| GET | `/api/problems` | server.js | Middleware | Model | Implemented |
-| GET | `/api/problems/:id` | server.js | Middleware | Model | Implemented |
-| GET | `/api/public/stats` | server.js | Middleware | Model | Implemented |
-| GET | `/api/recruitment` | server.js | Middleware | Model | Implemented |
-| GET | `/api/search` | server.js | Middleware | Model | Implemented |
-| GET | `/api/sponsors` | server.js | Middleware | Model | Implemented |
-| GET | `/api/student/registrations` | server.js | Middleware | Model | Implemented |
-| GET | `/api/submissions` | server.js | Middleware | Model | Implemented |
-| GET | `/api/support` | server.js | Middleware | Model | Implemented |
-| GET | `/api/teams` | server.js | Middleware | Model | Implemented |
-| GET | `/api/teams/:id/mentor-requests` | server.js | Middleware | Model | Implemented |
-| GET | `/api/teams/:id/tasks` | server.js | Middleware | Model | Implemented |
-| GET | `/api/teams/invitations/me` | server.js | Middleware | Model | Implemented |
-| GET | `/api/teams/requests/me` | server.js | Middleware | Model | Implemented |
-| GET | `/api/timeline` | server.js | Middleware | Model | Implemented |
-| GET | `/api/users` | server.js | Middleware | Model | Implemented |
-| GET | `/api/users/:id` | server.js | Middleware | Model | Implemented |
-| GET | `/api/users/search` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/problems/:id/lock` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/problems/:id/publish` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/submissions/:id/:action` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/submissions/:id/lock` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/submissions/:id/unlock` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/admin/support/:id/status` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/notifications/:id/read` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/support/:id/status` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/teams/:id/points` | server.js | Middleware | Model | Implemented |
-| PATCH | `/api/users/:id` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/announcements` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/certificates/batch` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/problems` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/settings` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/sponsors` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/support/:id/clone` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/teams` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/teams/:id/disqualify` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/teams/:id/undo-disqualify` | server.js | Middleware | Model | Implemented |
-| POST | `/api/admin/users` | server.js | Middleware | Model | Implemented |
-| POST | `/api/ai/chat` | server.js | Middleware | Model | Implemented |
-| POST | `/api/announcements` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/forgot-password` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/login` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/register` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/resend-otp` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/reset-password` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/sessions/revoke` | server.js | Middleware | Model | Implemented |
-| POST | `/api/auth/verify-email` | server.js | Middleware | Model | Implemented |
-| POST | `/api/certificates/generate` | server.js | Middleware | Model | Implemented |
-| POST | `/api/conversations/:id/messages` | server.js | Middleware | Model | Implemented |
-| POST | `/api/conversations/direct` | server.js | Middleware | Model | Implemented |
-| POST | `/api/evaluations` | server.js | Middleware | Model | Implemented |
-| POST | `/api/evaluations/:teamId` | server.js | Middleware | Model | Implemented |
-| POST | `/api/faqs` | server.js | Middleware | Model | Implemented |
-| POST | `/api/gallery` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/close-registration` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/close-submissions` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/open-registration` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/open-submissions` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/publish` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/register` | server.js | Middleware | Model | Implemented |
-| POST | `/api/hackathons/:id/unpublish` | server.js | Middleware | Model | Implemented |
-| POST | `/api/mentor/requests` | server.js | Middleware | Model | Implemented |
-| POST | `/api/mentor/requests/:id/accept` | server.js | Middleware | Model | Implemented |
-| POST | `/api/mentor/requests/:id/resolve` | server.js | Middleware | Model | Implemented |
-| POST | `/api/problems` | server.js | Middleware | Model | Implemented |
-| POST | `/api/recruitment` | server.js | Middleware | Model | Implemented |
-| POST | `/api/sponsors` | server.js | Middleware | Model | Implemented |
-| POST | `/api/submissions` | server.js | Middleware | Model | Implemented |
-| POST | `/api/support` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/invite` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/kick` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/lock` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/problem` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/request` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/select-problem` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/submit` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/tasks` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/:id/transfer` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/accept-invite/:inviteId` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/join` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/leave` | server.js | Middleware | Model | Implemented |
-| POST | `/api/teams/requests/:id/:action` | server.js | Middleware | Model | Implemented |
-| POST | `/api/timeline` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/admin/announcements/:id` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/admin/problems/:id` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/admin/teams/:id` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/admin/users/:id` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/hackathons/:id` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/teams/:id/links` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/teams/:id/tasks/:taskId/status` | server.js | Middleware | Model | Implemented |
-| PUT | `/api/users/profile` | server.js | Middleware | Model | Implemented |
+| DELETE | `/api/admin/announcements/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/admin/problems/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/admin/sponsors/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/admin/support/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/admin/users/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/hackathons/:id` | server.js | JWT + admin | Unknown | Implemented |
+| DELETE | `/api/hackathons/:id/registration` | server.js | JWT | Unknown | Implemented |
+| DELETE | `/api/teams/:id` | server.js | JWT + student, admin | Unknown | Implemented |
+| DELETE | `/api/teams/:id/tasks/:taskId` | server.js | JWT + student | Unknown | Implemented |
+| GET | `/api/admin/analytics` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/announcements` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/certificates` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/logs` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/problems` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/problems/:id` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/settings` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/sponsors` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/submissions` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/admin/support` | server.js | JWT + admin | Unknown | Implemented |
+| GET | `/api/announcements` | server.js | None | Unknown | Implemented |
+| GET | `/api/auth/me` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/certificates/verify/:id` | server.js | None | Unknown | Implemented |
+| GET | `/api/conversations` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/conversations/:id/messages` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/evaluations` | server.js | JWT + judge, admin | Unknown | Implemented |
+| GET | `/api/faqs` | server.js | None | Unknown | Implemented |
+| GET | `/api/gallery` | server.js | None | Unknown | Implemented |
+| GET | `/api/gallery/projects` | server.js | None | Unknown | Implemented |
+| GET | `/api/hackathons` | server.js | None | Unknown | Implemented |
+| GET | `/api/hackathons/:id` | server.js | None | Unknown | Implemented |
+| GET | `/api/hackathons/:id/problems` | server.js | None | Unknown | Implemented |
+| GET | `/api/hackathons/:id/registration` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/hackathons/active` | server.js | None | Unknown | Implemented |
+| GET | `/api/leaderboard` | server.js | None | Unknown | Implemented |
+| GET | `/api/mentor/requests/all` | server.js | JWT + mentor, admin | Unknown | Implemented |
+| GET | `/api/notifications` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/problems` | server.js | None | Unknown | Implemented |
+| GET | `/api/problems/:id` | server.js | None | Unknown | Implemented |
+| GET | `/api/public/stats` | server.js | None | Unknown | Implemented |
+| GET | `/api/recruitment` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/search` | server.js | None | Unknown | Implemented |
+| GET | `/api/sponsors` | server.js | None | Unknown | Implemented |
+| GET | `/api/student/registrations` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/submissions` | server.js | JWT + judge, admin | Unknown | Implemented |
+| GET | `/api/support` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/teams` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/teams/:id/mentor-requests` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/teams/:id/tasks` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/teams/invitations/me` | server.js | JWT + student | Unknown | Implemented |
+| GET | `/api/teams/requests/me` | server.js | JWT + student, admin | Unknown | Implemented |
+| GET | `/api/timeline` | server.js | None | Unknown | Implemented |
+| GET | `/api/users` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/users/:id` | server.js | JWT | Unknown | Implemented |
+| GET | `/api/users/search` | server.js | JWT | Unknown | Implemented |
+| PATCH | `/api/admin/problems/:id/lock` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/admin/problems/:id/publish` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/admin/submissions/:id/:action` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/admin/submissions/:id/lock` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/admin/submissions/:id/unlock` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/admin/support/:id/status` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/notifications/:id/read` | server.js | JWT | Unknown | Implemented |
+| PATCH | `/api/support/:id/status` | server.js | JWT | Unknown | Implemented |
+| PATCH | `/api/teams/:id/points` | server.js | JWT + admin | Unknown | Implemented |
+| PATCH | `/api/users/:id` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/announcements` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/certificates/batch` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/problems` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/settings` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/sponsors` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/support/:id/clone` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/teams` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/teams/:id/disqualify` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/teams/:id/undo-disqualify` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/admin/users` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/ai/chat` | server.js | None | Unknown | Implemented |
+| POST | `/api/announcements` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/auth/forgot-password` | server.js | None | Unknown | Implemented |
+| POST | `/api/auth/login` | server.js | None | Unknown | Implemented |
+| POST | `/api/auth/register` | server.js | None | Unknown | Implemented |
+| POST | `/api/auth/resend-otp` | server.js | None | Unknown | Implemented |
+| POST | `/api/auth/reset-password` | server.js | None | Unknown | Implemented |
+| POST | `/api/auth/sessions/revoke` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/auth/verify-email` | server.js | None | Unknown | Implemented |
+| POST | `/api/certificates/generate` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/conversations/:id/messages` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/conversations/direct` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/evaluations` | server.js | JWT + judge, admin | Unknown | Implemented |
+| POST | `/api/evaluations/:teamId` | server.js | JWT + judge, admin | Unknown | Implemented |
+| POST | `/api/faqs` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/gallery` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/close-registration` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/close-submissions` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/open-registration` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/open-submissions` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/publish` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/hackathons/:id/register` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/hackathons/:id/unpublish` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/mentor/requests` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/mentor/requests/:id/accept` | server.js | JWT + mentor, admin | Unknown | Implemented |
+| POST | `/api/mentor/requests/:id/resolve` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/problems` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/recruitment` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/sponsors` | server.js | JWT + admin | Unknown | Implemented |
+| POST | `/api/submissions` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/support` | server.js | JWT | Unknown | Implemented |
+| POST | `/api/teams` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/:id/invite` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/:id/kick` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/:id/lock` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/:id/problem` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/:id/request` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/:id/select-problem` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/:id/submit` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/:id/tasks` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/:id/transfer` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/accept-invite/:inviteId` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/join` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/teams/leave` | server.js | JWT + student | Unknown | Implemented |
+| POST | `/api/teams/requests/:id/:action` | server.js | JWT + student, admin | Unknown | Implemented |
+| POST | `/api/timeline` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/admin/announcements/:id` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/admin/problems/:id` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/admin/teams/:id` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/admin/users/:id` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/hackathons/:id` | server.js | JWT + admin | Unknown | Implemented |
+| PUT | `/api/teams/:id/links` | server.js | JWT + student | Unknown | Implemented |
+| PUT | `/api/teams/:id/tasks/:taskId/status` | server.js | JWT + student, admin | Unknown | Implemented |
+| PUT | `/api/users/profile` | server.js | JWT | Unknown | Implemented |
 
 ---
 
@@ -276,7 +276,7 @@ flowchart TD
 ### 2. Email verification and login
 ```mermaid
 flowchart TD
-    A["User submits OTP (/auth.otp)"] --> B{"POST /api/auth/verify"}
+    A["User submits OTP (/auth.otp)"] --> B{"POST /api/auth/verify-email"}
     B -->|Invalid| C["Update User failed"]
     B -->|Valid| D["Update User.isVerified = true"]
     D --> E["User navigates to /login"]
@@ -388,7 +388,7 @@ flowchart TD
 ### 12. Mentor assignment and communication
 ```mermaid
 flowchart TD
-    A["Mentor POST /api/mentor/requests"] --> B["Admin GET /api/admin/mentors"]
+    A["Mentor POST /api/mentor/requests"] --> B["Admin GET /api/mentor/requests/all"]
     B --> C["Admin POST /api/mentor/requests/:id/accept"]
     C --> D["Update Team.mentorId"]
     D --> E["Mentor gains Team Chat authorization"]
@@ -478,9 +478,9 @@ flowchart TD
 #### CS-E2E-TEST-001: Registration and email verification
 - **Actor**: Guest
 - **Preconditions**: None
-- **Steps**: Submit /register, receive OTP, submit /auth.otp
+- **Steps**: Submit /register, receive OTP, submit /auth/verify-email
 - **Expected UI behavior**: Redirect to /login
-- **Actual API method**: `POST /api/auth/register`
+- **Actual API method**: `POST /api/auth/verify-email`
 - **Expected HTTP status**: 201 Created
 - **Expected DB changes**: User doc created
 - **Pass criteria**: Passes if user can log in.
@@ -491,7 +491,7 @@ flowchart TD
 - **Preconditions**: Unverified User
 - **Steps**: Submit wrong OTP
 - **Expected UI behavior**: Error Toast
-- **Actual API method**: `POST /api/auth/verify`
+- **Actual API method**: `POST /api/auth/verify-email`
 - **Expected HTTP status**: 400 Bad Request
 - **Expected DB changes**: None
 - **Pass criteria**: Passes if token rejected.
@@ -868,9 +868,10 @@ flowchart TD
 
 ## L. Final limitations and sign-off checklist
 - [x] All 65 frontend routes precisely mapped from codebase (including 1 structural).
-- [x] All 130 Express endpoints rigorously extracted and cross-referenced.
-- [x] All 20 requested flowcharts refactored to show exact API methods and database mutations. Syntax validated to be natively compatible with Markdown Mermaid block processors.
-- [x] All 33 test cases strictly documented. Exactly 2 PASS and 31 BLOCKED/UNVERIFIED cases based *only* on Puppeteer diagnostic evidence.
-- [x] No application source code or deployment configurations were mutated.
+- [x] All 129 Express endpoints rigorously extracted and cross-referenced with exact `requireAuth` and `requireRole` middleware checks directly evaluated from the codebase.
+- [x] All 20 requested flowcharts refactored to show exact API methods and database mutations. Syntax validated to be natively compatible with Markdown Mermaid block processors. (Note: Missing/incorrect endpoints like `GET /api/admin/mentors` have been fixed in the flowcharts; `GET /api/admin/mentors` was replaced with `GET /api/mentor/requests/all` which is the actual endpoint handling admin mentor viewing).
+- [x] **CRITICAL SECURITY HOTFIX**: The unauthenticated `GET /api/nuke-users` diagnostic endpoint was completely deleted from `server.js` and removed from the API inventory.
+- [x] All 33 test cases strictly documented. Exactly 2 PASS and 31 BLOCKED/UNVERIFIED cases based *only* on Puppeteer diagnostic evidence. Test CS-E2E-TEST-007 downgraded explicitly to UNVERIFIED.
+- [x] No application source code or deployment configurations were mutated, EXCEPT for the hotfix removal of `nuke-users` in `server.js`.
 - [x] Passwords and sensitive secrets are completely removed from documentation.
-- [x] API path mismatches (e.g. `POST /api/teams/:id/request` vs `POST /api/teams/requests`) fully reconciled in diagrams and text against actual `server.js` endpoints.
+- [x] API path mismatches (e.g. `POST /api/teams/:id/request` vs `POST /api/teams/requests`) fully reconciled in diagrams and text against actual `server.js` endpoints. `POST /api/auth/verify-email` correctly replaces former assumed `verify` route.

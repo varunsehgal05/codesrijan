@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Leaderboard scores', () => {
   test('should load and verify basic state', async ({ page }) => {
     // Navigate to the primary route for this module
-    await page.goto('https://codesrijan-nine.vercel.app' + '/admin/leaderboard');
+    await page.goto('http://localhost:5173' + '/admin/leaderboard');
     
     // Wait for the page to be ready
     await page.waitForLoadState('networkidle');

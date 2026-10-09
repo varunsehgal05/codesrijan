@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = 'https://codesrijan-nine.vercel.app';
+const URL = 'http://localhost:5173';
 const TEAM_NAME = `AgentSquad-${Date.now()}`;
 
 test.describe('E2E Team Creation and Join Flow', () => {
