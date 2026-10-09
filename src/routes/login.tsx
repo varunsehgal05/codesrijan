@@ -14,7 +14,7 @@ function LoginPage() {
     useEffect(() => {
         if (currentUser) {
             if (currentUser.role === 'admin') navigate({ to: "/admin" });
-            else navigate({ to: "/workspace" });
+            else navigate({ to: "/dashboard" });
         }
     }, [currentUser, navigate]);
 
@@ -37,7 +37,7 @@ function LoginPage() {
             const user = await login(email, password);
             toast.success("Identity Verified. Initiating Handshake.");
             if (user.role === 'admin') navigate({ to: "/admin" });
-            else navigate({ to: "/workspace" });
+            else navigate({ to: "/dashboard" });
         } catch (err: any) {
             try {
                 const parsed = JSON.parse(err.message);

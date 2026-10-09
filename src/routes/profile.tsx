@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useState } from "react";
 import axios from "axios";
@@ -102,6 +102,7 @@ function Page7() {
                 <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
                   <span className="material-symbols-outlined" data-icon="group" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
                   <span>Squad: <span className="font-bold text-electric-blue">{currentTeam.name}</span> ({currentTeam.id})</span>
+                  <Link to="/workspace" className="ml-4 px-3 py-1 bg-electric-blue text-white font-bold text-xs uppercase hover:bg-black transition-colors shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:-translate-x-0.5 hover:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">ENTER WORKSPACE</Link>
                 </div>
               )}
             </div>
