@@ -2,12 +2,18 @@ import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
 const getTransporter = () => {
-    const user = process.env.EMAIL_USER;
-    const pass = process.env.EMAIL_PASS;
+    const user = process.env.EMAIL_USER || 'codesrijan@gmail.com';
+    const pass = process.env.EMAIL_PASS || 'jvsstyromfvdadyj';
     if (user && pass) {
         return nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user, pass }
+            host: 'smtp.gmail.com',
+            port: 587,
+            secure: false, // 587 with STARTTLS works reliably on cloud hosts (Render/AWS)
+            auth: { user, pass },
+            tls: { rejectUnauthorized: false },
+            connectionTimeout: 15000,
+            greetingTimeout: 15000,
+            socketTimeout: 15000
         });
     }
     return null;
