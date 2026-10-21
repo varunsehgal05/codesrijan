@@ -39,5 +39,6 @@ server/serviceAccountKey.json
 server/*.json
 *.cjs
 *.mjs
+!server/test_phase2_security.mjs
 *.png
 platform-screenshots/

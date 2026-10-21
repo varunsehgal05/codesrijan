@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import dns from 'dns';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,7 +81,6 @@ import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conve
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
-import crypto from 'crypto';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } from './services/email.js';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
@@ -155,39 +155,65 @@ mongoose.connect(MONGO_URI, {
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { name, email, password, college, branch, year } = req.body;
-        // Normalize email
+        
+        // Strict input validation
+        if (!name || !String(name).trim()) {
+            return res.status(400).json({ message: "Full name is required." });
+        }
+        if (!email || !String(email).trim()) {
+            return res.status(400).json({ message: "Email address is required." });
+        }
+        if (!password || typeof password !== 'string') {
+            return res.status(400).json({ message: "Password is required." });
+        }
+        if (password.length < 8) {
+            return res.status(400).json({ message: "Password must be at least 8 characters long." });
+        }
+
         const normalizedEmail = String(email).toLowerCase().trim();
         const existing = await User.findOne({ email: normalizedEmail });
 
         if (existing) {
             if (existing.accountStatus === 'pending_verification') {
-                // User already registered but pending verification - update profile and re-issue OTP
-                if (password) existing.passwordHash = await bcrypt.hash(String(password), 10);
-                if (name) existing.name = name;
+                // Pending account recovery: re-hash password, update academic profile, and re-issue fresh OTP
+                existing.passwordHash = await bcrypt.hash(String(password), 10);
+                existing.name = String(name).trim();
                 if (college) existing.college = college;
                 if (branch) existing.branch = branch;
                 if (year) existing.year = year;
                 await existing.save();
 
-                let code = Math.floor(100000 + Math.random() * 900000).toString();
-                if (normalizedEmail.endsWith('@codesrijan.test')) {
-                    code = '123456';
-                }
-                const tokenHash = await bcrypt.hash(code, 5);
+                // Generate cryptographically secure 6-digit OTP
+                const code = crypto.randomInt(100000, 1000000).toString();
+                const tokenHash = await bcrypt.hash(code, 10);
+
                 await EmailVerification.deleteMany({ userId: existing.id });
                 await EmailVerification.create({
                     userId: existing.id,
                     tokenHash,
-                    expiresAt: new Date(Date.now() + 15 * 60000)
+                    expiresAt: new Date(Date.now() + 15 * 60000), // 15 mins
+                    attempts: 0,
+                    maxAttempts: 5,
+                    lastResendAt: new Date(),
+                    resendCount: 1
                 });
 
-                try {
-                    await sendVerificationEmail(normalizedEmail, code);
-                    console.log(`[SECURE COMMS] Verification code sent to ${normalizedEmail}. Code: ${code}`);
-                } catch (mailError) {
-                    console.warn(`[SMTP FAULT] Could not dispatch email to ${normalizedEmail} (resend/unverified sender). Logged OTP for verification: ${code}`);
+                const sendResult = await sendVerificationEmail(normalizedEmail, code);
+                if (!sendResult.success) {
+                    console.warn(`[REGISTRATION] Account updated for ${normalizedEmail}, but email dispatch failed: ${sendResult.error}`);
+                    return res.status(200).json({
+                        message: "Account details updated. Email delivery encountered a temporary issue. You may request a resend.",
+                        userId: existing.id,
+                        emailDeliveryStatus: "failed",
+                        emailDispatchFailed: true
+                    });
                 }
-                return res.json({ message: "Verification passkey dispatched.", userId: existing.id, testOtp: code });
+
+                return res.status(200).json({
+                    message: "Verification passkey dispatched.",
+                    userId: existing.id,
+                    emailDeliveryStatus: "dispatched"
+                });
             } else {
                 return res.status(400).json({ message: "An active account with this email already exists. Please proceed to login." });
             }
@@ -195,43 +221,55 @@ app.post('/api/auth/register', async (req, res) => {
 
         const passwordHash = await bcrypt.hash(String(password), 10);
 
-        // Force Student role
+        // Force Student role (unless specific administrative prefix is explicitly designated)
         const user = new User({
             id: `usr-${Date.now()}`,
-            name,
+            name: String(name).trim(),
             email: normalizedEmail,
             passwordHash,
             role: normalizedEmail.startsWith('admin.') ? 'admin' : 'student',
-            college, branch, year,
+            college: college || '',
+            branch: branch || '',
+            year: year || '',
             accountStatus: 'pending_verification'
         });
         await user.save();
 
-        // Generate Verification Code (6-digit)
-        let code = Math.floor(100000 + Math.random() * 900000).toString();
-        if (normalizedEmail.endsWith('@codesrijan.test')) code = '123456';
-        const tokenHash = await bcrypt.hash(code, 5);
+        // Cryptographically secure 6-digit OTP
+        const code = crypto.randomInt(100000, 1000000).toString();
+        const tokenHash = await bcrypt.hash(code, 10);
 
+        await EmailVerification.deleteMany({ userId: user.id });
         const verification = new EmailVerification({
             userId: user.id,
             tokenHash,
-            expiresAt: new Date(Date.now() + 15 * 60000) // 15 mins
+            expiresAt: new Date(Date.now() + 15 * 60000), // 15 mins
+            attempts: 0,
+            maxAttempts: 5,
+            lastResendAt: new Date(),
+            resendCount: 1
         });
         await verification.save();
 
-        // Dispatch Verification Email in background (non-blocking)
-        console.log(`[OTP DISPATCH] Generated 6-digit OTP code for ${normalizedEmail}: ${code}`);
-        try {
-            if (!normalizedEmail.endsWith('@codesrijan.test')) {
-                sendVerificationEmail(normalizedEmail, code)
-                    .then(() => console.log(`[SECURE COMMS] Protocol fired for ${normalizedEmail}.`))
-                    .catch(mailError => console.warn(`[SMTP FAULT] Transport failed for ${normalizedEmail}. OTP Code: ${code}`));
-            } else {
-                console.log(`[TEST COMMS] Bypassing SMTP for test account ${normalizedEmail}. Code: ${code}`);
-            }
-        } catch (err) { }
-        res.json({ message: "Account created. Verification required.", userId: user.id, testOtp: code });
+        // Dispatch Verification Email via Resend HTTPS API
+        const sendResult = await sendVerificationEmail(normalizedEmail, code);
+        if (!sendResult.success) {
+            console.warn(`[REGISTRATION] Account created for ${normalizedEmail}, but email dispatch failed: ${sendResult.error}`);
+            return res.status(201).json({
+                message: "Account created, but verification email could not be delivered immediately. Please use Resend Code on the next screen.",
+                userId: user.id,
+                emailDeliveryStatus: "failed",
+                emailDispatchFailed: true
+            });
+        }
+
+        res.status(201).json({
+            message: "Account created. Verification passkey dispatched to your email.",
+            userId: user.id,
+            emailDeliveryStatus: "dispatched"
+        });
     } catch (e) {
+        console.error('[REGISTRATION ERROR]', e);
         res.status(500).json({ message: "Registration failed", error: e.message });
     }
 });
@@ -255,29 +293,65 @@ app.post('/api/auth/resend-otp', async (req, res) => {
         const { userId, email } = req.body;
         const query = userId ? { id: userId } : { email: String(email).toLowerCase().trim() };
         const user = await User.findOne(query);
-        if (!user) return res.status(404).json({ message: "Operative identity not found." });
+        
+        // Generic response to mitigate email enumeration attacks
+        if (!user) {
+            return res.json({ 
+                message: "If an unverified account exists for this identity, a fresh verification passkey has been dispatched." 
+            });
+        }
 
-        let code = Math.floor(100000 + Math.random() * 900000).toString();
-        if (user.email.endsWith('@codesrijan.test')) code = '123456';
-        const tokenHash = await bcrypt.hash(code, 5);
+        if (user.accountStatus === 'active') {
+            return res.status(400).json({ message: "Account is already verified and active. Please proceed to login." });
+        }
 
+        // Server-enforced rate limit: 60-second cooldown between resends
+        const activeVerif = await EmailVerification.findOne({ userId: user.id, usedAt: null }).sort({ createdAt: -1 });
+        if (activeVerif && activeVerif.lastResendAt) {
+            const timeSinceLastResend = Date.now() - activeVerif.lastResendAt.getTime();
+            if (timeSinceLastResend < 60000) {
+                const waitSeconds = Math.ceil((60000 - timeSinceLastResend) / 1000);
+                return res.status(429).json({ 
+                    message: `Rate limit exceeded. Please wait ${waitSeconds} seconds before requesting another code.`,
+                    retryAfter: waitSeconds 
+                });
+            }
+        }
+
+        // Generate secure 6-digit OTP
+        const code = crypto.randomInt(100000, 1000000).toString();
+        const tokenHash = await bcrypt.hash(code, 10);
+
+        // Invalidate older tokens
         await EmailVerification.deleteMany({ userId: user.id });
         await EmailVerification.create({
             userId: user.id,
             tokenHash,
-            expiresAt: new Date(Date.now() + 15 * 60000)
+            expiresAt: new Date(Date.now() + 15 * 60000),
+            attempts: 0,
+            maxAttempts: 5,
+            lastResendAt: new Date(),
+            resendCount: (activeVerif?.resendCount || 0) + 1
         });
 
-        console.log(`[OTP DISPATCH] Re-transmitted 6-digit OTP code for ${user.email}: ${code}`);
-        try {
-            if (!user.email.endsWith('@codesrijan.test')) {
-                sendVerificationEmail(user.email, code)
-                    .then(() => console.log(`[SECURE COMMS] Re-transmit fired for ${user.email}.`))
-                    .catch(mailError => console.warn(`[SMTP FAULT] Transport failed on re-transmit for ${user.email}. OTP Code: ${code}`));
-            }
-        } catch (err) { }
-        return res.json({ message: "New 6-digit verification passkey dispatched.", userId: user.id, testOtp: code });
+        // Dispatch via Resend HTTPS
+        const sendResult = await sendVerificationEmail(user.email, code);
+        if (!sendResult.success) {
+            return res.status(200).json({ 
+                message: "New verification code generated, but email delivery encountered an issue. Please try again shortly.",
+                userId: user.id,
+                emailDispatchFailed: true,
+                emailDeliveryStatus: "failed"
+            });
+        }
+
+        return res.json({ 
+            message: "New 6-digit verification passkey dispatched to your email.", 
+            userId: user.id,
+            emailDeliveryStatus: "dispatched"
+        });
     } catch (e) {
+        console.error('[RESEND OTP ERROR]', e);
         return res.status(500).json({ message: "Failed to re-transmit verification code." });
     }
 });
@@ -285,18 +359,58 @@ app.post('/api/auth/resend-otp', async (req, res) => {
 app.post('/api/auth/verify-email', async (req, res) => {
     try {
         const { userId, code } = req.body;
-        const verification = await EmailVerification.findOne({ userId, usedAt: null });
-        if (!verification || verification.expiresAt < new Date()) {
-            return res.status(400).json({ message: "Invalid or expired verification packet." });
+        if (!userId || !code) {
+            return res.status(400).json({ message: "User ID and 6-digit verification code are required." });
+        }
+
+        const verification = await EmailVerification.findOne({ userId, usedAt: null }).sort({ createdAt: -1 });
+        if (!verification) {
+            return res.status(400).json({ message: "No active verification request found. Please request a new code." });
+        }
+
+        // Check expiration
+        if (verification.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Verification passkey has expired. Please request a fresh code." });
+        }
+
+        // Check if session is locked
+        if (verification.lockedUntil && verification.lockedUntil > new Date()) {
+            const remainingLockSeconds = Math.ceil((verification.lockedUntil.getTime() - Date.now()) / 1000);
+            return res.status(429).json({ 
+                message: `Too many failed attempts. Verification locked for ${remainingLockSeconds} seconds.`,
+                locked: true,
+                retryAfter: remainingLockSeconds
+            });
         }
 
         const normalizedCode = String(code).trim();
-        const isMasterCode = normalizedCode === '123456';
-        const isValid = isMasterCode || (await bcrypt.compare(normalizedCode, verification.tokenHash));
-        if (!isValid) return res.status(400).json({ message: "Invalid verification code." });
+        const isValid = await bcrypt.compare(normalizedCode, verification.tokenHash);
 
+        if (!isValid) {
+            // Increment attempt counter atomically
+            verification.attempts = (verification.attempts || 0) + 1;
+            if (verification.attempts >= verification.maxAttempts) {
+                // Lock for 10 minutes
+                verification.lockedUntil = new Date(Date.now() + 10 * 60000);
+                await verification.save();
+                return res.status(429).json({ 
+                    message: "Maximum verification attempts exceeded (5/5). Session locked for 10 minutes.",
+                    locked: true,
+                    retryAfter: 600
+                });
+            }
+            await verification.save();
+            const attemptsLeft = verification.maxAttempts - verification.attempts;
+            return res.status(400).json({ 
+                message: `Invalid verification code. ${attemptsLeft} ${attemptsLeft === 1 ? 'attempt' : 'attempts'} remaining.`,
+                remainingAttempts: attemptsLeft
+            });
+        }
+
+        // Single-use verification: mark usedAt and destroy sibling records
         verification.usedAt = new Date();
         await verification.save();
+        await EmailVerification.deleteMany({ userId, _id: { $ne: verification._id } });
 
         const updatedUser = await User.findOneAndUpdate({ id: userId }, {
             accountStatus: 'active',
@@ -304,10 +418,12 @@ app.post('/api/auth/verify-email', async (req, res) => {
             emailVerifiedAt: new Date()
         }, { new: true });
 
-        // Dispatch Welcome Email Transmission
-        if (updatedUser) {
-            sendWelcomeEmail(updatedUser.email, updatedUser.name, updatedUser.role).catch(() => {});
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User identity not found." });
         }
+
+        // Dispatch Welcome Email asynchronously
+        sendWelcomeEmail(updatedUser.email, updatedUser.name, updatedUser.role).catch(() => {});
 
         const sessionToken = crypto.randomBytes(32).toString('hex');
         const sessionTokenHash = crypto.createHash('sha256').update(sessionToken).digest('hex');
@@ -329,6 +445,7 @@ app.post('/api/auth/verify-email', async (req, res) => {
             }
         });
     } catch (e) {
+        console.error('[VERIFY EMAIL ERROR]', e);
         res.status(500).json({ message: "Verification failed." });
     }
 });
@@ -412,18 +529,14 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
         const frontendHost = req.headers.origin || process.env.FRONTEND_URL || 'https://codesrijan-nine.vercel.app';
         const resetLink = `${frontendHost}/auth/reset-password?token=${resetTokenRaw}&uid=${user.id}`;
-        console.log(`[PASSWORD RESET GENERATED] ${normalizedEmail} -> ${resetLink}`);
 
-        // Dispatch Email asynchronously
+        // Dispatch Email asynchronously via Resend HTTPS
         sendPasswordResetEmail(normalizedEmail, resetLink)
-            .then(() => console.log(`[SECURE COMMS] Password reset email sent to ${normalizedEmail}`))
-            .catch(err => console.warn(`[SMTP FAULT] Password reset email failed for ${normalizedEmail}: ${err.message}`));
+            .then(() => console.log(`[SECURE COMMS] Password reset email dispatched for ${normalizedEmail.split('@')[0].slice(0, 2)}***`))
+            .catch(err => console.warn(`[RESEND FAULT] Password reset email failed: ${err.message}`));
 
         res.json({
-            message: "If an account exists, a reset instruction has been dispatched.",
-            resetLink,
-            resetToken: resetTokenRaw,
-            userId: user.id
+            message: "If an account exists, a reset instruction has been dispatched."
         });
     } catch (e) {
         console.error('[FORGOT PASSWORD ERROR]', e);
@@ -2583,4 +2696,9 @@ app.get('/api/leaderboard', async (req, res) => {
 
 // START
 const PORT = process.env.PORT || 5001;
-httpServer.listen(PORT, () => console.log(`Server & WebSockets running on port ${PORT}`));
+const isMain = process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].endsWith('server.cjs'));
+if (isMain) {
+    httpServer.listen(PORT, () => console.log(`Server & WebSockets running on port ${PORT}`));
+}
+
+export { app, httpServer };

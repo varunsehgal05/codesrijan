@@ -24,6 +24,10 @@ export interface User {
     password?: string; // Optional field for transport primarily
     role: Role;
     teamId?: string;
+    college?: string;
+    branch?: string;
+    year?: string;
+    handle?: string;
 }
 
 export interface Team {
@@ -135,7 +139,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const refetchData = async () => {
         try {
-            const token = localStorage.getItem("codesrijan_auth_token");
+            const rawToken = localStorage.getItem("codesrijan_auth_token");
+            const token = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
             let nextUser = null;
             if (token) {
                 try {
@@ -143,11 +148,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     nextUser = meRes.data.user;
-                } catch (e) { }
+                } catch (e: any) {
+                    if (e.response?.status === 401 || e.response?.status === 403) {
+                        localStorage.removeItem("codesrijan_auth_token");
+                    }
+                }
             }
 
             let teamTasks = [];
-            if (nextUser && nextUser.teamId) {
+            if (nextUser && nextUser.teamId && token) {
                 try {
                     const taskRes = await axios.get(`${API_URL}/teams/${nextUser.teamId}/tasks`, {
                         headers: { Authorization: `Bearer ${token}` }
@@ -158,12 +167,16 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 }
             }
 
+            const studentRegPromise = token 
+                ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+                : Promise.resolve({ data: [] });
+
             const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
                 axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+                studentRegPromise,
                 axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] }))
             ]);
 
@@ -176,18 +189,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 registrations: regRes.data,
                 tasks: teamTasks,
                 evaluations: evalRes.data,
-                ...(nextUser ? { currentUser: nextUser } : {}),
+                ...(nextUser ? { currentUser: nextUser } : (token ? {} : { currentUser: null })),
                 isLoaded: true
             }));
         } catch (e) {
-            console.error("Failed to fetch from Node API", e);
+            console.warn("Failed to complete background sync from Node API", e);
             setState(prev => ({ ...prev, isLoaded: true }));
         }
     };
 
     // Initialize state mapping
     useEffect(() => {
-        const storedToken = localStorage.getItem("codesrijan_auth_token");
+        const rawToken = localStorage.getItem("codesrijan_auth_token");
+        const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
+
         if (storedToken) {
             const loadWithToken = async () => {
                 try {
@@ -202,18 +217,21 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     refetchData();
                 } catch (e: any) {
                     if (e.response?.status === 401 || e.response?.status === 403) {
-                        console.error("Token explicitly invalid or expired. Purging local identity.");
+                        // Stale or expired token - purge quietly without alarming console error
                         localStorage.removeItem("codesrijan_auth_token");
+                        setState(prev => ({ ...prev, currentUser: null, isLoaded: true }));
                     } else {
                         console.warn("Network error verifying session, server might be spinning up. Keeping token intact.");
+                        setState(prev => ({ ...prev, isLoaded: true }));
                     }
-                    setState(prev => ({ ...prev, isLoaded: true }));
                     refetchData();
                 }
             };
             loadWithToken();
         } else {
-            setState(prev => ({ ...prev, isLoaded: true }));
+            // Fresh unauthenticated visitor - clear any malformed token and load public state
+            localStorage.removeItem("codesrijan_auth_token");
+            setState(prev => ({ ...prev, currentUser: null, isLoaded: true }));
             refetchData();
         }
     }, []);

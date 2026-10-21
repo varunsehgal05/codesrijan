@@ -16,6 +16,11 @@ const emailVerificationSchema = new mongoose.Schema({
     userId: { type: String, required: true },
     tokenHash: { type: String, required: true },
     expiresAt: { type: Date, required: true },
+    attempts: { type: Number, default: 0 },
+    maxAttempts: { type: Number, default: 5 },
+    lockedUntil: { type: Date, default: null },
+    lastResendAt: { type: Date, default: null },
+    resendCount: { type: Number, default: 0 },
     usedAt: Date
 }, { timestamps: true });
 

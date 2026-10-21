@@ -124,7 +124,7 @@ function Page14() {
               </div>
               <div className="mt-4 pt-4 border-t-2 border-stark-black flex justify-between items-center">
                 <span className="font-label-bold text-label-bold bg-secondary-fixed text-on-secondary-fixed px-3 py-1 rounded-full">
-                  {stats.activeHackathon ? `#${stats.activeHackathon.slug}` : '#CodeSrijanOffensive'}
+                  #{ (stats.activeHackathon?.category || stats.activeHackathon?.slug || stats.activeHackathon?.theme || 'General Innovation').replace(/^#/, '') }
                 </span>
                 <span className="font-label-bold text-label-bold text-stark-black">{stats.activeHackathon?.venue || 'Online & Offline'}</span>
               </div>

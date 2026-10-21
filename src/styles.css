@@ -95,6 +95,21 @@
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: oklch(0.929 0.013 255.508);
   --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* CodeSrijan Cyber Dark Theme Tokens */
+  --cs-bg-canvas: #0B0F14;
+  --cs-surface-card: #121A26;
+  --cs-surface-raised: #182334;
+  --cs-border-subtle: #223249;
+  --cs-border-active: #7C3AED;
+  --cs-text-primary: #F4F7FB;
+  --cs-text-secondary: #A9B5C5;
+  --cs-text-muted: #64748B;
+  --cs-accent-primary: #7C3AED;
+  --cs-accent-secondary: #22D3EE;
+  --cs-status-success: #22C55E;
+  --cs-status-warning: #F59E0B;
+  --cs-status-error: #F87171;
 }
 
 .dark {
@@ -202,8 +217,21 @@
   --color-ink-black: #000000;
   --color-stark-black: #000000;
   --color-pure-white: #ffffff;
-  --color-studio-white: #ffffff;
   --color-neutral-gray: #eaeaea;
+
+  --color-cs-bg-canvas: #0B0F14;
+  --color-cs-surface-card: #121A26;
+  --color-cs-surface-raised: #182334;
+  --color-cs-border-subtle: #223249;
+  --color-cs-border-active: #7C3AED;
+  --color-cs-text-primary: #F4F7FB;
+  --color-cs-text-secondary: #A9B5C5;
+  --color-cs-text-muted: #64748B;
+  --color-cs-accent-primary: #7C3AED;
+  --color-cs-accent-secondary: #22D3EE;
+  --color-cs-status-success: #22C55E;
+  --color-cs-status-warning: #F59E0B;
+  --color-cs-status-error: #F87171;
 
   --font-display-lg: "Anybody", system-ui, sans-serif;
   --font-headline-xl: "Anybody", system-ui, sans-serif;

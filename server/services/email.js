@@ -1,66 +1,54 @@
-import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 
-const getTransporter = () => {
-    const user = process.env.EMAIL_USER || 'codesrijan@gmail.com';
-    const pass = process.env.EMAIL_PASS || 'jvsstyromfvdadyj';
-    if (user && pass) {
-        return nodemailer.createTransport({
-            host: 'smtp.gmail.com',
-            port: 587,
-            secure: false, // 587 with STARTTLS works reliably on cloud hosts (Render/AWS)
-            auth: { user, pass },
-            tls: { rejectUnauthorized: false },
-            connectionTimeout: 15000,
-            greetingTimeout: 15000,
-            socketTimeout: 15000
-        });
-    }
-    return null;
-};
-
-const getResend = () => {
+// Resend HTTPS Client Factory
+const getResendClient = () => {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) return null;
     return new Resend(apiKey);
 };
 
-const FROM_EMAIL = process.env.EMAIL_USER || 'codesrijan@gmail.com';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'CodeSrijan <onboarding@resend.dev>';
 
+/**
+ * Dispatches 6-digit OTP verification email via Resend HTTPS REST API
+ * @param {string} to - Destination recipient email
+ * @param {string} code - Cryptographically generated 6-digit OTP code
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ */
 export const sendVerificationEmail = async (to, code) => {
     const htmlContent = `
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
                 <td align="center">
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #223249; border-radius: 8px; overflow: hidden;">
                         <tr>
-                            <td style="background-color: #0047FF; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
-                                <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
-                                <p style="margin: 8px 0 0 0; color: #FFFFFF; font-size: 12px; font-family: monospace; letter-spacing: 1px;">IDENTITY_VERIFICATION_PROTOCOL</p>
+                            <td style="background-color: #182334; border-bottom: 2px solid #223249; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #F4F7FB; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #22D3EE; font-size: 11px; font-family: monospace; letter-spacing: 2px;">IDENTITY_VERIFICATION_PROTOCOL</p>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 40px 32px;">
-                                <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Incoming Transmission</h2>
-                                <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
-                                    This email address was registered at CodeSrijan. To finalize your authorization, use the secure passkey below.
+                                <h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700; text-transform: uppercase;">Incoming Verification Transmission</h2>
+                                <p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    This address was registered on the CodeSrijan Mainframe. To confirm authorization and finalize your operative account, input your secure 6-digit passkey:
                                 </p>
-                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; border: 4px dashed #0047FF;">
+                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; border: 2px dashed #7C3AED; border-radius: 6px;">
                                     <tr>
-                                        <td align="center" style="padding: 32px;">
-                                            <p style="margin: 0 0 12px 0; color: #71717A; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px;">Secure Passkey</p>
-                                            <h1 style="margin: 0; color: #0047FF; font-size: 48px; font-family: monospace; font-weight: 900; letter-spacing: 12px;">${code}</h1>
+                                        <td align="center" style="padding: 28px;">
+                                            <p style="margin: 0 0 8px 0; color: #A9B5C5; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">Secure Passkey</p>
+                                            <h1 style="margin: 0; color: #22D3EE; font-size: 44px; font-family: monospace; font-weight: 900; letter-spacing: 10px;">${code}</h1>
                                         </td>
                                     </tr>
                                 </table>
-                                <p style="margin: 32px 0 0 0; color: #71717A; font-size: 14px; font-weight: 500;">
-                                    This code expires in <strong>15 minutes</strong>. Do not disclose this code under any circumstances.
+                                <p style="margin: 24px 0 0 0; color: #64748B; font-size: 13px; line-height: 1.5;">
+                                    This verification passkey will expire in <strong>15 minutes</strong> and can only be used once. Never disclose this transmission to anyone.
                                 </p>
                             </td>
                         </tr>
                         <tr>
-                            <td style="background-color: #141416; padding: 24px; text-align: center;">
-                                <p style="margin: 0; color: #A1A1AA; font-size: 12px; font-family: monospace;">If you did not initiate this sequence, you may safely ignore this transmission.</p>
+                            <td style="background-color: #0B0F14; border-top: 1px solid #223249; padding: 20px; text-align: center;">
+                                <p style="margin: 0; color: #64748B; font-size: 12px; font-family: monospace;">If you did not initiate this sequence, you may safely ignore this email.</p>
                             </td>
                         </tr>
                     </table>
@@ -69,83 +57,81 @@ export const sendVerificationEmail = async (to, code) => {
         </table>
     `;
 
-    // 1. Try Nodemailer (Gmail SMTP)
-    try {
-        const transporter = getTransporter();
-        if (transporter) {
-            const info = await transporter.sendMail({
-                from: `"CodeSrijan Protocol" <${FROM_EMAIL}>`,
-                to,
-                subject: 'CodeSrijan [OTP VERIFICATION]',
-                html: htmlContent
-            });
-            console.log('[SECURE COMMS] Verification Email dispatched via Gmail SMTP: %s', info.messageId);
-            return true;
-        }
-    } catch (e) {
-        console.warn('[SECURE COMMS] Gmail SMTP failed, attempting Resend fallback:', e.message);
+    const resend = getResendClient();
+    if (!resend) {
+        console.warn('[EMAIL SERVICE WARNING] RESEND_API_KEY is not configured in environment. Email transmission held.');
+        return {
+            success: false,
+            error: 'Email delivery provider unconfigured: RESEND_API_KEY missing in environment variables.'
+        };
     }
 
-    // 2. Fallback to Resend API if configured
     try {
-        const resend = getResend();
-        if (resend) {
-            const { data, error } = await resend.emails.send({
-                from: 'CodeSrijan <onboarding@resend.dev>',
-                to: [to],
-                subject: 'CodeSrijan [OTP VERIFICATION]',
-                html: htmlContent
-            });
-            if (!error) {
-                console.log('[SECURE COMMS] Verification Email dispatched via Resend: %s', data?.id);
-                return true;
-            }
-        }
-    } catch (e) { }
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [to],
+            subject: 'CodeSrijan [IDENTITY VERIFICATION PASSKEY]',
+            html: htmlContent
+        });
 
-    console.log(`[SECURE COMMS] Local test log. Verification OTP Code for ${to}: ${code}`);
-    return true;
+        if (error) {
+            console.error('[SECURE COMMS FAULT] Resend API rejected message to %s: %s', to, error.message);
+            return { success: false, error: error.message };
+        }
+
+        console.log('[SECURE COMMS] Verification email accepted by Resend for destination: %s. Message ID: %s', to, data?.id);
+        return { success: true, messageId: data?.id };
+    } catch (e) {
+        console.error('[SECURE COMMS EXCEPTION] Network or provider error sending to %s: %s', to, e.message);
+        return { success: false, error: e.message || 'HTTPS email transport timeout' };
+    }
 };
 
+/**
+ * Dispatches password recovery link via Resend HTTPS REST API
+ * @param {string} to - Destination recipient email
+ * @param {string} resetLink - Cryptographic single-use reset URL
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ */
 export const sendPasswordResetEmail = async (to, resetLink) => {
     const htmlContent = `
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
                 <td align="center">
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #223249; border-radius: 8px; overflow: hidden;">
                         <tr>
-                            <td style="background-color: #0047FF; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
-                                <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
-                                <p style="margin: 8px 0 0 0; color: #FFFFFF; font-size: 12px; font-family: monospace; letter-spacing: 1px;">PASSWORD_RECOVERY_PROTOCOL</p>
+                            <td style="background-color: #182334; border-bottom: 2px solid #223249; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #F4F7FB; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #7C3AED; font-size: 11px; font-family: monospace; letter-spacing: 2px;">PASSWORD_RECOVERY_PROTOCOL</p>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 40px 32px;">
-                                <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Password Reset Requested</h2>
-                                <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
-                                    A password reset sequence was initiated for your CodeSrijan account (${to}). Click the button below to set a new password.
+                                <h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700; text-transform: uppercase;">Password Reset Request</h2>
+                                <p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    A password reset sequence was initiated for your CodeSrijan account. Click the button below to configure a new password:
                                 </p>
                                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 24px 0;">
                                     <tr>
                                         <td align="center">
-                                            <a href="${resetLink}" target="_blank" style="background-color: #0047FF; color: #FFFFFF; font-weight: 900; text-transform: uppercase; text-decoration: none; padding: 16px 32px; border: 3px solid #141416; display: inline-block; font-size: 16px; letter-spacing: 1px;">
-                                                Reset Password Now
+                                            <a href="${resetLink}" target="_blank" style="background-color: #7C3AED; color: #F4F7FB; font-weight: 800; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border-radius: 4px; display: inline-block; font-size: 15px; letter-spacing: 1px;">
+                                                Reset Password
                                             </a>
                                         </td>
                                     </tr>
                                 </table>
-                                <p style="margin: 24px 0 0 0; color: #71717A; font-size: 14px; font-weight: 500; word-break: break-all;">
-                                    Or copy and paste this direct link into your browser:<br/>
-                                    <a href="${resetLink}" style="color: #0047FF;">${resetLink}</a>
+                                <p style="margin: 24px 0 0 0; color: #64748B; font-size: 13px; line-height: 1.5; word-break: break-all;">
+                                    Or copy and paste this link into your browser:<br/>
+                                    <span style="color: #22D3EE;">${resetLink}</span>
                                 </p>
-                                <p style="margin: 16px 0 0 0; color: #71717A; font-size: 13px;">
-                                    This link expires in <strong>60 minutes</strong>. If you did not request a password reset, please ignore this email.
+                                <p style="margin: 16px 0 0 0; color: #64748B; font-size: 12px;">
+                                    This link expires in <strong>60 minutes</strong>. If you did not request this reset, your account remains secure and you may safely ignore this transmission.
                                 </p>
                             </td>
                         </tr>
                         <tr>
-                            <td style="background-color: #141416; padding: 24px; text-align: center;">
-                                <p style="margin: 0; color: #A1A1AA; font-size: 12px; font-family: monospace;">CodeSrijan Identity Protection System</p>
+                            <td style="background-color: #0B0F14; border-top: 1px solid #223249; padding: 20px; text-align: center;">
+                                <p style="margin: 0; color: #64748B; font-size: 12px; font-family: monospace;">CodeSrijan Identity Protection System</p>
                             </td>
                         </tr>
                     </table>
@@ -154,59 +140,60 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
         </table>
     `;
 
-    try {
-        const transporter = getTransporter();
-        if (transporter) {
-            const info = await transporter.sendMail({
-                from: `"CodeSrijan Support" <${FROM_EMAIL}>`,
-                to,
-                subject: 'CodeSrijan [PASSWORD RESET INSTRUCTION]',
-                html: htmlContent
-            });
-            console.log('[SECURE COMMS] Password Reset Email dispatched via Gmail SMTP: %s', info.messageId);
-            return true;
-        }
-    } catch (e) {
-        console.warn('[SECURE COMMS] Gmail SMTP failed for password reset:', e.message);
+    const resend = getResendClient();
+    if (!resend) {
+        console.warn('[EMAIL SERVICE WARNING] RESEND_API_KEY missing for password reset.');
+        return { success: false, error: 'Resend API key missing.' };
     }
 
     try {
-        const resend = getResend();
-        if (resend) {
-            const { data, error } = await resend.emails.send({
-                from: 'CodeSrijan <onboarding@resend.dev>',
-                to: [to],
-                subject: 'CodeSrijan [PASSWORD RESET INSTRUCTION]',
-                html: htmlContent
-            });
-            if (!error) {
-                console.log('[SECURE COMMS] Password Reset Email dispatched via Resend: %s', data?.id);
-                return true;
-            }
-        }
-    } catch (e) {}
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [to],
+            subject: 'CodeSrijan [PASSWORD RESET REQUEST]',
+            html: htmlContent
+        });
 
-    console.log(`[SECURE COMMS] Password Reset link for ${to}: ${resetLink}`);
-    return true;
+        if (error) {
+            console.error('[SECURE COMMS FAULT] Password reset send failed to %s: %s', to, error.message);
+            return { success: false, error: error.message };
+        }
+
+        console.log('[SECURE COMMS] Password reset email accepted by Resend for destination: %s. Message ID: %s', to, data?.id);
+        return { success: true, messageId: data?.id };
+    } catch (e) {
+        console.error('[SECURE COMMS EXCEPTION] Password reset error: %s', e.message);
+        return { success: false, error: e.message };
+    }
 };
 
+/**
+ * Dispatches account clearance confirmation via Resend HTTPS REST API
+ * @param {string} to - Destination recipient email
+ * @param {string} name - Operative name
+ * @param {string} role - Operative role
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ */
 export const sendWelcomeEmail = async (to, name, role = 'student') => {
     const htmlContent = `
-        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F4F4F5; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
                 <td align="center">
-                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #FFFFFF; border: 4px solid #141416;">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #223249; border-radius: 8px; overflow: hidden;">
                         <tr>
-                            <td style="background-color: #FF3366; border-bottom: 4px solid #141416; padding: 24px; text-align: center;">
-                                <h1 style="margin: 0; color: #141416; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">CODESRIJAN</h1>
-                                <p style="margin: 8px 0 0 0; color: #141416; font-size: 12px; font-family: monospace; font-weight: 700; letter-spacing: 1px;">ACCESS_CLEARANCE_GRANTED</p>
+                            <td style="background-color: #182334; border-bottom: 2px solid #223249; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #22C55E; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #F4F7FB; font-size: 11px; font-family: monospace; letter-spacing: 2px;">CLEARANCE_GRANTED</p>
                             </td>
                         </tr>
                         <tr>
                             <td style="padding: 40px 32px;">
-                                <h2 style="margin: 0 0 16px 0; color: #141416; font-size: 20px; font-weight: 800; text-transform: uppercase;">Welcome to the Platform, ${name || 'Operative'}!</h2>
-                                <p style="margin: 0 0 32px 0; color: #3F3F46; font-size: 16px; line-height: 1.6; font-weight: 500;">
-                                    Your cryptographic identity has been fully verified and enrolled into the CodeSrijan network with role clearance: <strong style="color: #0047FF; text-transform: uppercase; padding: 2px 6px; border: 2px solid #0047FF;">${role}</strong>.
+                                <h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700;">Welcome to the Platform, ${name || 'Operative'}!</h2>
+                                <p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    Your identity has been verified on the CodeSrijan network with role clearance: <strong style="color: #7C3AED; text-transform: uppercase;">${role}</strong>.
+                                </p>
+                                <p style="margin: 0; color: #64748B; font-size: 13px;">
+                                    You can now enroll in hackathons, recruit teammates, and submit solutions directly from your workspace.
                                 </p>
                             </td>
                         </tr>
@@ -216,19 +203,20 @@ export const sendWelcomeEmail = async (to, name, role = 'student') => {
         </table>
     `;
 
-    try {
-        const transporter = getTransporter();
-        if (transporter) {
-            await transporter.sendMail({
-                from: `"CodeSrijan Protocol" <${FROM_EMAIL}>`,
-                to,
-                subject: 'CodeSrijan [ACCESS APPROVED]',
-                html: htmlContent
-            });
-            console.log('[SECURE COMMS] Welcome transmission dispatched via Gmail SMTP to %s', to);
-            return true;
-        }
-    } catch (e) { }
+    const resend = getResendClient();
+    if (!resend) return { success: false, error: 'RESEND_API_KEY missing' };
 
-    return true;
+    try {
+        const { data, error } = await resend.emails.send({
+            from: FROM_EMAIL,
+            to: [to],
+            subject: 'CodeSrijan [ACCOUNT ACTIVATED]',
+            html: htmlContent
+        });
+        if (error) return { success: false, error: error.message };
+        return { success: true, messageId: data?.id };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
 };
+
