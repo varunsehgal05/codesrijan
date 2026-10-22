@@ -81,7 +81,8 @@ async function runTestSuite() {
     // Ensure database connection
     if (mongoose.connection.readyState !== 1) {
         console.log('Connecting to MongoDB Atlas test database...');
-        await mongoose.connect(process.env.MONGO_URI, { dbName: 'codesrijan' });
+        const mongoUri = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
+        await mongoose.connect(mongoUri, { dbName: 'codesrijan' });
     }
     console.log('Database connected.\n');
 
