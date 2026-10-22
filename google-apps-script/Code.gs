@@ -88,7 +88,7 @@ function doPost(e) {
     var data = payload.data || {};
 
     var messageToSign = reqTime + '.' + nonce + '.' + template + '.' + to + '.' + JSON.stringify(data);
-    var expectedSignatureBytes = Utilities.computeHmacSha256Signature(messageToSign, secret);
+    var expectedSignatureBytes = Utilities.computeHmacSha256Signature(messageToSign, secret, Utilities.Charset.UTF_8);
     var expectedSignatureHex = bytesToHex(expectedSignatureBytes);
 
     if (expectedSignatureHex.toLowerCase() !== signature.trim().toLowerCase()) {

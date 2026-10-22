@@ -126,7 +126,7 @@ export const dispatchViaAppsScript = async (template, to, data = {}) => {
         const response = await fetch(scriptUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json; charset=utf-8',
                 'User-Agent': 'CodeSrijan-Backend-Relay/1.0'
             },
             body: JSON.stringify(payload),

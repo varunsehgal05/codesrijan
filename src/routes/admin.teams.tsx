@@ -10,7 +10,7 @@ export const Route = createFileRoute("/admin/teams")({
     <div className="p-8 text-center text-error font-mono bg-pure-white h-screen flex flex-col justify-center items-center">
       <h2 className="text-xl font-bold mb-4 bg-stark-black text-pure-white px-4 py-2 brutal-border inline-block">TEAM DIRECTORY UNAVAILABLE</h2>
       <p>We couldn't retrieve the team directory.</p>
-      <p className="mt-4 opacity-75">Error ID: TEAM-QUERY-104 | {error.message}</p>
+      <p className="mt-4 opacity-75">Error ID: TEAM-QUERY-104 | {error instanceof Error ? error.message : 'Unknown error'}</p>
     </div>
   )
 });

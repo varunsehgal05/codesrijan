@@ -9,7 +9,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { setTestAppsScriptDispatcher, sendPaymentReviewNotification, sendVerificationEmail, sendPasswordResetEmail } from './services/email.js';
 
 const properties = { CODESRIJAN_RELAY_SECRET: 'local-test-secret', ADMIN_NOTIFICATION_EMAIL: 'admin@example.test', FRONTEND_URL: 'https://example.test' };
-const data = { eventName: '<img src=x onerror=alert(1)>', registrationName: 'QA squad', registrationReference: 'qa-reg', feeAmount: 100, currency: 'INR', transactionReference: 'QA-123456', submittedAt: new Date().toISOString(), reviewUrl: 'https://example.test/admin/payments' };
+const data = { eventName: 'QA — परीक्षण <img src=x onerror=alert(1)>', registrationName: 'QA squad', registrationReference: 'qa-reg', feeAmount: 100, currency: 'INR', transactionReference: 'QA-123456', submittedAt: new Date().toISOString(), reviewUrl: 'https://example.test/admin/payments' };
 
 test('relay authenticates, restricts payment recipients/templates, escapes HTML and preserves existing templates', () => {
     const sent = [], cache = new Map();
@@ -17,7 +17,7 @@ test('relay authenticates, restricts payment recipients/templates, escapes HTML 
         PropertiesService: { getScriptProperties: () => ({ getProperty: key => properties[key] }) },
         LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
         CacheService: { getScriptCache: () => ({ get: key => cache.get(key), put: (key, value) => cache.set(key, value) }) },
-        Utilities: { computeHmacSha256Signature: (message, secret) => [...crypto.createHmac('sha256', secret).update(message).digest()] },
+        Utilities: { Charset: { UTF_8: 'UTF-8' }, computeHmacSha256Signature: (message, secret, charset) => { assert.equal(charset, 'UTF-8'); return [...crypto.createHmac('sha256', secret).update(message).digest()]; } },
         MailApp: { getRemainingDailyQuota: () => 100, sendEmail: mail => sent.push(mail) },
         ContentService: { MimeType: { JSON: 'json' }, createTextOutput: value => ({ value, setMimeType() {} }) }
     });
