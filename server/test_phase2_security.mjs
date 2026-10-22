@@ -14,7 +14,7 @@ process.env.NODE_ENV = 'test';
 import { app, httpServer } from './server.js';
 import { User, Hackathon } from './models/index.js';
 import { EmailVerification, Session, PasswordResetToken } from './models/auth.js';
-import { sendVerificationEmail } from './services/email.js';
+import { sendVerificationEmail, sendPasswordResetEmail, setTestTransporter } from './services/email.js';
 
 let serverInstance;
 let baseUrl;
@@ -71,9 +71,9 @@ function assert(condition, testName, details = '') {
 }
 
 async function runTestSuite() {
-    console.log('\n======================================================');
-    console.log('   CODESRIJAN PHASE 2: AUTOMATED SECURITY & OTP SUITE  ');
-    console.log('======================================================\n');
+    console.log('\n================================================================');
+    console.log('   CODESRIJAN PHASE 2: GMAIL SMTP & SECURITY TEST SUITE         ');
+    console.log('================================================================\n');
 
     await startServer();
     console.log(`Test API Server running on ${baseUrl}`);
@@ -96,20 +96,72 @@ async function runTestSuite() {
         await User.deleteMany({ email: { $in: [testEmail1, testEmail2] } });
 
         // ---------------------------------------------------------------------
-        // TEST 1: Missing Resend configuration fails safely
+        // GROUP 1: GMAIL SMTP CONFIGURATION & PROVIDER RESILIENCE
         // ---------------------------------------------------------------------
-        console.log('[GROUP 1: EMAIL PROVIDER RESILIENCE & CONFIGURATION]');
-        const savedApiKey = process.env.RESEND_API_KEY;
-        delete process.env.RESEND_API_KEY;
-        const missingKeyResult = await sendVerificationEmail('test@example.com', '999999');
+        console.log('[GROUP 1: GMAIL SMTP CONFIGURATION & ERROR HANDLING]');
+        
+        // 1. Missing credentials fails safely
+        setTestTransporter(null);
+        const savedUser = process.env.EMAIL_USER;
+        const savedPass = process.env.EMAIL_PASS;
+        const savedGmailUser = process.env.GMAIL_USER;
+        const savedGmailPass = process.env.GMAIL_APP_PASSWORD;
+        delete process.env.EMAIL_USER;
+        delete process.env.EMAIL_PASS;
+        delete process.env.GMAIL_USER;
+        delete process.env.GMAIL_APP_PASSWORD;
+
+        const missingConfigResult = await sendVerificationEmail('test@example.com', '999999');
         assert(
-            missingKeyResult.success === false && missingKeyResult.error.includes('RESEND_API_KEY'),
-            'Missing Resend configuration fails safely without throwing unhandled error'
+            missingConfigResult.success === false && missingConfigResult.error.includes('unconfigured'),
+            'Missing Gmail SMTP configuration fails safely without throwing unhandled error'
         );
-        process.env.RESEND_API_KEY = savedApiKey; // restore
+
+        // Restore env
+        if (savedUser) process.env.EMAIL_USER = savedUser;
+        if (savedPass) process.env.EMAIL_PASS = savedPass;
+        if (savedGmailUser) process.env.GMAIL_USER = savedGmailUser;
+        if (savedGmailPass) process.env.GMAIL_APP_PASSWORD = savedGmailPass;
+
+        // 2. SMTP Authentication Failure
+        setTestTransporter({
+            sendMail: async () => {
+                throw new Error('535 5.7.8 Username and Password not accepted');
+            }
+        });
+        const authFailResult = await sendVerificationEmail('test@example.com', '999999');
+        assert(
+            authFailResult.success === false && authFailResult.error.includes('535'),
+            'SMTP authentication failure (invalid App Password) is surfaced safely'
+        );
+
+        // 3. SMTP Connection Timeout / Port Block
+        setTestTransporter({
+            sendMail: async () => {
+                throw new Error('ETIMEDOUT: Connection to smtp.gmail.com:465 timed out');
+            }
+        });
+        const timeoutResult = await sendVerificationEmail('test@example.com', '999999');
+        assert(
+            timeoutResult.success === false && timeoutResult.error.includes('ETIMEDOUT'),
+            'SMTP connection timeout / firewall port block fails safely without hanging'
+        );
+
+        // 4. Successful Mocked SMTP Send
+        setTestTransporter({
+            sendMail: async (mailOptions) => ({
+                messageId: `<mock-test-${Date.now()}@gmail.com>`,
+                accepted: [mailOptions.to]
+            })
+        });
+        const successResult = await sendVerificationEmail('test@example.com', '123456');
+        assert(
+            successResult.success === true && successResult.messageId.includes('@gmail.com'),
+            'Successful SMTP dispatch returns success: true and messageId'
+        );
 
         // ---------------------------------------------------------------------
-        // TEST 2: Registration validation & secure account creation
+        // GROUP 2: REGISTRATION & SECURE ACCOUNT LIFECYCLE
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 2: REGISTRATION & SECURE ACCOUNT LIFECYCLE]');
         const shortPassRes = await apiRequest('/auth/register', {
@@ -146,7 +198,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 3: Duplicate Registration Recovery
+        // GROUP 3: DUPLICATE REGISTRATION RECOVERY
         // ---------------------------------------------------------------------
         const duplicateRes = await apiRequest('/auth/register', {
             method: 'POST',
@@ -168,7 +220,7 @@ async function runTestSuite() {
         assert(countUsers === 1, 'Only exactly 1 user document exists after recovery');
 
         // ---------------------------------------------------------------------
-        // TEST 4: Resend Throttling & Account Enumeration Mitigation
+        // GROUP 4: RESEND THROTTLING & ANTI-ENUMERATION
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 3: RESEND THROTTLING & ANTI-ENUMERATION]');
         // Immediate resend should be blocked by 60s cooldown
@@ -192,7 +244,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 5: Universal OTP Bypass '123456' is REJECTED
+        // GROUP 5: UNIVERSAL OTP BYPASS '123456' IS REJECTED
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 4: UNIVERSAL BYPASS EXCISION & OTP VALIDATION]');
         const bypassRes = await apiRequest('/auth/verify-email', {
@@ -205,7 +257,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 6: Incorrect OTP fails and decrements attempts
+        // GROUP 6: INCORRECT OTP FAILS & DECREMENTS ATTEMPTS
         // ---------------------------------------------------------------------
         const incorrectRes = await apiRequest('/auth/verify-email', {
             method: 'POST',
@@ -217,7 +269,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 7: Five incorrect attempts trigger account lockout
+        // GROUP 7: FIVE INCORRECT ATTEMPTS TRIGGER 10-MINUTE LOCKOUT
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 5: BRUTE FORCE DEFENSE & 5-ATTEMPT LOCKOUT]');
         // Submit 3 more failed attempts to reach 5 total
@@ -238,7 +290,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 8: Valid OTP succeeds and activates account
+        // GROUP 8: VALID OTP VERIFICATION & TOKEN CONSUMPTION
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 6: VALID OTP VERIFICATION & TOKEN CONSUMPTION]');
         // Mint a fresh test OTP directly for testing valid flow
@@ -269,7 +321,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 9: Reused OTP fails (Single-Use Token Enforcement)
+        // GROUP 9: REUSED OTP FAILS (SINGLE-USE ENFORCEMENT)
         // ---------------------------------------------------------------------
         const reuseRes = await apiRequest('/auth/verify-email', {
             method: 'POST',
@@ -281,9 +333,9 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 10: Expired OTP fails
+        // GROUP 10: EXPIRED OTP FAILS
         // ---------------------------------------------------------------------
-        console.log('\n[GROUP 7: EXPIRY & SIBLING TOKEN INVALIDATION]');
+        console.log('\n[GROUP 7: EXPIRY & CROSS-USER DEFENSE]');
         const expiredOtp = '731952';
         const expiredHash = await bcrypt.hash(expiredOtp, 10);
         await EmailVerification.create({
@@ -303,9 +355,8 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 11: Cross-user token attack is rejected
+        // GROUP 11: CROSS-USER TOKEN ATTACK REJECTED
         // ---------------------------------------------------------------------
-        // Create user 2
         const regUser2 = await apiRequest('/auth/register', {
             method: 'POST',
             body: {
@@ -330,7 +381,6 @@ async function runTestSuite() {
             maxAttempts: 5
         });
 
-        // Try to verify User 1 with User 2's OTP
         const crossUserRes = await apiRequest('/auth/verify-email', {
             method: 'POST',
             body: { userId: user1Id, code: user2Otp }
@@ -341,7 +391,7 @@ async function runTestSuite() {
         );
 
         // ---------------------------------------------------------------------
-        // TEST 12: Login regression - newly verified account can log in
+        // GROUP 12: LOGIN & PASSWORD RESET REGRESSION
         // ---------------------------------------------------------------------
         console.log('\n[GROUP 8: REGRESSION & CORE FUNCTIONALITY PRESERVATION]');
         const loginRes = await apiRequest('/auth/login', {
@@ -353,9 +403,6 @@ async function runTestSuite() {
             'Verified account logs in successfully and receives valid session token'
         );
 
-        // ---------------------------------------------------------------------
-        // TEST 13: Password Reset does not leak tokens in response
-        // ---------------------------------------------------------------------
         const forgotRes = await apiRequest('/auth/forgot-password', {
             method: 'POST',
             body: { email: testEmail1 }
@@ -367,9 +414,6 @@ async function runTestSuite() {
             'Forgot password does NOT leak raw resetToken or resetLink in HTTP response'
         );
 
-        // ---------------------------------------------------------------------
-        // TEST 14: Protected routes reject unauthenticated requests
-        // ---------------------------------------------------------------------
         const meUnauth = await apiRequest('/auth/me');
         assert(
             meUnauth.status === 401 || meUnauth.status === 403,
@@ -384,9 +428,6 @@ async function runTestSuite() {
             'Protected endpoint /api/auth/me validates session token and returns current user'
         );
 
-        // ---------------------------------------------------------------------
-        // TEST 15: Public hackathons endpoint works (Free hackathon registration preservation)
-        // ---------------------------------------------------------------------
         const hackathonsRes = await apiRequest('/hackathons');
         assert(
             hackathonsRes.status === 200 && Array.isArray(hackathonsRes.data),

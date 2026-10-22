@@ -1,16 +1,66 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
-// Resend HTTPS Client Factory
-const getResendClient = () => {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) return null;
-    return new Resend(apiKey);
+// Helper to sanitize recipient for diagnostic logs
+const maskEmail = (email) => {
+    if (!email || typeof email !== 'string' || !email.includes('@')) return 'unknown';
+    const [user, domain] = email.split('@');
+    return `${user.slice(0, 2)}***@${domain}`;
 };
 
-const FROM_EMAIL = process.env.EMAIL_FROM || 'CodeSrijan <onboarding@resend.dev>';
+// Singleton Transporter Cache
+let transporterInstance = null;
+let customTransporter = null;
 
 /**
- * Dispatches 6-digit OTP verification email via Resend HTTPS REST API
+ * Allows automated test suites to inject a mocked transporter
+ */
+export const setTestTransporter = (mock) => {
+    customTransporter = mock;
+};
+
+/**
+ * Builds or returns the cached Nodemailer Gmail SMTP transporter
+ */
+const getTransporter = () => {
+    if (customTransporter) return customTransporter;
+
+    const user = process.env.GMAIL_USER || process.env.EMAIL_USER;
+    const pass = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_PASS;
+
+    if (!user || !pass) {
+        return null;
+    }
+
+    if (!transporterInstance) {
+        const port = parseInt(process.env.SMTP_PORT || '465', 10);
+        const secure = port === 465;
+
+        transporterInstance = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port,
+            secure,
+            auth: {
+                user: user.trim(),
+                pass: pass.trim().replace(/\s+/g, '') // remove spaces from Google App Passwords
+            },
+            connectionTimeout: 10000, // 10 seconds
+            greetingTimeout: 10000,
+            socketTimeout: 15000 // 15 seconds
+        });
+    }
+
+    return transporterInstance;
+};
+
+const getSenderIdentity = () => {
+    const from = process.env.EMAIL_FROM || process.env.GMAIL_USER || process.env.EMAIL_USER;
+    if (from && from.includes('<')) return from;
+    if (from) return `CodeSrijan <${from.trim()}>`;
+    return 'CodeSrijan <codesrijan@gmail.com>';
+};
+
+/**
+ * Dispatches 6-digit OTP verification email via Gmail SMTP (Nodemailer)
  * @param {string} to - Destination recipient email
  * @param {string} code - Cryptographically generated 6-digit OTP code
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
@@ -57,38 +107,33 @@ export const sendVerificationEmail = async (to, code) => {
         </table>
     `;
 
-    const resend = getResendClient();
-    if (!resend) {
-        console.warn('[EMAIL SERVICE WARNING] RESEND_API_KEY is not configured in environment. Email transmission held.');
+    const transporter = getTransporter();
+    if (!transporter) {
+        console.warn('[EMAIL SERVICE WARNING] Gmail credentials missing (GMAIL_USER / EMAIL_USER and GMAIL_APP_PASSWORD / EMAIL_PASS). Email held.');
         return {
             success: false,
-            error: 'Email delivery provider unconfigured: RESEND_API_KEY missing in environment variables.'
+            error: 'Gmail SMTP unconfigured: missing GMAIL_USER / EMAIL_USER or GMAIL_APP_PASSWORD / EMAIL_PASS in environment variables.'
         };
     }
 
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM_EMAIL,
-            to: [to],
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
             subject: 'CodeSrijan [IDENTITY VERIFICATION PASSKEY]',
             html: htmlContent
         });
 
-        if (error) {
-            console.error('[SECURE COMMS FAULT] Resend API rejected message to %s: %s', to, error.message);
-            return { success: false, error: error.message };
-        }
-
-        console.log('[SECURE COMMS] Verification email accepted by Resend for destination: %s. Message ID: %s', to, data?.id);
-        return { success: true, messageId: data?.id };
+        console.log('[SECURE COMMS] Verification email accepted by Gmail SMTP for %s. Message ID: %s', maskEmail(to), info.messageId);
+        return { success: true, messageId: info.messageId };
     } catch (e) {
-        console.error('[SECURE COMMS EXCEPTION] Network or provider error sending to %s: %s', to, e.message);
-        return { success: false, error: e.message || 'HTTPS email transport timeout' };
+        console.error('[SECURE COMMS FAULT] Gmail SMTP error sending to %s: %s', maskEmail(to), e.message);
+        return { success: false, error: e.message || 'SMTP transmission failure' };
     }
 };
 
 /**
- * Dispatches password recovery link via Resend HTTPS REST API
+ * Dispatches password recovery link via Gmail SMTP (Nodemailer)
  * @param {string} to - Destination recipient email
  * @param {string} resetLink - Cryptographic single-use reset URL
  * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
@@ -140,35 +185,30 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
         </table>
     `;
 
-    const resend = getResendClient();
-    if (!resend) {
-        console.warn('[EMAIL SERVICE WARNING] RESEND_API_KEY missing for password reset.');
-        return { success: false, error: 'Resend API key missing.' };
+    const transporter = getTransporter();
+    if (!transporter) {
+        console.warn('[EMAIL SERVICE WARNING] Gmail credentials missing for password reset.');
+        return { success: false, error: 'Gmail SMTP unconfigured.' };
     }
 
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM_EMAIL,
-            to: [to],
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
             subject: 'CodeSrijan [PASSWORD RESET REQUEST]',
             html: htmlContent
         });
 
-        if (error) {
-            console.error('[SECURE COMMS FAULT] Password reset send failed to %s: %s', to, error.message);
-            return { success: false, error: error.message };
-        }
-
-        console.log('[SECURE COMMS] Password reset email accepted by Resend for destination: %s. Message ID: %s', to, data?.id);
-        return { success: true, messageId: data?.id };
+        console.log('[SECURE COMMS] Password reset email accepted by Gmail SMTP for %s. Message ID: %s', maskEmail(to), info.messageId);
+        return { success: true, messageId: info.messageId };
     } catch (e) {
-        console.error('[SECURE COMMS EXCEPTION] Password reset error: %s', e.message);
+        console.error('[SECURE COMMS FAULT] Password reset send failed to %s: %s', maskEmail(to), e.message);
         return { success: false, error: e.message };
     }
 };
 
 /**
- * Dispatches account clearance confirmation via Resend HTTPS REST API
+ * Dispatches account clearance confirmation via Gmail SMTP (Nodemailer)
  * @param {string} to - Destination recipient email
  * @param {string} name - Operative name
  * @param {string} role - Operative role
@@ -203,20 +243,18 @@ export const sendWelcomeEmail = async (to, name, role = 'student') => {
         </table>
     `;
 
-    const resend = getResendClient();
-    if (!resend) return { success: false, error: 'RESEND_API_KEY missing' };
+    const transporter = getTransporter();
+    if (!transporter) return { success: false, error: 'Gmail SMTP unconfigured' };
 
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM_EMAIL,
-            to: [to],
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
             subject: 'CodeSrijan [ACCOUNT ACTIVATED]',
             html: htmlContent
         });
-        if (error) return { success: false, error: error.message };
-        return { success: true, messageId: data?.id };
+        return { success: true, messageId: info.messageId };
     } catch (e) {
         return { success: false, error: e.message };
     }
 };
-
