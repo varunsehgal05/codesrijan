@@ -26,7 +26,7 @@ function Page12() {
   const activeEvent = hackathons[0];
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
-  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   useEffect(() => {
     if (hackathons.length > 0) {
@@ -61,10 +61,12 @@ function Page12() {
 
   const selectProblem = async (problemId: string) => {
     if (!userTeam) {
-      return toast("You must join a squad before selecting a problem statement.");
+      toast("You must join a squad before selecting a problem statement.");
+      return;
     }
     if (userTeam.leaderId !== currentUser.id) {
-      return toast("Only squad leaders can deploy the problem selection directive.");
+      toast("Only squad leaders can deploy the problem selection directive.");
+      return;
     }
     if (userTeam.problemId) {
       if (!confirm("Your squad already has an active tracking vector. Switching vectors will overwrite your objective. Proceed?")) return;

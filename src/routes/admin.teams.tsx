@@ -223,7 +223,7 @@ function AdminTeams() {
                       EDIT
                     </button>
                     <button
-                      onClick={() => handleDisqualify(t.id, t.name)}
+                      onClick={() => { setDqTeam(t); setDqReason(""); }}
                       disabled={loadingId === t.id}
                       className="bg-error text-pure-white px-4 py-2 font-label-caps text-xs border-2 border-stark-black hover:-translate-y-0.5 hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all font-bold tracking-widest uppercase cursor-pointer disabled:opacity-50"
                     >

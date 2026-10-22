@@ -24,6 +24,28 @@ export const setTestAppsScriptDispatcher = (mockFn) => {
     customAppsScriptDispatcher = mockFn;
 };
 
+// Only server configuration chooses the destination and review link.
+export const sendPaymentReviewNotification = async (registration, eventName, registrationName) => {
+    const to = process.env.ADMIN_NOTIFICATION_EMAIL?.trim();
+    try {
+        if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) return { success: false };
+        const base = new URL(process.env.FRONTEND_URL);
+        if (!['https:', 'http:'].includes(base.protocol) || base.username || base.password) return { success: false };
+        return await dispatchViaAppsScript('payment_review_notification', to, {
+            eventName,
+            registrationName,
+            registrationReference: registration.id,
+            feeAmount: registration.feeAmount,
+            currency: registration.currency,
+            transactionReference: registration.transactionReference,
+            submittedAt: new Date(registration.paymentSubmittedAt).toISOString(),
+            reviewUrl: new URL('/admin/payments', base).href
+        }) || { success: false };
+    } catch {
+        return { success: false };
+    }
+};
+
 /**
  * Builds or returns the cached Nodemailer Gmail SMTP transporter
  */
@@ -121,7 +143,7 @@ export const dispatchViaAppsScript = async (template, to, data = {}) => {
                 remainingQuota: resData.remainingQuota
             };
         } else {
-            const errStr = resData?.error || 'Unknown relay error';
+            const errStr = 'Relay rejected email request';
             console.error('[APPS SCRIPT RELAY FAULT] Relay returned error for %s: %s', maskEmail(to), errStr);
             return {
                 success: false,
@@ -129,10 +151,10 @@ export const dispatchViaAppsScript = async (template, to, data = {}) => {
             };
         }
     } catch (err) {
-        console.error('[APPS SCRIPT RELAY FAULT] HTTP call to Apps Script failed for %s: %s', maskEmail(to), err.message);
+        console.error('[APPS SCRIPT RELAY FAULT] HTTP call to Apps Script failed for %s', maskEmail(to));
         return {
             success: false,
-            error: `Apps Script relay failure: ${err.message}`
+            error: 'Apps Script relay failure'
         };
     }
 };

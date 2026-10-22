@@ -15,7 +15,7 @@ export function NotificationBell() {
             try {
                 const token = localStorage.getItem("codesrijan_auth_token");
                 if (!token) return;
-                const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+                const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
                 const res = await axios.get(`${BASE_URL}/notifications`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
@@ -33,7 +33,7 @@ export function NotificationBell() {
     const handleMarkAsRead = async (id: string) => {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+            const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
             await axios.patch(`${BASE_URL}/notifications/${id}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });

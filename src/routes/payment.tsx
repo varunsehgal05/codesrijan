@@ -64,7 +64,7 @@ function PaymentPage() {
     const [submitting, setSubmitting] = useState(false);
     const [retrying, setRetrying] = useState(false);
 
-    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
     const loadData = async () => {
         setLoading(true);
@@ -88,7 +88,7 @@ function PaymentPage() {
                 const paidPending = regs.find(r => r.entryType === 'paid' || r.paymentStatus !== 'not_required');
                 if (paidPending) {
                     targetHackathonId = paidPending.hackathonId;
-                } else if (regs.length > 0) {
+                } else if (regs[0]) {
                     targetHackathonId = regs[0].hackathonId;
                 }
             }

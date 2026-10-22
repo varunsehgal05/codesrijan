@@ -4,7 +4,7 @@ import axios from "axios";
 import { useAppStore } from "../lib/store";
 import { toast } from "react-hot-toast";
 
-const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
 export const Route = createFileRoute("/admin/hackathons/$id")({
     component: AdminHackathonDetail,

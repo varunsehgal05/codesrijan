@@ -20,6 +20,7 @@ const emailVerificationSchema = new mongoose.Schema({
     maxAttempts: { type: Number, default: 5 },
     lockedUntil: { type: Date, default: null },
     lastResendAt: { type: Date, default: null },
+    resendWindowStartedAt: Date,
     resendCount: { type: Number, default: 0 },
     usedAt: Date
 }, { timestamps: true });

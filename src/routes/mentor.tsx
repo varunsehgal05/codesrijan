@@ -20,7 +20,7 @@ function Page2() {
   const [meetLink, setMeetLink] = useState("");
   const [activeReqId, setActiveReqId] = useState("");
 
-  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   useEffect(() => {
     if (currentUser?.role === 'mentor' || currentUser?.role === 'admin') {
@@ -86,7 +86,7 @@ function Page2() {
                       />
                       <button 
                         onClick={async () => {
-                          if (!meetLink || activeReqId !== req.id) return toast("Provide a meet link first!");
+                          if (!meetLink || activeReqId !== req.id) { toast("Provide a meet link first!"); return; }
                           try {
                             const token = localStorage.getItem("codesrijan_auth_token");
                             await axios.post(`${API_URL}/mentor/requests/${req.id}/accept`, { meetLink }, { headers: { Authorization: `Bearer ${token}` } });

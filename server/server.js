@@ -81,55 +81,26 @@ import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conve
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
-import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification } from './services/email.js';
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, {
-    dbName: 'codesrijan'
+    dbName: process.env.MONGO_DB_NAME || 'codesrijan'
 }).then(async () => {
     console.log('MongoDB Connected to keyspace codesrijan');
-    try {
-        await mongoose.connection.collection('users').updateOne(
-            { email: 'admin@e2e.test' },
-            { $set: { role: 'admin' } }
-        );
-    } catch(e) {}
-
-    // Seed secure root accounts exactly once and sync passwords
-    const adminHash = await bcrypt.hash("CodeSrijan99!", 10);
-    const adminExists = await User.findOne({ email: "admin@codesrijan.com" });
-    if (!adminExists) {
-        await User.create({
-            id: "root-admin-01",
-            name: "CodeSrijan Administrator",
-            email: "admin@codesrijan.com",
-            passwordHash: adminHash,
-            role: "admin",
-            accountStatus: "active",
-            emailVerified: true
-        });
-        console.log("[SYSTEM] Root Admin cryptographic identity provisioned.");
-    } else {
-        await User.updateOne({ email: "admin@codesrijan.com" }, { passwordHash: adminHash, role: "admin", accountStatus: "active" });
-    }
-
-    const studentHash = await bcrypt.hash("HackerStudent99!", 10);
-    const studentExists = await User.findOne({ email: "student@codesrijan.com" });
-    if (!studentExists) {
-        await User.create({
-            id: "test-student-01",
-            name: "Vanguard Hacker",
-            email: "student@codesrijan.com",
-            passwordHash: studentHash,
-            role: "student",
-            accountStatus: "active",
-            emailVerified: true
-        });
-        console.log("[SYSTEM] Structural Hacker student identity provisioned.");
-    } else {
-        await User.updateOne({ email: "student@codesrijan.com" }, { passwordHash: studentHash, role: "student", accountStatus: "active" });
+    // Seed only absent accounts with explicitly configured credentials.
+    for (const account of [
+        { email: 'admin@codesrijan.com', id: 'root-admin-01', name: 'CodeSrijan Administrator', role: 'admin', password: process.env.SEED_ADMIN_PASSWORD },
+        { email: 'student@codesrijan.com', id: 'test-student-01', name: 'Vanguard Hacker', role: 'student', password: process.env.SEED_STUDENT_PASSWORD }
+    ]) {
+        const { password, ...identity } = account;
+        if (password && !(await User.exists({ email: identity.email }))) {
+            if (password.length < 12) throw new Error('Seed passwords must contain at least 12 characters.');
+            await User.create({ ...identity, passwordHash: await bcrypt.hash(password, 12), accountStatus: 'active', emailVerified: true });
+        }
     }
 
     const defaultSponsorIds = ["sp-1", "sp-2", "sp-3", "sp-4", "sp-5"];
@@ -152,6 +123,25 @@ mongoose.connect(MONGO_URI, {
 // --- Routes ---
 
 // --- AUTHENTICATION & SECURITY (EPIC 5) ---
+// Durable resend limits survive code replacement and pending-account recovery.
+const rotateVerification = async (userId, tokenHash) => {
+    const now = new Date();
+    const current = await EmailVerification.findOne({ userId, usedAt: null }).sort({ createdAt: -1 });
+    const fail = (retryAfter = 60) => { const error = new Error('Verification locked or resend limit reached. Please wait before requesting another code.'); error.status = 429; error.retryAfter = retryAfter; throw error; };
+    if (!current) fail();
+    if (current.lockedUntil > now) fail(Math.ceil((current.lockedUntil - now) / 1000));
+    if (current.lastResendAt && now - current.lastResendAt < 60000) fail(Math.ceil((60000 - (now - current.lastResendAt)) / 1000));
+    const windowStart = current.resendWindowStartedAt || current.createdAt;
+    const freshWindow = now - windowStart >= 3600000;
+    if (!freshWindow && current.resendCount >= 5) fail(Math.ceil((3600000 - (now - windowStart)) / 1000));
+    const update = await EmailVerification.findOneAndUpdate({ _id: current._id, tokenHash: current.tokenHash, usedAt: null, lastResendAt: current.lastResendAt || null, lockedUntil: current.lockedUntil || null, attempts: current.attempts }, { $set: {
+        tokenHash, expiresAt: new Date(now.getTime() + 15 * 60000), lastResendAt: now,
+        resendCount: freshWindow ? 1 : (current.resendCount || 0) + 1, resendWindowStartedAt: freshWindow ? now : windowStart,
+        ...(current.lockedUntil && current.lockedUntil <= now ? { attempts: 0, lockedUntil: null } : {})
+    } }, { new: true });
+    if (!update) fail();
+};
+
 app.post('/api/auth/register', async (req, res) => {
     try {
         const { name, email, password, college, branch, year } = req.body;
@@ -181,22 +171,13 @@ app.post('/api/auth/register', async (req, res) => {
                 if (college) existing.college = college;
                 if (branch) existing.branch = branch;
                 if (year) existing.year = year;
-                await existing.save();
 
                 // Generate cryptographically secure 6-digit OTP
                 const code = crypto.randomInt(100000, 1000000).toString();
                 const tokenHash = await bcrypt.hash(code, 10);
 
-                await EmailVerification.deleteMany({ userId: existing.id });
-                await EmailVerification.create({
-                    userId: existing.id,
-                    tokenHash,
-                    expiresAt: new Date(Date.now() + 15 * 60000), // 15 mins
-                    attempts: 0,
-                    maxAttempts: 5,
-                    lastResendAt: new Date(),
-                    resendCount: 1
-                });
+                await rotateVerification(existing.id, tokenHash);
+                await existing.save();
 
                 const sendResult = await sendVerificationEmail(normalizedEmail, code);
                 if (!sendResult.success) {
@@ -221,13 +202,13 @@ app.post('/api/auth/register', async (req, res) => {
 
         const passwordHash = await bcrypt.hash(String(password), 10);
 
-        // Force Student role (unless specific administrative prefix is explicitly designated)
+        // Public registration always provisions a student.
         const user = new User({
             id: `usr-${Date.now()}`,
             name: String(name).trim(),
             email: normalizedEmail,
             passwordHash,
-            role: normalizedEmail.startsWith('admin.') ? 'admin' : 'student',
+            role: 'student',
             college: college || '',
             branch: branch || '',
             year: year || '',
@@ -270,7 +251,7 @@ app.post('/api/auth/register', async (req, res) => {
         });
     } catch (e) {
         console.error('[REGISTRATION ERROR]', e);
-        res.status(500).json({ message: "Registration failed", error: e.message });
+        res.status(e.status || 500).json({ message: e.status ? e.message : "Registration failed", ...(e.status === 429 ? { retryAfter: e.retryAfter } : {}) });
     }
 });
 
@@ -305,34 +286,10 @@ app.post('/api/auth/resend-otp', async (req, res) => {
             return res.status(400).json({ message: "Account is already verified and active. Please proceed to login." });
         }
 
-        // Server-enforced rate limit: 60-second cooldown between resends
-        const activeVerif = await EmailVerification.findOne({ userId: user.id, usedAt: null }).sort({ createdAt: -1 });
-        if (activeVerif && activeVerif.lastResendAt) {
-            const timeSinceLastResend = Date.now() - activeVerif.lastResendAt.getTime();
-            if (timeSinceLastResend < 60000) {
-                const waitSeconds = Math.ceil((60000 - timeSinceLastResend) / 1000);
-                return res.status(429).json({ 
-                    message: `Rate limit exceeded. Please wait ${waitSeconds} seconds before requesting another code.`,
-                    retryAfter: waitSeconds 
-                });
-            }
-        }
-
-        // Generate secure 6-digit OTP
+        if (user.accountStatus !== 'pending_verification') return res.status(403).json({ message: 'Account is not eligible for verification.' });
         const code = crypto.randomInt(100000, 1000000).toString();
         const tokenHash = await bcrypt.hash(code, 10);
-
-        // Invalidate older tokens
-        await EmailVerification.deleteMany({ userId: user.id });
-        await EmailVerification.create({
-            userId: user.id,
-            tokenHash,
-            expiresAt: new Date(Date.now() + 15 * 60000),
-            attempts: 0,
-            maxAttempts: 5,
-            lastResendAt: new Date(),
-            resendCount: (activeVerif?.resendCount || 0) + 1
-        });
+        await rotateVerification(user.id, tokenHash);
 
         // Dispatch via Resend HTTPS
         const sendResult = await sendVerificationEmail(user.email, code);
@@ -352,7 +309,7 @@ app.post('/api/auth/resend-otp', async (req, res) => {
         });
     } catch (e) {
         console.error('[RESEND OTP ERROR]', e);
-        return res.status(500).json({ message: "Failed to re-transmit verification code." });
+        return res.status(e.status || 500).json({ message: e.status ? e.message : "Failed to re-transmit verification code.", ...(e.status === 429 ? { retryAfter: e.retryAfter } : {}) });
     }
 });
 
@@ -386,33 +343,19 @@ app.post('/api/auth/verify-email', async (req, res) => {
         const normalizedCode = String(code).trim();
         const isValid = await bcrypt.compare(normalizedCode, verification.tokenHash);
 
+        const eligible = { _id: verification._id, tokenHash: verification.tokenHash, usedAt: null, expiresAt: { $gt: new Date() }, attempts: { $lt: verification.maxAttempts }, $or: [{ lockedUntil: null }, { lockedUntil: { $lte: new Date() } }] };
         if (!isValid) {
-            // Increment attempt counter atomically
-            verification.attempts = (verification.attempts || 0) + 1;
-            if (verification.attempts >= verification.maxAttempts) {
-                // Lock for 10 minutes
-                verification.lockedUntil = new Date(Date.now() + 10 * 60000);
-                await verification.save();
-                return res.status(429).json({ 
-                    message: "Maximum verification attempts exceeded (5/5). Session locked for 10 minutes.",
-                    locked: true,
-                    retryAfter: 600
-                });
+            const failed = await EmailVerification.findOneAndUpdate(eligible, { $inc: { attempts: 1 } }, { new: true });
+            if (!failed || failed.attempts >= failed.maxAttempts) {
+                await EmailVerification.updateOne({ _id: verification._id, tokenHash: verification.tokenHash, usedAt: null, attempts: { $gte: verification.maxAttempts } }, { $set: { lockedUntil: new Date(Date.now() + 10 * 60000) } });
+                return res.status(429).json({ message: 'Maximum verification attempts exceeded. Request a new code after lockout.', locked: true, retryAfter: 600 });
             }
-            await verification.save();
-            const attemptsLeft = verification.maxAttempts - verification.attempts;
-            return res.status(400).json({ 
-                message: `Invalid verification code. ${attemptsLeft} ${attemptsLeft === 1 ? 'attempt' : 'attempts'} remaining.`,
-                remainingAttempts: attemptsLeft
-            });
+            return res.status(400).json({ message: 'Invalid verification code.', remainingAttempts: failed.maxAttempts - failed.attempts });
         }
+        const consumed = await EmailVerification.findOneAndUpdate(eligible, { $set: { usedAt: new Date() } }, { new: true });
+        if (!consumed) return res.status(400).json({ message: 'Verification request was consumed, replaced, or locked. Please request a new code.' });
 
-        // Single-use verification: mark usedAt and destroy sibling records
-        verification.usedAt = new Date();
-        await verification.save();
-        await EmailVerification.deleteMany({ userId, _id: { $ne: verification._id } });
-
-        const updatedUser = await User.findOneAndUpdate({ id: userId }, {
+        const updatedUser = await User.findOneAndUpdate({ id: userId, accountStatus: 'pending_verification' }, {
             accountStatus: 'active',
             emailVerified: true,
             emailVerifiedAt: new Date()
@@ -466,6 +409,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (user.accountStatus === 'suspended') return res.status(403).json({ message: "Your CodeSrijan account is currently suspended. Please contact support." });
         if (user.accountStatus === 'disabled') return res.status(403).json({ message: "This CodeSrijan account is currently disabled." });
 
+        if (!user.passwordHash || typeof password !== 'string') return res.status(401).json({ message: 'Invalid matrix passkey or identity.' });
         if (user.passwordHash) {
             const isValid = await bcrypt.compare(String(password), user.passwordHash);
             if (!isValid) return res.status(401).json({ message: "Invalid matrix passkey or identity." });
@@ -738,7 +682,8 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             }
 
             // Check min/max team size constraints
-            const totalMembers = (targetTeam.memberIds || []).length + 1; // Leader + members
+            const allMemberIds = [...new Set([targetTeam.leaderId, ...(targetTeam.memberIds || [])])];
+            const totalMembers = allMemberIds.length;
             const minSize = hackathon.teamSizeMin || 1;
             const maxSize = hackathon.teamSizeMax || 6;
             if (totalMembers < minSize) {
@@ -749,8 +694,10 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             }
 
             // Verify all squad members are active and verified
-            const allMemberIds = [targetTeam.leaderId, ...(targetTeam.memberIds || [])];
             const memberDocs = await User.find({ id: { $in: allMemberIds } });
+            if (memberDocs.length !== allMemberIds.length) {
+                return res.status(400).json({ message: 'Squad roster contains missing accounts. Reconcile the roster before registering.' });
+            }
             
             for (const m of memberDocs) {
                 if (m.accountStatus !== 'active' || !m.emailVerified) {
@@ -864,7 +811,7 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
         }
 
         // 3. Locate Registration for this hackathon and student/team
-        const registration = await Registration.findOne({
+        let registration = await Registration.findOne({
             hackathonId,
             $or: [
                 { userId },
@@ -893,20 +840,40 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             return res.status(409).json({ message: "Duplicate transaction reference: This UTR has already been submitted for another registration." });
         }
 
-        // 5. Update Registration to payment_under_review
-        registration.transactionReference = cleanUtr;
-        registration.paymentProofUrl = paymentProofUrl;
-        registration.paymentSubmittedAt = new Date();
-        registration.paymentStatus = 'payment_under_review';
-        registration.status = 'payment_under_review';
-        registration.reviewHistory = registration.reviewHistory || [];
-        registration.reviewHistory.push({
-            status: 'payment_under_review',
-            reason: 'Proof submitted by operative',
-            timestamp: new Date()
-        });
+        // Claim the state transition atomically: simultaneous retries dispatch only once.
+        registration = await Registration.findOneAndUpdate({
+            _id: registration._id,
+            entryType: 'paid',
+            paymentStatus: { $in: ['pending_proof', 'rejected'] }
+        }, {
+            $set: {
+                transactionReference: cleanUtr, paymentProofUrl,
+                paymentSubmittedAt: new Date(), paymentStatus: 'payment_under_review',
+                status: 'payment_under_review', paymentNotificationStatus: 'pending',
+                paymentNotificationAttemptedAt: new Date()
+            },
+            $push: { reviewHistory: {
+                status: 'payment_under_review', reason: 'Proof submitted by operative', timestamp: new Date()
+            } }
+        }, { returnDocument: 'after', runValidators: true });
+        if (!registration) return res.status(409).json({ message: 'Payment submission already processed or registration is not awaiting payment.' });
 
-        await registration.save();
+        // The queue is already durable. Email or outcome-write failure cannot undo it.
+        try {
+            const event = await Hackathon.findOne({ id: hackathonId });
+            const team = registration.teamId ? await Team.findOne({ id: registration.teamId }) : null;
+            const result = await sendPaymentReviewNotification(registration, event?.name || hackathonId, team?.name || 'Solo registration');
+            registration.paymentNotificationStatus = result?.success ? 'sent' : 'failed';
+            await Registration.updateOne({ _id: registration._id, paymentSubmittedAt: registration.paymentSubmittedAt }, {
+                $set: { paymentNotificationStatus: registration.paymentNotificationStatus }
+            });
+        } catch {
+            registration.paymentNotificationStatus = 'failed';
+            await Registration.updateOne({ _id: registration._id, paymentSubmittedAt: registration.paymentSubmittedAt }, {
+                $set: { paymentNotificationStatus: 'failed' }
+            }).catch(() => {});
+            console.warn('[PAYMENT NOTIFICATION] Delivery or outcome recording failed; submission remains in review queue.');
+        }
 
         // 6. Record System Activity Log
         try {
@@ -1032,44 +999,16 @@ app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(
             return res.status(400).json({ message: "Invalid decision. Must be 'approve' or 'reject'." });
         }
 
-        const registration = await Registration.findOne({ id: req.params.registrationId });
-        if (!registration) {
-            return res.status(404).json({ message: "Registration record not found." });
-        }
-
-        if (decision === 'approve') {
-            registration.paymentStatus = 'verified';
-            registration.status = 'registered';
-            registration.verifiedAt = new Date();
-            registration.reviewedBy = req.user.email;
-            registration.reviewedAt = new Date();
-            registration.reviewReason = reason || 'Payment verified by administrator';
-            registration.reviewHistory = registration.reviewHistory || [];
-            registration.reviewHistory.push({
-                status: 'verified',
-                reason: registration.reviewReason,
-                reviewedBy: req.user.email,
-                timestamp: new Date()
-            });
-        } else {
-            if (!reason || !reason.trim()) {
-                return res.status(400).json({ message: "A rejection reason is strictly required when declining payment." });
-            }
-            registration.paymentStatus = 'rejected';
-            registration.status = 'rejected';
-            registration.reviewReason = reason.trim();
-            registration.reviewedBy = req.user.email;
-            registration.reviewedAt = new Date();
-            registration.reviewHistory = registration.reviewHistory || [];
-            registration.reviewHistory.push({
-                status: 'rejected',
-                reason: reason.trim(),
-                reviewedBy: req.user.email,
-                timestamp: new Date()
-            });
-        }
-
-        await registration.save();
+        if (reason != null && typeof reason !== 'string') return res.status(400).json({ message: 'Review reason must be text.' });
+        if (decision === 'reject' && !reason?.trim()) return res.status(400).json({ message: 'A rejection reason is strictly required when declining payment.' });
+        const now = new Date();
+        const paymentStatus = decision === 'approve' ? 'verified' : 'rejected';
+        const reviewReason = reason?.trim() || 'Payment verified by administrator';
+        const registration = await Registration.findOneAndUpdate({ id: req.params.registrationId, paymentStatus: 'payment_under_review', status: 'payment_under_review', transactionReference: { $type: 'string', $ne: '' }, paymentProofUrl: { $type: 'string', $ne: '' } }, {
+            $set: { paymentStatus, status: decision === 'approve' ? 'registered' : 'rejected', reviewedBy: req.user.email, reviewedAt: now, reviewReason, ...(decision === 'approve' ? { verifiedAt: now } : {}) },
+            $push: { reviewHistory: { status: paymentStatus, reason: reviewReason, reviewedBy: req.user.email, timestamp: now } }
+        }, { new: true });
+        if (!registration) return res.status(409).json({ message: 'Only submitted, unreviewed payment proofs may be reviewed.' });
         res.json({ success: true, decision, registration });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1196,7 +1135,7 @@ app.get('/api/problems/:id', async (req, res) => {
 
 // --- USER DIRECTORY ---
 app.get('/api/users', requireAuth, async (req, res) => {
-    const users = await User.find().select('-password');
+    const users = await User.find().select('-passwordHash');
     res.json(users);
 });
 
@@ -1282,6 +1221,7 @@ app.post('/api/teams/leave', requireAuth, requireRole(['student']), async (req, 
 
     const team = await Team.findOne({ id: req.user.teamId });
     if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.isLocked) return res.status(403).json({ message: 'Squad roster is locked for an active hackathon registration.' });
 
     if (team.leaderId === req.user.id) {
         if (team.memberIds.length > 1) {
@@ -1301,6 +1241,7 @@ app.post('/api/teams/leave', requireAuth, requireRole(['student']), async (req, 
 app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.isLocked) return res.status(403).json({ message: 'Squad roster is locked for an active hackathon registration.' });
     if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Security Action Blocked: Only leaders possess authorization to dissolve the squad." });
     }
@@ -1314,6 +1255,7 @@ app.post('/api/teams/:id/transfer', requireAuth, requireRole(['student']), async
     const { newLeaderId } = req.body;
     const team = await Team.findOne({ id: req.params.id });
     if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+    if (team.isLocked) return res.status(403).json({ message: 'Squad roster is locked for an active hackathon registration.' });
     if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Only leaders can transfer command." });
     if (!team.memberIds.includes(newLeaderId)) return res.status(400).json({ message: "New leader must be a member." });
 
@@ -1860,7 +1802,7 @@ app.get('/api/search', async (req, res) => {
     if (!q) return res.json({ teams: [], users: [], problems: [] });
     try {
         const teamRes = await Team.find({ name: { $regex: q, $options: 'i' } }).limit(10);
-        const userRes = await User.find({ name: { $regex: q, $options: 'i' } }).select('-password').limit(10);
+        const userRes = await User.find({ name: { $regex: q, $options: 'i' } }).select('-passwordHash').limit(10);
         const probRes = await ProblemStatement.find({ title: { $regex: q, $options: 'i' } }).limit(10);
         res.json({ teams: teamRes, users: userRes, problems: probRes });
     } catch (err) {
@@ -1923,7 +1865,8 @@ app.post('/api/admin/users', requireAuth, requireRole(['admin']), async (req, re
         const existing = await User.findOne({ email });
         if (existing) return res.status(400).json({ message: "Email already registered." });
 
-        const passwordHash = await bcrypt.hash(password || "Hackathon2026!", 10);
+        if (typeof password !== 'string' || password.length < 12) return res.status(400).json({ message: 'An explicit password of at least 12 characters is required.' });
+        const passwordHash = await bcrypt.hash(password, 12);
         const newUser = new User({
             id: id || `u-${Date.now()}`,
             name, email, role, passwordHash, teamId,
@@ -2244,7 +2187,7 @@ app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req,
         Team.countDocuments(),
         Message.countDocuments(),
         Hackathon.countDocuments(),
-        User.find().select('-password').limit(50),
+        User.find().select('-passwordHash').limit(50),
         Team.find().limit(50)
     ]);
     

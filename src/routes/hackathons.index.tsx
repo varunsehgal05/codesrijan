@@ -11,7 +11,7 @@ function HackathonsHubPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
     useEffect(() => {
         axios.get(`${API_URL}/hackathons`)
@@ -70,7 +70,7 @@ function HackathonsHubPage() {
                                 </div>
                                 <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
                                     <span className="font-code-snippet text-xs font-bold uppercase">{evt.location || 'Online Arena'}</span>
-                                    <Link to={`/hackathons/${evt.id}/register`} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
+                                    <Link to="/hackathons/$id/register" params={{ id: evt.id }} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
                                         ENTER ARENA
                                     </Link>
                                 </div>

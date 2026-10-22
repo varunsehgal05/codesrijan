@@ -23,7 +23,7 @@ function RecruitmentMatrix() {
   // Default to the first registration if available
   const [selectedHackathonId, setSelectedHackathonId] = useState(registrations?.[0]?.hackathonId || "");
 
-  const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
   if (!currentUser) return <Navigate to="/login" />;

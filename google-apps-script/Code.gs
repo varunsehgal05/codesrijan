@@ -80,8 +80,6 @@ function doPost(e) {
     if (cache.get(cacheKey)) {
       return jsonResponse(409, { success: false, error: 'Replay detected: nonce has already been consumed.' });
     }
-    // Store nonce for 10 minutes (600 seconds)
-    cache.put(cacheKey, 'consumed', 600);
 
     // 4. Verify HMAC-SHA256 Signature
     // Signature payload format: timestamp + "." + nonce + "." + template + "." + to + "." + JSON.stringify(data)
@@ -96,11 +94,19 @@ function doPost(e) {
     if (expectedSignatureHex.toLowerCase() !== signature.trim().toLowerCase()) {
       return jsonResponse(403, { success: false, error: 'Invalid cryptographic signature.' });
     }
+    // Consume only authenticated nonces; forged requests must not poison replay tracking.
+    cache.put(cacheKey, 'consumed', 600);
 
     // 5. Validate Recipient Email
     var emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
     if (!emailRegex.test(to)) {
       return jsonResponse(400, { success: false, error: 'Invalid recipient email address syntax.' });
+    }
+    if (template === 'payment_review_notification') {
+      var adminEmail = PropertiesService.getScriptProperties().getProperty('ADMIN_NOTIFICATION_EMAIL');
+      if (!adminEmail || to.toLowerCase() !== adminEmail.trim().toLowerCase()) {
+        return jsonResponse(403, { success: false, error: 'Payment notifications require the configured administrator recipient.' });
+      }
     }
 
     // 6. Check Google Mail Quota
@@ -153,6 +159,27 @@ function doGet(e) {
 }
 
 function renderTemplate(template, data) {
+  if (template === 'payment_review_notification') {
+    var fields = ['eventName', 'registrationName', 'registrationReference', 'currency', 'transactionReference', 'submittedAt', 'reviewUrl'];
+    if (!fields.every(function (key) { return typeof data[key] === 'string' && data[key].trim() && data[key].length <= 500; })) return null;
+    if (typeof data.feeAmount !== 'number' || !isFinite(data.feeAmount) || data.feeAmount < 0 || !/^[A-Z]{3}$/.test(data.currency)) return null;
+    if (isNaN(Date.parse(data.submittedAt))) return null;
+    var frontend = PropertiesService.getScriptProperties().getProperty('FRONTEND_URL');
+    if (!frontend || !/^https?:\/\/[^\s"'<>?#]+$/.test(frontend)) return null;
+    var reviewUrl = frontend.replace(/\/+$/, '') + '/admin/payments';
+    if (data.reviewUrl !== reviewUrl) return null;
+    var rows = [
+      ['Event', data.eventName], ['Registration', data.registrationName],
+      ['Reference', data.registrationReference], ['Expected fee', data.feeAmount + ' ' + data.currency],
+      ['Transaction reference (admin review only)', data.transactionReference], ['Submitted at', data.submittedAt]
+    ];
+    return {
+      subject: 'CodeSrijan [PAYMENT REVIEW REQUIRED]',
+      html: '<h1>CodeSrijan payment-review notification</h1>' + rows.map(function (row) {
+        return '<p><strong>' + escapeHtml(row[0]) + ':</strong> ' + escapeHtml(row[1]) + '</p>';
+      }).join('') + '<p><a href="' + escapeHtml(reviewUrl) + '">Open Admin Payment Review Queue</a></p>'
+    };
+  }
   if (template === 'verification_otp') {
     var code = (data.code || '').trim();
     if (!/^\d{6}$/.test(code)) return null;
@@ -244,6 +271,10 @@ function bytesToHex(bytes) {
     hex += b;
   }
   return hex;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function jsonResponse(statusCode, data) {

@@ -5,7 +5,7 @@ import axios from "axios";
 
 export function ChatBotWidget() {
     const { currentUser } = useAppStore();
-    const apiBaseUrl = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+    const apiBaseUrl = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
     const routerState = useRouterState();
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState("");
@@ -108,8 +108,8 @@ export function ChatBotWidget() {
 
             if (rawText.includes("->")) {
                 const split = rawText.split("->");
-                buttonText = split[0].trim();
-                targetPath = split[1].trim();
+                buttonText = (split[0] || "").trim();
+                targetPath = (split[1] || "/").trim();
             } else {
                 // Fallback Action Router for old static links
                 if (buttonText.includes("Support")) targetPath = "/support";

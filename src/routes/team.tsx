@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useAppStore, type User } from "../lib/store";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -20,7 +20,7 @@ function Page6() {
   const [invitations, setInvitations] = useState<any[]>([]);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
 
-  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   useEffect(() => {
     if (currentUser?.role === 'student' && !currentUser.teamId) {
@@ -42,13 +42,13 @@ function Page6() {
   }, [currentUser, API_URL]);
 
   const currentTeam = currentUser?.teamId ? teams.find(t => t.id === currentUser.teamId) : null;
-  const teamMembers = currentTeam ? (currentTeam.members || currentTeam.memberIds || []).map(userId => users.find(u => u.id === userId)).filter(Boolean) : [];
+  const teamMembers = currentTeam ? (currentTeam.members || currentTeam.memberIds || []).map(userId => users.find(u => u.id === userId)).filter((member): member is User => member !== undefined) : [];
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName || !currentUser) return;
-    if (!selectedHackathon) return toast("Select a hackathon to form a squad in.");
-    if (!selectedProblem) return toast("Select a problem statement.");
+    if (!selectedHackathon) { toast("Select a hackathon to form a squad in."); return; }
+    if (!selectedProblem) { toast("Select a problem statement."); return; }
     createTeam(newTeamName, currentUser.id, selectedHackathon, selectedProblem);
   };
 

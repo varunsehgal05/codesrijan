@@ -11,7 +11,10 @@ dns.setServers(['8.8.8.8', '8.8.4.4']);
 // Set test environment
 process.env.NODE_ENV = 'test';
 
-import { app, httpServer } from './server.js';
+import { requireTestDatabaseUri } from './test-database.js';
+process.env.MONGO_URI = requireTestDatabaseUri();
+process.env.MONGO_DB_NAME = new URL(process.env.MONGO_URI).pathname.slice(1);
+const { app, httpServer } = await import('./server.js');
 import { User, Hackathon } from './models/index.js';
 import { EmailVerification, Session, PasswordResetToken } from './models/auth.js';
 import { sendVerificationEmail, sendPasswordResetEmail, setTestTransporter } from './services/email.js';
@@ -81,8 +84,8 @@ async function runTestSuite() {
     // Ensure database connection
     if (mongoose.connection.readyState !== 1) {
         console.log('Connecting to MongoDB Atlas test database...');
-        const mongoUri = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
-        await mongoose.connect(mongoUri, { dbName: 'codesrijan' });
+        const mongoUri = requireTestDatabaseUri();
+        await mongoose.connect(mongoUri, { dbName: process.env.MONGO_DB_NAME });
     }
     console.log('Database connected.\n');
 
@@ -201,6 +204,17 @@ async function runTestSuite() {
         // ---------------------------------------------------------------------
         // GROUP 3: DUPLICATE REGISTRATION RECOVERY
         // ---------------------------------------------------------------------
+        const immediateDuplicate = await apiRequest('/auth/register', {
+            method: 'POST',
+            body: { name: 'Rate limited recovery', email: testEmail1, password: 'BlockedRecoveryPassword!' }
+        });
+        assert(immediateDuplicate.status === 429, 'Pending re-registration shares the OTP resend cooldown');
+        const unchangedUser = await User.findOne({ id: user1Id });
+        assert(unchangedUser.passwordHash === dbUser.passwordHash, 'Rate-limited recovery does not change account credentials');
+        // Advance only disposable fixture time; exercise recovery after the real cooldown.
+        await EmailVerification.updateMany({ userId: user1Id, usedAt: null }, {
+            $set: { lastResendAt: new Date(Date.now() - 61000) }
+        });
         const duplicateRes = await apiRequest('/auth/register', {
             method: 'POST',
             body: {

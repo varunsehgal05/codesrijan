@@ -1,3 +1,4 @@
+import { requireTestDatabaseUri } from './test-database.js';
 /**
  * CODESRIJAN PHASE 3: PAID HACKATHONS & GOOGLE APPS SCRIPT RELAY TEST SUITE
  * 
@@ -51,8 +52,8 @@ async function runTests() {
     app.use(express.json({ limit: '10mb' }));
 
     // Connect to MongoDB
-    const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
-    await mongoose.connect(MONGO_URI, { dbName: 'codesrijan' });
+    const MONGO_URI = requireTestDatabaseUri();
+    await mongoose.connect(MONGO_URI, { dbName: new URL(MONGO_URI).pathname.slice(1) });
     console.log('MongoDB Connected to keyspace codesrijan');
 
     // Bind registration and payment routes matching server.js

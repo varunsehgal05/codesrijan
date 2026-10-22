@@ -52,7 +52,8 @@ function OTPVerification() {
     // Helper: Mask email for privacy (e.g. j***e@domain.com)
     const formatMaskedEmail = (email: string) => {
         if (!email || !email.includes("@")) return "your registered inbox";
-        const [local, domain] = email.split("@");
+        const [local = "", domain = ""] = email.split("@");
+        if (!local || !domain) return "your registered inbox";
         if (local.length <= 2) {
             return `${local[0]}***@${domain}`;
         }
@@ -108,7 +109,7 @@ function OTPVerification() {
         if (digits.length > 0) {
             const newCode = ["", "", "", "", "", ""];
             for (let i = 0; i < digits.length; i++) {
-                newCode[i] = digits[i];
+                newCode[i] = digits.charAt(i);
             }
             setCode(newCode);
 

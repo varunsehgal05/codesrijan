@@ -107,7 +107,7 @@ function RegisterPage() {
                 college: college.trim(),
                 branch,
                 year,
-                handle: handle.trim() ? handle.trim().replace(/^@/, '') : undefined
+                ...(handle.trim() ? { handle: handle.trim().replace(/^@/, '') } : {})
             });
 
             // Navigate to OTP verification screen WITHOUT exposing tokens or otp parameters

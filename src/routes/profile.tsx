@@ -30,7 +30,7 @@ function Page7() {
   const [techStack, setTechStack] = useState(currentUser?.techStack?.join(", ") || "React, Rust, WebAssembly, Tailwind");
   const [saving, setSaving] = useState(false);
 
-  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   const handleSave = async () => {
     setSaving(true);

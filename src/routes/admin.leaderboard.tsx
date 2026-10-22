@@ -155,11 +155,11 @@ function AdminLeaderboard() {
         </div>
         <div className="bg-pure-white p-6 brutal-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <p className="font-code-snippet text-on-surface-variant uppercase text-xs font-bold mb-2">Maximum Current Score</p>
-          <p className="font-display-lg text-4xl text-electric-blue">{teams.length > 0 && teams[0].isScored ? teams[0].totalScore : 0} <span className="text-xl text-on-surface-variant opacity-50">PTS</span></p>
+          <p className="font-display-lg text-4xl text-electric-blue">{teams[0]?.isScored ? teams[0].totalScore : 0} <span className="text-xl text-on-surface-variant opacity-50">PTS</span></p>
         </div>
         <div className="bg-pure-white p-6 brutal-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <p className="font-code-snippet text-on-surface-variant uppercase text-xs font-bold mb-2">Current Vanguard Matrix</p>
-          <p className="font-headline-sm uppercase text-stark-black truncate text-xl">{teams.length > 0 && teams[0].isScored ? teams[0].name : 'N/A'}</p>
+          <p className="font-headline-sm uppercase text-stark-black truncate text-xl">{teams[0]?.isScored ? teams[0].name : 'N/A'}</p>
         </div>
       </div>
 

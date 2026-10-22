@@ -11,6 +11,7 @@ export const Route = createFileRoute("/workspace")({
 function WorkspaceHUD() {
   const { currentUser, teams, tasks, hackathons, refetchData } = useAppStore();
   const navigate = useNavigate();
+  const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [githubLink, setGithubLink] = useState("");
@@ -80,10 +81,9 @@ function WorkspaceHUD() {
     }
   };
 
-  const userTeam = teams.find(t => t.id === currentUser?.teamId);
   const activeEvent = hackathons[0];
 
-  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+  const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   useEffect(() => {
     if (userTeam) {
@@ -117,7 +117,7 @@ function WorkspaceHUD() {
   const handleTaskCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) { toast("WORKSPACE LOCKED."); return; }
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -133,7 +133,7 @@ function WorkspaceHUD() {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) { toast("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -147,7 +147,7 @@ function WorkspaceHUD() {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) { toast("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -160,7 +160,7 @@ function WorkspaceHUD() {
   };
 
   const handleSaveLinks = async () => {
-    if (userTeam.isSubmitted) return toast("WORKSPACE LOCKED.");
+    if (userTeam.isSubmitted) { toast("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -177,7 +177,8 @@ function WorkspaceHUD() {
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!submissionForm.githubLink && !submissionForm.figmaLink && !submissionForm.demoLink) {
-      return toast("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
+      toast("CRITICAL: You must append at least one physical Payload Link (GitHub, Prisma, etc.) before running the Submissions routine.");
+      return;
     }
     if (!confirm("ABSOLUTE WARNING: Transmitting final payload permanently LOCKS this workspace. No operatives may leave, and tasks cannot be altered. Initiate sequence?")) return;
 

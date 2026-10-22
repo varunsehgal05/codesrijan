@@ -55,7 +55,7 @@ export const requireAuth = async (req, res, next) => {
             try {
                 const firebaseAuth = getAuth(firebaseAdminApp);
                 const decodedToken = await firebaseAuth.verifyIdToken(token);
-                if (decodedToken && decodedToken.email) {
+                if (decodedToken && decodedToken.email && decodedToken.email_verified === true) {
                     let user = await User.findOne({ email: decodedToken.email.toLowerCase() });
                     if (!user) {
                         // Provision Firebase User in Mongo DB
@@ -63,13 +63,16 @@ export const requireAuth = async (req, res, next) => {
                             id: `usr-${Date.now()}`,
                             name: decodedToken.name || decodedToken.email.split('@')[0],
                             email: decodedToken.email.toLowerCase(),
-                            role: decodedToken.email.toLowerCase().startsWith('admin.') ? 'admin' : 'student',
+                            role: 'student',
                             accountStatus: 'active',
                             emailVerified: true
                         });
                         await user.save();
                     }
 
+                    if (user.accountStatus !== 'active' || !user.emailVerified) {
+                        return res.status(403).json({ message: 'Account disabled or unverified.' });
+                    }
                     req.user = user;
                     req.firebaseToken = decodedToken;
                     return next();
@@ -88,7 +91,7 @@ export const requireAuth = async (req, res, next) => {
         }
 
         const user = await User.findOne({ id: session.userId });
-        if (!user || user.accountStatus === 'suspended') {
+        if (!user || user.accountStatus !== 'active' || !user.emailVerified) {
             return res.status(403).json({ message: "Account disabled or suspended." });
         }
 

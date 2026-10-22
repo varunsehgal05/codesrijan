@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     assignedHackathons: [String],
     assignedCategories: [String],
     assignedTeams: [String]
-}, { timestamps: true });
+}, { timestamps: true, toJSON: { transform: (_doc, ret) => { delete ret.passwordHash; return ret; } } });
 
 // 2. Hackathons Collection
 const hackathonSchema = new mongoose.Schema({
@@ -112,6 +112,8 @@ const registrationSchema = new mongoose.Schema({
     transactionReference: { type: String, index: true },
     paymentProofUrl: String,
     paymentSubmittedAt: Date,
+    paymentNotificationStatus: { type: String, enum: ['pending', 'sent', 'failed'] },
+    paymentNotificationAttemptedAt: Date,
     reviewReason: String,
     reviewedBy: String,
     reviewedAt: Date,

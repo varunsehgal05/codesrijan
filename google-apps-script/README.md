@@ -7,7 +7,7 @@ This Google Apps Script Web App functions as an authenticated HTTPS email relay 
 - **HMAC-SHA256 Authenticated:** Every HTTP POST request requires an HMAC-SHA256 signature generated with a high-entropy shared secret.
 - **Timestamp Expiry:** Requests older than 5 minutes are rejected.
 - **Replay-Resistant Nonce:** Every request requires a unique nonce cached via Google's `CacheService` to prevent replay attacks.
-- **Strict Template Whitelist:** Only predefined system templates (`verification_otp`, `welcome`, `password_reset`) can be sent. Arbitrary HTML or text injection is strictly prohibited.
+- **Strict Template Whitelist:** Only predefined system templates (`verification_otp`, `welcome`, `password_reset`, `payment_review_notification`) can be sent. Arbitrary HTML or text injection is strictly prohibited.
 - **Quota Protection:** Checks `MailApp.getRemainingDailyQuota()`. Consumer Gmail allows 100 emails/day; Google Workspace allows 1,500/day.
 
 ---
@@ -44,3 +44,15 @@ In your Render Dashboard (`codesrijan-api` &rarr; **Environment**), add:
 - `APPS_SCRIPT_SECRET` = `<Your shared secret from step 2>`
 
 The CodeSrijan backend will automatically detect these variables and route email dispatch via Google Apps Script HTTPS with HMAC-SHA256 verification.
+
+## Payment review notifications
+
+Set `ADMIN_NOTIFICATION_EMAIL` and `FRONTEND_URL` in both Render environment variables and Apps Script Script Properties. The recipient must match in both places. Use the frontend origin, with no path, query or fragment, for `FRONTEND_URL`. The fixed queue link is `/admin/payments`; no student-supplied destination or receipt URL enters the notification.
+
+Redeploy the updated `Code.gs` as a new version of the existing Apps Script deployment before enabling backend notifications. Existing OTP, welcome and recovery templates are preserved.
+
+A successful atomic payment-proof transition persists `paymentNotificationStatus: pending` before dispatch. It records `sent` only after relay acceptance, or `failed` after a failed/missing configuration result. Concurrent or repeated submissions cannot dispatch again while review is pending. A rejected registration can submit a fresh proof and generate a new notification.
+
+The queue remains the source of truth. There is deliberately no automatic retry after an ambiguous relay timeout: MailApp may already have sent the email. A process crash can leave `pending`; inspect the queue and relay evidence before any manual resend. `sent` means provider acceptance, not proven inbox delivery. Verify one isolated QA email in the real inbox before release; never approve dummy production payments.
+
+Run the safe local regression suite from the repository root: `node --test server/test_payment_notifications.mjs`. It uses a temporary MongoDB and simulated MailApp; no external email or production database is used.

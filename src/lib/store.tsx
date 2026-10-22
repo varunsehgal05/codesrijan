@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
+const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 export const socket = io(API_URL.replace('/api', ''));
 
 // Global API Interceptor for JWT Tokens
@@ -28,6 +28,19 @@ export interface User {
     branch?: string;
     year?: string;
     handle?: string;
+    profileImage?: string;
+    bio?: string;
+    skills?: string[];
+    techStack?: string[];
+    assignedHackathons?: string[];
+    assignedCategories?: string[];
+    assignedTeams?: string[];
+}
+
+interface EmailVerificationResult {
+    message: string;
+    token: string;
+    user: User;
 }
 
 export interface Team {
@@ -44,6 +57,8 @@ export interface Team {
     members?: string[]; // Legacy compatibility 
     memberIds: string[]; // Native MongoDB property
     description?: string;
+    status?: 'forming' | 'active' | 'submitted' | 'disqualified' | 'completed';
+    maxMembers?: number;
 }
 
 export interface Problem {
@@ -91,7 +106,7 @@ interface StoreState {
 interface StoreContextType extends StoreState {
     login: (email: string, password?: string) => Promise<any>;
     register: (user: User) => Promise<any>;
-    verifyEmail: (userId: string, code: string) => Promise<boolean>;
+    verifyEmail: (userId: string, code: string) => Promise<EmailVerificationResult>;
     logout: () => void;
     createTeam: (name: string, leaderId: string, hackathonId: string, problemStatementId: string) => void;
     joinTeam: (teamId: string, userId: string) => void;
@@ -312,7 +327,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const verifyEmail = async (userId: string, code: string) => {
         try {
-            const res = await axios.post(`${API_URL}/auth/verify-email`, { userId, code });
+            const res = await axios.post<EmailVerificationResult>(`${API_URL}/auth/verify-email`, { userId, code });
             const { user: u, token } = res.data;
             if (u && token) {
                 setState(prev => ({ ...prev, currentUser: u }));
