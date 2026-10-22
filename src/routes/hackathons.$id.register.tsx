@@ -21,7 +21,8 @@ function HackathonRegistrationPage() {
     const [college, setCollege] = useState((currentUser as any)?.college || "");
     const [branch, setBranch] = useState((currentUser as any)?.branch || "");
     const [year, setYear] = useState((currentUser as any)?.year || "");
-    const [hackathonStatus, setHackathonStatus] = useState<string | null>(null);
+    const [type, setType] = useState<'team' | 'solo'>('team');
+    const [hackathon, setHackathon] = useState<any>(null);
     const [statusLoading, setStatusLoading] = useState(true);
 
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api.onrender.com/api');
@@ -36,10 +37,10 @@ function HackathonRegistrationPage() {
             toast("Only students can register to participate.");
             window.history.back();
         } else {
-            // Fetch hackathon status
+            // Fetch hackathon details
             axios.get(`${API_URL}/hackathons/${id}`)
                 .then(res => {
-                    setHackathonStatus(res.data.status?.toLowerCase().trim() || '');
+                    setHackathon(res.data);
                 })
                 .catch(err => {
                     console.error("Failed to fetch hackathon status:", err);
@@ -49,7 +50,9 @@ function HackathonRegistrationPage() {
         }
     }, [currentUser, isLoaded, navigate, id, API_URL]);
 
+    const hackathonStatus = hackathon?.status?.toLowerCase().trim() || '';
     const isClosed = hackathonStatus && hackathonStatus !== 'registration_open' && hackathonStatus !== 'active' && hackathonStatus !== 'upcoming' && id !== 'hack-demo-2';
+    const isPaid = hackathon?.entryType === 'paid' && (hackathon?.fee || 0) > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,15 +61,23 @@ function HackathonRegistrationPage() {
 
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            await axios.post(`${API_URL}/hackathons/${id}/register`, {
+            const res = await axios.post(`${API_URL}/hackathons/${id}/register`, {
                 college,
                 branch,
-                year
+                year,
+                type,
+                teamId: (currentUser as any)?.teamId
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             setSuccess(true);
+            if (isPaid) {
+                toast.success("Tournament enrollment recorded. Proceeding to payment clearance...");
+                setTimeout(() => {
+                    navigate({ to: '/payment', search: { hackathonId: id } as any });
+                }, 1500);
+            }
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || "Registration failed. Are you already registered?");
@@ -83,21 +94,41 @@ function HackathonRegistrationPage() {
                 <div className="mb-6"><Link to="/" className="flex items-center gap-2 font-bold text-zinc-400 hover:text-white transition-colors w-fit"><span className="material-symbols-outlined text-sm">arrow_back</span>ABORT ENROLLMENT</Link></div>
 
                 <h1 className="text-3xl font-black uppercase mb-2">Hackathon Enrollment</h1>
-                <p className="text-electric-blue mb-8 font-mono text-sm uppercase tracking-widest border-b-2 border-zinc-800 pb-4">
-                    TARGET TOURNAMENT: {id}
+                <p className="text-electric-blue mb-4 font-mono text-sm uppercase tracking-widest border-b-2 border-zinc-800 pb-4">
+                    TARGET TOURNAMENT: {hackathon?.name || id}
                 </p>
 
+                {isPaid && (
+                    <div className="bg-amber-500/10 border-2 border-amber-500 p-3 mb-6 text-xs text-amber-300">
+                        <strong className="uppercase block mb-1">Paid Tournament Notice:</strong>
+                        Entry fee: ₹{hackathon?.fee} ({hackathon?.feeBasis?.replace(/_/g, ' ')}). Registration will lock your squad roster and require payment receipt verification.
+                    </div>
+                )}
+
                 {success ? (
-                    <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue">
-                        <h3 className="text-electric-blue font-bold uppercase mb-2">Enrollment Confirmed</h3>
-                        <p className="text-sm text-zinc-300">Your registration has been logged into the CodeSrijan Mainframe. You may now form or join a squad.</p>
+                    <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue space-y-4">
+                        <h3 className="text-electric-blue font-bold uppercase mb-2">Enrollment Initiated</h3>
+                        <p className="text-sm text-zinc-300">
+                            {isPaid 
+                                ? "Your squad roster is now locked in the mainframe. Complete your payment proof submission to clear your entry." 
+                                : "Your registration has been logged into the CodeSrijan Mainframe. You may now form or join a squad."}
+                        </p>
                         <div className="flex gap-4 mt-6">
-                            <button
-                                onClick={() => navigate({ to: '/dashboard' })}
-                                className="font-mono text-sm uppercase px-4 py-2 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors"
-                            >
-                                Enter Dashboard
-                            </button>
+                            {isPaid ? (
+                                <button
+                                    onClick={() => navigate({ to: '/payment', search: { hackathonId: id } as any })}
+                                    className="font-mono text-sm uppercase px-4 py-2 bg-electric-blue text-black font-black hover:bg-white transition-colors"
+                                >
+                                    Proceed to Payment Clearance →
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => navigate({ to: '/dashboard' })}
+                                    className="font-mono text-sm uppercase px-4 py-2 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors"
+                                >
+                                    Enter Dashboard
+                                </button>
+                            )}
                         </div>
                     </div>
                 ) : (

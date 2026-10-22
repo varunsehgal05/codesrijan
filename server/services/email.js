@@ -1,4 +1,6 @@
 import nodemailer from 'nodemailer';
+import crypto from 'crypto';
+import axios from 'axios';
 
 // Helper to sanitize recipient for diagnostic logs
 const maskEmail = (email) => {
@@ -10,12 +12,17 @@ const maskEmail = (email) => {
 // Singleton Transporter Cache
 let transporterInstance = null;
 let customTransporter = null;
+let customAppsScriptDispatcher = null;
 
 /**
- * Allows automated test suites to inject a mocked transporter
+ * Allows automated test suites to inject a mocked transporter or Apps Script dispatcher
  */
 export const setTestTransporter = (mock) => {
     customTransporter = mock;
+};
+
+export const setTestAppsScriptDispatcher = (mockFn) => {
+    customAppsScriptDispatcher = mockFn;
 };
 
 /**
@@ -60,12 +67,85 @@ const getSenderIdentity = () => {
 };
 
 /**
- * Dispatches 6-digit OTP verification email via Gmail SMTP (Nodemailer)
- * @param {string} to - Destination recipient email
- * @param {string} code - Cryptographically generated 6-digit OTP code
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ * Dispatches email via authenticated Google Apps Script Web App HTTPS Relay
+ * Avoids outbound SMTP port blocking on Render Free ($0 cost)
+ */
+export const dispatchViaAppsScript = async (template, to, data = {}) => {
+    if (customAppsScriptDispatcher) {
+        return await customAppsScriptDispatcher(template, to, data);
+    }
+
+    const scriptUrl = process.env.APPS_SCRIPT_URL;
+    const secret = process.env.APPS_SCRIPT_SECRET || process.env.CODESRIJAN_RELAY_SECRET;
+
+    if (!scriptUrl || !secret) {
+        return null; // Not configured
+    }
+
+    try {
+        const timestamp = Date.now();
+        const nonce = crypto.randomBytes(16).toString('hex');
+        const cleanTo = (to || '').trim();
+        const cleanTemplate = (template || '').trim();
+
+        const messageToSign = `${timestamp}.${nonce}.${cleanTemplate}.${cleanTo}.${JSON.stringify(data)}`;
+        const signature = crypto.createHmac('sha256', secret).update(messageToSign).digest('hex');
+
+        const payload = {
+            auth: {
+                timestamp,
+                nonce,
+                signature
+            },
+            template: cleanTemplate,
+            to: cleanTo,
+            data
+        };
+
+        const res = await axios.post(scriptUrl, payload, {
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'CodeSrijan-Backend-Relay/1.0'
+            },
+            timeout: 15000
+        });
+
+        if (res.data && res.data.success) {
+            console.log('[APPS SCRIPT RELAY] Email dispatched to %s via MailApp (Quota remaining: %s)', maskEmail(to), res.data.remainingQuota ?? 'N/A');
+            return {
+                success: true,
+                messageId: `apps-script-${res.data.timestamp || timestamp}`,
+                remainingQuota: res.data.remainingQuota
+            };
+        } else {
+            const errStr = res.data?.error || 'Unknown relay error';
+            console.error('[APPS SCRIPT RELAY FAULT] Relay returned error for %s: %s', maskEmail(to), errStr);
+            return {
+                success: false,
+                error: errStr
+            };
+        }
+    } catch (err) {
+        console.error('[APPS SCRIPT RELAY FAULT] HTTP call to Apps Script failed for %s: %s', maskEmail(to), err.message);
+        return {
+            success: false,
+            error: `Apps Script relay failure: ${err.message}`
+        };
+    }
+};
+
+/**
+ * Dispatches 6-digit OTP verification email
+ * Prioritizes Google Apps Script Relay (port-free HTTPS), falls back to Gmail SMTP
  */
 export const sendVerificationEmail = async (to, code) => {
+    // 1. Try Google Apps Script HTTPS Relay if configured
+    if (process.env.APPS_SCRIPT_URL || customAppsScriptDispatcher) {
+        const relayResult = await dispatchViaAppsScript('verification_otp', to, { code });
+        if (relayResult) return relayResult;
+    }
+
+    // 2. Fall back to Gmail SMTP via Nodemailer
     const htmlContent = `
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
@@ -109,10 +189,10 @@ export const sendVerificationEmail = async (to, code) => {
 
     const transporter = getTransporter();
     if (!transporter) {
-        console.warn('[EMAIL SERVICE WARNING] Gmail credentials missing (GMAIL_USER / EMAIL_USER and GMAIL_APP_PASSWORD / EMAIL_PASS). Email held.');
+        console.warn('[EMAIL SERVICE WARNING] No email provider configured (APPS_SCRIPT_URL or Gmail credentials missing). Email held.');
         return {
             success: false,
-            error: 'Gmail SMTP unconfigured: missing GMAIL_USER / EMAIL_USER or GMAIL_APP_PASSWORD / EMAIL_PASS in environment variables.'
+            error: 'Email unconfigured: Set APPS_SCRIPT_URL & APPS_SCRIPT_SECRET or GMAIL_USER & GMAIL_APP_PASSWORD.'
         };
     }
 
@@ -133,12 +213,16 @@ export const sendVerificationEmail = async (to, code) => {
 };
 
 /**
- * Dispatches password recovery link via Gmail SMTP (Nodemailer)
- * @param {string} to - Destination recipient email
- * @param {string} resetLink - Cryptographic single-use reset URL
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ * Dispatches password recovery link
  */
 export const sendPasswordResetEmail = async (to, resetLink) => {
+    // 1. Try Google Apps Script HTTPS Relay
+    if (process.env.APPS_SCRIPT_URL || customAppsScriptDispatcher) {
+        const relayResult = await dispatchViaAppsScript('password_reset', to, { resetLink });
+        if (relayResult) return relayResult;
+    }
+
+    // 2. Fall back to Gmail SMTP
     const htmlContent = `
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
@@ -174,11 +258,6 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
                                 </p>
                             </td>
                         </tr>
-                        <tr>
-                            <td style="background-color: #0B0F14; border-top: 1px solid #223249; padding: 20px; text-align: center;">
-                                <p style="margin: 0; color: #64748B; font-size: 12px; font-family: monospace;">CodeSrijan Identity Protection System</p>
-                            </td>
-                        </tr>
                     </table>
                 </td>
             </tr>
@@ -187,8 +266,8 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
 
     const transporter = getTransporter();
     if (!transporter) {
-        console.warn('[EMAIL SERVICE WARNING] Gmail credentials missing for password reset.');
-        return { success: false, error: 'Gmail SMTP unconfigured.' };
+        console.warn('[EMAIL SERVICE WARNING] Email unconfigured for password reset.');
+        return { success: false, error: 'Email service unconfigured.' };
     }
 
     try {
@@ -199,7 +278,7 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
             html: htmlContent
         });
 
-        console.log('[SECURE COMMS] Password reset email accepted by Gmail SMTP for %s. Message ID: %s', maskEmail(to), info.messageId);
+        console.log('[SECURE COMMS] Password reset email accepted for %s. Message ID: %s', maskEmail(to), info.messageId);
         return { success: true, messageId: info.messageId };
     } catch (e) {
         console.error('[SECURE COMMS FAULT] Password reset send failed to %s: %s', maskEmail(to), e.message);
@@ -208,13 +287,16 @@ export const sendPasswordResetEmail = async (to, resetLink) => {
 };
 
 /**
- * Dispatches account clearance confirmation via Gmail SMTP (Nodemailer)
- * @param {string} to - Destination recipient email
- * @param {string} name - Operative name
- * @param {string} role - Operative role
- * @returns {Promise<{success: boolean, messageId?: string, error?: string}>}
+ * Dispatches account clearance confirmation
  */
 export const sendWelcomeEmail = async (to, name, role = 'student') => {
+    // 1. Try Google Apps Script HTTPS Relay
+    if (process.env.APPS_SCRIPT_URL || customAppsScriptDispatcher) {
+        const relayResult = await dispatchViaAppsScript('welcome', to, { name, role });
+        if (relayResult) return relayResult;
+    }
+
+    // 2. Fall back to Gmail SMTP
     const htmlContent = `
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
             <tr>
@@ -244,7 +326,7 @@ export const sendWelcomeEmail = async (to, name, role = 'student') => {
     `;
 
     const transporter = getTransporter();
-    if (!transporter) return { success: false, error: 'Gmail SMTP unconfigured' };
+    if (!transporter) return { success: false, error: 'Email service unconfigured' };
 
     try {
         const info = await transporter.sendMail({

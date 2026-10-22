@@ -54,6 +54,7 @@ import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
 import { Route as AdminLeaderboardRouteImport } from './routes/admin.leaderboard'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
+import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminProblemsRouteImport } from './routes/admin.problems'
 import { Route as AdminRecruitmentRouteImport } from './routes/admin.recruitment'
 import { Route as AdminScheduleRouteImport } from './routes/admin.schedule'
@@ -299,6 +300,11 @@ const AdminMentorsRoute = AdminMentorsRouteImport.update({
   path: '/mentors',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminProblemsRoute = AdminProblemsRouteImport.update({
   id: '/problems',
   path: '/problems',
@@ -440,6 +446,7 @@ export interface FileRoutesByFullPath {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
@@ -505,6 +512,7 @@ export interface FileRoutesByTo {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
@@ -572,6 +580,7 @@ export interface FileRoutesById {
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
   '/admin/schedule': typeof AdminScheduleRoute
@@ -640,6 +649,7 @@ export interface FileRouteTypes {
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
     | '/admin/schedule'
@@ -705,6 +715,7 @@ export interface FileRouteTypes {
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
     | '/admin/schedule'
@@ -771,6 +782,7 @@ export interface FileRouteTypes {
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
     | '/admin/schedule'
@@ -1153,6 +1165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminMentorsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/payments': {
+      id: '/admin/payments'
+      path: '/payments'
+      fullPath: '/admin/payments'
+      preLoaderRoute: typeof AdminPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/problems': {
       id: '/admin/problems'
       path: '/problems'
@@ -1328,6 +1347,7 @@ interface AdminRouteChildren {
   AdminLeaderboardRoute: typeof AdminLeaderboardRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMentorsRoute: typeof AdminMentorsRoute
+  AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminProblemsRoute: typeof AdminProblemsRouteWithChildren
   AdminRecruitmentRoute: typeof AdminRecruitmentRoute
   AdminScheduleRoute: typeof AdminScheduleRoute
@@ -1351,6 +1371,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminLeaderboardRoute: AdminLeaderboardRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMentorsRoute: AdminMentorsRoute,
+  AdminPaymentsRoute: AdminPaymentsRoute,
   AdminProblemsRoute: AdminProblemsRouteWithChildren,
   AdminRecruitmentRoute: AdminRecruitmentRoute,
   AdminScheduleRoute: AdminScheduleRoute,

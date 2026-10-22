@@ -64,6 +64,18 @@ const hackathonSchema = new mongoose.Schema({
     submissionRules: String,
     codeOfConduct: String,
 
+    // Paid Entry & Registration Configuration
+    entryType: { type: String, enum: ['free', 'paid'], default: 'free' },
+    participationType: { type: String, enum: ['solo', 'team', 'both'], default: 'both' },
+    fee: { type: Number, default: 0 },
+    feeBasis: { type: String, enum: ['per_team', 'per_participant'], default: 'per_team' },
+    currency: { type: String, default: 'INR' },
+    upiId: String,
+    payeeName: String,
+    qrImageUrl: String,
+    paymentInstructions: String,
+    capacity: Number,
+
     createdBy: String
 }, { timestamps: true });
 
@@ -76,7 +88,45 @@ const registrationSchema = new mongoose.Schema({
     college: String,
     branch: String,
     year: String,
-    status: { type: String, default: 'pending' },
+
+    // Paid Hackathons & Squad Roster Binding
+    type: { type: String, enum: ['solo', 'team'], default: 'solo' },
+    teamId: String,
+    rosterLocked: { type: Boolean, default: false },
+    rosterMembers: [{
+        userId: String,
+        name: String,
+        email: String,
+        college: String,
+        role: String
+    }],
+    entryType: { type: String, enum: ['free', 'paid'], default: 'free' },
+    feeAmount: { type: Number, default: 0 },
+    feeBasis: { type: String, default: 'per_team' },
+    currency: { type: String, default: 'INR' },
+    paymentStatus: {
+        type: String,
+        enum: ['not_required', 'pending_proof', 'payment_under_review', 'verified', 'rejected'],
+        default: 'not_required'
+    },
+    transactionReference: { type: String, index: true },
+    paymentProofUrl: String,
+    paymentSubmittedAt: Date,
+    reviewReason: String,
+    reviewedBy: String,
+    reviewedAt: Date,
+    reviewHistory: [{
+        status: String,
+        reason: String,
+        reviewedBy: String,
+        timestamp: { type: Date, default: Date.now }
+    }],
+
+    status: {
+        type: String,
+        enum: ['draft', 'roster_locked', 'awaiting_payment_proof', 'payment_under_review', 'registered', 'rejected'],
+        default: 'registered'
+    },
     verifiedAt: Date
 }, { timestamps: true });
 
@@ -118,6 +168,8 @@ const teamSchema = new mongoose.Schema({
     maxMembers: Number,
     recruitmentOpen: Boolean,
     status: { type: String, enum: ['forming', 'active', 'submitted', 'disqualified', 'completed'], default: 'forming' },
+    isLocked: { type: Boolean, default: false },
+    lockedForHackathonId: String,
     // Backwards compat fields for current frontend
     repositoryUrl: String,
     demoUrl: String,

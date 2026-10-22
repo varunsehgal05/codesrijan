@@ -682,12 +682,12 @@ app.post('/api/hackathons/:id/close-submissions', requireAuth, requireRole(['adm
     changeHackathonState(req.params.id, req.user.id, 'evaluation', ['submission_open'], res)
 );
 
-// REGISTRATIONS
+// REGISTRATIONS & PAID HACKATHON WORKFLOW
 app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), async (req, res) => {
     try {
         const hackathonId = req.params.id;
         const userId = req.user.id;
-        const { college, branch, year } = req.body; // Only trust non-auth fields from body!
+        const { college, branch, year, type = 'team', teamId } = req.body;
 
         // 1. Verify Hackathon Exists and is accepting registrations
         const hackathon = await Hackathon.findOne({ id: hackathonId });
@@ -700,8 +700,8 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
 
         // 2. Validate Time Window
         const now = new Date();
-        const regStart = hackathonId === 'hack-demo-2' ? new Date(0) : new Date(hackathon.registrationStart);
-        const regEnd = hackathonId === 'hack-demo-2' ? new Date("2100-01-01") : new Date(hackathon.registrationEnd);
+        const regStart = hackathonId === 'hack-demo-2' ? new Date(0) : new Date(hackathon.registrationStart || 0);
+        const regEnd = hackathonId === 'hack-demo-2' ? new Date("2100-01-01") : new Date(hackathon.registrationEnd || "2100-01-01");
 
         if (now < regStart) return res.status(403).json({ message: "Registration window has not started yet." });
         if (now > regEnd) return res.status(403).json({ message: "Registration deadline has passed." });
@@ -711,7 +711,95 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             return res.status(403).json({ message: "Your identity matrix is unverified. Validate email to unlock registrations." });
         }
 
-        // 4. Create Registration
+        // 4. Check for Existing Registration
+        const existingReg = await Registration.findOne({ hackathonId, userId });
+        if (existingReg) {
+            return res.status(409).json({ message: "Duplicate record: This operative is already registered for this event.", registration: existingReg });
+        }
+
+        // 5. Handle Team vs Solo Registration
+        let targetTeam = null;
+        let rosterMembers = [];
+        const isPaid = hackathon.entryType === 'paid' && (hackathon.fee || 0) > 0;
+        let feeAmount = 0;
+        const feeBasis = hackathon.feeBasis || 'per_team';
+
+        if (type === 'team') {
+            const resolvedTeamId = teamId || req.user.teamId;
+            if (!resolvedTeamId) {
+                return res.status(400).json({ message: "Team ID required for team registration. Create or join a squad first." });
+            }
+
+            targetTeam = await Team.findOne({ id: resolvedTeamId });
+            if (!targetTeam) return res.status(404).json({ message: "Designated squad not found." });
+
+            if (targetTeam.leaderId !== userId) {
+                return res.status(403).json({ message: "Only the squad leader is authorized to register the squad for this tournament." });
+            }
+
+            // Check min/max team size constraints
+            const totalMembers = (targetTeam.memberIds || []).length + 1; // Leader + members
+            const minSize = hackathon.teamSizeMin || 1;
+            const maxSize = hackathon.teamSizeMax || 6;
+            if (totalMembers < minSize) {
+                return res.status(400).json({ message: `Squad size must be at least ${minSize} operatives (Current: ${totalMembers}).` });
+            }
+            if (totalMembers > maxSize) {
+                return res.status(400).json({ message: `Squad size exceeds tournament maximum of ${maxSize} operatives (Current: ${totalMembers}).` });
+            }
+
+            // Verify all squad members are active and verified
+            const allMemberIds = [targetTeam.leaderId, ...(targetTeam.memberIds || [])];
+            const memberDocs = await User.find({ id: { $in: allMemberIds } });
+            
+            for (const m of memberDocs) {
+                if (m.accountStatus !== 'active' || !m.emailVerified) {
+                    return res.status(403).json({ message: `Squad member ${m.name || m.email} has an unverified identity. All members must verify email before tournament registration.` });
+                }
+                rosterMembers.push({
+                    userId: m.id,
+                    name: m.name || 'Operative',
+                    email: m.email,
+                    college: m.college || college,
+                    role: m.id === targetTeam.leaderId ? 'leader' : 'member'
+                });
+            }
+
+            // Calculate Authoritative Backend Fee
+            if (isPaid) {
+                if (feeBasis === 'per_participant') {
+                    feeAmount = (hackathon.fee || 0) * totalMembers;
+                } else {
+                    feeAmount = hackathon.fee || 0;
+                }
+            }
+
+            // Lock Team Roster
+            targetTeam.isLocked = true;
+            targetTeam.lockedForHackathonId = hackathonId;
+            targetTeam.hackathonId = hackathonId;
+            await targetTeam.save();
+
+        } else {
+            // Solo Registration
+            rosterMembers = [{
+                userId: req.user.id,
+                name: req.user.name,
+                email: req.user.email,
+                college: college || req.user.college,
+                role: 'solo'
+            }];
+
+            if (isPaid) {
+                feeAmount = hackathon.fee || 0;
+            }
+        }
+
+        // Determine Initial Statuses
+        const status = isPaid ? 'awaiting_payment_proof' : 'registered';
+        const paymentStatus = isPaid ? 'pending_proof' : 'not_required';
+
+        // 6. Create Registration Document
         const registration = new Registration({
             id: `reg-${Date.now()}`,
             hackathonId,
@@ -720,7 +808,17 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             college: college || req.user.college,
             branch: branch || req.user.branch,
             year: year || req.user.year,
-            status: 'registered'
+            type,
+            teamId: targetTeam ? targetTeam.id : undefined,
+            rosterLocked: targetTeam ? true : false,
+            rosterMembers,
+            entryType: hackathon.entryType || 'free',
+            feeAmount,
+            feeBasis,
+            currency: hackathon.currency || 'INR',
+            paymentStatus,
+            status,
+            verifiedAt: isPaid ? undefined : new Date()
         });
 
         await registration.save();
@@ -733,11 +831,267 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
     }
 });
 
+// SUBMIT PAYMENT PROOF (UTR & RECEIPT ATTACHMENT)
+app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student']), async (req, res) => {
+    try {
+        const hackathonId = req.params.id;
+        const userId = req.user.id;
+        const { transactionReference, paymentProofUrl } = req.body;
+
+        // 1. Validate Transaction Reference / UTR format
+        if (!transactionReference || typeof transactionReference !== 'string') {
+            return res.status(400).json({ message: "Transaction reference / UTR is required." });
+        }
+        const cleanUtr = transactionReference.trim();
+        if (cleanUtr.length < 6 || cleanUtr.length > 64) {
+            return res.status(400).json({ message: "Transaction reference / UTR must be between 6 and 64 characters." });
+        }
+        if (!/^[A-Za-z0-9_\-\.]+$/.test(cleanUtr)) {
+            return res.status(400).json({ message: "Transaction reference / UTR contains invalid characters." });
+        }
+
+        // 2. Validate Payment Proof Attachment
+        if (!paymentProofUrl || typeof paymentProofUrl !== 'string') {
+            return res.status(400).json({ message: "Payment proof attachment (screenshot or receipt URL) is required." });
+        }
+        if (paymentProofUrl.length > 7000000) { // Limit to ~5MB payload
+            return res.status(413).json({ message: "Payment proof attachment exceeds maximum allowed size (5MB)." });
+        }
+        const isDataUri = paymentProofUrl.startsWith('data:image/');
+        const isHttpUrl = paymentProofUrl.startsWith('http://') || paymentProofUrl.startsWith('https://');
+        if (!isDataUri && !isHttpUrl) {
+            return res.status(400).json({ message: "Payment proof must be a valid image data URI or URL." });
+        }
+
+        // 3. Locate Registration for this hackathon and student/team
+        const registration = await Registration.findOne({
+            hackathonId,
+            $or: [
+                { userId },
+                { 'rosterMembers.userId': userId }
+            ]
+        });
+
+        if (!registration) {
+            return res.status(404).json({ message: "No registration record found for this tournament. Please enroll first." });
+        }
+
+        if (registration.paymentStatus === 'verified' || registration.status === 'registered') {
+            return res.status(400).json({ message: "This registration has already been verified and confirmed as paid." });
+        }
+
+        if (registration.paymentStatus === 'payment_under_review') {
+            return res.status(400).json({ message: "Payment proof has already been submitted and is currently awaiting administrator review." });
+        }
+
+        // 4. Duplicate Transaction Detection
+        const dupUtr = await Registration.findOne({
+            transactionReference: cleanUtr,
+            id: { $ne: registration.id }
+        });
+        if (dupUtr) {
+            return res.status(409).json({ message: "Duplicate transaction reference: This UTR has already been submitted for another registration." });
+        }
+
+        // 5. Update Registration to payment_under_review
+        registration.transactionReference = cleanUtr;
+        registration.paymentProofUrl = paymentProofUrl;
+        registration.paymentSubmittedAt = new Date();
+        registration.paymentStatus = 'payment_under_review';
+        registration.status = 'payment_under_review';
+        registration.reviewHistory = registration.reviewHistory || [];
+        registration.reviewHistory.push({
+            status: 'payment_under_review',
+            reason: 'Proof submitted by operative',
+            timestamp: new Date()
+        });
+
+        await registration.save();
+
+        // 6. Record System Activity Log
+        try {
+            const activity = new ActivityLog({
+                id: `act-${Date.now()}`,
+                type: 'payment_submitted',
+                title: 'Payment Proof Submitted',
+                description: `Operative ${req.user.name || req.user.email} submitted UTR ${cleanUtr} for event ${hackathonId}.`,
+                timestamp: new Date()
+            });
+            await activity.save();
+        } catch (logErr) {}
+
+        res.json({
+            success: true,
+            message: "Payment proof submitted successfully. Operative status: payment_under_review",
+            registration
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to submit payment proof.", error: err.message });
+    }
+});
+
+// GET CURRENT USER'S TOURNAMENT REGISTRATION (STUDENT)
+app.get('/api/hackathons/:id/my-registration', requireAuth, async (req, res) => {
+    try {
+        const registration = await Registration.findOne({
+            hackathonId: req.params.id,
+            $or: [
+                { userId: req.user.id },
+                { 'rosterMembers.userId': req.user.id }
+            ]
+        });
+        if (!registration) return res.status(404).json({ message: "Registration not found." });
+        res.json(registration);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/hackathons/:id/registration', requireAuth, async (req, res) => {
-    // Determine the authenticated user from the server-side session.
     const registration = await Registration.findOne({ userId: req.user.id, hackathonId: req.params.id });
     if (!registration) return res.status(404).json({ message: "Registration not found." });
     res.json(registration);
+});
+
+// RETRY REJECTED PAYMENT PROOF
+app.post('/api/hackathons/:id/retry-payment', requireAuth, requireRole(['student']), async (req, res) => {
+    try {
+        const registration = await Registration.findOne({
+            hackathonId: req.params.id,
+            userId: req.user.id,
+            paymentStatus: 'rejected'
+        });
+        if (!registration) {
+            return res.status(404).json({ message: "No rejected registration found eligible for payment retry." });
+        }
+        registration.paymentStatus = 'pending_proof';
+        registration.status = 'awaiting_payment_proof';
+        await registration.save();
+        res.json({ success: true, message: "Registration reset to awaiting_payment_proof", registration });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- ADMIN PAYMENT REVIEW QUEUE ROUTES ---
+app.get('/api/admin/payments', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const statusFilter = req.query.status;
+        const query = {
+            $or: [
+                { entryType: 'paid' },
+                { paymentStatus: { $in: ['payment_under_review', 'verified', 'rejected', 'pending_proof'] } }
+            ]
+        };
+
+        if (statusFilter && statusFilter !== 'all') {
+            query.paymentStatus = statusFilter;
+        }
+
+        const registrations = await Registration.find(query).sort({ paymentSubmittedAt: -1, createdAt: -1 });
+
+        // Enrich with Hackathon and Team names
+        const enriched = await Promise.all(registrations.map(async (reg) => {
+            const obj = reg.toObject();
+            if (reg.hackathonId) {
+                const h = await Hackathon.findOne({ id: reg.hackathonId }).select('name fee currency upiId');
+                obj.hackathonName = h ? h.name : reg.hackathonId;
+            }
+            if (reg.teamId) {
+                const t = await Team.findOne({ id: reg.teamId }).select('name leaderId memberIds');
+                obj.teamName = t ? t.name : reg.teamId;
+            }
+            return obj;
+        }));
+
+        const pendingCount = await Registration.countDocuments({ paymentStatus: 'payment_under_review' });
+        const verifiedCount = await Registration.countDocuments({ paymentStatus: 'verified' });
+        const rejectedCount = await Registration.countDocuments({ paymentStatus: 'rejected' });
+        const pendingProofCount = await Registration.countDocuments({ paymentStatus: 'pending_proof' });
+
+        res.json({
+            registrations: enriched,
+            summary: {
+                total: enriched.length,
+                pendingCount,
+                verifiedCount,
+                rejectedCount,
+                pendingProofCount
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ADMIN APPROVE OR REJECT PAYMENT
+app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { decision, reason } = req.body;
+        if (decision !== 'approve' && decision !== 'reject') {
+            return res.status(400).json({ message: "Invalid decision. Must be 'approve' or 'reject'." });
+        }
+
+        const registration = await Registration.findOne({ id: req.params.registrationId });
+        if (!registration) {
+            return res.status(404).json({ message: "Registration record not found." });
+        }
+
+        if (decision === 'approve') {
+            registration.paymentStatus = 'verified';
+            registration.status = 'registered';
+            registration.verifiedAt = new Date();
+            registration.reviewedBy = req.user.email;
+            registration.reviewedAt = new Date();
+            registration.reviewReason = reason || 'Payment verified by administrator';
+            registration.reviewHistory = registration.reviewHistory || [];
+            registration.reviewHistory.push({
+                status: 'verified',
+                reason: registration.reviewReason,
+                reviewedBy: req.user.email,
+                timestamp: new Date()
+            });
+        } else {
+            if (!reason || !reason.trim()) {
+                return res.status(400).json({ message: "A rejection reason is strictly required when declining payment." });
+            }
+            registration.paymentStatus = 'rejected';
+            registration.status = 'rejected';
+            registration.reviewReason = reason.trim();
+            registration.reviewedBy = req.user.email;
+            registration.reviewedAt = new Date();
+            registration.reviewHistory = registration.reviewHistory || [];
+            registration.reviewHistory.push({
+                status: 'rejected',
+                reason: reason.trim(),
+                reviewedBy: req.user.email,
+                timestamp: new Date()
+            });
+        }
+
+        await registration.save();
+        res.json({ success: true, decision, registration });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ADMIN PROTECTED RECEIPT ACCESS
+app.get('/api/admin/payments/:registrationId/receipt', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const registration = await Registration.findOne({ id: req.params.registrationId });
+        if (!registration) return res.status(404).json({ message: "Registration not found." });
+        if (!registration.paymentProofUrl) return res.status(404).json({ message: "No payment receipt on file." });
+
+        res.json({
+            registrationId: registration.id,
+            transactionReference: registration.transactionReference,
+            paymentProofUrl: registration.paymentProofUrl,
+            submittedAt: registration.paymentSubmittedAt
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.delete('/api/hackathons/:id/registration', requireAuth, async (req, res) => {
@@ -907,6 +1261,9 @@ app.post('/api/teams/join', requireAuth, requireRole(['student', 'admin']), asyn
     const team = await Team.findOne({ id: teamCode });
     if (!team) {
         return res.status(404).json({ message: "Invalid Squad Code." });
+    }
+    if (team.isLocked) {
+        return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. Direct join is blocked." });
     }
     const hackathon = await Hackathon.findOne({ id: team.hackathonId });
     const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
@@ -1096,6 +1453,9 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
         if (!team || team.leaderId !== req.user.id) {
             return res.status(403).json({ message: "Only squad leaders can transmit invitations." });
         }
+        if (team.isLocked) {
+            return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. No new invitations can be dispatched." });
+        }
 
         const hackathon = await Hackathon.findOne({ id: team.hackathonId });
         const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
@@ -1142,6 +1502,9 @@ app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['studen
 
     const team = await Team.findOne({ id: invite.teamId });
     if (!team) return res.status(404).json({ message: "Team not found." });
+    if (team.isLocked) {
+        return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. Invitations cannot be accepted." });
+    }
     const hackathon = await Hackathon.findOne({ id: team.hackathonId });
     const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
     
@@ -1281,6 +1644,9 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
         const team = await Team.findOne({ id: req.params.id });
         if (!team || team.leaderId !== req.user.id) return res.status(403).json({ message: "Squad Leader clearance required." });
         if (team.leaderId === userId) return res.status(403).json({ message: "System Error: Cannot purge designated Leader." });
+        if (team.isLocked) {
+            return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. Operatives cannot be removed." });
+        }
 
         team.memberIds = team.memberIds.filter(id => id !== userId);
         await team.save();

@@ -33,6 +33,14 @@ function CreateHackathonPage() {
     const [evaluationDeadline, setEvaluationDeadline] = useState("");
     const [resultDate, setResultDate] = useState("");
 
+    // Paid Hackathon Configuration
+    const [entryType, setEntryType] = useState<'free' | 'paid'>('free');
+    const [fee, setFee] = useState<number>(500);
+    const [feeBasis, setFeeBasis] = useState<'per_team' | 'per_participant'>('per_team');
+    const [upiId, setUpiId] = useState("codesrijan@okhdfcbank");
+    const [payeeName, setPayeeName] = useState("CodeSrijan Hackathon Society");
+    const [qrImageUrl, setQrImageUrl] = useState("");
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -52,7 +60,14 @@ function CreateHackathonPage() {
                 endDate,
                 submissionDeadline,
                 evaluationDeadline,
-                resultDate
+                resultDate,
+                entryType,
+                fee: entryType === 'paid' ? fee : 0,
+                feeBasis,
+                currency: 'INR',
+                upiId: entryType === 'paid' ? upiId : undefined,
+                payeeName: entryType === 'paid' ? payeeName : undefined,
+                qrImageUrl: entryType === 'paid' ? qrImageUrl : undefined
             }, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
             await refetchData();
             setStatusMsg("OK: Hackathon event matrix generated successfully.");
@@ -146,6 +161,82 @@ function CreateHackathonPage() {
                             <label className="font-label-bold uppercase text-ink-black">Results Date</label>
                             <input value={resultDate} onChange={e => setResultDate(e.target.value)} type="datetime-local" className="w-full bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required />
                         </div>
+                    </div>
+
+                    {/* Paid Entry Configuration */}
+                    <div className="bg-surface-container p-6 brutal-border space-y-4">
+                        <h3 className="font-display-lg text-lg uppercase text-ink-black flex items-center gap-2">
+                            <span className="material-symbols-outlined text-electric-blue">payments</span>
+                            Entry Fee & Payment Configuration
+                        </h3>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="flex flex-col gap-2">
+                                <label className="font-label-bold uppercase text-ink-black text-xs">Entry Type</label>
+                                <select
+                                    value={entryType}
+                                    onChange={e => setEntryType(e.target.value as any)}
+                                    className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                >
+                                    <option value="free">Free Entry</option>
+                                    <option value="paid">Paid Tournament</option>
+                                </select>
+                            </div>
+
+                            {entryType === 'paid' && (
+                                <>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="font-label-bold uppercase text-ink-black text-xs">Fee Amount (INR ₹)</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={fee}
+                                            onChange={e => setFee(parseInt(e.target.value) || 0)}
+                                            className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <label className="font-label-bold uppercase text-ink-black text-xs">Fee Basis</label>
+                                        <select
+                                            value={feeBasis}
+                                            onChange={e => setFeeBasis(e.target.value as any)}
+                                            className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                        >
+                                            <option value="per_team">Per Squad (Fixed)</option>
+                                            <option value="per_participant">Per Participant</option>
+                                        </select>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        {entryType === 'paid' && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                <div className="flex flex-col gap-2">
+                                    <label className="font-label-bold uppercase text-ink-black text-xs">Official UPI ID</label>
+                                    <input
+                                        type="text"
+                                        value={upiId}
+                                        onChange={e => setUpiId(e.target.value)}
+                                        className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                        placeholder="codesrijan@okhdfcbank"
+                                        required
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="font-label-bold uppercase text-ink-black text-xs">Payee Name</label>
+                                    <input
+                                        type="text"
+                                        value={payeeName}
+                                        onChange={e => setPayeeName(e.target.value)}
+                                        className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                        placeholder="CodeSrijan Hackathon Society"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <button type="submit" className="w-full bg-electric-blue text-pure-white py-4 font-headline-md italic uppercase brutal-border brutal-shadow hover:-translate-y-1 transition-transform mt-6">
