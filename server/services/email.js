@@ -102,23 +102,27 @@ export const dispatchViaAppsScript = async (template, to, data = {}) => {
             data
         };
 
-        const res = await axios.post(scriptUrl, payload, {
+        const response = await fetch(scriptUrl, {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent': 'CodeSrijan-Backend-Relay/1.0'
             },
-            timeout: 15000
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(20000)
         });
 
-        if (res.data && res.data.success) {
-            console.log('[APPS SCRIPT RELAY] Email dispatched to %s via MailApp (Quota remaining: %s)', maskEmail(to), res.data.remainingQuota ?? 'N/A');
+        const resData = await response.json();
+
+        if (resData && resData.success) {
+            console.log('[APPS SCRIPT RELAY] Email dispatched to %s via MailApp (Quota remaining: %s)', maskEmail(to), resData.remainingQuota ?? 'N/A');
             return {
                 success: true,
-                messageId: `apps-script-${res.data.timestamp || timestamp}`,
-                remainingQuota: res.data.remainingQuota
+                messageId: `apps-script-${resData.timestamp || timestamp}`,
+                remainingQuota: resData.remainingQuota
             };
         } else {
-            const errStr = res.data?.error || 'Unknown relay error';
+            const errStr = resData?.error || 'Unknown relay error';
             console.error('[APPS SCRIPT RELAY FAULT] Relay returned error for %s: %s', maskEmail(to), errStr);
             return {
                 success: false,

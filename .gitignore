@@ -37,6 +37,7 @@ dist-ssr
 server/.env
 server/serviceAccountKey.json
 server/*.json
+server/*.tmp
 *.cjs
 *.mjs
 !server/test_phase2_security.mjs
