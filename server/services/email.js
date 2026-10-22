@@ -1,6 +1,5 @@
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
-import axios from 'axios';
 
 // Helper to sanitize recipient for diagnostic logs
 const maskEmail = (email) => {
