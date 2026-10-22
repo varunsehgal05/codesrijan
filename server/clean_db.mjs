@@ -1,8 +1,9 @@
+if (!process.env.MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const MONGO_URI = 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
+const MONGO_URI = process.env.MONGO_URI;
 
 const UserSchema = new mongoose.Schema({}, { strict: false });
 const User = mongoose.model('User', UserSchema, 'users'); // collection name users

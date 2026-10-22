@@ -52,23 +52,35 @@ const io = new Server(httpServer, {
     }
 });
 
-// Configure Realtime Sockets
+// Apply the same verified-account authentication used by HTTP routes.
+io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (typeof token !== 'string' || !token) return next(new Error('Unauthorized'));
+    const req = { headers: { authorization: 'Bearer ' + token } };
+    const res = { status() { return this; }, json() { next(new Error('Unauthorized')); } };
+    requireAuth(req, res, () => { socket.data.user = req.user; next(); });
+});
 io.on('connection', (socket) => {
-    socket.on('conversation:join', (conversationId) => {
-        socket.join(conversationId);
+    const authorize = async (conversationId) => {
+        if (typeof conversationId !== 'string') return false;
+        // Recheck account/session validity when subscribing or emitting.
+        const user = await new Promise(resolve => {
+            const req = { headers: { authorization: 'Bearer ' + socket.handshake.auth.token } };
+            requireAuth(req, { status() { return this; }, json() { resolve(null); } }, () => resolve(req.user));
+        });
+        if (!user) return false;
+        const conv = await Conversation.findOne({ id: conversationId });
+        if (!conv) return false;
+        return user.role === 'admin' || conv.participantIds?.includes(user.id) || !!(conv.teamId && await Team.exists({ id: conv.teamId, memberIds: user.id }));
+    };
+    socket.on('conversation:join', async (conversationId, ack) => {
+        try { const allowed = await authorize(conversationId); if (allowed) await socket.join(conversationId); if (typeof ack === 'function') ack({ allowed: !!allowed }); } catch { if (typeof ack === 'function') ack({ allowed: false }); }
     });
-
-    socket.on('conversation:leave', (conversationId) => {
-        socket.leave(conversationId);
-    });
-
-    socket.on('typing:start', (data) => {
-        // data expects: { conversationId, userId, name }
-        socket.to(data.conversationId).emit('typing:start', data);
-    });
-
-    socket.on('typing:stop', (data) => {
-        socket.to(data.conversationId).emit('typing:stop', data);
+    socket.on('conversation:leave', (conversationId) => { if (typeof conversationId === 'string') socket.leave(conversationId); });
+    for (const event of ['typing:start', 'typing:stop']) socket.on(event, async (data) => {
+        try {
+            if (await authorize(data?.conversationId)) socket.to(data.conversationId).emit(event, { conversationId: data.conversationId, userId: socket.data.user.id, name: socket.data.user.name });
+        } catch { /* fail closed */ }
     });
 });
 
@@ -471,7 +483,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         });
         await resetToken.save();
 
-        const frontendHost = req.headers.origin || process.env.FRONTEND_URL || 'https://codesrijan-nine.vercel.app';
+        const frontendHost = process.env.FRONTEND_URL || 'https://codesrijan-nine.vercel.app';
         const resetLink = `${frontendHost}/auth/reset-password?token=${resetTokenRaw}&uid=${user.id}`;
 
         // Dispatch Email asynchronously via Resend HTTPS

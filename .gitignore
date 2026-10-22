@@ -44,5 +44,6 @@ server/*.tmp
 !server/test_phase3_paid_hackathons.mjs
 !server/test-security-local.mjs
 !server/test_payment_notifications.mjs
+!server/test_final_paid_acceptance.mjs
 *.png
 platform-screenshots/

@@ -1,3 +1,4 @@
+if (!process.env.MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const dns = require('dns');
@@ -5,7 +6,7 @@ const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 require('dotenv').config();
 
-const uri = 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
+const uri = process.env.MONGO_URI;
 
 mongoose.connect(uri).then(async () => {
     const hash = await bcrypt.hash('password123', 10);

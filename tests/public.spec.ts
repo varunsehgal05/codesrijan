@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const URL = 'http://localhost:5173';
+const URL = process.env.QA_BASE_URL || 'http://localhost:5173';
 
 test.describe('Public Website E2E Tests', () => {
 
@@ -15,14 +15,16 @@ test.describe('Public Website E2E Tests', () => {
   });
 
   test('Problems page requires authentication', async ({ page }) => {
-    await page.goto(`${URL}/problems`);
+    await page.goto(`${URL}/problems`, { waitUntil: "domcontentloaded" });
     await page.waitForURL('**/login*');
     await expect(page.locator('h1').first()).toContainText('Welcome Back');
   });
 
   test('Leaderboard page loads without errors', async ({ page }) => {
+    await page.route("**/api/leaderboard", route => route.fulfill({ json: [] }));
     await page.goto(`${URL}/leaderboard`);
-    await expect(page.locator('h1').first()).toContainText('CLASSIFIED STANDINGS');
+    await expect(page.locator('h1').first()).toContainText('GLOBAL LEADERBOARD');
+    await expect(page.getByText('No evaluated payloads detected yet.')).toBeVisible();
   });
 
   test('Timeline and Rules display', async ({ page }) => {

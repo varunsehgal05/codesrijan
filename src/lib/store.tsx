@@ -3,7 +3,7 @@ import axios from 'axios';
 import { io } from 'socket.io-client';
 
 const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
-export const socket = io(API_URL.replace('/api', ''));
+export const socket = io(API_URL.replace('/api', ''), { autoConnect: false, auth: (cb) => cb({ token: typeof localStorage === 'undefined' ? null : localStorage.getItem('codesrijan_auth_token') }) });
 
 // Global API Interceptor for JWT Tokens
 axios.interceptors.request.use((config) => {
@@ -131,6 +131,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         evaluations: [],
         isLoaded: false
     });
+
+    useEffect(() => {
+        if (state.currentUser?.id) socket.connect();
+        else socket.disconnect();
+        return () => { socket.disconnect(); };
+    }, [state.currentUser?.id]);
 
     useEffect(() => {
         if (state.currentUser?.teamId) {
@@ -290,7 +296,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
                     const u = meRes.data.user;
                     setState(prev => ({ ...prev, currentUser: u }));
-                    socket.emit('authenticate', idToken);
+                    socket.disconnect().connect();
                     return u;
                 } catch (fbErr: any) {
                     console.warn("Firebase Client Auth bypass/fallback to Express API:", fbErr.message);
@@ -306,10 +312,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const { user: u, token } = res.data;
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_auth_token", token);
-            socket.emit('authenticate', res.data.token);
+            socket.disconnect().connect();
             return u;
         } catch (e: any) {
-            console.error("Login Error:", e);
+            console.error("Login failed", e.response?.status || "network error");
             if (e.message && e.message.includes("verification_required")) throw e;
             throw new Error(e.response?.data?.message || "Authentication failed. Connection to server refused.");
         }
@@ -332,7 +338,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             if (u && token) {
                 setState(prev => ({ ...prev, currentUser: u }));
                 localStorage.setItem("codesrijan_auth_token", token);
-                socket.emit('authenticate', token);
+                socket.disconnect().connect();
             }
             return res.data;
         } catch (e: any) {
@@ -341,6 +347,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
+        socket.disconnect();
         setState(prev => ({ ...prev, currentUser: null }));
         localStorage.removeItem("codesrijan_auth_token");
     };

@@ -1,4 +1,5 @@
-import { createFileRoute, Outlet, Link, useRouterState, Navigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 export const Route = createFileRoute("/admin")({
     component: AdminLayout,
@@ -28,6 +29,10 @@ const ADMIN_LINKS = [
 function AdminLayout() {
     const activeRoute = useRouterState({ select: (s) => s.location.pathname });
     const { currentUser, isLoaded } = useAppStore();
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (isLoaded && (!currentUser || currentUser.role !== 'admin')) void navigate({ to: '/dashboard', replace: true });
+    }, [isLoaded, currentUser, navigate]);
 
     if (!isLoaded) {
         return (
@@ -39,7 +44,7 @@ function AdminLayout() {
     }
 
     if (!currentUser || currentUser.role !== 'admin') {
-        return <Navigate to="/dashboard" />;
+        return null;
     }
 
     return (

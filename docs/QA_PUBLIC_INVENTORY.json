@@ -1,0 +1,77 @@
+{
+  "checkedAt": "2026-10-22T22:39:07.041Z",
+  "events": [
+    {
+      "id": "qa-paid-hack-1792650687843",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "paid",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650689462",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "free",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792650786332",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "paid",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650787439",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "free",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792650910884",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "paid",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650912102",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "free",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792695285658",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "paid",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792695286924",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "entryType": "free",
+      "publiclyListed": true,
+      "privateRelationships": "BLOCKED",
+      "mutationApplied": false
+    }
+  ]
+}

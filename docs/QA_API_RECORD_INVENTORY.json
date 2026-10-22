@@ -1,0 +1,183 @@
+{
+  "reviewedAt": "2026-10-22T22:56:39.730Z",
+  "source": "authenticated supported API reads",
+  "readOnly": true,
+  "events": [
+    {
+      "id": "qa-paid-hack-1792650687843",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650689462",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792650786332",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [
+        {
+          "id": "reg-1792650790901",
+          "teamId": "t-qa-1792650789448",
+          "status": "registered",
+          "paymentStatus": "verified",
+          "proofPresent": true,
+          "testReference": false,
+          "reviewStates": [
+            "payment_under_review",
+            "payment_under_review"
+          ],
+          "participantCount": 2,
+          "allParticipantsDesignatedQA": false,
+          "teamLocked": true,
+          "rosterLocked": true,
+          "otherPaidLockedRegistrations": 0
+        }
+      ],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650787439",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792650910884",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [
+        {
+          "id": "reg-1792650914790",
+          "teamId": "t-qa-1792650913837",
+          "status": "registered",
+          "paymentStatus": "verified",
+          "proofPresent": true,
+          "testReference": false,
+          "reviewStates": [
+            "payment_under_review"
+          ],
+          "participantCount": 2,
+          "allParticipantsDesignatedQA": false,
+          "teamLocked": true,
+          "rosterLocked": true,
+          "otherPaidLockedRegistrations": 0
+        },
+        {
+          "id": "reg-1792650917113",
+          "teamId": null,
+          "status": "awaiting_payment_proof",
+          "paymentStatus": "pending_proof",
+          "proofPresent": false,
+          "testReference": false,
+          "reviewStates": [],
+          "participantCount": 1,
+          "allParticipantsDesignatedQA": false,
+          "teamLocked": null,
+          "rosterLocked": false,
+          "otherPaidLockedRegistrations": 0
+        }
+      ],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792650912102",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-paid-hack-1792695285658",
+      "name": "QA PAID HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [
+        {
+          "id": "reg-1792696746046",
+          "teamId": "t-1791543889807",
+          "status": "registered",
+          "paymentStatus": "verified",
+          "proofPresent": true,
+          "testReference": true,
+          "reviewStates": [
+            "payment_under_review",
+            "rejected",
+            "payment_under_review",
+            "verified"
+          ],
+          "participantCount": 1,
+          "allParticipantsDesignatedQA": true,
+          "teamLocked": true,
+          "rosterLocked": true,
+          "otherPaidLockedRegistrations": 0
+        },
+        {
+          "id": "reg-1792695288931",
+          "teamId": "t-qa-1792695288382",
+          "status": "registered",
+          "paymentStatus": "verified",
+          "proofPresent": true,
+          "testReference": false,
+          "reviewStates": [
+            "payment_under_review"
+          ],
+          "participantCount": 2,
+          "allParticipantsDesignatedQA": false,
+          "teamLocked": true,
+          "rosterLocked": true,
+          "otherPaidLockedRegistrations": 0
+        },
+        {
+          "id": "reg-1792695290330",
+          "teamId": null,
+          "status": "awaiting_payment_proof",
+          "paymentStatus": "pending_proof",
+          "proofPresent": false,
+          "testReference": false,
+          "reviewStates": [],
+          "participantCount": 1,
+          "allParticipantsDesignatedQA": false,
+          "teamLocked": null,
+          "rosterLocked": false,
+          "otherPaidLockedRegistrations": 0
+        }
+      ],
+      "mutationApplied": false
+    },
+    {
+      "id": "qa-free-hack-1792695286924",
+      "name": "QA FREE HACKATHON 2026",
+      "status": "registration_open",
+      "publiclyVisible": true,
+      "coverage": "paid queue only; free registrations not exposed here",
+      "registrations": [],
+      "mutationApplied": false
+    }
+  ],
+  "historicalTeamPresent": true,
+  "limitations": [
+    "Free-event registrations and locks outside paid queue are not fully observable.",
+    "No receipts, emails, credentials or raw transaction references saved."
+  ]
+}

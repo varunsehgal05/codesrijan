@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
 import { useState, useEffect } from "react";
 import axios from "axios";
@@ -21,7 +21,11 @@ export const Route = createFileRoute("/problems")({
 });
 
 function Page12() {
-  const { currentUser, hackathons, teams, assignProblem } = useAppStore();
+  const { currentUser, isLoaded, hackathons, teams, assignProblem } = useAppStore();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (isLoaded && !currentUser) void navigate({ to: '/login', replace: true });
+  }, [isLoaded, currentUser, navigate]);
   const [problems, setProblems] = useState<any[]>([]);
   const activeEvent = hackathons[0];
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
@@ -57,7 +61,7 @@ function Page12() {
     }
   }, [hackathons, API_URL]);
 
-  if (!currentUser) return <Navigate to="/login" />;
+  if (!isLoaded || !currentUser) return null;
 
   const selectProblem = async (problemId: string) => {
     if (!userTeam) {

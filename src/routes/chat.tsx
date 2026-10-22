@@ -49,7 +49,7 @@ function ChatDashboard() {
     loadConversations();
     
     const socketUrl = API_URL.replace('/api', '');
-    socketRef.current = io(socketUrl);
+    socketRef.current = io(socketUrl, { auth: { token: localStorage.getItem("codesrijan_auth_token") } });
     
     return () => {
       socketRef.current?.disconnect();

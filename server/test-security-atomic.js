@@ -66,6 +66,17 @@ try {
         assert.equal(result.status, 201);
         assert.equal((await User.findOne({ email: 'admin.prefix@example.invalid' })).role, 'student');
     });
+    await test('reset email ignores attacker Origin', async () => {
+        let delivered;
+        process.env.FRONTEND_URL = 'https://trusted.example.invalid';
+        setTestAppsScriptDispatcher(async (template, to, data) => { delivered = data; return { success: true }; });
+        await User.create({ id: 'reset-origin', email: 'reset-origin@example.invalid', role: 'student' });
+        const response = await fetch(base + '/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'https://attacker.example.invalid' }, body: JSON.stringify({ email: 'reset-origin@example.invalid' }) });
+        assert.equal(response.status, 200);
+        assert.equal((await response.text()).includes('token='), false);
+        assert.equal(new URL(delivered.resetLink).origin, 'https://trusted.example.invalid');
+        setTestAppsScriptDispatcher(async () => ({ success: true, messageId: 'mock' }));
+    });
     await test('review requires submitted proof and competing decisions have one winner', async () => {
         const token = 'local-admin-test';
         await User.create({ id: 'review-admin', email: 'review@example.invalid', role: 'admin', accountStatus: 'active', emailVerified: true });

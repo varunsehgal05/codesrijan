@@ -8,6 +8,8 @@ export function ChatBotWidget() {
     const apiBaseUrl = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
     const routerState = useRouterState();
     const [isOpen, setIsOpen] = useState(false);
+    const [isReady, setIsReady] = useState(false);
+    useEffect(() => setIsReady(true), []);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
@@ -151,15 +153,15 @@ export function ChatBotWidget() {
     };
 
     return (
-        <div className="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+        <div className={`${isOpen ? "fixed bottom-4 right-4" : "relative mx-4 mb-4"} sm:fixed sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end`}>
             {isOpen && (
-                <div className="bg-surface brutal-border brutal-shadow-lg w-[380px] h-[550px] mb-4 flex flex-col overflow-hidden">
+                <div className="bg-surface brutal-border brutal-shadow-lg w-[min(380px,calc(100vw-2rem))] h-[min(550px,calc(100dvh-2rem))] mb-4 flex flex-col overflow-hidden">
                     {/* Header */}
                     <div className="bg-electric-blue text-white p-4 border-b-4 border-ink-black flex justify-between items-center shrink-0">
                         <span className="font-headline-md uppercase text-base flex items-center gap-2">
                             <span className="material-symbols-outlined">smart_toy</span> SrijanBot
                         </span>
-                        <button onClick={() => setIsOpen(false)} className="hover:text-ink-black transition-colors rotate-0 hover:rotate-90 duration-200">
+                        <button aria-label="Close SrijanBot" onClick={() => setIsOpen(false)} className="hover:text-ink-black transition-colors rotate-0 hover:rotate-90 duration-200">
                             <span className="material-symbols-outlined text-2xl">close</span>
                         </button>
                     </div>
@@ -199,10 +201,11 @@ export function ChatBotWidget() {
                             <input
                                 value={input}
                                 onChange={e => setInput(e.target.value)}
+                                aria-label="Message SrijanBot"
                                 placeholder="Ask SrijanBot..."
-                                className="w-full bg-surface-container-lowest brutal-border p-3 pr-12 font-body-md focus:outline-none focus:border-electric-blue"
+                                className="w-full bg-surface-container-lowest brutal-border p-3 pr-12 font-body-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-blue"
                             />
-                            <button type="submit" className="absolute right-0 top-0 bottom-0 px-3 bg-electric-blue text-white border-l-2 border-ink-black hover:bg-primary-fixed-dim hover:text-ink-black transition-colors flex items-center justify-center">
+                            <button aria-label="Send message" type="submit" className="absolute right-0 top-0 bottom-0 px-3 bg-electric-blue text-white border-l-2 border-ink-black hover:bg-primary-fixed-dim hover:text-ink-black transition-colors flex items-center justify-center">
                                 <span className="material-symbols-outlined">send</span>
                             </button>
                         </form>
@@ -212,6 +215,8 @@ export function ChatBotWidget() {
 
             {!isOpen && (
                 <button
+                    disabled={!isReady}
+                    aria-label="Open SrijanBot help"
                     onClick={() => setIsOpen(true)}
                     className="bg-electric-blue text-white p-4 brutal-border brutal-shadow brutal-hover rounded-full flex items-center justify-center group relative mt-4 block pointer-events-auto"
                 >
