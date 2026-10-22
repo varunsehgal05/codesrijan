@@ -10,18 +10,23 @@ function AdminLoginPage() {
     const { login } = useAppStore();
     const navigate = useNavigate({ from: "/admin-login" });
     const [adminId, setAdminId] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState("");
 
     const handleAdminLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg("");
         if (!adminId) return;
+        setLoading(true);
 
         try {
-            await login(adminId); // We will pass "admin" or "admin@codesrijan.com" as the ID to trigger the backend override
-            navigate({ to: "/admin" });
-        } catch (err: any) {
-            setErrorMsg(err.message || "Admin authorization rejected.");
+            const user = await login(adminId.trim(), password);
+            await navigate({ to: user.role === "admin" ? "/admin" : "/dashboard" });
+        } catch (err: unknown) {
+            setErrorMsg(err instanceof Error ? err.message : "Admin authorization rejected.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -50,7 +55,10 @@ function AdminLoginPage() {
                                 value={adminId}
                                 onChange={(e) => setAdminId(e.target.value)}
                                 className="w-full neo-border bg-white p-3 pl-10 font-code-snippet focus:outline-none focus:border-electric-blue focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
-                                placeholder="e.g. admin"
+                                type="email"
+                                autoComplete="username"
+                                aria-label="Admin email"
+                                placeholder="admin@example.com"
                                 required
                             />
                         </div>
@@ -60,12 +68,12 @@ function AdminLoginPage() {
                         <label className="font-label-caps uppercase text-xs font-bold text-ink-black">Clearance Passphrase</label>
                         <div className="relative">
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-ink-black">key</span>
-                            <input type="password" className="w-full neo-border bg-white p-3 pl-10 font-code-snippet focus:outline-none focus:border-electric-blue focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all" placeholder="•••••••••" required />
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} aria-label="Admin password" autoComplete="current-password" className="w-full neo-border bg-white p-3 pl-10 font-code-snippet focus:outline-none focus:border-electric-blue focus:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all" placeholder="•••••••••" required />
                         </div>
                     </div>
 
-                    <button type="submit" className="bg-electric-blue text-white py-4 font-headline-md uppercase neo-border hover:bg-ink-black transition-colors mt-2">
-                        Initialize Session
+                    <button type="submit" disabled={loading} className="bg-electric-blue text-white py-4 font-headline-md uppercase neo-border hover:bg-ink-black transition-colors mt-2">
+                        {loading ? "Authenticating…" : "Initialize Session"}
                     </button>
 
                     <Link to="/" className="text-center font-label-caps text-xs text-text-muted hover:text-electric-blue transition-colors underline underline-offset-2">
