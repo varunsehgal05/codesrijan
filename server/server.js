@@ -130,7 +130,85 @@ mongoose.connect(MONGO_URI, {
         await Sponsor.insertMany(defaultSponsors);
         console.log("[SYSTEM] Missing Default Corporate Sponsors seeded.");
     }
+
+    try {
+        const settings = await SystemSetting.find();
+        settings.forEach(s => {
+            if (s.key) globalSystemSettings[s.key] = s.value;
+        });
+        console.log("[SYSTEM] Global settings synced. Maintenance mode:", globalSystemSettings.maintenanceMode);
+    } catch (e) {}
 }).catch(err => console.error(err));
+
+// --- Global System Status & Maintenance Protocol ---
+const globalSystemSettings = {
+    maintenanceMode: false,
+    registrationEnabled: true,
+    submissionEnabled: true,
+    chatEnabled: true,
+    recruitmentEnabled: true,
+    leaderboardVisible: true
+};
+
+export const getSystemSettings = () => globalSystemSettings;
+export const setSystemSettings = (newSettings) => {
+    Object.assign(globalSystemSettings, newSettings);
+};
+
+// Global Maintenance Mode Guard Middleware (Affects students & visitors, never administrators)
+app.use(async (req, res, next) => {
+    if (globalSystemSettings.maintenanceMode === true) {
+        const path = req.path;
+        // Bypassed endpoints
+        if (
+            path.startsWith('/api/admin') ||
+            path.startsWith('/api/auth') ||
+            path === '/api/system/status' ||
+            path === '/api/settings/public'
+        ) {
+            return next();
+        }
+
+        // Check if admin is authenticated (Admin bypass)
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            try {
+                const sessionTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+                const session = await Session.findOne({ sessionTokenHash, revokedAt: null });
+                if (session) {
+                    const u = await User.findOne({ id: session.userId });
+                    if (u && u.role === 'admin') {
+                        return next(); // Admin bypasses maintenance completely!
+                    }
+                }
+            } catch (err) {}
+        }
+
+        return res.status(503).json({
+            error: "Platform in Maintenance Mode",
+            maintenance: true,
+            message: "CodeSrijan is undergoing scheduled system upgrades. Regular operative access is temporarily paused."
+        });
+    }
+    next();
+});
+
+// Public System Status Endpoint
+app.get('/api/system/status', (req, res) => {
+    res.json({
+        success: true,
+        maintenanceMode: globalSystemSettings.maintenanceMode === true,
+        settings: globalSystemSettings
+    });
+});
+app.get('/api/settings/public', (req, res) => {
+    res.json({
+        success: true,
+        maintenanceMode: globalSystemSettings.maintenanceMode === true,
+        settings: globalSystemSettings
+    });
+});
 
 // --- Routes ---
 
@@ -561,28 +639,94 @@ app.get('/api/hackathons', async (req, res) => {
     const hackathons = await Hackathon.find();
     res.json(hackathons);
 });
-app.post('/api/hackathons', requireAuth, requireRole(['admin']), async (req, res) => {
-    // Generate native ID
-    const isExplicitTest = req.body.isTest === true ||
-        (typeof req.body.id === 'string' && req.body.id.startsWith('qa-')) ||
-        (typeof req.body.name === 'string' && /^qa[-_\s]/i.test(req.body.name.trim()));
-    const hackathonData = {
-        ...req.body,
-        id: req.body.id || `hack-${Date.now()}`,
-        status: 'draft',
-        createdBy: req.user.id,
-        isTest: isExplicitTest
-    };
+app.post('/api/hackathons', requireAuth, async (req, res) => {
+    try {
+        const isAdmin = req.user.role === 'admin';
+        // Generate native ID
+        const isExplicitTest = req.body.isTest === true ||
+            (typeof req.body.id === 'string' && req.body.id.startsWith('qa-')) ||
+            (typeof req.body.name === 'string' && /^qa[-_\s]/i.test(req.body.name.trim()));
 
-    // Server-side validation
-    if (!hackathonData.name || !hackathonData.registrationStart || !hackathonData.registrationEnd) {
-        return res.status(400).json({ message: "Bad Request: Missing critical dates or nomenclature." });
+        const hackathonId = req.body.id || `hack-${Date.now()}`;
+        const revealMode = req.body.problemRevealMode || 'manual';
+        const isImmediate = revealMode === 'immediate';
+
+        const hackathonData = {
+            ...req.body,
+            id: hackathonId,
+            status: isAdmin ? (req.body.status || 'draft') : 'draft',
+            mode: req.body.mode || 'online',
+            amenities: Array.isArray(req.body.amenities) ? req.body.amenities : [],
+            problemRevealMode: revealMode,
+            problemStatementsRevealed: isImmediate,
+            entryType: req.body.entryType || 'free',
+            fee: req.body.entryType === 'paid' ? (Number(req.body.fee) || 0) : 0,
+            feeBasis: req.body.feeBasis || 'per_team',
+            currency: 'INR',
+            upiId: req.body.upiId,
+            payeeName: req.body.payeeName,
+            qrImageUrl: req.body.qrImageUrl,
+            paymentInstructions: req.body.paymentInstructions,
+            institutionName: req.body.institutionName,
+            coordinatorEmail: req.body.coordinatorEmail || req.user.email,
+            coordinatorName: req.body.coordinatorName || req.user.name,
+            coordinatorPhone: req.body.coordinatorPhone,
+            createdBy: req.user.id,
+            isTest: isExplicitTest
+        };
+
+        // Server-side validation
+        if (!hackathonData.name || !hackathonData.registrationStart || !hackathonData.registrationEnd) {
+            return res.status(400).json({ message: "Bad Request: Missing critical dates or nomenclature." });
+        }
+
+        const hackathon = new Hackathon(hackathonData);
+        await hackathon.save();
+
+        // Create linked problem statements if provided in the hosting request
+        if (Array.isArray(req.body.problemStatements) && req.body.problemStatements.length > 0) {
+            for (let i = 0; i < req.body.problemStatements.length; i++) {
+                const ps = req.body.problemStatements[i];
+                if (ps && ps.title) {
+                    await ProblemStatement.create({
+                        id: `ps-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 4)}`,
+                        hackathonId: hackathon.id,
+                        title: ps.title,
+                        slug: ps.slug || ps.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+                        domain: ps.track || ps.domain || 'General',
+                        difficulty: ps.difficulty || 'medium',
+                        description: ps.description || ps.title,
+                        fullDescription: ps.fullDescription || ps.description || ps.title,
+                        requirements: Array.isArray(ps.requirements) ? ps.requirements : (ps.requirements ? [ps.requirements] : []),
+                        isPublished: isImmediate,
+                        isLocked: !isImmediate,
+                        createdBy: req.user.id
+                    }).catch(err => console.error("Problem statement creation fault:", err));
+                }
+            }
+        }
+
+        // Notify admins if created as a proposal by student/organizer
+        if (!isAdmin) {
+            const adminUsers = await User.find({ role: 'admin' });
+            for (const adm of adminUsers) {
+                await Notification.create({
+                    id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                    userId: adm.id,
+                    type: 'system',
+                    title: 'New Hackathon Proposal Submitted',
+                    message: `Coordinator ${hackathonData.coordinatorName || req.user.name} from "${hackathonData.institutionName || 'Campus'}" submitted "${hackathonData.name}" (${hackathonData.mode.toUpperCase()}).`,
+                    referenceType: 'hackathon',
+                    referenceId: hackathon.id,
+                    isRead: false
+                }).catch(() => {});
+            }
+        }
+
+        res.json(hackathon);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create hackathon: " + e.message });
     }
-
-    const hackathon = new Hackathon(hackathonData);
-    await hackathon.save();
-
-    res.json(hackathon);
 });
 
 app.get('/api/hackathons/active', async (req, res) => {
@@ -650,6 +794,63 @@ app.post('/api/hackathons/:id/open-submissions', requireAuth, requireRole(['admi
 app.post('/api/hackathons/:id/close-submissions', requireAuth, requireRole(['admin']), (req, res) =>
     changeHackathonState(req.params.id, req.user.id, 'evaluation', ['submission_open'], res)
 );
+
+// --- PROBLEM STATEMENT REVEAL DIRECTIVES (ADMIN CONTROLS) ---
+app.patch('/api/admin/hackathons/:id/reveal-problems', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const hackathon = await Hackathon.findOneAndUpdate(
+            { id: req.params.id },
+            { problemStatementsRevealed: true },
+            { new: true }
+        );
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+        await ProblemStatement.updateMany(
+            { hackathonId: req.params.id },
+            { isPublished: true, isLocked: false }
+        );
+
+        // Notify participants
+        const regs = await Registration.find({ hackathonId: req.params.id });
+        const userIds = Array.from(new Set(regs.map(r => r.userId)));
+        for (const uid of userIds) {
+            await Notification.create({
+                id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                userId: uid,
+                type: 'system',
+                title: '🚨 PROBLEM STATEMENTS UNLOCKED!',
+                message: `The problem statements for "${hackathon.name}" have been officially revealed by administrators. Choose your track now!`,
+                referenceType: 'hackathon',
+                referenceId: hackathon.id,
+                isRead: false
+            }).catch(() => {});
+        }
+
+        res.json({ success: true, hackathon, message: "Problem statements successfully revealed to all participants." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to reveal problem statements: " + e.message });
+    }
+});
+
+app.patch('/api/admin/hackathons/:id/hide-problems', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const hackathon = await Hackathon.findOneAndUpdate(
+            { id: req.params.id },
+            { problemStatementsRevealed: false },
+            { new: true }
+        );
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+        await ProblemStatement.updateMany(
+            { hackathonId: req.params.id },
+            { isPublished: false, isLocked: true }
+        );
+
+        res.json({ success: true, hackathon, message: "Problem statements classified and locked." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to hide problem statements: " + e.message });
+    }
+});
 
 // REGISTRATIONS & PAID HACKATHON WORKFLOW
 app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), async (req, res) => {
@@ -1058,24 +1259,56 @@ app.get('/api/admin/payments', requireAuth, requireRole(['admin']), async (req, 
     }
 });
 
-// ADMIN APPROVE OR REJECT PAYMENT
 app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const { decision, reason } = req.body;
+        const { decision, reason, noteOnly } = req.body;
+        const now = new Date();
+
+        // 1. Audit Note edit only (no status toggle)
+        if (noteOnly) {
+            if (!reason?.trim()) return res.status(400).json({ message: 'Audit note text is required.' });
+            const registration = await Registration.findOneAndUpdate(
+                { id: req.params.registrationId },
+                {
+                    $set: { reviewReason: reason.trim() },
+                    $push: { reviewHistory: { status: 'note_updated', reason: reason.trim(), reviewedBy: req.user.email, timestamp: now } }
+                },
+                { returnDocument: 'after' }
+            );
+            if (!registration) return res.status(404).json({ message: "Registration not found." });
+            return res.json({ success: true, registration, message: "Audit note updated." });
+        }
+
         if (decision !== 'approve' && decision !== 'reject') {
             return res.status(400).json({ message: "Invalid decision. Must be 'approve' or 'reject'." });
         }
 
         if (reason != null && typeof reason !== 'string') return res.status(400).json({ message: 'Review reason must be text.' });
         if (decision === 'reject' && !reason?.trim()) return res.status(400).json({ message: 'A rejection reason is strictly required when declining payment.' });
-        const now = new Date();
+
         const paymentStatus = decision === 'approve' ? 'verified' : 'rejected';
         const reviewReason = reason?.trim() || (decision === 'approve' ? 'Payment verified by administrator' : 'Payment declined by administrator');
-        const registration = await Registration.findOneAndUpdate({ id: req.params.registrationId, paymentStatus: 'payment_under_review', status: 'payment_under_review', transactionReference: { $type: 'string', $ne: '' }, paymentProofUrl: { $type: 'string', $ne: '' } }, {
-            $set: { paymentStatus, status: decision === 'approve' ? 'registered' : 'rejected', reviewedBy: req.user.email, reviewedAt: now, reviewReason, ...(decision === 'approve' ? { verifiedAt: now } : {}) },
-            $push: { reviewHistory: { status: paymentStatus, reason: reviewReason, reviewedBy: req.user.email, timestamp: now } }
-        }, { new: true });
-        if (!registration) return res.status(409).json({ message: 'Only submitted, unreviewed payment proofs may be reviewed.' });
+
+        const existing = await Registration.findOne({ id: req.params.registrationId });
+        if (!existing) return res.status(404).json({ message: "Registration not found." });
+
+        const registration = await Registration.findOneAndUpdate(
+            { id: req.params.registrationId },
+            {
+                $set: {
+                    paymentStatus,
+                    status: decision === 'approve' ? 'registered' : 'rejected',
+                    reviewedBy: req.user.email,
+                    reviewedAt: now,
+                    reviewReason,
+                    ...(decision === 'approve' ? { verifiedAt: now } : {})
+                },
+                $push: {
+                    reviewHistory: { status: paymentStatus, reason: reviewReason, reviewedBy: req.user.email, timestamp: now }
+                }
+            },
+            { returnDocument: 'after' }
+        );
 
         // Retrieve User, Hackathon, and Team context for communication
         const [user, hackathon, team] = await Promise.all([
@@ -2245,6 +2478,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
             { value, description, updatedBy: req.user.id },
             { new: true, upsert: true }
         );
+        globalSystemSettings[key] = value;
         res.json(result);
     } catch (e) {
         res.status(500).json({ message: "Failed to update configuration parameter." });

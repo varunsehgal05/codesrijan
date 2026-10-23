@@ -82,6 +82,8 @@ function AdminPaymentsPage() {
     const [zoomActual, setZoomActual] = useState(false);
     const [rejectingReg, setRejectingReg] = useState<PaymentRegistration | null>(null);
     const [rejectReason, setRejectReason] = useState("");
+    const [editingNoteReg, setEditingNoteReg] = useState<PaymentRegistration | null>(null);
+    const [editNoteText, setEditNoteText] = useState("");
     const [processingId, setProcessingId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -171,6 +173,42 @@ function AdminPaymentsPage() {
         } catch (err: unknown) {
             const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
             toast.error(msg || "Failed to reject payment.");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleSaveAuditNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingNoteReg) return;
+        if (!editNoteText.trim()) {
+            toast.error("Audit note text is required.");
+            return;
+        }
+
+        setProcessingId(editingNoteReg.id);
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            await axios.post(`${API_URL}/admin/payments/${editingNoteReg.id}/review`, {
+                noteOnly: true,
+                reason: editNoteText.trim()
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            toast.success("Audit note updated successfully.");
+            if (activeReceipt && activeReceipt.reg.id === editingNoteReg.id) {
+                setActiveReceipt({
+                    ...activeReceipt,
+                    reg: { ...activeReceipt.reg, reviewReason: editNoteText.trim() }
+                });
+            }
+            setEditingNoteReg(null);
+            setEditNoteText("");
+            fetchPayments();
+        } catch (err: unknown) {
+            const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+            toast.error(msg || "Failed to update audit note.");
         } finally {
             setProcessingId(null);
         }
@@ -407,25 +445,84 @@ function AdminPaymentsPage() {
                                 </div>
                             )}
 
-                            {/* Action Buttons */}
-                            {reg.paymentStatus === 'payment_under_review' && (
-                                <div className="flex gap-4 pt-2 border-t border-zinc-900">
+                            {/* Action Buttons for All States */}
+                            <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-900">
+                                {reg.paymentStatus === 'payment_under_review' && (
+                                    <>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => handleApprove(reg)}
+                                            className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-xs py-2.5 px-3 border-2 border-emerald-400 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">check</span>
+                                            VERIFY & CLEAR
+                                        </button>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => { setRejectingReg(reg); setRejectReason(""); }}
+                                            className="flex-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-black uppercase text-xs py-2.5 px-3 border-2 border-rose-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">close</span>
+                                            DECLINE PAYMENT
+                                        </button>
+                                    </>
+                                )}
+
+                                {reg.paymentStatus === 'verified' && (
+                                    <>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => { setRejectingReg(reg); setRejectReason(reg.reviewReason || ""); }}
+                                            className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-bold uppercase text-xs py-2 px-3 border border-rose-500 transition-colors flex items-center gap-1.5"
+                                            title="Reverse verification and reject this payment"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                                            RE-AUDIT: DECLINE
+                                        </button>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => { setEditingNoteReg(reg); setEditNoteText(reg.reviewReason || ""); }}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold uppercase text-xs py-2 px-3 border border-zinc-700 transition-colors flex items-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">edit_note</span>
+                                            EDIT AUDIT NOTE
+                                        </button>
+                                    </>
+                                )}
+
+                                {reg.paymentStatus === 'rejected' && (
+                                    <>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => handleApprove(reg)}
+                                            className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 font-bold uppercase text-xs py-2 px-3 border border-emerald-500 transition-colors flex items-center gap-1.5"
+                                            title="Reverse rejection and verify this payment"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">check_circle</span>
+                                            RE-AUDIT: VERIFY & CLEAR
+                                        </button>
+                                        <button
+                                            disabled={processingId === reg.id}
+                                            onClick={() => { setEditingNoteReg(reg); setEditNoteText(reg.reviewReason || ""); }}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold uppercase text-xs py-2 px-3 border border-zinc-700 transition-colors flex items-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">edit_note</span>
+                                            EDIT REJECTION REASON
+                                        </button>
+                                    </>
+                                )}
+
+                                {reg.paymentStatus === 'pending_proof' && (
                                     <button
                                         disabled={processingId === reg.id}
                                         onClick={() => handleApprove(reg)}
-                                        className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase text-xs py-3 px-4 border-2 border-emerald-400 transition-colors disabled:opacity-50"
+                                        className="bg-electric-blue/20 hover:bg-electric-blue/40 text-electric-blue font-bold uppercase text-xs py-2 px-3 border border-electric-blue transition-colors flex items-center gap-1.5"
                                     >
-                                        VERIFY & CLEAR REGISTRATION
+                                        <span className="material-symbols-outlined text-sm">verified</span>
+                                        MANUAL OVERRIDE: VERIFY
                                     </button>
-                                    <button
-                                        disabled={processingId === reg.id}
-                                        onClick={() => { setRejectingReg(reg); setRejectReason(""); }}
-                                        className="flex-1 bg-rose-500/20 hover:bg-rose-500/40 text-rose-400 font-black uppercase text-xs py-3 px-4 border-2 border-rose-500 transition-colors disabled:opacity-50"
-                                    >
-                                        DECLINE PAYMENT
-                                    </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -767,25 +864,99 @@ function AdminPaymentsPage() {
                                     Close
                                 </button>
 
-                                {/* Quick Reject Button */}
+                                {/* Modal Action Buttons */}
                                 {activeReceipt.reg.paymentStatus === 'payment_under_review' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const regToReject = activeReceipt.reg;
-                                            setActiveReceipt(null);
-                                            setRejectingReg(regToReject);
-                                            setRejectReason(imgError ? "Unreadable or corrupt transaction receipt. Please re-upload a clear image file." : "");
-                                        }}
-                                        className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1"
-                                    >
-                                        <span className="material-symbols-outlined text-sm">close</span>
-                                        Reject
-                                    </button>
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const regToReject = activeReceipt.reg;
+                                                setActiveReceipt(null);
+                                                setRejectingReg(regToReject);
+                                                setRejectReason(imgError ? "Unreadable or corrupt transaction receipt. Please re-upload a clear image file." : "");
+                                            }}
+                                            className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">close</span>
+                                            Decline Payment
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={processingId === activeReceipt.reg.id}
+                                            onClick={() => {
+                                                const regToApprove = activeReceipt.reg;
+                                                setActiveReceipt(null);
+                                                handleApprove(regToApprove);
+                                            }}
+                                            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1 disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">check</span>
+                                            Verify & Clear
+                                        </button>
+                                    </>
                                 )}
 
-                                {/* Quick Approve Button */}
-                                {activeReceipt.reg.paymentStatus === 'payment_under_review' && (
+                                {activeReceipt.reg.paymentStatus === 'verified' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const regToReject = activeReceipt.reg;
+                                                setActiveReceipt(null);
+                                                setRejectingReg(regToReject);
+                                                setRejectReason(regToReject.reviewReason || "");
+                                            }}
+                                            className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1"
+                                            title="Re-audit: Reverse verification and reject"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">swap_horiz</span>
+                                            Re-Audit: Decline
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditingNoteReg(activeReceipt.reg);
+                                                setEditNoteText(activeReceipt.reg.reviewReason || "");
+                                            }}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 text-xs font-bold uppercase border border-zinc-700 transition-all flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">edit_note</span>
+                                            Edit Audit Note
+                                        </button>
+                                    </>
+                                )}
+
+                                {activeReceipt.reg.paymentStatus === 'rejected' && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            disabled={processingId === activeReceipt.reg.id}
+                                            onClick={() => {
+                                                const regToApprove = activeReceipt.reg;
+                                                setActiveReceipt(null);
+                                                handleApprove(regToApprove);
+                                            }}
+                                            className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1 disabled:opacity-50"
+                                            title="Re-audit: Reverse rejection and clear"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">check_circle</span>
+                                            Re-Audit: Verify & Clear
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setEditingNoteReg(activeReceipt.reg);
+                                                setEditNoteText(activeReceipt.reg.reviewReason || "");
+                                            }}
+                                            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 text-xs font-bold uppercase border border-zinc-700 transition-all flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-sm">edit_note</span>
+                                            Edit Rejection Reason
+                                        </button>
+                                    </>
+                                )}
+
+                                {activeReceipt.reg.paymentStatus === 'pending_proof' && (
                                     <button
                                         type="button"
                                         disabled={processingId === activeReceipt.reg.id}
@@ -794,10 +965,10 @@ function AdminPaymentsPage() {
                                             setActiveReceipt(null);
                                             handleApprove(regToApprove);
                                         }}
-                                        className="bg-emerald-500 hover:bg-emerald-400 text-black px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1 disabled:opacity-50"
+                                        className="bg-electric-blue text-black px-4 py-2 text-xs font-black uppercase border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-1 disabled:opacity-50"
                                     >
-                                        <span className="material-symbols-outlined text-sm">check</span>
-                                        Approve Payment
+                                        <span className="material-symbols-outlined text-sm">verified</span>
+                                        Manual Override: Verify
                                     </button>
                                 )}
                             </div>
@@ -815,7 +986,7 @@ function AdminPaymentsPage() {
                             Decline Payment Submission
                         </h3>
                         <p className="text-xs text-zinc-400">
-                            Provide a specific explanation for the participant (e.g. invalid UTR, incorrect amount, illegible screenshot).
+                            Provide a specific explanation for the participant (e.g. invalid UTR, incorrect amount, illegible screenshot). An automated email and in-app transmission will be dispatched immediately.
                         </p>
                         <div>
                             <label className="text-xs font-bold text-zinc-300 uppercase block mb-1">Rejection Reason *</label>
@@ -842,6 +1013,48 @@ function AdminPaymentsPage() {
                                 className="bg-rose-500 hover:bg-rose-400 text-black px-4 py-2 text-xs font-black uppercase disabled:opacity-50"
                             >
                                 Confirm Rejection
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {/* Edit Audit Note Modal */}
+            {editingNoteReg && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                    <form onSubmit={handleSaveAuditNote} className="bg-zinc-950 border-4 border-electric-blue max-w-md w-full p-6 space-y-4">
+                        <h3 className="font-black text-white uppercase text-lg flex items-center gap-2">
+                            <span className="material-symbols-outlined text-electric-blue">edit_note</span>
+                            {editingNoteReg.paymentStatus === 'rejected' ? 'Edit Rejection Reason' : 'Edit Audit Note'}
+                        </h3>
+                        <p className="text-xs text-zinc-400">
+                            Update administrative record for UTR <strong className="text-white font-mono">{editingNoteReg.transactionReference || 'N/A'}</strong>.
+                        </p>
+                        <div>
+                            <label className="text-xs font-bold text-zinc-300 uppercase block mb-1">Audit Record Text *</label>
+                            <textarea
+                                required
+                                rows={4}
+                                value={editNoteText}
+                                onChange={(e) => setEditNoteText(e.target.value)}
+                                placeholder="Enter updated audit notes or review explanation..."
+                                className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white text-xs focus:border-electric-blue outline-none"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setEditingNoteReg(null)}
+                                className="bg-zinc-800 text-zinc-300 px-4 py-2 text-xs font-bold uppercase hover:bg-zinc-700"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={processingId === editingNoteReg.id}
+                                className="bg-electric-blue hover:bg-white text-black px-4 py-2 text-xs font-black uppercase disabled:opacity-50"
+                            >
+                                Save Note
                             </button>
                         </div>
                     </form>

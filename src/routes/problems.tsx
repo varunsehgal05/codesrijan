@@ -41,10 +41,18 @@ function Page12() {
         try {
           const promises = hackathons.map(async (hackathon: any) => {
             const startDate = new Date(hackathon.startDate);
-            // Only fetch problems if the hackathon time has started
-            if (now >= startDate) {
-              const res = await axios.get(`${BASE}/hackathons/${hackathon.id}/problems`);
-              return res.data.map((p: any) => ({ ...p, hackathonName: hackathon.name || hackathon.title }));
+            // Fetch if revealed by admin, immediate reveal mode, or startDate reached, or admin role
+            const isRevealed = hackathon.problemStatementsRevealed === true ||
+              hackathon.problemRevealMode === 'immediate' ||
+              (now >= startDate);
+
+            if (isRevealed || currentUser?.role === 'admin') {
+              try {
+                const res = await axios.get(`${BASE}/hackathons/${hackathon.id}/problems`);
+                if (Array.isArray(res.data)) {
+                  return res.data.map((p: any) => ({ ...p, hackathonName: hackathon.name || hackathon.title }));
+                }
+              } catch (err) {}
             }
             return [];
           });
@@ -120,7 +128,28 @@ function Page12() {
           </div>
         </section>
         {/*Problems Grid*/}
-        <section className="w-full relative z-10">
+        <section className="w-full relative z-10 space-y-6">
+          {/* Classified Directives Notice if active hackathon has locked problems */}
+          {activeEvent && !activeEvent.problemStatementsRevealed && activeEvent.problemRevealMode !== 'immediate' && (
+            <div className="w-full bg-zinc-950 text-white brutal-border p-6 shadow-[6px_6px_0px_0px_rgba(255,0,85,1)] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <span className="material-symbols-outlined text-rose-500 text-4xl animate-pulse">lock</span>
+                <div>
+                  <span className="text-xs font-black uppercase text-rose-500 tracking-widest block">[CLASSIFIED SECURITY PROTOCOL]</span>
+                  <h3 className="font-headline-md uppercase text-lg">Challenge Directives Awaiting Launch Transmission</h3>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Problem statements for "{activeEvent.name || activeEvent.title}" will be revealed by Hackathon Administrators at official launch.
+                  </p>
+                </div>
+              </div>
+              {currentUser?.role === 'admin' && (
+                <span className="text-xs bg-amber-400 text-black font-bold uppercase px-3 py-1.5 brutal-border">
+                  ADMIN ACCESS BYPASS ACTIVE
+                </span>
+              )}
+            </div>
+          )}
+
           {problems.length === 0 ? (
             <div className="bg-surface-container-lowest border-4 border-ink-black py-16 text-center neo-shadow flex flex-col items-center">
               <span className="material-symbols-outlined text-outline text-6xl mb-4">cloud_off</span>

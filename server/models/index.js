@@ -76,6 +76,16 @@ const hackathonSchema = new mongoose.Schema({
     paymentInstructions: String,
     capacity: Number,
 
+    // Hackathon Format, Amenities & Problem Statement Control
+    mode: { type: String, enum: ['offline', 'online', 'hybrid'], default: 'online' },
+    amenities: [String],
+    problemRevealMode: { type: String, enum: ['immediate', 'manual', 'at_start'], default: 'manual' },
+    problemStatementsRevealed: { type: Boolean, default: false },
+    institutionName: String,
+    coordinatorEmail: String,
+    coordinatorName: String,
+    coordinatorPhone: String,
+
     createdBy: String,
     isTest: { type: Boolean, default: false, index: true }
 }, { timestamps: true });

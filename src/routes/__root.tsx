@@ -8,11 +8,12 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import axios from "axios";
 
 import appCss from "../styles.css?url";
 import { ChatBotWidget } from "../components/ChatBotWidget";
-import { AppStoreProvider } from "../lib/store";
+import { AppStoreProvider, useAppStore } from "../lib/store";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
 import { Toaster } from "react-hot-toast";
@@ -132,23 +133,99 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppStoreProvider>
-        <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative">
-          <Navbar />
-          <Outlet />
-          <Footer />
-        </div>
-        <ChatBotWidget />
-        <Toaster position="bottom-right" toastOptions={{
-          className: 'brutal-border font-label-bold rounded-none',
-          style: {
-            background: '#0a0a0a',
-            color: '#fff',
-            border: '2px solid #0a0a0a',
-            borderRadius: '0px',
-            boxShadow: '4px 4px 0px 0px rgba(10, 10, 10, 1)',
-          },
-        }} />
+        <MaintenanceGuard>
+          <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative">
+            <Navbar />
+            <Outlet />
+            <Footer />
+          </div>
+          <ChatBotWidget />
+          <Toaster position="bottom-right" toastOptions={{
+            className: 'brutal-border font-label-bold rounded-none',
+            style: {
+              background: '#0a0a0a',
+              color: '#fff',
+              border: '2px solid #0a0a0a',
+              borderRadius: '0px',
+              boxShadow: '4px 4px 0px 0px rgba(10, 10, 10, 1)',
+            },
+          }} />
+        </MaintenanceGuard>
       </AppStoreProvider>
     </QueryClientProvider>
+  );
+}
+
+function MaintenanceGuard({ children }: { children: ReactNode }) {
+  const { currentUser } = useAppStore();
+  const routerState = useRouterState();
+  const pathname = routerState.location.pathname;
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+    axios.get(`${API_URL}/system/status`)
+      .then(res => {
+        if (res.data?.maintenanceMode === true) {
+          setMaintenanceMode(true);
+        } else {
+          setMaintenanceMode(false);
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const isAdmin = currentUser?.role === 'admin';
+  const isAdminRoute = pathname.startsWith('/admin') || pathname === '/admin-login';
+
+  // If maintenance mode is active AND user is not admin AND not on an admin route
+  if (maintenanceMode && !isAdmin && !isAdminRoute) {
+    return (
+      <div className="min-h-screen bg-stark-black text-white flex flex-col justify-center items-center p-6 font-mono selection:bg-error selection:text-white">
+        <div className="max-w-xl w-full bg-zinc-950 border-4 border-error p-8 shadow-[8px_8px_0px_0px_rgba(255,0,85,1)] space-y-6 text-center">
+          <div className="inline-flex items-center gap-2 bg-error text-white font-black text-xs px-3 py-1 uppercase tracking-widest animate-pulse">
+            <span className="material-symbols-outlined text-sm">lock</span>
+            SECURITY LOCKDOWN ACTIVE
+          </div>
+          <h1 className="text-3xl font-black uppercase tracking-tight text-white">
+            SYSTEM UNDER MAINTENANCE
+          </h1>
+          <p className="text-sm text-zinc-400 font-semibold leading-relaxed">
+            The CodeSrijan neural matrix is currently undergoing scheduled platform upgrades and database synchronization. Regular student access is temporarily suspended.
+          </p>
+          <div className="bg-zinc-900 border border-zinc-800 p-4 text-xs text-zinc-500 font-mono text-left space-y-1">
+            <p>&gt; STATUS: LEVEL_5_MAINTENANCE_LOCKDOWN</p>
+            <p>&gt; OPERATIVE_GATE: SUSPENDED</p>
+            <p>&gt; PROTOCOL: UPGRADE_TRANSMISSION_IN_PROGRESS</p>
+          </div>
+          <div className="pt-4 flex flex-col sm:flex-row gap-3">
+            <Link
+              to="/admin-login"
+              className="flex-1 bg-white hover:bg-electric-blue text-black font-black uppercase text-xs py-3 px-4 border-2 border-black transition-colors text-center"
+            >
+              ADMINISTRATIVE ACCESS LOGIN
+            </Link>
+            <button
+              onClick={() => window.location.reload()}
+              className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase text-xs py-3 px-4 border border-zinc-700 transition-colors text-center"
+            >
+              RETRY CONNECTION
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {maintenanceMode && (isAdmin || isAdminRoute) && (
+        <div className="w-full bg-[#FFD700] text-stark-black px-4 py-2 text-xs font-black uppercase tracking-wider text-center border-b-2 border-stark-black flex items-center justify-center gap-2 sticky top-0 z-50">
+          <span className="material-symbols-outlined text-sm">warning</span>
+          <span>MAINTENANCE MODE PROTOCOL ACTIVE — REGULAR ACCESS SUSPENDED (ADMIN BYPASS ACTIVE)</span>
+        </div>
+      )}
+      {children}
+    </>
   );
 }

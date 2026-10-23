@@ -41,15 +41,23 @@ function CreateHackathonPage() {
     const [payeeName, setPayeeName] = useState("CodeSrijan Hackathon Society");
     const [qrImageUrl, setQrImageUrl] = useState("");
 
+    // Mode, Amenities & Problem Statement Control
+    const [mode, setMode] = useState<'offline' | 'online' | 'hybrid'>('offline');
+    const [amenities, setAmenities] = useState<string[]>([
+        'meals', 'wifi', 'power_backup', 'swag_kits', 'physical_certificates'
+    ]);
+    const [problemRevealMode, setProblemRevealMode] = useState<'manual' | 'immediate' | 'at_start'>('manual');
+
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const token = localStorage.getItem('codesrijan_auth_token') || localStorage.getItem('token');
             await axios.post(`${API_URL}/hackathons`, {
                 name,
                 slug,
-                description: rules, // Simple mapping for now
+                description: rules,
                 theme,
-                venue,
+                venue: mode === 'online' ? 'Online Arena' : venue,
                 hackathonRules: rules,
                 eligibilityRules: eligibility,
                 teamSizeMin,
@@ -61,6 +69,9 @@ function CreateHackathonPage() {
                 submissionDeadline,
                 evaluationDeadline,
                 resultDate,
+                mode,
+                amenities,
+                problemRevealMode,
                 entryType,
                 fee: entryType === 'paid' ? fee : 0,
                 feeBasis,
@@ -68,7 +79,7 @@ function CreateHackathonPage() {
                 upiId: entryType === 'paid' ? upiId : undefined,
                 payeeName: entryType === 'paid' ? payeeName : undefined,
                 qrImageUrl: entryType === 'paid' ? qrImageUrl : undefined
-            }, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+            }, { headers: { 'Authorization': `Bearer ${token}` } });
             await refetchData();
             setStatusMsg("OK: Hackathon event matrix generated successfully.");
             setTimeout(() => navigate({ to: "/admin" }), 2000);
@@ -237,6 +248,122 @@ function CreateHackathonPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Format Mode Selector */}
+                    <div className="bg-surface-container p-6 brutal-border space-y-4">
+                        <h3 className="font-display-lg text-lg uppercase text-ink-black flex items-center gap-2">
+                            <span className="material-symbols-outlined text-electric-blue">hub</span>
+                            Arena Format &amp; Venue
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            {[
+                                { id: 'offline', label: 'OFFLINE / IN-PERSON', desc: 'On-campus arena with food & dorms' },
+                                { id: 'online', label: 'ONLINE / VIRTUAL', desc: 'Remote arena via Discord mesh' },
+                                { id: 'hybrid', label: 'HYBRID ARENA', desc: 'On-campus + remote satellite tracks' }
+                            ].map(m => (
+                                <div
+                                    key={m.id}
+                                    onClick={() => setMode(m.id as any)}
+                                    className={`p-3 brutal-border cursor-pointer transition-all ${
+                                        mode === m.id ? 'bg-stark-black text-white' : 'bg-pure-white text-stark-black'
+                                    }`}
+                                >
+                                    <p className="font-bold text-xs uppercase">{m.label}</p>
+                                    <p className="text-[10px] opacity-75 mt-1">{m.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+                        {mode !== 'online' && (
+                            <div className="flex flex-col gap-2 pt-2">
+                                <label className="font-label-bold uppercase text-ink-black text-xs">Campus Physical Venue Address</label>
+                                <input
+                                    type="text"
+                                    value={venue}
+                                    onChange={e => setVenue(e.target.value)}
+                                    className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
+                                    placeholder="e.g. Auditorium Hall & Innovation Lab, Block B"
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Amenities & Provisions Tick Boxes */}
+                    <div className="bg-surface-container p-6 brutal-border space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-display-lg text-lg uppercase text-ink-black flex items-center gap-2">
+                                <span className="material-symbols-outlined text-electric-blue">checklist</span>
+                                Verified Amenities &amp; Perks
+                            </h3>
+                            <span className="text-xs bg-electric-blue text-white px-2 py-0.5 font-bold uppercase">
+                                {amenities.length} Selected
+                            </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {[
+                                { id: 'meals', label: '🍱 Free Meals & Midnight Fuel' },
+                                { id: 'accommodation', label: '🛏️ Overnight Stay & Rest Dorms' },
+                                { id: 'wifi', label: '📶 Gigabit WiFi & LAN Drops' },
+                                { id: 'power_backup', label: '⚡ 24x7 Power Backup & Workbench' },
+                                { id: 'hardware_lab', label: '🔌 Hardware & IoT Prototype Lab' },
+                                { id: 'swag_kits', label: '👕 Swag Kits & Custom Merch' },
+                                { id: 'refreshments', label: '☕ Unlimited Coffee & Energy Drinks' },
+                                { id: 'physical_certificates', label: '📜 Verified Physical Certificates' },
+                                { id: 'cloud_credits', label: '☁️ Cloud Compute Credits ($500+)' },
+                                { id: 'api_keys', label: '🔑 API Keys & Dev Licenses' },
+                                { id: 'mentor_rooms', label: '💬 24/7 Discord / Slack Mentorship' },
+                                { id: 'workshops', label: '🎥 Live Masterclasses & Workshops' },
+                                { id: 'digital_badges', label: '🎖️ Verifiable Digital Badges' },
+                                { id: 'sponsor_perks', label: '🎁 Sponsor SaaS Deals & Toolkits' }
+                            ].map(a => {
+                                const checked = amenities.includes(a.id);
+                                return (
+                                    <div
+                                        key={a.id}
+                                        onClick={() => {
+                                            if (checked) setAmenities(amenities.filter(x => x !== a.id));
+                                            else setAmenities([...amenities, a.id]);
+                                        }}
+                                        className={`p-2.5 brutal-border cursor-pointer select-none flex items-center gap-2 text-xs font-bold uppercase ${
+                                            checked ? 'bg-zinc-950 text-white' : 'bg-pure-white text-stark-black hover:bg-zinc-100'
+                                        }`}
+                                    >
+                                        <span className={`w-4 h-4 border flex items-center justify-center text-[10px] ${
+                                            checked ? 'bg-electric-blue border-white text-black' : 'border-black bg-white'
+                                        }`}>
+                                            {checked && '✓'}
+                                        </span>
+                                        <span>{a.label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Problem Statement Reveal Policy */}
+                    <div className="bg-surface-container p-6 brutal-border space-y-4">
+                        <h3 className="font-display-lg text-lg uppercase text-ink-black flex items-center gap-2">
+                            <span className="material-symbols-outlined text-electric-blue">lock</span>
+                            Problem Statement Reveal Policy
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            {[
+                                { id: 'manual', label: 'MANUAL RELEASE BY ADMIN', desc: 'Hidden until Admin presses Reveal button in dashboard' },
+                                { id: 'immediate', label: 'REVEAL IMMEDIATELY', desc: 'Visible to students upon event creation' },
+                                { id: 'at_start', label: 'AUTO REVEAL AT START', desc: 'Reveals automatically at hackathon kick-off' }
+                            ].map(r => (
+                                <div
+                                    key={r.id}
+                                    onClick={() => setProblemRevealMode(r.id as any)}
+                                    className={`p-3 brutal-border cursor-pointer transition-all ${
+                                        problemRevealMode === r.id ? 'bg-stark-black text-white' : 'bg-pure-white text-stark-black'
+                                    }`}
+                                >
+                                    <p className="font-bold text-xs uppercase">{r.label}</p>
+                                    <p className="text-[10px] opacity-75 mt-1">{r.desc}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <button type="submit" className="w-full bg-electric-blue text-pure-white py-4 font-headline-md italic uppercase brutal-border brutal-shadow hover:-translate-y-1 transition-transform mt-6">

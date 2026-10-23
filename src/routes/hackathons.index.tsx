@@ -57,19 +57,58 @@ function HackathonsHubPage() {
                         {events.map((evt, idx) => (
                             <div key={idx} className="bg-pure-white brutal-border brutal-shadow p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
                                 <div>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <span className="bg-surface-container-high px-3 py-1 font-code-snippet text-xs uppercase font-bold brutal-border">
-                                            {evt.status || 'Active'}
-                                        </span>
+                                    <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
+                                        <div className="flex gap-2 items-center">
+                                            <span className="bg-surface-container-high px-2.5 py-1 font-code-snippet text-[11px] uppercase font-bold brutal-border">
+                                                {evt.status ? evt.status.replace('_', ' ') : 'Active'}
+                                            </span>
+                                            <span className={`px-2 py-0.5 font-bold uppercase text-[10px] brutal-border ${
+                                                evt.entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
+                                            }`}>
+                                                {evt.entryType === 'paid' ? `₹${evt.fee} / ${evt.feeBasis === 'per_participant' ? 'MEMBER' : 'SQUAD'}` : 'FREE ENTRY'}
+                                            </span>
+                                        </div>
                                         <span className="font-code-snippet text-xs font-bold text-electric-blue">
                                             {evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}
                                         </span>
                                     </div>
-                                    <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-2">{evt.name || evt.title}</h3>
-                                    <p className="font-body-md text-on-surface-variant text-sm line-clamp-3 mb-6">{evt.description}</p>
+
+                                    <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-1">{evt.name || evt.title}</h3>
+                                    
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <span className="text-[11px] font-bold uppercase tracking-wider bg-stark-black text-white px-2 py-0.5">
+                                            {evt.mode ? evt.mode.toUpperCase() : 'ONLINE ARENA'}
+                                        </span>
+                                        {evt.venue && evt.mode !== 'online' && (
+                                            <span className="text-[11px] text-zinc-600 font-bold truncate">
+                                                📍 {evt.venue}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <p className="font-body-md text-on-surface-variant text-sm line-clamp-3 mb-4">{evt.description}</p>
+
+                                    {/* Amenities Badges */}
+                                    {evt.amenities && evt.amenities.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5 mb-4 pt-2 border-t border-zinc-200">
+                                            {evt.amenities.slice(0, 4).map((a: string) => (
+                                                <span key={a} className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-800 px-2 py-0.5 border border-zinc-300">
+                                                    ✓ {a.replace('_', ' ')}
+                                                </span>
+                                            ))}
+                                            {evt.amenities.length > 4 && (
+                                                <span className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 border border-zinc-300">
+                                                    +{evt.amenities.length - 4} more
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
+
                                 <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
-                                    <span className="font-code-snippet text-xs font-bold uppercase">{evt.location || 'Online Arena'}</span>
+                                    <span className="font-code-snippet text-[11px] font-bold uppercase text-zinc-600">
+                                        {evt.problemStatementsRevealed ? '🟢 Directives Live' : '🔒 Directives Classified'}
+                                    </span>
                                     <Link to="/hackathons/$id/register" params={{ id: evt.id }} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
                                         ENTER ARENA
                                     </Link>

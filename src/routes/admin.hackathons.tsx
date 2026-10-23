@@ -90,6 +90,26 @@ function AdminHackathons() {
         }
     };
 
+    const toggleProblemReveal = async (id: string, currentlyRevealed: boolean) => {
+        setLoadingId(id);
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const action = currentlyRevealed ? 'hide-problems' : 'reveal-problems';
+            await axios.patch(`${API_BASE}/admin/hackathons/${id}/${action}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setStatusMsg({
+                type: 'success',
+                text: currentlyRevealed ? 'Problem statements classified & locked.' : '🚨 Problem statements officially revealed to all participants!'
+            });
+            await refetchData();
+        } catch (err: any) {
+            setStatusMsg({ type: 'error', text: err.response?.data?.message || 'Failed to toggle problem reveal state.' });
+        } finally {
+            setLoadingId(null);
+        }
+    };
+
     return (
         <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
             <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center flex-wrap gap-4">
@@ -122,9 +142,9 @@ function AdminHackathons() {
                     <thead>
                         <tr className="bg-stark-black text-pure-white">
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">ID</th>
-                            <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Designation</th>
+                            <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Designation &amp; Format</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Dates</th>
-                            <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Status</th>
+                            <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Status &amp; Problems</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue text-center">Actions</th>
                         </tr>
                     </thead>
@@ -132,14 +152,24 @@ function AdminHackathons() {
                         {hackathons.map((h) => (
                             <tr key={h.id} className="border-b-2 border-stark-black hover:bg-surface-container transition-colors group">
                                 <td className="p-4 font-code-snippet text-sm border-r-2 border-stark-black">{h.id}</td>
-                                <td className="p-4 font-label-bold text-stark-black border-r-2 border-stark-black uppercase">{h.name}</td>
+                                <td className="p-4 border-r-2 border-stark-black">
+                                    <div className="font-label-bold text-stark-black uppercase text-sm">{h.name}</div>
+                                    <div className="flex flex-wrap gap-1.5 mt-1">
+                                        <span className="text-[10px] font-bold px-1.5 py-0.5 bg-stark-black text-white uppercase">
+                                            {h.mode || 'ONLINE'}
+                                        </span>
+                                        <span className={`text-[10px] font-bold px-1.5 py-0.5 uppercase ${h.entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'}`}>
+                                            {h.entryType === 'paid' ? `₹${h.fee} / ${h.feeBasis === 'per_participant' ? 'MEMBER' : 'SQUAD'}` : 'FREE ENTRY'}
+                                        </span>
+                                    </div>
+                                </td>
                                 <td className="p-4 border-r-2 border-stark-black font-code-snippet text-xs text-on-surface-variant">
                                     {(!h.startDate || !h.endDate || isNaN(new Date(h.startDate).getTime()) || isNaN(new Date(h.endDate).getTime())) 
                                         ? 'Not configured' 
                                         : `${new Date(h.startDate).toLocaleDateString()} - ${new Date(h.endDate).toLocaleDateString()}`
                                     }
                                 </td>
-                                <td className="p-4 border-r-2 border-stark-black">
+                                <td className="p-4 border-r-2 border-stark-black space-y-1">
                                     <span className={`inline-flex items-center gap-2 px-2 py-1 font-label-bold text-[10px] uppercase brutal-border ${h.status === 'registration_open' ? 'bg-electric-blue text-pure-white' :
                                             h.status === 'active' ? 'bg-[#FFD700] text-stark-black' :
                                                 h.status === 'completed' ? 'bg-stark-black text-pure-white' :
@@ -148,16 +178,46 @@ function AdminHackathons() {
                                         <span className="w-1.5 h-1.5 rounded-full bg-current block"></span>
                                         {h.status.replace('_', ' ')}
                                     </span>
+                                    <div>
+                                        <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 border ${
+                                            h.problemStatementsRevealed
+                                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500'
+                                                : 'bg-rose-500/10 text-rose-600 border-rose-500'
+                                        }`}>
+                                            {h.problemStatementsRevealed ? 'PS: REVEALED' : 'PS: CLASSIFIED'}
+                                        </span>
+                                    </div>
                                 </td>
-                                <td className="p-4 text-center flex justify-center gap-2">
-                                    <button onClick={() => { setEditingHackathon({...h}); setIsModalOpen(true); }} className="bg-surface-bright text-stark-black px-3 py-1 font-label-caps text-xs brutal-border hover:bg-electric-blue hover:text-pure-white transition-all font-bold">
+                                <td className="p-4 text-center flex flex-wrap justify-center gap-1.5">
+                                    <button onClick={() => { setEditingHackathon({...h}); setIsModalOpen(true); }} className="bg-surface-bright text-stark-black px-2.5 py-1 font-label-caps text-xs brutal-border hover:bg-electric-blue hover:text-pure-white transition-all font-bold">
                                         EDIT
                                     </button>
-                                    {h.status === 'draft' && <button onClick={() => changeState(h.id, 'publish')} className="bg-electric-blue text-pure-white px-3 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">PUBLISH</button>}
-                                    {h.status === 'registration_open' && <button onClick={() => changeState(h.id, 'close-registration')} className="bg-[#FFA500] text-stark-black px-3 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">CLOSE REG</button>}
-                                    {h.status === 'registration_closed' && <button onClick={() => changeState(h.id, 'open-submissions')} className="bg-success text-stark-black px-3 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">START HACK</button>}
-                                    {h.status === 'submission_open' && <button onClick={() => changeState(h.id, 'close-submissions')} className="bg-[#FFD700] text-stark-black px-3 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">EVAL PHASE</button>}
-                                    <button onClick={() => handleDelete(h.id)} className="bg-error text-pure-white px-3 py-1 font-label-caps text-xs brutal-border hover:bg-stark-black transition-all">DEL</button>
+                                    {h.problemStatementsRevealed ? (
+                                        <button
+                                            disabled={loadingId === h.id}
+                                            onClick={() => toggleProblemReveal(h.id, true)}
+                                            className="bg-zinc-800 text-white px-2 py-1 font-label-caps text-[11px] brutal-border hover:bg-black transition-all flex items-center gap-1"
+                                            title="Hide problem statements from participants"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px]">visibility_off</span>
+                                            HIDE PS
+                                        </button>
+                                    ) : (
+                                        <button
+                                            disabled={loadingId === h.id}
+                                            onClick={() => toggleProblemReveal(h.id, false)}
+                                            className="bg-electric-blue text-white px-2 py-1 font-label-caps text-[11px] brutal-border hover:bg-black transition-all flex items-center gap-1 font-bold"
+                                            title="Reveal problem statements to all participants"
+                                        >
+                                            <span className="material-symbols-outlined text-[13px]">visibility</span>
+                                            REVEAL PS
+                                        </button>
+                                    )}
+                                    {h.status === 'draft' && <button onClick={() => changeState(h.id, 'publish')} className="bg-electric-blue text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">PUBLISH</button>}
+                                    {h.status === 'registration_open' && <button onClick={() => changeState(h.id, 'close-registration')} className="bg-[#FFA500] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">CLOSE REG</button>}
+                                    {h.status === 'registration_closed' && <button onClick={() => changeState(h.id, 'open-submissions')} className="bg-success text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">START HACK</button>}
+                                    {h.status === 'submission_open' && <button onClick={() => changeState(h.id, 'close-submissions')} className="bg-[#FFD700] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">EVAL PHASE</button>}
+                                    <button onClick={() => handleDelete(h.id)} className="bg-error text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:bg-stark-black transition-all">DEL</button>
                                 </td>
                             </tr>
                         ))}
