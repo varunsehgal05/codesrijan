@@ -76,6 +76,7 @@ function AdminPaymentsPage() {
     
     // Modals
     const [activeReceipt, setActiveReceipt] = useState<{ url: string; utr: string; regId: string; reg: PaymentRegistration } | null>(null);
+    const [receiptViewTab, setReceiptViewTab] = useState<'visual' | 'voucher' | 'raw'>('visual');
     const [imgLoading, setImgLoading] = useState(true);
     const [imgError, setImgError] = useState(false);
     const [zoomActual, setZoomActual] = useState(false);
@@ -86,8 +87,14 @@ function AdminPaymentsPage() {
     useEffect(() => {
         if (activeReceipt) {
             setImgLoading(true);
-            setImgError(false);
             setZoomActual(false);
+            const isMock = !activeReceipt.url || 
+                activeReceipt.url.length < 200 || 
+                activeReceipt.url === 'data:image/png;base64,aGVsbG8=' ||
+                activeReceipt.url.startsWith('test') ||
+                activeReceipt.url === 'placeholder';
+            setImgError(isMock);
+            setReceiptViewTab(isMock ? 'voucher' : 'visual');
         }
     }, [activeReceipt?.regId, activeReceipt?.url]);
 
@@ -427,7 +434,7 @@ function AdminPaymentsPage() {
             {/* Receipt Modal */}
             {activeReceipt && (
                 <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-zinc-950 border-4 border-electric-blue max-w-3xl w-full max-h-[92vh] flex flex-col p-6 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,53,213,1)]">
+                    <div className="bg-zinc-950 border-4 border-electric-blue max-w-3xl w-full max-h-[94vh] flex flex-col p-6 space-y-4 shadow-[8px_8px_0px_0px_rgba(0,53,213,1)]">
                         {/* Modal Header */}
                         <div className="flex items-start justify-between border-b-2 border-zinc-800 pb-3">
                             <div className="space-y-1">
@@ -480,121 +487,265 @@ function AdminPaymentsPage() {
                             </div>
                         </div>
 
-                        {/* Receipt Image / Content Canvas */}
-                        <div className="relative min-h-[300px] max-h-[58vh] overflow-auto bg-black p-4 border-2 border-zinc-800 flex flex-col items-center justify-center">
-                            {/* Loading indicator */}
-                            {imgLoading && !imgError && (
-                                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-10">
-                                    <span className="material-symbols-outlined text-electric-blue text-4xl animate-spin">progress_activity</span>
-                                    <span className="text-xs text-electric-blue font-mono font-bold tracking-wider animate-pulse uppercase">
-                                        Rendering Receipt Attachment...
-                                    </span>
+                        {/* Inspector Navigation Tabs */}
+                        <div className="flex items-center justify-between border-b border-zinc-850 pb-2">
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setReceiptViewTab('visual')}
+                                    className={`px-3 py-1 text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                                        receiptViewTab === 'visual'
+                                            ? 'bg-electric-blue text-black border border-electric-blue'
+                                            : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">image</span>
+                                    Visual Image
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setReceiptViewTab('voucher')}
+                                    className={`px-3 py-1 text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                                        receiptViewTab === 'voucher'
+                                            ? 'bg-electric-blue text-black border border-electric-blue'
+                                            : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">receipt_long</span>
+                                    Transaction Voucher
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setReceiptViewTab('raw')}
+                                    className={`px-3 py-1 text-xs font-bold uppercase transition-all flex items-center gap-1.5 ${
+                                        receiptViewTab === 'raw'
+                                            ? 'bg-electric-blue text-black border border-electric-blue'
+                                            : 'bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-sm">data_object</span>
+                                    Raw Payload
+                                </button>
+                            </div>
+
+                            {receiptViewTab === 'visual' && !imgError && (
+                                <div className="flex items-center gap-3 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setZoomActual(!zoomActual)}
+                                        className="text-zinc-400 hover:text-white font-mono flex items-center gap-1"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">{zoomActual ? 'zoom_out' : 'zoom_in'}</span>
+                                        {zoomActual ? 'Fit to View' : 'Actual Size'}
+                                    </button>
+                                    <span className="text-zinc-700">|</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => window.open(activeReceipt.url, '_blank')}
+                                        className="text-electric-blue hover:underline font-mono"
+                                    >
+                                        Open Tab ↗
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Receipt Content Canvas */}
+                        <div className="relative min-h-[340px] max-h-[58vh] overflow-auto bg-black p-4 border-2 border-zinc-800 flex flex-col items-center justify-center">
+                            {/* TAB 1: VISUAL IMAGE */}
+                            {receiptViewTab === 'visual' && (
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                    {imgLoading && !imgError && (
+                                        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 z-10">
+                                            <span className="material-symbols-outlined text-electric-blue text-4xl animate-spin">progress_activity</span>
+                                            <span className="text-xs text-electric-blue font-mono font-bold tracking-wider animate-pulse uppercase">
+                                                Decoding Receipt Attachment...
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {!imgError ? (
+                                        <div className="w-full h-full flex flex-col items-center justify-center">
+                                            <img
+                                                src={activeReceipt.url}
+                                                alt="Payment Proof Receipt"
+                                                onLoad={(e) => {
+                                                    const img = e.currentTarget;
+                                                    if (img.naturalWidth <= 15 || img.naturalHeight <= 15) {
+                                                        setImgLoading(false);
+                                                        setImgError(true);
+                                                        setReceiptViewTab('voucher');
+                                                    } else {
+                                                        setImgLoading(false);
+                                                    }
+                                                }}
+                                                onError={() => {
+                                                    setImgLoading(false);
+                                                    setImgError(true);
+                                                    setReceiptViewTab('voucher');
+                                                }}
+                                                className={`transition-all select-all ${
+                                                    zoomActual 
+                                                        ? 'max-w-none cursor-zoom-out' 
+                                                        : 'max-w-full max-h-[48vh] object-contain cursor-zoom-in shadow-lg'
+                                                }`}
+                                                onClick={() => setZoomActual(!zoomActual)}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="w-full p-6 bg-zinc-950 border-2 border-amber-500/80 text-left space-y-4 max-w-xl">
+                                            <div className="flex items-start gap-3">
+                                                <span className="material-symbols-outlined text-amber-400 text-3xl shrink-0 mt-0.5">warning</span>
+                                                <div>
+                                                    <h4 className="text-white font-black text-sm uppercase tracking-wide">
+                                                        Attachment Is Not a Renderable Image Raster
+                                                    </h4>
+                                                    <p className="text-zinc-400 text-xs mt-1 leading-relaxed">
+                                                        The uploaded proof file is a placeholder test string (or corrupt data) that cannot be displayed as a graphic image. Switch to the <strong>Transaction Voucher</strong> tab to inspect full ledger details.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReceiptViewTab('voucher')}
+                                                    className="bg-electric-blue text-black font-black uppercase text-xs px-4 py-2 hover:bg-white transition-all flex items-center gap-1.5"
+                                                >
+                                                    <span className="material-symbols-outlined text-sm">receipt_long</span>
+                                                    View Transaction Voucher
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setReceiptViewTab('raw')}
+                                                    className="bg-zinc-900 border border-zinc-700 text-zinc-300 font-bold uppercase text-xs px-4 py-2 hover:text-white transition-all"
+                                                >
+                                                    Inspect Raw Payload
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
-                            {/* Main Image View */}
-                            {!imgError ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center">
-                                    <img
-                                        src={activeReceipt.url}
-                                        alt="Payment Proof Receipt"
-                                        onLoad={() => setImgLoading(false)}
-                                        onError={() => {
-                                            setImgLoading(false);
-                                            setImgError(true);
-                                        }}
-                                        className={`transition-all select-all ${
-                                            zoomActual 
-                                                ? 'max-w-none cursor-zoom-out' 
-                                                : 'max-w-full max-h-[50vh] object-contain cursor-zoom-in shadow-lg'
-                                        }`}
-                                        onClick={() => setZoomActual(!zoomActual)}
-                                    />
-                                    <div className="mt-3 flex items-center gap-4 text-[11px] text-zinc-500 font-mono">
-                                        <span>Click image to {zoomActual ? 'fit view' : 'zoom in'}</span>
-                                        <span>•</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => window.open(activeReceipt.url, '_blank')}
-                                            className="text-electric-blue hover:underline font-bold"
-                                        >
-                                            Open in New Tab ↗
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* Error / Fallback Card for Corrupt / Mock Test Data */
-                                <div className="w-full p-6 bg-zinc-950 border-2 border-amber-500/80 text-left space-y-4 max-w-xl">
-                                    <div className="flex items-start gap-3">
-                                        <span className="material-symbols-outlined text-amber-400 text-3xl shrink-0 mt-0.5">warning</span>
-                                        <div>
-                                            <h4 className="text-white font-black text-sm uppercase tracking-wide">
-                                                Unable to Render Image Preview
-                                            </h4>
-                                            <p className="text-zinc-400 text-xs mt-1 leading-relaxed">
-                                                The submitted receipt attachment cannot be decoded as a standard image file. The payload may be corrupted, an unsupported MIME type, or a placeholder test string.
+                            {/* TAB 2: STRUCTURED LEDGER TRANSACTION VOUCHER */}
+                            {receiptViewTab === 'voucher' && (
+                                <div className="w-full max-w-2xl bg-zinc-950 border-2 border-zinc-700 p-6 space-y-5 text-left shadow-2xl">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-zinc-800 pb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 bg-white text-black font-black flex items-center justify-center text-xl neo-border border-2 border-black">
+                                                CS
+                                            </div>
+                                            <div>
+                                                <h4 className="text-white font-black text-base uppercase tracking-tight">
+                                                    Official Transaction Voucher
+                                                </h4>
+                                                <p className="text-xs text-electric-blue font-mono">
+                                                    CodeSrijan Financial Audit Protocol
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div className="text-right">
+                                            <span className={`px-3 py-1 text-xs font-black uppercase tracking-wider border-2 inline-block ${
+                                                activeReceipt.reg.paymentStatus === 'verified' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500' :
+                                                activeReceipt.reg.paymentStatus === 'rejected' ? 'bg-rose-500/10 text-rose-400 border-rose-500' :
+                                                'bg-amber-500/10 text-amber-400 border-amber-500'
+                                            }`}>
+                                                {activeReceipt.reg.paymentStatus.replace(/_/g, ' ')}
+                                            </span>
+                                            <p className="text-[11px] text-zinc-500 font-mono mt-1">
+                                                {activeReceipt.reg.paymentSubmittedAt ? new Date(activeReceipt.reg.paymentSubmittedAt).toLocaleDateString() : 'Awaiting Audit'}
                                             </p>
                                         </div>
                                     </div>
 
-                                    {/* Payload Inspection Box */}
-                                    <div className="bg-zinc-900 border border-zinc-800 p-3 space-y-2">
-                                        <div className="flex items-center justify-between text-[11px]">
-                                            <span className="text-zinc-400 uppercase font-bold">Proof Payload Format:</span>
-                                            <span className="text-electric-blue font-mono font-bold">
-                                                {activeReceipt.url.startsWith('data:image/') ? 'Base64 Encoded Image Data' :
-                                                 activeReceipt.url.startsWith('http') ? 'External HTTP/S URL' :
-                                                 'Raw String / Encrypted Data'}
-                                            </span>
+                                    {/* Voucher Grid */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
+                                        <div className="bg-zinc-900/80 p-3 border border-zinc-800 space-y-1">
+                                            <span className="text-zinc-500 uppercase text-[10px] block">Tournament Arena</span>
+                                            <span className="text-white font-bold block truncate">{activeReceipt.reg.hackathonName || activeReceipt.reg.hackathonId}</span>
                                         </div>
-                                        <div className="flex items-center justify-between text-[11px]">
-                                            <span className="text-zinc-400 uppercase font-bold">Payload Length:</span>
-                                            <span className="text-zinc-300 font-mono">{activeReceipt.url.length} characters</span>
+
+                                        <div className="bg-zinc-900/80 p-3 border border-zinc-800 space-y-1">
+                                            <span className="text-zinc-500 uppercase text-[10px] block">Cleared / Due Amount</span>
+                                            <span className="text-electric-blue font-black text-lg block">₹{activeReceipt.reg.feeAmount} <span className="text-xs text-zinc-400">({activeReceipt.reg.feeBasis})</span></span>
                                         </div>
-                                        <div className="pt-2 border-t border-zinc-800">
-                                            <span className="text-[10px] text-zinc-500 uppercase block mb-1">Payload Content Snippet:</span>
-                                            <pre className="bg-black border border-zinc-800 p-2 text-[10px] font-mono text-emerald-400 break-all select-all max-h-24 overflow-y-auto">
-                                                {activeReceipt.url.slice(0, 350)}{activeReceipt.url.length > 350 ? '...' : ''}
-                                            </pre>
+
+                                        <div className="bg-zinc-900/80 p-3 border border-zinc-800 space-y-1">
+                                            <span className="text-zinc-500 uppercase text-[10px] block">Registered Squad</span>
+                                            <span className="text-emerald-400 font-bold block">{activeReceipt.reg.teamName || 'SOLO OPERATIVE'}</span>
+                                            <span className="text-[10px] text-zinc-500 block truncate">ID: {activeReceipt.reg.teamId || activeReceipt.reg.userId}</span>
+                                        </div>
+
+                                        <div className="bg-zinc-900/80 p-3 border border-zinc-800 space-y-1">
+                                            <span className="text-zinc-500 uppercase text-[10px] block">Transaction Reference (UTR)</span>
+                                            <span className="text-white font-mono font-bold block select-all tracking-wider">{activeReceipt.utr}</span>
                                         </div>
                                     </div>
 
-                                    {/* Remediation Action Buttons */}
-                                    <div className="flex flex-wrap items-center gap-2 pt-2">
+                                    {/* Squad Roster in Voucher */}
+                                    {activeReceipt.reg.rosterMembers && activeReceipt.reg.rosterMembers.length > 0 && (
+                                        <div className="bg-zinc-900/50 p-3 border border-zinc-850 space-y-1.5 text-xs">
+                                            <span className="text-zinc-400 uppercase text-[10px] font-bold block">Squad Roster ({activeReceipt.reg.rosterMembers.length} Operatives):</span>
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                {activeReceipt.reg.rosterMembers.map(m => (
+                                                    <div key={m.userId} className="flex items-center justify-between bg-black/40 px-2.5 py-1 border border-zinc-800 text-[11px]">
+                                                        <span className="text-white font-mono">{m.name}</span>
+                                                        <span className="text-zinc-500 uppercase text-[10px]">({m.role})</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Test Data Banner if applicable */}
+                                    {(activeReceipt.reg.isTest || activeReceipt.url.length < 200) && (
+                                        <div className="bg-amber-500/10 border border-amber-500/40 p-3 text-[11px] text-amber-300 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-base shrink-0">info</span>
+                                            <span>
+                                                <strong>QA / Verification Record:</strong> Attached proof is a simulated test payload generated during end-to-end audit procedures.
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* TAB 3: RAW PAYLOAD INSPECTOR */}
+                            {receiptViewTab === 'raw' && (
+                                <div className="w-full max-w-2xl bg-zinc-950 border border-zinc-800 p-5 space-y-4 text-left">
+                                    <div className="flex items-center justify-between text-xs border-b border-zinc-800 pb-2">
+                                        <span className="text-zinc-400 uppercase font-bold">Proof Attachment String</span>
+                                        <span className="text-zinc-500 font-mono">{activeReceipt.url.length} Characters</span>
+                                    </div>
+
+                                    <pre className="bg-black border border-zinc-800 p-4 font-mono text-xs text-emerald-400 break-all select-all max-h-56 overflow-y-auto leading-relaxed">
+                                        {activeReceipt.url}
+                                    </pre>
+
+                                    <div className="flex items-center justify-between pt-2">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 navigator.clipboard.writeText(activeReceipt.url);
-                                                toast.success("Raw proof string copied to clipboard!");
+                                                toast.success("Proof attachment copied to clipboard!");
                                             }}
                                             className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 px-3 py-1.5 text-xs font-bold uppercase transition-all flex items-center gap-1.5"
                                         >
                                             <span className="material-symbols-outlined text-sm">content_copy</span>
-                                            Copy Raw Proof
+                                            Copy Raw Payload
                                         </button>
+
                                         {activeReceipt.url.startsWith('http') && (
                                             <button
                                                 type="button"
                                                 onClick={() => window.open(activeReceipt.url, '_blank')}
-                                                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 px-3 py-1.5 text-xs font-bold uppercase transition-all flex items-center gap-1.5"
+                                                className="bg-electric-blue text-black px-3 py-1.5 text-xs font-black uppercase hover:bg-white transition-all flex items-center gap-1.5"
                                             >
                                                 <span className="material-symbols-outlined text-sm">open_in_new</span>
-                                                Open Link
+                                                Open Target URL
                                             </button>
                                         )}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const regToReject = activeReceipt.reg;
-                                                setActiveReceipt(null);
-                                                setRejectingReg(regToReject);
-                                                setRejectReason("Unreadable or corrupt transaction receipt. Please re-upload a clear image file.");
-                                            }}
-                                            className="bg-rose-500/20 hover:bg-rose-500 text-rose-300 hover:text-black border border-rose-500 px-3 py-1.5 text-xs font-black uppercase transition-all ml-auto flex items-center gap-1.5"
-                                        >
-                                            <span className="material-symbols-outlined text-sm">cancel</span>
-                                            Reject Invalid Proof
-                                        </button>
                                     </div>
                                 </div>
                             )}
