@@ -53,11 +53,13 @@ const messageSchema = new mongoose.Schema({
 const notificationSchema = new mongoose.Schema({
     id: { type: String, unique: true },
     userId: String,
-    type: String, // e.g., 'team_invitation', 'announcement', 'evaluation'
+    type: String, // e.g., 'team_invitation', 'announcement', 'evaluation', 'payment_rejected', 'payment_approved', 'team_updated', 'team_disqualified', 'chat_message', 'admin_message'
     title: String,
     message: String,
     referenceType: String,
     referenceId: String,
+    rejectionReason: String,
+    metadata: mongoose.Schema.Types.Mixed,
     isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 

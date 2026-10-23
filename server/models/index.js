@@ -171,7 +171,8 @@ const teamSchema = new mongoose.Schema({
     problemStatementId: String,
     maxMembers: Number,
     recruitmentOpen: Boolean,
-    status: { type: String, enum: ['forming', 'active', 'submitted', 'disqualified', 'completed'], default: 'forming' },
+    status: { type: String, enum: ['forming', 'active', 'verified', 'submitted', 'disqualified', 'completed'], default: 'forming' },
+    adminNote: { type: String, default: '' },
     isLocked: { type: Boolean, default: false },
     lockedForHackathonId: String,
     // Backwards compat fields for current frontend
@@ -365,8 +366,12 @@ const notificationSchema = new mongoose.Schema({
     userId: String,
     title: String,
     message: String,
-    type: { type: String, enum: ['team_invite', 'join_request', 'system', 'evaluation', 'mentor'], default: 'system' },
+    type: { type: String, default: 'system' }, // 'team_invite', 'join_request', 'system', 'evaluation', 'mentor', 'payment_rejected', 'payment_approved', 'team_updated', 'team_disqualified', 'chat_message', 'admin_message'
     relatedId: String,
+    referenceType: String,
+    referenceId: String,
+    rejectionReason: String,
+    metadata: mongoose.Schema.Types.Mixed,
     isRead: { type: Boolean, default: false }
 }, { timestamps: true });
 

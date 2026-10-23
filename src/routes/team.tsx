@@ -260,14 +260,53 @@ function Page6() {
           <>
             <header className="bg-surface p-8 neo-brutal-card flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
               <div>
-                <h1 className="font-display-lg text-display-lg text-ink-black mb-2">{currentTeam.name}</h1>
-                <p className="font-body-lg text-body-lg text-text-muted">Team ID: <span className="font-code-snippet text-electric-blue">{currentTeam.id}</span></p>
-                <div className="mt-4 flex gap-4">
-                  <button onClick={handleLeaveTeam} className="px-4 py-2 bg-error text-white font-bold text-sm uppercase hover:bg-black transition-colors">
+                <div className="flex items-center gap-3 flex-wrap mb-2">
+                  <h1 className="font-display-lg text-display-lg text-ink-black">{currentTeam.name}</h1>
+                  {currentTeam.status === 'verified' && (
+                    <span className="px-3 py-1 bg-emerald-500 text-white font-bold text-xs uppercase border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">verified</span>OFFICIALLY VERIFIED
+                    </span>
+                  )}
+                  {currentTeam.status === 'active' && (
+                    <span className="px-3 py-1 bg-electric-blue text-white font-bold text-xs uppercase border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">bolt</span>ACTIVE SQUAD
+                    </span>
+                  )}
+                  {currentTeam.status === 'disqualified' && (
+                    <span className="px-3 py-1 bg-error text-white font-bold text-xs uppercase border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">gavel</span>DISQUALIFIED
+                    </span>
+                  )}
+                  {(!currentTeam.status || currentTeam.status === 'forming') && (
+                    <span className="px-3 py-1 bg-amber-400 text-stark-black font-bold text-xs uppercase border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">group_add</span>FORMING
+                    </span>
+                  )}
+                  {currentTeam.status === 'submitted' && (
+                    <span className="px-3 py-1 bg-purple-600 text-white font-bold text-xs uppercase border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">task_alt</span>SUBMITTED
+                    </span>
+                  )}
+                </div>
+                <p className="font-body-lg text-body-lg text-text-muted">
+                  Team ID: <span className="font-code-snippet text-electric-blue">{currentTeam.id}</span>
+                  {(currentTeam.bonusPoints !== undefined || currentTeam.penaltyPoints !== undefined) && (
+                    <span className="ml-4 font-mono text-xs font-bold bg-surface-container px-2 py-0.5 border border-ink-black">
+                      Score: {(currentTeam.bonusPoints || 0) - (currentTeam.penaltyPoints || 0)} pts
+                    </span>
+                  )}
+                </p>
+                {currentTeam.adminNote && (
+                  <div className="mt-3 p-3 bg-amber-50 border-l-4 border-amber-500 text-xs text-amber-900 font-mono">
+                    <span className="font-bold">ADMIN ANNOUNCEMENT:</span> {currentTeam.adminNote}
+                  </div>
+                )}
+                <div className="mt-4 flex gap-4 flex-wrap">
+                  <button onClick={handleLeaveTeam} className="px-4 py-2 bg-error text-white font-bold text-sm uppercase hover:bg-black transition-colors border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                     {currentTeam.leaderId === currentUser?.id && (currentTeam.members || currentTeam.memberIds || []).length === 1 ? 'DISBAND SQUAD' : 'LEAVE SQUAD'}
                   </button>
                   {currentTeam.leaderId === currentUser?.id && (
-                     <button onClick={copyInvite} className="px-4 py-2 bg-electric-blue text-black font-bold text-sm uppercase hover:bg-black hover:text-white transition-colors">
+                     <button onClick={copyInvite} className="px-4 py-2 bg-electric-blue text-black font-bold text-sm uppercase hover:bg-black hover:text-white transition-colors border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                         COPY INVITE LINK
                      </button>
                   )}

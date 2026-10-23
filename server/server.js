@@ -93,7 +93,7 @@ import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conve
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
-import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
@@ -1070,12 +1070,105 @@ app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(
         if (decision === 'reject' && !reason?.trim()) return res.status(400).json({ message: 'A rejection reason is strictly required when declining payment.' });
         const now = new Date();
         const paymentStatus = decision === 'approve' ? 'verified' : 'rejected';
-        const reviewReason = reason?.trim() || 'Payment verified by administrator';
+        const reviewReason = reason?.trim() || (decision === 'approve' ? 'Payment verified by administrator' : 'Payment declined by administrator');
         const registration = await Registration.findOneAndUpdate({ id: req.params.registrationId, paymentStatus: 'payment_under_review', status: 'payment_under_review', transactionReference: { $type: 'string', $ne: '' }, paymentProofUrl: { $type: 'string', $ne: '' } }, {
             $set: { paymentStatus, status: decision === 'approve' ? 'registered' : 'rejected', reviewedBy: req.user.email, reviewedAt: now, reviewReason, ...(decision === 'approve' ? { verifiedAt: now } : {}) },
             $push: { reviewHistory: { status: paymentStatus, reason: reviewReason, reviewedBy: req.user.email, timestamp: now } }
         }, { new: true });
         if (!registration) return res.status(409).json({ message: 'Only submitted, unreviewed payment proofs may be reviewed.' });
+
+        // Retrieve User, Hackathon, and Team context for communication
+        const [user, hackathon, team] = await Promise.all([
+            User.findOne({ id: registration.userId }),
+            Hackathon.findOne({ id: registration.hackathonId }),
+            registration.teamId ? Team.findOne({ id: registration.teamId }) : null
+        ]);
+
+        const eventName = hackathon?.name || hackathon?.title || registration.hackathonId;
+        const teamName = team?.name || registration.teamName || '';
+        const userEmail = user?.email || (registration.rosterMembers?.find(m => m.userId === registration.userId)?.email) || (registration.rosterMembers?.[0]?.email);
+        const userName = user?.name || registration.rosterMembers?.[0]?.name || 'Operative';
+
+        // Collect all squad members to notify
+        const memberIdsToNotify = Array.from(new Set([
+            registration.userId,
+            ...(registration.rosterMembers?.map(m => m.userId) || []),
+            ...(team?.memberIds || []),
+            team?.leaderId
+        ])).filter(Boolean);
+
+        if (decision === 'reject') {
+            // 1. Dispatch Email with Rejection Reason
+            if (userEmail) {
+                const retryUrl = `${process.env.FRONTEND_URL || 'https://codesrijan-nine.vercel.app'}/payment`;
+                sendPaymentRejectionEmail(userEmail, {
+                    name: userName,
+                    eventName,
+                    teamName,
+                    reason: reviewReason,
+                    transactionReference: registration.transactionReference,
+                    feeAmount: registration.feeAmount,
+                    currency: registration.currency || 'INR',
+                    retryUrl
+                }).catch(err => console.error('[PAYMENT REJECTION EMAIL DISPATCH FAULT]', err?.message || err));
+            }
+
+            // 2. Dispatch In-App Notification with Rejection Reason to User & Roster
+            for (const uid of memberIdsToNotify) {
+                try {
+                    await Notification.create({
+                        id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                        userId: uid,
+                        type: 'payment_rejected',
+                        title: 'Payment Verification Declined',
+                        message: `Payment of ${registration.currency || 'INR'} ${registration.feeAmount || ''} for "${eventName}" was declined by administrator. Reason: ${reviewReason}`,
+                        referenceType: 'registration',
+                        referenceId: registration.id,
+                        rejectionReason: reviewReason,
+                        isRead: false
+                    });
+                } catch (ne) {
+                    console.error('[NOTIF CREATION FAULT]', ne.message);
+                }
+            }
+        } else {
+            // Decision is 'approve'
+            // If tied to team, update squad status to active/locked
+            if (registration.teamId) {
+                await Team.findOneAndUpdate({ id: registration.teamId }, { status: 'active', isLocked: true });
+            }
+
+            // 1. Dispatch Approval Email
+            if (userEmail) {
+                sendPaymentApprovalEmail(userEmail, {
+                    name: userName,
+                    eventName,
+                    teamName,
+                    transactionReference: registration.transactionReference,
+                    feeAmount: registration.feeAmount,
+                    currency: registration.currency || 'INR'
+                }).catch(err => console.error('[PAYMENT APPROVAL EMAIL DISPATCH FAULT]', err?.message || err));
+            }
+
+            // 2. Dispatch In-App Notification to User & Roster
+            for (const uid of memberIdsToNotify) {
+                try {
+                    await Notification.create({
+                        id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                        userId: uid,
+                        type: 'payment_approved',
+                        title: 'Payment Verified & Approved',
+                        message: `Payment for "${eventName}" has been verified and cleared by Administrator. Squad clearance granted.`,
+                        referenceType: 'registration',
+                        referenceId: registration.id,
+                        isRead: false
+                    });
+                } catch (ne) {
+                    console.error('[NOTIF CREATION FAULT]', ne.message);
+                }
+            }
+        }
+
         res.json({ success: true, decision, registration });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1397,15 +1490,37 @@ app.patch('/api/admin/submissions/:id/:action', requireAuth, requireRole(['admin
 });
 
 app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
-    const { reason } = req.body;
+    const { reason, notify = true } = req.body;
     if (!reason || reason.trim() === '') return res.status(400).json({ message: "Reason is required for disqualification." });
 
-    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'disqualified' }, { new: true });
+    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'disqualified', adminNote: `Disqualified: ${reason.trim()}` }, { new: true });
     if (!team) return res.status(404).json({ message: "Squad missing." });
     
     // Log DQ
     const dqLog = new Message({ id: `dq-${Date.now()}`, content: reason, authorId: req.user.id, teamId: team.id });
     await dqLog.save();
+
+    // Dispatch In-App Notification to all squad members
+    if (notify) {
+        const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+        for (const uid of members) {
+            try {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: 'team_disqualified',
+                    title: 'Squad Disqualified',
+                    message: `Your squad "${team.name}" was disqualified by administration. Reason: ${reason.trim()}`,
+                    referenceType: 'team',
+                    referenceId: team.id,
+                    rejectionReason: reason.trim(),
+                    isRead: false
+                });
+            } catch (ne) {
+                console.error('[NOTIF CREATION FAULT]', ne.message);
+            }
+        }
+    }
 
     res.json({ message: "Squad Disqualified", team });
 });
@@ -1413,7 +1528,83 @@ app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']),
 app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
     const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'active' }, { new: true });
     if (!team) return res.status(404).json({ message: "Squad missing." });
+
+    // Notify members of reinstatement
+    const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+    for (const uid of members) {
+        try {
+            await Notification.create({
+                id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                userId: uid,
+                type: 'team_updated',
+                title: 'Squad Reinstated',
+                message: `Your squad "${team.name}" has been restored to active tournament standing.`,
+                referenceType: 'team',
+                referenceId: team.id,
+                isRead: false
+            });
+        } catch (ne) {}
+    }
+
     res.json({ message: "Squad Restored", team });
+});
+
+app.post('/api/admin/teams/:id/verify', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'verified', isLocked: true }, { new: true });
+        if (!team) return res.status(404).json({ message: "Squad missing." });
+
+        // Notify squad members of official verified status
+        const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+        for (const uid of members) {
+            try {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: 'team_updated',
+                    title: 'Squad Officially Verified',
+                    message: `Congratulations! Squad "${team.name}" has been officially verified and cleared by Hackathon Administration.`,
+                    referenceType: 'team',
+                    referenceId: team.id,
+                    isRead: false
+                });
+            } catch (ne) {}
+        }
+
+        res.json({ message: "Squad Verified & Cleared", team });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to verify squad." });
+    }
+});
+
+app.post('/api/admin/teams/:id/notify', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { message, title, type } = req.body;
+        if (!message || !message.trim()) return res.status(400).json({ message: "Notification message is required." });
+
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team) return res.status(404).json({ message: "Squad missing." });
+
+        const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+        for (const uid of members) {
+            try {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: type || 'admin_message',
+                    title: title || 'Admin Transmission',
+                    message: message.trim(),
+                    referenceType: 'team',
+                    referenceId: team.id,
+                    isRead: false
+                });
+            } catch (ne) {}
+        }
+
+        res.json({ success: true, count: members.length });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to dispatch notification." });
+    }
 });
 
 app.post('/api/admin/teams', requireAuth, requireRole(['admin']), async (req, res) => {
@@ -1429,6 +1620,26 @@ app.post('/api/admin/teams', requireAuth, requireRole(['admin']), async (req, re
 app.put('/api/admin/teams/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
         const team = await Team.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        if (!team) return res.status(404).json({ message: "Squad not found." });
+
+        // Dispatch notification to squad members
+        const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+        const notifyMsg = req.body.notifyMessage?.trim() || `Your squad "${team.name}" details were updated by administration. Status: ${team.status?.toUpperCase() || 'ACTIVE'}.`;
+        for (const uid of members) {
+            try {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: 'team_updated',
+                    title: 'Squad Parameters Updated',
+                    message: notifyMsg,
+                    referenceType: 'team',
+                    referenceId: team.id,
+                    isRead: false
+                });
+            } catch (ne) {}
+        }
+
         res.json(team);
     } catch (e) {
         res.status(500).json({ message: "Failed to update squad parameters." });
@@ -2625,6 +2836,33 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
         // Broadcast realtime event
         io.to(convId).emit('message:new', newMsg);
 
+        // Notify conversation participants
+        try {
+            const recipients = new Set((conv.participantIds || []).filter(id => id !== req.user.id));
+            if (conv.teamId) {
+                const team = await Team.findOne({ id: conv.teamId });
+                if (team) {
+                    if (team.leaderId && team.leaderId !== req.user.id) recipients.add(team.leaderId);
+                    (team.memberIds || []).forEach(m => { if (m && m !== req.user.id) recipients.add(m); });
+                }
+            }
+            const snippet = message.length > 75 ? message.slice(0, 72) + '...' : message;
+            for (const uid of recipients) {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: 'chat_message',
+                    title: `Message from ${req.user.name || 'Teammate'}`,
+                    message: snippet,
+                    referenceType: 'conversation',
+                    referenceId: convId,
+                    isRead: false
+                });
+            }
+        } catch (err) {
+            console.error('[CHAT NOTIF CREATION ERROR]', err.message);
+        }
+
         res.status(201).json(newMsg);
     } catch (err) {
         res.status(500).json({ message: "Failed to transmit message." });
@@ -2892,6 +3130,15 @@ app.get('/api/notifications', requireAuth, async (req, res) => {
 app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
     await Notification.findOneAndUpdate({ id: req.params.id, userId: req.user.id }, { isRead: true });
     res.json({ success: true });
+});
+
+app.patch('/api/notifications/read-all', requireAuth, async (req, res) => {
+    try {
+        await Notification.updateMany({ userId: req.user.id, isRead: false }, { $set: { isRead: true } });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // --- ANALYTICS ---

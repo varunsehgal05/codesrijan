@@ -365,3 +365,185 @@ export const sendWelcomeEmail = async (to, name, role = 'student') => {
         return { success: false, error: e.message };
     }
 };
+
+/**
+ * Dispatches payment rejection notice with reason and resubmission instructions
+ */
+export const sendPaymentRejectionEmail = async (to, { name, eventName, teamName, reason, transactionReference, feeAmount, currency = 'INR', retryUrl }) => {
+    // 1. Try Google Apps Script HTTPS Relay
+    if (process.env.APPS_SCRIPT_URL || customAppsScriptDispatcher) {
+        const relayResult = await dispatchViaAppsScript('payment_rejected', to, {
+            name,
+            eventName,
+            teamName,
+            reason,
+            transactionReference,
+            feeAmount,
+            currency,
+            retryUrl
+        });
+        if (relayResult && relayResult.success) return relayResult;
+    }
+
+    // 2. Fall back to Gmail SMTP via Nodemailer
+    const htmlContent = `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <tr>
+                <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #E11D48; border-radius: 8px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #881337; border-bottom: 2px solid #E11D48; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #FDA4AF; font-size: 11px; font-family: monospace; letter-spacing: 2px;">PAYMENT_AUDIT_TRANSMISSION // DECLINED</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 36px 32px;">
+                                <h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700;">Payment Verification Notice</h2>
+                                <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    Hello <strong>${name || 'Operative'}</strong>,
+                                </p>
+                                <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    Your tournament entry payment for <strong>${eventName || 'Tournament'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been reviewed and <strong style="color: #F43F5E;">DECLINED</strong> by the tournament administration.
+                                </p>
+
+                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #1C1917; border-left: 4px solid #F43F5E; border-radius: 4px; margin: 24px 0;">
+                                    <tr>
+                                        <td style="padding: 20px;">
+                                            <p style="margin: 0 0 6px 0; color: #F43F5E; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;">Rejection Reason</p>
+                                            <p style="margin: 0 0 16px 0; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1.5;">${reason || 'Transaction proof or reference could not be verified against banking records.'}</p>
+                                            
+                                            ${transactionReference ? `
+                                            <p style="margin: 0 0 4px 0; color: #A8A29E; font-size: 11px; font-weight: 700; text-transform: uppercase;">Submitted UTR / Reference:</p>
+                                            <p style="margin: 0 0 12px 0; color: #E0E7FF; font-family: monospace; font-size: 13px;">${transactionReference}</p>
+                                            ` : ''}
+
+                                            ${feeAmount ? `
+                                            <p style="margin: 0 0 4px 0; color: #A8A29E; font-size: 11px; font-weight: 700; text-transform: uppercase;">Fee Amount:</p>
+                                            <p style="margin: 0; color: #E0E7FF; font-family: monospace; font-size: 13px;">${currency} ${feeAmount}</p>
+                                            ` : ''}
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 14px; line-height: 1.6;">
+                                    <strong>How to resolve:</strong><br/>
+                                    Please verify your transaction receipt, ensure the 12-digit UTR is accurately transcribed, and re-submit your proof of payment via the tournament dashboard.
+                                </p>
+
+                                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 28px 0;">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="${retryUrl || 'https://codesrijan-nine.vercel.app/payment'}" target="_blank" style="background-color: #E11D48; color: #FFFFFF; font-weight: 800; text-transform: uppercase; text-decoration: none; padding: 14px 32px; border-radius: 4px; display: inline-block; font-size: 14px; letter-spacing: 1px;">
+                                                RESUBMIT PAYMENT PROOF
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <p style="margin: 20px 0 0 0; color: #64748B; font-size: 12px; line-height: 1.5;">
+                                    If you require assistance, reply to this email or contact support through the platform.
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #0B0F14; border-top: 1px solid #223249; padding: 18px; text-align: center;">
+                                <p style="margin: 0; color: #64748B; font-size: 11px; font-family: monospace;">CodeSrijan Automated Tournament Protocol</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    const transporter = getTransporter();
+    if (!transporter) {
+        console.warn('[EMAIL SERVICE WARNING] Email unconfigured for payment rejection notice.');
+        return { success: false, error: 'Email service unconfigured' };
+    }
+
+    try {
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
+            subject: `CodeSrijan [PAYMENT REVIEW: DECLINED - ${eventName || 'Tournament'}]`,
+            html: htmlContent
+        });
+        console.log('[SECURE COMMS] Payment rejection email dispatched to %s. Message ID: %s', maskEmail(to), info.messageId);
+        return { success: true, messageId: info.messageId };
+    } catch (e) {
+        console.error('[SECURE COMMS FAULT] Payment rejection send failed to %s: %s', maskEmail(to), e.message);
+        return { success: false, error: e.message };
+    }
+};
+
+/**
+ * Dispatches payment verified confirmation email
+ */
+export const sendPaymentApprovalEmail = async (to, { name, eventName, teamName, transactionReference, feeAmount, currency = 'INR' }) => {
+    // 1. Try Google Apps Script HTTPS Relay
+    if (process.env.APPS_SCRIPT_URL || customAppsScriptDispatcher) {
+        const relayResult = await dispatchViaAppsScript('payment_approved', to, {
+            name,
+            eventName,
+            teamName,
+            transactionReference,
+            feeAmount,
+            currency
+        });
+        if (relayResult && relayResult.success) return relayResult;
+    }
+
+    const htmlContent = `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+            <tr>
+                <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #059669; border-radius: 8px; overflow: hidden;">
+                        <tr>
+                            <td style="background-color: #064E3B; border-bottom: 2px solid #059669; padding: 24px; text-align: center;">
+                                <h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>
+                                <p style="margin: 8px 0 0 0; color: #6EE7B7; font-size: 11px; font-family: monospace; letter-spacing: 2px;">PAYMENT_CLEARED // SQUAD_AUTHORIZED</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 36px 32px;">
+                                <h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700;">Payment Verified &amp; Squad Cleared</h2>
+                                <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    Hello <strong>${name || 'Operative'}</strong>,
+                                </p>
+                                <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
+                                    Your payment for <strong>${eventName || 'Hackathon'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been <strong style="color: #10B981;">VERIFIED AND CLEARED</strong> by the tournament administration.
+                                </p>
+                                ${transactionReference ? `
+                                <div style="background-color: #0B0F14; border: 1px solid #059669; padding: 12px 16px; border-radius: 4px; margin: 16px 0; font-family: monospace; font-size: 13px; color: #6EE7B7;">
+                                    Verified UTR: <strong>${transactionReference}</strong>
+                                </div>
+                                ` : ''}
+                                <p style="margin: 0; color: #64748B; font-size: 13px;">
+                                    Your squad is now fully cleared to participate. Log into your dashboard to access the workspace, collaborate, and begin development.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    const transporter = getTransporter();
+    if (!transporter) return { success: false, error: 'Email service unconfigured' };
+
+    try {
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
+            subject: `CodeSrijan [PAYMENT VERIFIED - ${eventName || 'Tournament'}]`,
+            html: htmlContent
+        });
+        return { success: true, messageId: info.messageId };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+};
+
