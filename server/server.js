@@ -165,6 +165,10 @@ app.post('/api/auth/register', async (req, res) => {
         if (!email || !String(email).trim()) {
             return res.status(400).json({ message: "Email address is required." });
         }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(String(email).trim())) {
+            return res.status(400).json({ message: "Valid email address format is required." });
+        }
         if (!password || typeof password !== 'string') {
             return res.status(400).json({ message: "Password is required." });
         }
@@ -750,6 +754,35 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             if (isEventTest) {
                 targetTeam.isTest = true;
             }
+            // Guard: Ensure no squad member has an active submitted or verified solo registration with financial proof
+            const activeMemberSolo = await Registration.findOne({
+                hackathonId,
+                userId: { $in: allMemberIds },
+                type: 'solo',
+                $or: [
+                    { paymentStatus: { $in: ['verified', 'payment_under_review'] } },
+                    { transactionReference: { $exists: true, $nin: [null, ''] } },
+                    { paymentProofUrl: { $exists: true, $nin: [null, ''] } }
+                ]
+            });
+            if (activeMemberSolo) {
+                return res.status(409).json({ 
+                    message: "A squad member already has a verified or submitted solo registration with active payment proof for this event. Reconcile existing registrations before squad entry." 
+                });
+            }
+
+            // Clean up only genuine, unsubmitted placeholder solo registrations (no payment proof, unverified)
+            await Registration.deleteMany({
+                hackathonId,
+                userId: { $in: allMemberIds },
+                type: 'solo',
+                paymentStatus: { $in: ['pending_proof', 'not_required'] },
+                status: { $nin: ['verified', 'payment_under_review'] },
+                $and: [
+                    { $or: [{ transactionReference: { $exists: false } }, { transactionReference: null }, { transactionReference: '' }] },
+                    { $or: [{ paymentProofUrl: { $exists: false } }, { paymentProofUrl: null }, { paymentProofUrl: '' }] }
+                ]
+            });
             await targetTeam.save();
 
         } else {
@@ -2556,6 +2589,9 @@ app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
 app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
     try {
         const { message, attachments, replyTo } = req.body;
+        if (!message || typeof message !== 'string' || !message.trim()) {
+            return res.status(400).json({ message: "Message content cannot be blank." });
+        }
         const convId = req.params.id;
         
         const conv = await Conversation.findOne({ id: convId });
@@ -2597,17 +2633,18 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
 // --- SUPPORT TICKETS ---
 app.post('/api/support', requireAuth, async (req, res) => {
     try {
-        const { subject, category, description, priority } = req.body;
+        const { subject, category, priority } = req.body;
+        const description = req.body.description || req.body.message || '';
         const ticketId = 'tkt-' + Date.now().toString();
         const convId = 'conv-sup-' + ticketId;
 
         const ticket = await SupportTicket.create({
             id: ticketId,
             userId: req.user.id,
-            subject,
-            category,
+            subject: subject || 'Support Request',
+            category: category || 'general',
             description,
-            priority: priority || 'medium',
+            priority: (priority === 'medium' ? 'normal' : (priority || 'normal')),
             status: 'open',
             conversationId: convId
         });

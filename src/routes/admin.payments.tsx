@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -53,6 +53,26 @@ function AdminPaymentsPage() {
     });
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'payment_under_review' | 'verified' | 'rejected' | 'pending_proof'>('payment_under_review');
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredRegistrations = useMemo(() => {
+        if (!searchQuery.trim()) return registrations;
+        const q = searchQuery.toLowerCase().trim();
+        return registrations.filter(reg => {
+            const matchesUtr = reg.transactionReference?.toLowerCase().includes(q);
+            const matchesTeamName = reg.teamName?.toLowerCase().includes(q);
+            const matchesTeamId = reg.teamId?.toLowerCase().includes(q);
+            const matchesUserId = reg.userId?.toLowerCase().includes(q);
+            const matchesHackathon = (reg.hackathonName || reg.hackathonId)?.toLowerCase().includes(q);
+            const matchesRoster = reg.rosterMembers?.some(m => 
+                m.name?.toLowerCase().includes(q) || 
+                m.email?.toLowerCase().includes(q) || 
+                m.userId?.toLowerCase().includes(q)
+            );
+            const matchesReason = reg.reviewReason?.toLowerCase().includes(q);
+            return !!(matchesUtr || matchesTeamName || matchesTeamId || matchesUserId || matchesHackathon || matchesRoster || matchesReason);
+        });
+    }, [registrations, searchQuery]);
     
     // Modals
     const [activeReceipt, setActiveReceipt] = useState<{ url: string; utr: string; regId: string } | null>(null);
@@ -143,17 +163,17 @@ function AdminPaymentsPage() {
             {/* Header */}
             <div className="border-b-4 border-electric-blue pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-black uppercase tracking-tight text-pure-white flex items-center gap-3">
+                    <h1 className="text-3xl font-black uppercase tracking-tight text-stark-black flex items-center gap-3">
                         <span className="material-symbols-outlined text-electric-blue text-4xl">receipt_long</span>
                         PAYMENT REVIEW QUEUE
                     </h1>
-                    <p className="text-surface-variant text-sm mt-1">
-                        Cryptographic audit terminal for tournament entry fee verification & UTR tracking.
+                    <p className="text-zinc-600 font-semibold text-sm mt-1">
+                        Cryptographic audit terminal for tournament entry fee verification &amp; UTR tracking.
                     </p>
                 </div>
                 <button
                     onClick={fetchPayments}
-                    className="flex items-center gap-2 bg-zinc-900 border-2 border-zinc-700 hover:border-electric-blue text-white px-4 py-2 font-bold uppercase text-xs transition-colors"
+                    className="flex items-center gap-2 bg-stark-black border-2 border-stark-black hover:bg-electric-blue hover:border-stark-black text-white px-4 py-2.5 font-bold uppercase text-xs transition-all shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5"
                 >
                     <span className="material-symbols-outlined text-sm">refresh</span>
                     REFRESH TRANSMISSIONS
@@ -164,66 +184,123 @@ function AdminPaymentsPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div 
                     onClick={() => setFilter('payment_under_review')}
-                    className={`p-5 border-4 cursor-pointer transition-all ${filter === 'payment_under_review' ? 'border-amber-400 bg-amber-400/10 shadow-[4px_4px_0px_0px_#FBBF24]' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'}`}
+                    className={`p-5 border-4 cursor-pointer transition-all bg-zinc-950 ${filter === 'payment_under_review' ? 'border-amber-400 ring-2 ring-amber-400/50 shadow-[4px_4px_0px_0px_#FBBF24]' : 'border-zinc-800 hover:border-zinc-700'}`}
                 >
-                    <p className="text-xs uppercase text-zinc-400 tracking-wider">Awaiting Audit</p>
+                    <p className={`text-xs uppercase tracking-wider ${filter === 'payment_under_review' ? 'text-amber-400 font-bold' : 'text-zinc-400'}`}>Awaiting Audit</p>
                     <p className="text-3xl font-black text-amber-400 mt-2">{summary.pendingCount}</p>
                 </div>
                 <div 
                     onClick={() => setFilter('verified')}
-                    className={`p-5 border-4 cursor-pointer transition-all ${filter === 'verified' ? 'border-emerald-400 bg-emerald-400/10 shadow-[4px_4px_0px_0px_#34D399]' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'}`}
+                    className={`p-5 border-4 cursor-pointer transition-all bg-zinc-950 ${filter === 'verified' ? 'border-emerald-400 ring-2 ring-emerald-400/50 shadow-[4px_4px_0px_0px_#34D399]' : 'border-zinc-800 hover:border-zinc-700'}`}
                 >
-                    <p className="text-xs uppercase text-zinc-400 tracking-wider">Verified & Cleared</p>
+                    <p className={`text-xs uppercase tracking-wider ${filter === 'verified' ? 'text-emerald-400 font-bold' : 'text-zinc-400'}`}>Verified &amp; Cleared</p>
                     <p className="text-3xl font-black text-emerald-400 mt-2">{summary.verifiedCount}</p>
                 </div>
                 <div 
                     onClick={() => setFilter('rejected')}
-                    className={`p-5 border-4 cursor-pointer transition-all ${filter === 'rejected' ? 'border-rose-400 bg-rose-400/10 shadow-[4px_4px_0px_0px_#FB7185]' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'}`}
+                    className={`p-5 border-4 cursor-pointer transition-all bg-zinc-950 ${filter === 'rejected' ? 'border-rose-400 ring-2 ring-rose-400/50 shadow-[4px_4px_0px_0px_#FB7185]' : 'border-zinc-800 hover:border-zinc-700'}`}
                 >
-                    <p className="text-xs uppercase text-zinc-400 tracking-wider">Rejected</p>
+                    <p className={`text-xs uppercase tracking-wider ${filter === 'rejected' ? 'text-rose-400 font-bold' : 'text-zinc-400'}`}>Rejected</p>
                     <p className="text-3xl font-black text-rose-400 mt-2">{summary.rejectedCount}</p>
                 </div>
                 <div 
                     onClick={() => setFilter('pending_proof')}
-                    className={`p-5 border-4 cursor-pointer transition-all ${filter === 'pending_proof' ? 'border-electric-blue bg-electric-blue/10 shadow-[4px_4px_0px_0px_#22D3EE]' : 'border-zinc-800 bg-zinc-950 hover:border-zinc-700'}`}
+                    className={`p-5 border-4 cursor-pointer transition-all bg-zinc-950 ${filter === 'pending_proof' ? 'border-electric-blue ring-2 ring-electric-blue/50 shadow-[4px_4px_0px_0px_#22D3EE]' : 'border-zinc-800 hover:border-zinc-700'}`}
                 >
-                    <p className="text-xs uppercase text-zinc-400 tracking-wider">Awaiting Proof</p>
+                    <p className={`text-xs uppercase tracking-wider ${filter === 'pending_proof' ? 'text-electric-blue font-bold' : 'text-zinc-400'}`}>Awaiting Proof</p>
                     <p className="text-3xl font-black text-electric-blue mt-2">{summary.pendingProofCount}</p>
                 </div>
             </div>
 
-            {/* Filter Tabs */}
-            <div className="flex gap-2 border-b-2 border-zinc-800 pb-2 overflow-x-auto">
-                {[
-                    { id: 'payment_under_review', label: 'Pending Review' },
-                    { id: 'verified', label: 'Verified' },
-                    { id: 'rejected', label: 'Rejected' },
-                    { id: 'pending_proof', label: 'Awaiting Proof' },
-                    { id: 'all', label: 'All Registrations' }
-                ].map(t => (
-                    <button
-                        key={t.id}
-                        onClick={() => setFilter(t.id as typeof filter)}
-                        className={`px-4 py-2 text-xs font-bold uppercase transition-all ${filter === t.id ? 'bg-electric-blue text-black border-2 border-electric-blue' : 'bg-zinc-900 text-zinc-400 border-2 border-transparent hover:text-white'}`}
-                    >
-                        {t.label}
-                    </button>
-                ))}
+            {/* Controls Bar: Filter Tabs & Search Bar */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-zinc-800 pb-3">
+                {/* Filter Tabs */}
+                <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
+                    {[
+                        { id: 'payment_under_review', label: 'Pending Review' },
+                        { id: 'verified', label: 'Verified' },
+                        { id: 'rejected', label: 'Rejected' },
+                        { id: 'pending_proof', label: 'Awaiting Proof' },
+                        { id: 'all', label: 'All Registrations' }
+                    ].map(t => (
+                        <button
+                            key={t.id}
+                            onClick={() => setFilter(t.id as typeof filter)}
+                            className={`px-4 py-2 text-xs font-bold uppercase transition-all whitespace-nowrap brutal-border ${
+                                filter === t.id 
+                                    ? 'bg-electric-blue text-white border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]' 
+                                    : 'bg-zinc-900 text-zinc-300 border-2 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                            }`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative w-full md:w-80">
+                    <div className="flex items-center bg-pure-white border-2 border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] px-3 py-1.5">
+                        <span className="material-symbols-outlined text-stark-black text-lg mr-2 select-none">search</span>
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="SEARCH UTR, SQUAD, ID..."
+                            className="w-full bg-transparent font-mono text-xs uppercase font-bold text-stark-black placeholder:text-zinc-500 focus:outline-none"
+                        />
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery("")}
+                                className="text-zinc-500 hover:text-stark-black text-xs font-bold px-1 ml-1"
+                                title="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
+                </div>
             </div>
+
+            {/* Active Search Query Indicator */}
+            {searchQuery.trim() && (
+                <div className="flex items-center justify-between bg-zinc-950 border-2 border-zinc-700 px-4 py-2 text-xs">
+                    <span className="text-zinc-300">
+                        SEARCH FILTER: <strong className="text-electric-blue uppercase">"{searchQuery}"</strong> — {filteredRegistrations.length} record(s) found
+                    </span>
+                    <button
+                        onClick={() => setSearchQuery("")}
+                        className="text-xs text-rose-400 hover:text-rose-300 font-bold uppercase transition-colors"
+                    >
+                        Clear Filter [✕]
+                    </button>
+                </div>
+            )}
 
             {/* Content Table / Cards */}
             {loading ? (
-                <div className="p-12 text-center text-electric-blue border-2 border-zinc-800 animate-pulse">
+                <div className="p-12 text-center text-electric-blue border-2 border-zinc-800 bg-zinc-950 animate-pulse font-bold">
                     QUERYING MAIN-NETWORK PAYMENT LEDGER...
                 </div>
             ) : registrations.length === 0 ? (
-                <div className="p-12 text-center border-4 border-dashed border-zinc-800 bg-zinc-950/50">
+                <div className="p-12 text-center border-4 border-dashed border-zinc-800 bg-zinc-950">
                     <span className="material-symbols-outlined text-zinc-600 text-5xl mb-2">inbox</span>
-                    <p className="text-zinc-400 uppercase text-sm">No payment records located under current filter ({filter}).</p>
+                    <p className="text-zinc-400 uppercase text-sm font-bold">No payment records located under current filter ({filter.replace(/_/g, ' ')}).</p>
+                </div>
+            ) : filteredRegistrations.length === 0 ? (
+                <div className="p-12 text-center border-4 border-dashed border-zinc-800 bg-zinc-950 space-y-3">
+                    <span className="material-symbols-outlined text-zinc-500 text-5xl">search_off</span>
+                    <p className="text-white uppercase text-sm font-black tracking-wide">No payment records match "{searchQuery}"</p>
+                    <p className="text-zinc-400 text-xs">Search scans across transaction UTRs, squad names, operative IDs, tournaments, and squad members.</p>
+                    <button
+                        onClick={() => setSearchQuery("")}
+                        className="inline-block mt-2 px-4 py-2 bg-electric-blue text-white text-xs font-bold uppercase brutal-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-stark-black transition-all"
+                    >
+                        Clear Search Query
+                    </button>
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {registrations.map(reg => (
+                    {filteredRegistrations.map(reg => (
                         <div key={reg.id} className="bg-zinc-950 border-4 border-zinc-800 hover:border-zinc-600 transition-all p-6 space-y-4">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-zinc-900 pb-4">
                                 <div>

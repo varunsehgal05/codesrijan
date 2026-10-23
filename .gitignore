@@ -47,7 +47,9 @@ server/*.tmp
 !server/test_final_paid_acceptance.mjs
 !server/migrate-qa-data.mjs
 !server/test-qa-data-isolation.mjs
+!server/test_audit_journeys.mjs
 *.png
 platform-screenshots/
 test-results/
 playwright-report/
+artifacts/

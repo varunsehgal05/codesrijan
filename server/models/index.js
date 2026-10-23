@@ -352,7 +352,8 @@ const supportTicketSchema = new mongoose.Schema({
     userId: String,
     subject: String,
     category: String,
-    priority: { type: String, enum: ['low', 'normal', 'high', 'critical'], default: 'normal' },
+    description: String,
+    priority: { type: String, enum: ['low', 'normal', 'medium', 'high', 'critical'], default: 'normal' },
     status: { type: String, enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], default: 'open' },
     assignedTo: String,
     conversationId: String
