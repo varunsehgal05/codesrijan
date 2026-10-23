@@ -45,5 +45,9 @@ server/*.tmp
 !server/test-security-local.mjs
 !server/test_payment_notifications.mjs
 !server/test_final_paid_acceptance.mjs
+!server/migrate-qa-data.mjs
+!server/test-qa-data-isolation.mjs
 *.png
 platform-screenshots/
+test-results/
+playwright-report/

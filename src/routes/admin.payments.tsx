@@ -38,6 +38,7 @@ interface PaymentRegistration {
     rosterMembers?: RosterMember[];
     reviewHistory?: Array<{ status: string; reason: string; reviewedBy?: string; timestamp: string }>;
     createdAt: string;
+    isTest?: boolean;
 }
 
 function AdminPaymentsPage() {
@@ -47,7 +48,8 @@ function AdminPaymentsPage() {
         pendingCount: 0,
         verifiedCount: 0,
         rejectedCount: 0,
-        pendingProofCount: 0
+        pendingProofCount: 0,
+        testCount: 0
     });
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'payment_under_review' | 'verified' | 'rejected' | 'pending_proof'>('payment_under_review');
@@ -71,8 +73,9 @@ function AdminPaymentsPage() {
             if (res.data.summary) {
                 setSummary(res.data.summary);
             }
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to load payment review queue.");
+        } catch (err: unknown) {
+            const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+            toast.error(msg || "Failed to load payment review queue.");
         } finally {
             setLoading(false);
         }
@@ -97,8 +100,9 @@ function AdminPaymentsPage() {
 
             toast.success(`Payment verified! Squad clearance granted.`);
             fetchPayments();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to approve payment.");
+        } catch (err: unknown) {
+            const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+            toast.error(msg || "Failed to approve payment.");
         } finally {
             setProcessingId(null);
         }
@@ -126,8 +130,9 @@ function AdminPaymentsPage() {
             setRejectingReg(null);
             setRejectReason("");
             fetchPayments();
-        } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to reject payment.");
+        } catch (err: unknown) {
+            const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
+            toast.error(msg || "Failed to reject payment.");
         } finally {
             setProcessingId(null);
         }
@@ -198,7 +203,7 @@ function AdminPaymentsPage() {
                 ].map(t => (
                     <button
                         key={t.id}
-                        onClick={() => setFilter(t.id as any)}
+                        onClick={() => setFilter(t.id as typeof filter)}
                         className={`px-4 py-2 text-xs font-bold uppercase transition-all ${filter === t.id ? 'bg-electric-blue text-black border-2 border-electric-blue' : 'bg-zinc-900 text-zinc-400 border-2 border-transparent hover:text-white'}`}
                     >
                         {t.label}
@@ -225,6 +230,11 @@ function AdminPaymentsPage() {
                                     <div className="flex items-center gap-3">
                                         <span className="text-lg font-black text-white uppercase">{reg.teamName || (reg.type === 'solo' ? 'SOLO OPERATIVE' : 'SQUAD ENTRY')}</span>
                                         <span className="text-xs bg-zinc-900 border border-zinc-700 px-2 py-0.5 text-zinc-400 font-mono">ID: {reg.teamId || reg.userId}</span>
+                                        {reg.isTest && (
+                                            <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500 px-2 py-0.5 font-bold uppercase tracking-wider">
+                                                TEST DATA
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-xs text-electric-blue mt-1 uppercase tracking-wider">Tournament: {reg.hackathonName || reg.hackathonId}</p>
                                 </div>

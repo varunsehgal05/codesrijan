@@ -76,7 +76,8 @@ const hackathonSchema = new mongoose.Schema({
     paymentInstructions: String,
     capacity: Number,
 
-    createdBy: String
+    createdBy: String,
+    isTest: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 
 // 3. Registrations Collection
@@ -129,7 +130,8 @@ const registrationSchema = new mongoose.Schema({
         enum: ['draft', 'roster_locked', 'awaiting_payment_proof', 'payment_under_review', 'registered', 'rejected'],
         default: 'registered'
     },
-    verifiedAt: Date
+    verifiedAt: Date,
+    isTest: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 
 // Prevent generic registration duplication at Database Level
@@ -180,7 +182,8 @@ const teamSchema = new mongoose.Schema({
     demoLink: String,
     isSubmitted: { type: Boolean, default: false },
     bonusPoints: { type: Number, default: 0 },
-    penaltyPoints: { type: Number, default: 0 }
+    penaltyPoints: { type: Number, default: 0 },
+    isTest: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 
 // 6. Team Invitations Collection

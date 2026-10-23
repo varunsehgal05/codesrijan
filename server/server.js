@@ -559,7 +559,16 @@ app.get('/api/hackathons', async (req, res) => {
 });
 app.post('/api/hackathons', requireAuth, requireRole(['admin']), async (req, res) => {
     // Generate native ID
-    const hackathonData = { ...req.body, id: `hack-${Date.now()}`, status: 'draft', createdBy: req.user.id };
+    const isExplicitTest = req.body.isTest === true ||
+        (typeof req.body.id === 'string' && req.body.id.startsWith('qa-')) ||
+        (typeof req.body.name === 'string' && /^qa[-_\s]/i.test(req.body.name.trim()));
+    const hackathonData = {
+        ...req.body,
+        id: req.body.id || `hack-${Date.now()}`,
+        status: 'draft',
+        createdBy: req.user.id,
+        isTest: isExplicitTest
+    };
 
     // Server-side validation
     if (!hackathonData.name || !hackathonData.registrationStart || !hackathonData.registrationEnd) {
@@ -737,6 +746,10 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             targetTeam.isLocked = true;
             targetTeam.lockedForHackathonId = hackathonId;
             targetTeam.hackathonId = hackathonId;
+            const isEventTest = Boolean(hackathon.isTest || (hackathonId && hackathonId.startsWith('qa-')));
+            if (isEventTest) {
+                targetTeam.isTest = true;
+            }
             await targetTeam.save();
 
         } else {
@@ -753,6 +766,8 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
                 feeAmount = hackathon.fee || 0;
             }
         }
+
+        const isEventTest = Boolean(hackathon.isTest || (hackathonId && hackathonId.startsWith('qa-')));
 
         // Determine Initial Statuses
         const status = isPaid ? 'awaiting_payment_proof' : 'registered';
@@ -777,7 +792,8 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             currency: hackathon.currency || 'INR',
             paymentStatus,
             status,
-            verifiedAt: isPaid ? undefined : new Date()
+            verifiedAt: isPaid ? undefined : new Date(),
+            isTest: isEventTest
         });
 
         await registration.save();
@@ -969,24 +985,29 @@ app.get('/api/admin/payments', requireAuth, requireRole(['admin']), async (req, 
 
         const registrations = await Registration.find(query).sort({ paymentSubmittedAt: -1, createdAt: -1 });
 
-        // Enrich with Hackathon and Team names
+        // Enrich with Hackathon and Team names, tagging test records
         const enriched = await Promise.all(registrations.map(async (reg) => {
             const obj = reg.toObject();
-            if (reg.hackathonId) {
-                const h = await Hackathon.findOne({ id: reg.hackathonId }).select('name fee currency upiId');
-                obj.hackathonName = h ? h.name : reg.hackathonId;
+            const h = reg.hackathonId ? await Hackathon.findOne({ id: reg.hackathonId }).select('name fee currency upiId isTest') : null;
+            if (h) {
+                obj.hackathonName = h.name || reg.hackathonId;
+            } else if (reg.hackathonId) {
+                obj.hackathonName = reg.hackathonId;
             }
             if (reg.teamId) {
-                const t = await Team.findOne({ id: reg.teamId }).select('name leaderId memberIds');
+                const t = await Team.findOne({ id: reg.teamId }).select('name leaderId memberIds isTest');
                 obj.teamName = t ? t.name : reg.teamId;
             }
+            obj.isTest = Boolean(reg.isTest || (h && h.isTest) || (reg.hackathonId && reg.hackathonId.startsWith('qa-')));
             return obj;
         }));
 
-        const pendingCount = await Registration.countDocuments({ paymentStatus: 'payment_under_review' });
-        const verifiedCount = await Registration.countDocuments({ paymentStatus: 'verified' });
-        const rejectedCount = await Registration.countDocuments({ paymentStatus: 'rejected' });
-        const pendingProofCount = await Registration.countDocuments({ paymentStatus: 'pending_proof' });
+        const prodFilter = { isTest: { $ne: true } };
+        const pendingCount = await Registration.countDocuments({ paymentStatus: 'payment_under_review', ...prodFilter });
+        const verifiedCount = await Registration.countDocuments({ paymentStatus: 'verified', ...prodFilter });
+        const rejectedCount = await Registration.countDocuments({ paymentStatus: 'rejected', ...prodFilter });
+        const pendingProofCount = await Registration.countDocuments({ paymentStatus: 'pending_proof', ...prodFilter });
+        const testCount = await Registration.countDocuments({ isTest: true });
 
         res.json({
             registrations: enriched,
@@ -995,7 +1016,8 @@ app.get('/api/admin/payments', requireAuth, requireRole(['admin']), async (req, 
                 pendingCount,
                 verifiedCount,
                 rejectedCount,
-                pendingProofCount
+                pendingProofCount,
+                testCount
             }
         });
     } catch (err) {
@@ -1825,12 +1847,15 @@ app.get('/api/search', async (req, res) => {
 app.get('/api/public/stats', async (req, res) => {
     const hackersCount = await User.countDocuments({ role: 'student' });
     const projectsCount = await Project.countDocuments();
-    const registrationsCount = await Registration.countDocuments();
+    const registrationsCount = await Registration.countDocuments({ isTest: { $ne: true } });
     // Default colleges to 1 for MVP (this would normally be an aggregation on unique college names)
     const collegesCount = (await User.distinct('college')).length || 1;
 
-    // Check if there is an active hackathon for the countdown
-    const activeHackathon = await Hackathon.findOne({ status: { $in: ['active', 'registration_open'] } });
+    // Check if there is an active hackathon for the countdown, excluding test hackathons
+    const activeHackathon = await Hackathon.findOne({
+        status: { $in: ['active', 'registration_open'] },
+        isTest: { $ne: true }
+    });
 
     res.json({
         hackersCount: hackersCount || 0,
@@ -2194,13 +2219,14 @@ app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (re
 
 // Admin Analytics Route
 app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req, res) => {
+    const prodFilter = { isTest: { $ne: true } };
     const [userCount, teamCount, messageCount, hackathonCount, users, teams] = await Promise.all([
         User.countDocuments(),
-        Team.countDocuments(),
+        Team.countDocuments(prodFilter),
         Message.countDocuments(),
-        Hackathon.countDocuments(),
+        Hackathon.countDocuments(prodFilter),
         User.find().select('-passwordHash').limit(50),
-        Team.find().limit(50)
+        Team.find(prodFilter).limit(50)
     ]);
     
     res.json({
@@ -2834,12 +2860,13 @@ app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
 // --- ANALYTICS ---
 app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
+        const prodFilter = { isTest: { $ne: true } };
         const userCount = await User.countDocuments();
-        const teamCount = await Team.countDocuments();
+        const teamCount = await Team.countDocuments(prodFilter);
         const messageCount = await Message.countDocuments();
-        const hackathonCount = await Hackathon.countDocuments();
+        const hackathonCount = await Hackathon.countDocuments(prodFilter);
         
-        const teams = await Team.find().sort({ createdAt: -1 }).limit(20);
+        const teams = await Team.find(prodFilter).sort({ createdAt: -1 }).limit(20);
         const users = await User.find().sort({ createdAt: -1 }).limit(20);
         const submissions = await Submission.find().sort({ createdAt: -1 }).limit(20);
 
@@ -2967,11 +2994,62 @@ app.get('/api/gallery/projects', async (req, res) => {
 // --- PUBLIC LEADERBOARD ---
 app.get('/api/leaderboard', async (req, res) => {
     try {
-        const teams = await Team.find({ isSubmitted: true });
-        const evals = await Evaluation.find();
+        // 1. Identify non-test genuine hackathons
+        const genuineHackathons = await Hackathon.find({
+            isTest: { $ne: true },
+            id: { $not: /^qa[-_]/i }
+        }).select('id').lean();
+        const genuineHackathonIds = new Set(genuineHackathons.map(h => h.id));
 
-        const leaderboardData = teams.map((t) => {
-            const teamEvals = evals.filter(e => e.projectId === t.id || e.teamId === t.id);
+        // 2. Identify teams associated with QA registrations or events
+        const [testRegistrations, genuineRegistrations] = await Promise.all([
+            Registration.find({
+                $or: [
+                    { isTest: true },
+                    { hackathonId: { $regex: /^qa[-_]/i } }
+                ]
+            }).select('teamId').lean(),
+            Registration.find({
+                hackathonId: { $in: Array.from(genuineHackathonIds) },
+                isTest: { $ne: true }
+            }).select('teamId').lean()
+        ]);
+
+        const testTeamIds = new Set(testRegistrations.map(r => r.teamId).filter(Boolean));
+        const genuineTeamIds = new Set(genuineRegistrations.map(r => r.teamId).filter(Boolean));
+
+        // 3. Query candidate submitted teams that are not explicitly marked as test
+        const candidateTeams = await Team.find({ isSubmitted: true, isTest: { $ne: true } }).lean();
+
+        // Filter out teams that only belong to QA registrations/events and lack genuine registrations
+        const eligibleTeams = candidateTeams.filter(t => {
+            const hasQaEventRef = (t.hackathonId && /^qa[-_]/i.test(t.hackathonId)) ||
+                                  (t.lockedForHackathonId && /^qa[-_]/i.test(t.lockedForHackathonId));
+            const isLinkedToQaReg = testTeamIds.has(t.id);
+            const hasGenuineReg = genuineTeamIds.has(t.id) || 
+                                  (t.hackathonId && genuineHackathonIds.has(t.hackathonId));
+
+            // If team is associated with QA activity and has NO genuine event participation, exclude from public leaderboard
+            if ((hasQaEventRef || isLinkedToQaReg) && !hasGenuineReg) {
+                return false;
+            }
+            return true;
+        });
+
+        // 4. Query evaluations strictly for genuine hackathons
+        const evals = await Evaluation.find({
+            $or: [
+                { hackathonId: { $in: Array.from(genuineHackathonIds) } },
+                { hackathonId: { $exists: false } },
+                { hackathonId: null }
+            ]
+        }).lean();
+
+        // Exclude evaluations explicitly linked to QA hackathons
+        const genuineEvals = evals.filter(e => !e.hackathonId || genuineHackathonIds.has(e.hackathonId));
+
+        const leaderboardData = eligibleTeams.map((t) => {
+            const teamEvals = genuineEvals.filter(e => e.projectId === t.id || e.teamId === t.id);
             const evalScore = teamEvals.reduce((acc, cur) => acc + (cur.totalScore || 0), 0);
             
             let aggregatedScores = {};
