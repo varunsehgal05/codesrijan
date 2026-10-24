@@ -260,6 +260,43 @@ function renderTemplate(template, data) {
     };
   }
 
+  if (template === 'payment_rejected') {
+    var name = escapeHtml(data.name || 'Operative');
+    var eventName = escapeHtml(data.eventName || 'Tournament');
+    var teamName = data.teamName ? escapeHtml(data.teamName) : '';
+    var reason = escapeHtml(data.reason || 'Transaction proof could not be verified against banking records.');
+    var utr = data.transactionReference ? escapeHtml(data.transactionReference) : '';
+    var fee = (typeof data.feeAmount === 'number' || typeof data.feeAmount === 'string') ? escapeHtml(data.feeAmount + ' ' + (data.currency || 'INR')) : '';
+    var retryUrl = (data.retryUrl && /^https?:\/\/[^\s"'<>?#]+$/.test(data.retryUrl)) ? escapeHtml(data.retryUrl) : 'https://codesrijan-nine.vercel.app/payment';
+
+    return {
+      subject: 'CodeSrijan [PAYMENT REVIEW: DECLINED - ' + eventName + ']',
+      html: '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: Helvetica, Arial, sans-serif;">' +
+        '<tr><td align="center">' +
+        '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #E11D48; border-radius: 8px; overflow: hidden;">' +
+        '<tr><td style="background-color: #881337; border-bottom: 2px solid #E11D48; padding: 24px; text-align: center;">' +
+        '<h1 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 900; letter-spacing: 3px; font-family: monospace;">CODESRIJAN</h1>' +
+        '<p style="margin: 8px 0 0 0; color: #FDA4AF; font-size: 11px; font-family: monospace; letter-spacing: 2px;">PAYMENT_AUDIT_TRANSMISSION // DECLINED</p>' +
+        '</td></tr>' +
+        '<tr><td style="padding: 40px 32px;">' +
+        '<h2 style="margin: 0 0 16px 0; color: #F4F7FB; font-size: 18px; font-weight: 700;">Payment Verification Notice</h2>' +
+        '<p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">Hello <strong>' + name + '</strong>,</p>' +
+        '<p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">Your tournament entry payment for <strong>' + eventName + '</strong>' + (teamName ? ' (Squad: <strong>' + teamName + '</strong>)' : '') + ' has been reviewed and <strong style="color: #F43F5E;">DECLINED</strong> by the tournament administration.</p>' +
+        '<div style="background-color: #1C1917; border-left: 4px solid #F43F5E; padding: 18px; margin: 24px 0; border-radius: 4px;">' +
+        '<p style="margin: 0 0 6px 0; color: #F43F5E; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Rejection Reason</p>' +
+        '<p style="margin: 0 0 12px 0; color: #FFFFFF; font-size: 14px; font-weight: 600;">' + reason + '</p>' +
+        (utr ? '<p style="margin: 0 0 4px 0; color: #A8A29E; font-size: 11px; font-weight: 700; text-transform: uppercase;">Submitted UTR / Reference:</p><p style="margin: 0 0 10px 0; color: #E0E7FF; font-family: monospace; font-size: 13px;">' + utr + '</p>' : '') +
+        (fee ? '<p style="margin: 0 0 4px 0; color: #A8A29E; font-size: 11px; font-weight: 700; text-transform: uppercase;">Expected Fee:</p><p style="margin: 0; color: #E0E7FF; font-family: monospace; font-size: 13px;">' + fee + '</p>' : '') +
+        '</div>' +
+        '<p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 14px; line-height: 1.6;"><strong>How to resolve:</strong><br/>Please verify your transaction receipt, ensure the 12-digit UTR is accurately transcribed, and re-submit your proof of payment via the tournament dashboard.</p>' +
+        '<div style="text-align: center; margin: 28px 0;">' +
+        '<a href="' + retryUrl + '" target="_blank" style="background-color: #E11D48; color: #FFFFFF; font-weight: 800; text-transform: uppercase; text-decoration: none; padding: 14px 28px; border-radius: 4px; display: inline-block; font-size: 13px; letter-spacing: 1px;">RESUBMIT PAYMENT PROOF</a>' +
+        '</div>' +
+        '<p style="margin: 20px 0 0 0; color: #64748B; font-size: 12px; font-family: monospace;">CodeSrijan Automated Tournament Protocol</p>' +
+        '</td></tr></table></td></tr></table>'
+    };
+  }
+
   return null;
 }
 

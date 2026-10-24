@@ -1105,35 +1105,36 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             proofSizeBytes: null
         };
 
-        if (paymentProofUrl.startsWith('data:')) {
-            const validatedProof = validatePaymentProofFile(paymentProofUrl);
-            if (!validatedProof.valid) {
-                return res.status(validatedProof.statusCode || 400).json({ message: validatedProof.error });
-            }
-            storageMetadata.proofMimeType = validatedProof.mimeType;
-            storageMetadata.proofSizeBytes = validatedProof.sizeBytes;
-
-            // Attempt Firebase Cloud Storage upload using server-side Admin SDK
-            const fbUpload = await uploadProofToFirebaseStorage({
-                buffer: validatedProof.buffer,
-                mimeType: validatedProof.mimeType,
-                extension: validatedProof.extension,
-                registrationId: hackathonId + '-' + userId,
-                userId
-            });
-
-            if (fbUpload.success) {
-                storageMetadata.storageProvider = 'firebase';
-                storageMetadata.storagePath = fbUpload.storagePath;
-                storageMetadata.storageBucket = fbUpload.storageBucket;
-            } else {
-                storageMetadata.storageProvider = fbUpload.storageProvider || 'unprovisioned';
-            }
-        } else if (paymentProofUrl.startsWith('http://') || paymentProofUrl.startsWith('https://')) {
-            storageMetadata.storageProvider = 'direct';
-        } else {
-            return res.status(400).json({ message: "Payment proof must be a valid image data URI or URL." });
+        if (!paymentProofUrl.startsWith('data:')) {
+            return res.status(400).json({ message: "Payment proof must be a valid image file (JPEG, PNG, WebP)." });
         }
+
+        const validatedProof = validatePaymentProofFile(paymentProofUrl);
+        if (!validatedProof.valid) {
+            return res.status(validatedProof.statusCode || 400).json({ message: validatedProof.error });
+        }
+        storageMetadata.proofMimeType = validatedProof.mimeType;
+        storageMetadata.proofSizeBytes = validatedProof.sizeBytes;
+
+        // Attempt Firebase Cloud Storage upload using server-side Admin SDK
+        const fbUpload = await uploadProofToFirebaseStorage({
+            buffer: validatedProof.buffer,
+            mimeType: validatedProof.mimeType,
+            extension: validatedProof.extension,
+            registrationId: hackathonId + '-' + userId,
+            userId
+        });
+
+        if (!fbUpload.success) {
+            return res.status(503).json({
+                error: 'PAYMENT_STORAGE_UNAVAILABLE',
+                message: 'Payment proof upload service is currently unavailable. Cloud storage is not provisioned. Your registration has not been marked as under review; please retry later.'
+            });
+        }
+
+        storageMetadata.storageProvider = 'firebase';
+        storageMetadata.storagePath = fbUpload.storagePath;
+        storageMetadata.storageBucket = fbUpload.storageBucket;
 
         // 3. Locate Registration for this hackathon and student/team
         let registration = await Registration.findOne({
