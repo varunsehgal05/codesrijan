@@ -87,7 +87,8 @@ const hackathonSchema = new mongoose.Schema({
     coordinatorPhone: String,
 
     createdBy: String,
-    isTest: { type: Boolean, default: false, index: true }
+    isTest: { type: Boolean, default: false, index: true },
+    isArchived: { type: Boolean, default: false, index: true }
 }, { timestamps: true });
 
 // 3. Registrations Collection
