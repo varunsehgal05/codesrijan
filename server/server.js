@@ -1521,17 +1521,44 @@ app.get('/api/problems', async (req, res) => {
 });
 
 app.get('/api/hackathons/:id/problems', async (req, res) => {
-    // Extract published problems for this hackathon OR global problems
-    const problems = await ProblemStatement.find({ 
-        isPublished: true,
-        $or: [
-            { hackathonId: req.params.id },
-            { hackathonId: '' },
-            { hackathonId: null },
-            { hackathonId: { $exists: false } }
-        ]
-    });
-    res.json(problems);
+    try {
+        const hackathon = await Hackathon.findOne({ id: req.params.id });
+        if (hackathon) {
+            const now = new Date();
+            const isStartReached = hackathon.startDate && now >= new Date(hackathon.startDate);
+            const isRevealed = hackathon.problemStatementsRevealed === true ||
+                               hackathon.problemRevealMode === 'immediate' ||
+                               isStartReached;
+            if (!isRevealed) {
+                let isAdmin = false;
+                const authHeader = req.headers.authorization;
+                if (authHeader && authHeader.startsWith('Bearer ')) {
+                    const token = authHeader.split(' ')[1];
+                    const session = await Session.findOne({ sessionTokenHash: crypto.createHash('sha256').update(token).digest('hex') });
+                    if (session) {
+                        const user = await User.findOne({ id: session.userId });
+                        if (user?.role === 'admin') isAdmin = true;
+                    }
+                }
+                if (!isAdmin) {
+                    return res.json([]);
+                }
+            }
+        }
+        // Extract published problems for this hackathon OR global problems
+        const problems = await ProblemStatement.find({ 
+            isPublished: true,
+            $or: [
+                { hackathonId: req.params.id },
+                { hackathonId: '' },
+                { hackathonId: null },
+                { hackathonId: { $exists: false } }
+            ]
+        });
+        res.json(problems);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/problems/:id', async (req, res) => {
@@ -1709,6 +1736,19 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin'])
     if (!team) return res.status(404).json({ message: "Squad matrix missing." });
     if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Only leaders can authorize final submission." });
+    }
+
+    // Check hackathon submission deadline
+    if (team.hackathonId) {
+        const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+        if (hackathon) {
+            if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
+                return res.status(403).json({ message: "Submissions for this tournament are officially closed." });
+            }
+            if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
+                return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
+            }
+        }
     }
     
     team.isSubmitted = true;
@@ -2210,6 +2250,19 @@ app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, 
     // Epic D: Final Submission Lock
     if (team.isSubmitted || team.status === 'submitted') {
         return res.status(403).json({ message: "Project stream is LOCKED. Final submission has already been recorded for evaluation." });
+    }
+
+    // Check hackathon submission deadline
+    if (team.hackathonId) {
+        const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+        if (hackathon) {
+            if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
+                return res.status(403).json({ message: "Submissions for this tournament are officially closed." });
+            }
+            if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
+                return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
+            }
+        }
     }
 
     // Create Submission Schema Record
