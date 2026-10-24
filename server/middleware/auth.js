@@ -115,3 +115,5 @@ export const requireRole = (roles) => {
         next();
     };
 };
+
+export { firebaseAdminApp };

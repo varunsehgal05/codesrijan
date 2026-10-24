@@ -94,6 +94,7 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
+import { validatePaymentProofFile, uploadProofToFirebaseStorage } from './services/storage.js';
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
@@ -638,15 +639,24 @@ app.get('/api/hackathons', async (req, res) => {
         let isAdmin = false;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
-            const session = await Session.findOne({ sessionTokenHash: crypto.createHash('sha256').update(token).digest('hex') });
-            if (session) {
-                const user = await User.findOne({ id: session.userId });
-                if (user?.role === 'admin') isAdmin = true;
+            if (token && token.trim()) {
+                const sessionTokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
+                const session = await Session.findOne({ sessionTokenHash, revokedAt: null });
+                if (session && (!session.expiresAt || session.expiresAt >= new Date())) {
+                    const user = await User.findOne({ id: session.userId });
+                    if (user?.role === 'admin' && user?.accountStatus === 'active') {
+                        isAdmin = true;
+                    }
+                }
             }
         }
 
         const filter = {};
-        if (!isAdmin && req.query.includeArchived !== 'true') {
+        // CRITICAL SECURITY ENFORCEMENT (CS-035 regression fix):
+        // Anonymous guests and ordinary students CANNOT expose archived or draft hackathons
+        // by supplying query parameters such as ?includeArchived=true.
+        // The public catalog restriction is ALWAYS enforced unless the caller is an authenticated administrator.
+        if (!isAdmin) {
             filter.status = { $nin: ['archived', 'draft', 'completed', 'Completed'] };
             filter.isArchived = { $ne: true };
             if (process.env.NODE_ENV === 'test') {
@@ -655,6 +665,7 @@ app.get('/api/hackathons', async (req, res) => {
                 filter.id = { $in: ['hack-free-1792862581267', 'hack-paid-1792862582632'] };
             }
         }
+
         const hackathons = await Hackathon.find(filter).sort({ createdAt: -1 });
         res.json(hackathons);
     } catch (e) {
@@ -1085,12 +1096,42 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
         if (!paymentProofUrl || typeof paymentProofUrl !== 'string') {
             return res.status(400).json({ message: "Payment proof attachment (screenshot or receipt URL) is required." });
         }
-        if (paymentProofUrl.length > 7000000) { // Limit to ~5MB payload
-            return res.status(413).json({ message: "Payment proof attachment exceeds maximum allowed size (5MB)." });
-        }
-        const isDataUri = paymentProofUrl.startsWith('data:image/');
-        const isHttpUrl = paymentProofUrl.startsWith('http://') || paymentProofUrl.startsWith('https://');
-        if (!isDataUri && !isHttpUrl) {
+
+        let storageMetadata = {
+            storageProvider: 'none',
+            storagePath: null,
+            storageBucket: null,
+            proofMimeType: null,
+            proofSizeBytes: null
+        };
+
+        if (paymentProofUrl.startsWith('data:')) {
+            const validatedProof = validatePaymentProofFile(paymentProofUrl);
+            if (!validatedProof.valid) {
+                return res.status(validatedProof.statusCode || 400).json({ message: validatedProof.error });
+            }
+            storageMetadata.proofMimeType = validatedProof.mimeType;
+            storageMetadata.proofSizeBytes = validatedProof.sizeBytes;
+
+            // Attempt Firebase Cloud Storage upload using server-side Admin SDK
+            const fbUpload = await uploadProofToFirebaseStorage({
+                buffer: validatedProof.buffer,
+                mimeType: validatedProof.mimeType,
+                extension: validatedProof.extension,
+                registrationId: hackathonId + '-' + userId,
+                userId
+            });
+
+            if (fbUpload.success) {
+                storageMetadata.storageProvider = 'firebase';
+                storageMetadata.storagePath = fbUpload.storagePath;
+                storageMetadata.storageBucket = fbUpload.storageBucket;
+            } else {
+                storageMetadata.storageProvider = fbUpload.storageProvider || 'unprovisioned';
+            }
+        } else if (paymentProofUrl.startsWith('http://') || paymentProofUrl.startsWith('https://')) {
+            storageMetadata.storageProvider = 'direct';
+        } else {
             return res.status(400).json({ message: "Payment proof must be a valid image data URI or URL." });
         }
 
@@ -1131,9 +1172,17 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             paymentStatus: { $in: ['pending_proof', 'rejected'] }
         }, {
             $set: {
-                transactionReference: cleanUtr, paymentProofUrl,
-                paymentSubmittedAt: new Date(), paymentStatus: 'payment_under_review',
-                status: 'payment_under_review', paymentNotificationStatus: 'pending',
+                transactionReference: cleanUtr,
+                paymentProofUrl,
+                storageProvider: storageMetadata.storageProvider,
+                storagePath: storageMetadata.storagePath,
+                storageBucket: storageMetadata.storageBucket,
+                proofMimeType: storageMetadata.proofMimeType,
+                proofSizeBytes: storageMetadata.proofSizeBytes,
+                paymentSubmittedAt: new Date(),
+                paymentStatus: 'payment_under_review',
+                status: 'payment_under_review',
+                paymentNotificationStatus: 'pending',
                 paymentNotificationAttemptedAt: new Date()
             },
             $push: { reviewHistory: {
@@ -1441,6 +1490,43 @@ app.get('/api/admin/payments/:registrationId/receipt', requireAuth, requireRole(
             registrationId: registration.id,
             transactionReference: registration.transactionReference,
             paymentProofUrl: registration.paymentProofUrl,
+            storageProvider: registration.storageProvider || 'direct',
+            storagePath: registration.storagePath || null,
+            storageBucket: registration.storageBucket || null,
+            proofMimeType: registration.proofMimeType || null,
+            proofSizeBytes: registration.proofSizeBytes || null,
+            submittedAt: registration.paymentSubmittedAt
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// STUDENT PROTECTED RECEIPT ACCESS (Strict Owner Clearance)
+app.get('/api/student/registrations/:registrationId/receipt', requireAuth, async (req, res) => {
+    try {
+        const registration = await Registration.findOne({ id: req.params.registrationId });
+        if (!registration) return res.status(404).json({ message: "Registration not found." });
+
+        const isOwner = registration.userId === req.user.id ||
+            registration.rosterMembers?.some(m => m.userId === req.user.id) ||
+            req.user.role === 'admin';
+
+        if (!isOwner) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to view another student's payment proof." });
+        }
+
+        if (!registration.paymentProofUrl) return res.status(404).json({ message: "No payment receipt on file." });
+
+        res.json({
+            registrationId: registration.id,
+            transactionReference: registration.transactionReference,
+            paymentProofUrl: registration.paymentProofUrl,
+            storageProvider: registration.storageProvider || 'direct',
+            storagePath: registration.storagePath || null,
+            storageBucket: registration.storageBucket || null,
+            proofMimeType: registration.proofMimeType || null,
+            proofSizeBytes: registration.proofSizeBytes || null,
             submittedAt: registration.paymentSubmittedAt
         });
     } catch (err) {
