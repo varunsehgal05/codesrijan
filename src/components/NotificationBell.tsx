@@ -188,6 +188,18 @@ export function NotificationBell() {
                             })
                         )}
                     </div>
+
+                    {/* Footer link to dedicated /notifications page */}
+                    <div className="p-2 border-t-2 border-ink-black bg-zinc-50 text-center">
+                        <Link 
+                            to="/notifications" 
+                            onClick={() => setIsOpen(false)}
+                            className="text-[11px] font-bold text-electric-blue hover:text-stark-black uppercase inline-flex items-center gap-1 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-xs">open_in_new</span>
+                            OPEN TRANSMISSION CENTER &rarr;
+                        </Link>
+                    </div>
                 </div>
             )}
         </div>

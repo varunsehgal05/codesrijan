@@ -633,11 +633,28 @@ app.post('/api/auth/reset-password', async (req, res) => {
 
 // HACKATHONS
 app.get('/api/hackathons', async (req, res) => {
-    // Optionally only return "active" or "registration_open" hackathons unless admin
-    const query = (req.headers.authorization) ? {} : { status: { $in: ['registration_open', 'active'] } };
-    // Wait, let's keep it simple: Public can view hackathons, but maybe only active ones.
-    const hackathons = await Hackathon.find();
-    res.json(hackathons);
+    try {
+        const authHeader = req.headers.authorization;
+        let isAdmin = false;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            const session = await Session.findOne({ sessionTokenHash: crypto.createHash('sha256').update(token).digest('hex') });
+            if (session) {
+                const user = await User.findOne({ id: session.userId });
+                if (user?.role === 'admin') isAdmin = true;
+            }
+        }
+
+        const filter = {};
+        if (!isAdmin && req.query.includeArchived !== 'true') {
+            filter.status = { $nin: ['archived', 'draft'] };
+            filter.isArchived = { $ne: true };
+        }
+        const hackathons = await Hackathon.find(filter).sort({ createdAt: -1 });
+        res.json(hackathons);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 app.post('/api/hackathons', requireAuth, async (req, res) => {
     try {
@@ -1901,7 +1918,6 @@ app.patch('/api/teams/:id/points', requireAuth, requireRole(['admin']), async (r
 
 app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (req, res) => {
     try {
-        const { receiverId } = req.body;
         const team = await Team.findOne({ id: req.params.id });
         if (!team || team.leaderId !== req.user.id) {
             return res.status(403).json({ message: "Only squad leaders can transmit invitations." });
@@ -1910,27 +1926,24 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
             return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. No new invitations can be dispatched." });
         }
 
-        const hackathon = await Hackathon.findOne({ id: team.hackathonId });
-        const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
-        if (team.memberIds.length >= maxAllowed) {
-            return res.status(403).json({ message: `Squad capacity reached (${maxAllowed} members).` });
-        }
+        const { receiverId, email } = req.body;
+        const targetIdentifier = receiverId || email;
+        if (!targetIdentifier) return res.status(400).json({ message: "Receiver ID or email is required." });
 
-        const receiver = await User.findOne({ id: receiverId });
+        const receiver = await User.findOne(
+            targetIdentifier.includes('@') ? { email: targetIdentifier } : { id: targetIdentifier }
+        );
         if (!receiver) return res.status(404).json({ message: "Operative not found." });
         if (receiver.teamId) return res.status(400).json({ message: "Operative is already aligned with a squad." });
 
-        const registration = await Registration.findOne({ userId: receiverId, hackathonId: team.hackathonId });
-        if (!registration) return res.status(400).json({ message: "Operative is not registered for this event." });
-
-        const existingInvite = await TeamInvitation.findOne({ teamId: team.id, receiverId, status: 'pending' });
+        const existingInvite = await TeamInvitation.findOne({ teamId: team.id, receiverId: receiver.id, status: 'pending' });
         if (existingInvite) return res.status(400).json({ message: "Invitation already dispatched." });
 
         const invite = new TeamInvitation({
             id: `inv-${Date.now()}`,
             teamId: team.id,
             senderId: req.user.id,
-            receiverId
+            receiverId: receiver.id
         });
         await invite.save();
         
@@ -2089,6 +2102,74 @@ app.post('/api/teams/requests/:id/:action', requireAuth, requireRole(['student',
         await request.save();
         res.json({ message: `Signature ${action}ed.` });
     } catch (e) { res.status(500).json({ error: e.message }) }
+});
+
+// NOTIFICATION CENTER ENDPOINTS
+app.get('/api/notifications', requireAuth, async (req, res) => {
+    try {
+        const notifs = await Notification.find({ userId: req.user.id }).sort({ createdAt: -1 }).limit(100);
+        res.json(notifs);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.patch('/api/notifications/:id/read', requireAuth, async (req, res) => {
+    try {
+        const notif = await Notification.findOneAndUpdate(
+            { id: req.params.id, userId: req.user.id },
+            { $set: { isRead: true } },
+            { returnDocument: 'after' }
+        );
+        if (!notif) return res.status(404).json({ message: "Notification not found." });
+        res.json({ success: true, notification: notif });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.patch('/api/notifications/read-all', requireAuth, async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { userId: req.user.id, isRead: false },
+            { $set: { isRead: true } }
+        );
+        res.json({ success: true, message: "All notifications marked as read." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/notifications/:id', requireAuth, async (req, res) => {
+    try {
+        const result = await Notification.findOneAndDelete({ id: req.params.id, userId: req.user.id });
+        if (!result) return res.status(404).json({ message: "Notification not found." });
+        res.json({ success: true, message: "Notification deleted." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/notifications/clear-selected', requireAuth, async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: "Array of notification IDs is required." });
+        }
+        const result = await Notification.deleteMany({ id: { $in: ids }, userId: req.user.id });
+        res.json({ success: true, deletedCount: result.deletedCount });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.delete('/api/notifications', requireAuth, async (req, res) => {
+    try {
+        const result = await Notification.deleteMany({ userId: req.user.id });
+        res.json({ success: true, deletedCount: result.deletedCount });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), async (req, res) => {

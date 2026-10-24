@@ -30,6 +30,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MentorRouteImport } from './routes/mentor'
 import { Route as MentorCommandCenterRouteImport } from './routes/mentor-command-center'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ProblemsRouteImport } from './routes/problems'
@@ -178,6 +179,11 @@ const MentorRoute = MentorRouteImport.update({
 const MentorCommandCenterRoute = MentorCommandCenterRouteImport.update({
   id: '/mentor-command-center',
   path: '/mentor-command-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentRoute = PaymentRouteImport.update({
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/notifications': typeof NotificationsRoute
   '/payment': typeof PaymentRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
@@ -489,6 +496,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/notifications': typeof NotificationsRoute
   '/payment': typeof PaymentRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
@@ -557,6 +565,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
   '/mentor-command-center': typeof MentorCommandCenterRoute
+  '/notifications': typeof NotificationsRoute
   '/payment': typeof PaymentRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/problems': typeof ProblemsRoute
@@ -626,6 +635,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/notifications'
     | '/payment'
     | '/privacy-policy'
     | '/problems'
@@ -692,6 +702,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/notifications'
     | '/payment'
     | '/privacy-policy'
     | '/problems'
@@ -759,6 +770,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mentor'
     | '/mentor-command-center'
+    | '/notifications'
     | '/payment'
     | '/privacy-policy'
     | '/problems'
@@ -827,6 +839,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
   MentorCommandCenterRoute: typeof MentorCommandCenterRoute
+  NotificationsRoute: typeof NotificationsRoute
   PaymentRoute: typeof PaymentRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ProblemsRoute: typeof ProblemsRoute
@@ -995,6 +1008,13 @@ declare module '@tanstack/react-router' {
       path: '/mentor-command-center'
       fullPath: '/mentor-command-center'
       preLoaderRoute: typeof MentorCommandCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payment': {
@@ -1408,6 +1428,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
   MentorCommandCenterRoute: MentorCommandCenterRoute,
+  NotificationsRoute: NotificationsRoute,
   PaymentRoute: PaymentRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   ProblemsRoute: ProblemsRoute,
