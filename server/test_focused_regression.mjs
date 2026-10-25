@@ -13,10 +13,11 @@ const __dirname = path.dirname(__filename);
 // Helper function that mirrors frontend active tickets filter
 const filterActiveTickets = (tickets) => {
     return tickets.filter(t => {
-        if (!t || typeof t !== 'object') return false;
-        const raw = (t.status || 'open').toString().toLowerCase().trim();
-        const s = raw.replace(/[\s-]+/g, '_');
-        return s === 'open' || s === 'in_progress';
+        if (!t || typeof t !== 'object' || typeof t.status !== 'string') return false;
+        const trimmed = t.status.trim().toLowerCase();
+        if (!trimmed) return false;
+        const normalized = trimmed.replace(/[\s-]+/g, '_');
+        return normalized === 'open' || normalized === 'in_progress';
     });
 };
 
@@ -30,7 +31,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
     process.env.MONGO_DB_NAME = 'focused_regression_db';
     process.env.JWT_SECRET = 'test_jwt_secret_codesrijan_123456';
 
-    const { app, isOriginAllowed } = await import('./server.js');
+    const { app, isOriginAllowed, isTicketStatusActive } = await import('./server.js');
     const { requireRole } = await import('./middleware/auth.js');
     const User = mongoose.model('User');
     const Conversation = mongoose.model('Conversation');
@@ -182,12 +183,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
 
         // Backend query
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
@@ -225,12 +221,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
 
         // Backend query
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
@@ -257,12 +248,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
 
         // Backend active query
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
@@ -293,12 +279,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
 
         // Backend active query
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
@@ -330,12 +311,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
 
         // Admin query to /api/admin/support?activeOnly=true
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         const adminResults = await SupportTicket.find(activeCondition).sort({ createdAt: -1 });
@@ -350,12 +326,7 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
     // -------------------------------------------------------------------------
     await t.test('Scenario 10: Students only see their own tickets (strict user data isolation)', async () => {
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
 
         // Student A query
@@ -437,6 +408,93 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
         assert.ok(linkedConv, 'Conversation mapped by conversationId must exist in MongoDB');
         assert.equal(linkedConv.id, sampleTicket.conversationId, 'Conversation ID must match ticket conversationId');
         console.log('✓ Scenario 12 PASSED: Open Comms and Manage navigation links resolve to exact records');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 13: Strict Status Policy Matrix across API, DB, and UI
+    // Testing: open, OPEN, in_progress, in-progress, in progress, closed, resolved,
+    // missing status, null, empty strings, and unknown values
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 13: Strict Status Policy Matrix across API, DB, and UI', async () => {
+        const testCases = [
+            { status: 'open', expected: true, label: 'open' },
+            { status: 'OPEN', expected: true, label: 'OPEN' },
+            { status: 'in_progress', expected: true, label: 'in_progress' },
+            { status: 'in-progress', expected: true, label: 'in-progress' },
+            { status: 'in progress', expected: true, label: 'in progress' },
+            { status: 'IN_PROGRESS', expected: true, label: 'IN_PROGRESS' },
+            { status: 'IN PROGRESS', expected: true, label: 'IN PROGRESS' },
+            { status: 'closed', expected: false, label: 'closed' },
+            { status: 'resolved', expected: false, label: 'resolved' },
+            { status: undefined, expected: false, label: 'missing status (undefined)' },
+            { status: null, expected: false, label: 'null status' },
+            { status: '', expected: false, label: 'empty string' },
+            { status: '   ', expected: false, label: 'whitespace only' },
+            { status: 'waiting', expected: false, label: 'unknown (waiting)' },
+            { status: 'archived', expected: false, label: 'unknown (archived)' },
+            { status: 'pending_review', expected: false, label: 'unknown (pending_review)' }
+        ];
+
+        // 1. Verify Client UI Filter
+        for (const tc of testCases) {
+            const ticketObj = { id: `test-${tc.label}`, status: tc.status };
+            const isClientActive = filterActiveTickets([ticketObj]).length === 1;
+            assert.equal(
+                isClientActive, 
+                tc.expected, 
+                `UI filter: ${tc.label} expected active=${tc.expected}, got active=${isClientActive}`
+            );
+        }
+
+        // 2. Verify Server isTicketStatusActive helper
+        for (const tc of testCases) {
+            const isServerActive = isTicketStatusActive(tc.status);
+            assert.equal(
+                isServerActive, 
+                tc.expected, 
+                `Server helper: ${tc.label} expected active=${tc.expected}, got active=${isServerActive}`
+            );
+        }
+
+        // 3. Verify Database Query with $regex on actual MongoDB documents
+        const activeDbQuery = { status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i } };
+        
+        // Insert test records directly into collection to test missing/null/empty/unknown
+        for (let i = 0; i < testCases.length; i++) {
+            const tc = testCases[i];
+            const doc = {
+                id: `tic-matrix-${i}`,
+                userId: studentA.id,
+                subject: `Matrix test ${tc.label}`,
+                description: 'Test payload'
+            };
+            if (tc.status !== undefined) {
+                doc.status = tc.status;
+            }
+            await SupportTicket.collection.insertOne(doc);
+        }
+
+        const matchedDocs = await SupportTicket.find({
+            id: { $regex: /^tic-matrix-/ },
+            ...activeDbQuery
+        });
+
+        const matchedIds = matchedDocs.map(d => d.id);
+        
+        for (let i = 0; i < testCases.length; i++) {
+            const tc = testCases[i];
+            const isMatchedInDb = matchedIds.includes(`tic-matrix-${i}`);
+            assert.equal(
+                isMatchedInDb, 
+                tc.expected, 
+                `MongoDB active query: ${tc.label} expected in active list=${tc.expected}, got in list=${isMatchedInDb}`
+            );
+        }
+
+        // Clean up matrix test records
+        await SupportTicket.collection.deleteMany({ id: { $regex: /^tic-matrix-/ } });
+
+        console.log('✓ Scenario 13 PASSED: All 16 status matrix variations verified across UI, Server Helper, and MongoDB query');
     });
 
     // =========================================================================

@@ -467,7 +467,8 @@ graph TD
   - **Active Status Policy:** The active ticket list follows a strict status policy synchronized across frontend and backend:
     - **Active List Whitelist:** Strictly includes `OPEN` and `IN PROGRESS` tickets.
     - **Completed Status Exclusions:** Never shows `CLOSED` or `RESOLVED` tickets in the active transmission list.
-    - **Status Normalization:** Safe normalization handles variations (`in_progress`, `in-progress`, `in progress`). Missing, null, or empty statuses default safely to `open`. Unknown statuses never expose completed tickets as active.
+    - **Strict Status Normalization & Exclusion:** Case, whitespace, and supported separators are normalized (`in_progress`, `in-progress`, `in progress`). Missing, `null`, empty string, and unknown statuses (`waiting`, `archived`, `pending_review`) are **STRICTLY EXCLUDED** from the active transmission list and never silently treated as active.
+    - **Legacy Compatibility Policy:** In MongoDB, tickets genuinely lacking status or having null/unknown values are not mutated blindly in production; they are safely retained in the database and accessible via `/admin/support` (which displays all tickets without status filtering) and `includeClosed=true` for administrator inspection and manual triage.
     - **Management Access:** Closed and resolved tickets remain fully accessible in the administrative management console (`/admin/support`) and history views.
 
 ---
@@ -808,6 +809,7 @@ sequenceDiagram
 3. **Admin Directorate:** Administrator navigates to `/admin/support`. The loading skeleton appears immediately (`SYNCHRONIZING GLOBAL SUPPORT TICKETS...`) and clears when data arrives.
 4. **Status Mutation:** Administrator updates ticket status via the high-contrast dropdown (`● OPEN`, `⚡ IN PROGRESS`, `✓ RESOLVED`, `✕ CLOSED`). The change persists to MongoDB and emits real-time socket events.
 5. **Direct Comms Shortcut:** Clicking "Comms" opens `/chat?conv=...`, allowing direct real-time communication between student and organizers.
+6. **Active List Policy & Legacy Compatibility:** Active transmissions on `/support` strictly whitelist `OPEN` and `IN PROGRESS` tickets. `CLOSED` and `RESOLVED` tickets are excluded. Tickets with missing, `null`, empty string, or unknown statuses are never treated as active, and remain safely accessible via `/admin/support` without destructive automated database mutations.
 
 ---
 

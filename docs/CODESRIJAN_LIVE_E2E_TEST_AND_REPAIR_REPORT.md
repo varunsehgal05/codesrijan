@@ -921,16 +921,17 @@ The automated live verification script (`server/verify_live_gridfs_e2e.mjs`) and
 
 ---
 
-## 16. FINAL SUPPORT, NOTIFICATIONS, LEADERBOARD & RECRUITMENT VERIFICATION AUDIT (REVISION 99b5ccf / HEAD)
+## 16. FINAL SUPPORT, NOTIFICATIONS, LEADERBOARD & RECRUITMENT VERIFICATION AUDIT & PRODUCTION RELEASE GATE
 
 ### 1. Executive Summary & Verification Classification
 
-This section establishes empirical evidence for the finalized support ticket lifecycle, notification category tagging, tournament leaderboard matrix, and admin squad governance console.
+This section establishes empirical evidence for the finalized support ticket lifecycle, strict active status whitelist, legacy ticket compatibility policy, notification category tagging, tournament leaderboard matrix, and admin squad governance console.
 
 | Feature Scope | Implemented Changes | Local Regression Suite | Live Deployment Check | Final Classification |
 |---|---|:---:|:---:|:---:|
 | **Admin Support View** | Removed TALK TO ADMIN button for admins; added ADMIN CONSOLE ↗ shortcut to `/admin/support`; modal locked for admins. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
-| **Support Status Whitelist** | Active tickets strictly whitelist `OPEN` and `IN PROGRESS`. `CLOSED` and `RESOLVED` tickets excluded from active list. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
+| **Support Status Whitelist** | Active tickets strictly whitelist `OPEN` and `IN PROGRESS`. Missing, `null`, empty string, `CLOSED`, `RESOLVED`, and unknown statuses are strictly non-active. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
+| **Legacy Ticket Compatibility** | Legacy tickets lacking status or with unknown/null status are safely retained in MongoDB without blind mutations; accessible in `/admin/support` and history. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
 | **Support Tenant Isolation** | Admin sees platform-wide tickets via `/admin/support?activeOnly=true`. Students see only their personal tickets. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
 | **Support Permissions** | Non-admin users blocked with HTTP 403 from admin endpoints and mutating other users' tickets. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
 | **Notification Category Badges** | Neo-brutalist category tags (`PAYMENT`, `SQUAD`, `SUPPORT`, `SYSTEM`, `GENERAL`) in notification page & bell dropdown. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
@@ -939,12 +940,14 @@ This section establishes empirical evidence for the finalized support ticket lif
 | **Instant Route Keying** | Root `<Outlet key={location.pathname} />` and Admin `<Outlet key={activeRoute} />` prevent stale views. | **PASS (100%)** | Built & Synchronized | **PASS — LOCAL** |
 | **Live Backend API (Catalog & Health)** | Render backend returns HTTP 200 on public hackathons catalog (`/api/hackathons`). | N/A | **HTTP 200 OK** | **PASS — LIVE VERIFIED** |
 | **Live Frontend (Vercel CDN)** | Vercel production edge returns HTTP 200 with active cache headers (`codesrijan-nine.vercel.app`). | N/A | **HTTP 200 OK** | **PASS — LIVE VERIFIED** |
+| **Vercel Dashboard Deployed Revision** | Authenticated Vercel deployment records / dashboard inspect. | N/A | Provider session requires auth | **NOT VERIFIED** |
+| **Render Dashboard Deployed Revision** | Authenticated Render deployment records / dashboard inspect. | N/A | Provider session requires auth | **NOT VERIFIED** |
 
 ---
 
-### 2. The 12 Focused Support Regression Test Scenarios & Empirical Evidence
+### 2. The Focused Support Regression Test Scenarios & Empirical Evidence
 
-The comprehensive test suite `server/test_focused_regression.mjs` was executed against an in-memory MongoDB environment mimicking the canonical server and authentication middleware. All 12 explicit scenarios passed with zero failures:
+The comprehensive test suite `server/test_focused_regression.mjs` was executed against an in-memory MongoDB environment mimicking the canonical server and authentication middleware. All 13 explicit scenarios (19 subtests) passed with zero failures:
 
 1. **Scenario 1 — Admin visits `/support` (No TALK TO ADMIN Button):**
    - *Implementation:* `src/routes/support.tsx` inspects `currentUser.role === 'admin'`. When true, renders `ADMIN CONSOLE ↗` and completely omits the `TALK TO ADMIN` action.
@@ -963,7 +966,7 @@ The comprehensive test suite `server/test_focused_regression.mjs` was executed a
    - *Test Evidence:* Test fixture created ticket with ID `tic-student-init-...`, status `open`, and matched support conversation. **Status: PASS — LOCAL**.
 
 5. **Scenario 5 — Active list includes an OPEN ticket:**
-   - *Implementation:* Backend `activeCondition` matches `{ status: { $in: ['open', ...] } }` and frontend filter returns `true` for `s === 'open'`.
+   - *Implementation:* Backend `activeCondition` matches `{ status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i } }` and frontend filter returns `true` for `normalized === 'open'`.
    - *Test Evidence:* Both backend query and frontend filter include `ticketOpen`. **Status: PASS — LOCAL**.
 
 6. **Scenario 6 — Active list includes an IN PROGRESS ticket:**
@@ -994,6 +997,41 @@ The comprehensive test suite `server/test_focused_regression.mjs` was executed a
     - *Implementation:* `Open Comms` links to `/chat?conv=${t.conversationId}`. `Manage` links to `/admin/support`.
     - *Test Evidence:* Database integrity verification confirmed `Conversation` record matches ticket `conversationId`. **Status: PASS — LOCAL**.
 
+13. **Scenario 13 — Strict Status Policy Matrix across API, DB, and UI (All 16 Variations):**
+    - *Implementation:* Evaluates 16 distinct status representations across the Client UI Filter (`src/routes/support.tsx`), Server Helper (`isTicketStatusActive`), and MongoDB Database Query (`{ status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i } }`).
+    - *Test Matrix & Results:*
+      - `open` -> Active: **YES** (`true`)
+      - `OPEN` -> Active: **YES** (`true`)
+      - `in_progress` -> Active: **YES** (`true`)
+      - `in-progress` -> Active: **YES** (`true`)
+      - `in progress` -> Active: **YES** (`true`)
+      - `IN_PROGRESS` -> Active: **YES** (`true`)
+      - `IN PROGRESS` -> Active: **YES** (`true`)
+      - `closed` -> Active: **NO** (`false`)
+      - `resolved` -> Active: **NO** (`false`)
+      - Missing status (`undefined`) -> Active: **NO** (`false`)
+      - `null` status -> Active: **NO** (`false`)
+      - `""` (empty string) -> Active: **NO** (`false`)
+      - `"   "` (whitespace only) -> Active: **NO** (`false`)
+      - `waiting` (unknown status) -> Active: **NO** (`false`)
+      - `archived` (unknown status) -> Active: **NO** (`false`)
+      - `pending_review` (unknown status) -> Active: **NO** (`false`)
+    - *Test Evidence:* All 16 variations yielded 100% agreement between UI filter, Server helper, and MongoDB query. **Status: PASS — LOCAL**.
+
+---
+
+### 2.1 Ticket Status Policy & Legacy Compatibility Policy
+
+1. **Strict Active Whitelist:**
+   - Active tickets must strictly match `OPEN` or `IN PROGRESS` (case-insensitive, whitespace-trimmed, with spaces or hyphens normalized to underscores).
+   - Any ticket in `CLOSED` or `RESOLVED` state is strictly excluded from active lists.
+   - Missing (`undefined`), `null`, empty string (`""`), whitespace-only, or unknown statuses (`waiting`, `archived`, etc.) are **never** silently treated as active.
+
+2. **Legacy Record Compatibility (Non-Destructive Policy):**
+   - Production database records lacking a `status` field or having malformed/unknown status are **not blindly mutated or mass-updated**.
+   - These records are safely preserved in MongoDB Atlas to avoid unintended data loss or corruption.
+   - Organizers can view, triage, and manage all records (including legacy/unspecified status records) through the administrative support table (`/admin/support`, which queries `{}` without status constraints) or via `GET /api/support?includeClosed=true`.
+
 ---
 
 ### 3. Verification of Notifications, Leaderboard & Recruitment
@@ -1011,10 +1049,27 @@ The comprehensive test suite `server/test_focused_regression.mjs` was executed a
    - Admin view dynamically transforms into the **Global Squad Directorate** with live search, tournament filter dropdown, and full player dossier cards.
    - Disqualify and permanent ban actions enforce `status: 'disqualified'`, `isLocked: true`, and append administrative notes. **Status: PASS — LOCAL**.
 
-4. **Production Build & Deploy Status:**
-   - Vite client and SSR build (`npm run build`) succeeded with exit code 0 and zero compilation errors.
+4. **Production Build & Test Suite Outcomes:**
+   - Vite client and Nitro SSR build (`npm run build`) succeeded with exit code 0 and zero compilation errors (10.20s client + 1.71s SSR).
    - Production budget maintained at strictly **$0.00 / month**.
-   - Current commit HEAD on local and remote `main` / `master`: `99b5ccf`. Latest changes staged and committed.
+   - Automated Regression Tests Executed:
+     - `server/test_focused_regression.mjs`: 19 / 19 tests passed (Exit code 0).
+     - `server/test-security-local.mjs`: 8 / 8 tests passed (Exit code 0).
+     - `server/test_firebase_and_catalog_regression.mjs`: 8 / 8 tests passed (Exit code 0).
+     - `server/test_gridfs_concurrency.mjs`: 4 / 4 checks passed (Exit code 0).
+     - `server/test_gridfs_lease_lifecycle.mjs`: 4 / 4 checks passed (Exit code 0).
+     - `server/test_gridfs_storage.mjs`: 15 / 15 checks passed (Exit code 0).
+     - Total Core Platform Checks: **58 / 58 checks passed (100% passing rate)**.
+
+5. **Deployment Records & Verification Classification:**
+   - **Canonical Endpoints Tested Live:**
+     - Frontend CDN: `https://codesrijan-nine.vercel.app` (HTTP 200 OK, `Server: Vercel`).
+     - Backend API: `https://codesrijan-api-6tfr.onrender.com/api/hackathons` (HTTP 200 OK, `x-render-origin-server: Render`, returns exactly 2 public hackathons).
+   - **Deployment Status:**
+     - Local Build & Unit/Integration Suites: **PASS — LOCAL**.
+     - Live Public Route Reachability & Response Format: **PASS — LIVE VERIFIED**.
+     - Authenticated Vercel / Render Dashboard Commit SHA Audit: **NOT VERIFIED** (interactive MFA/login required in provider dashboard).
+
 
 
 

@@ -70,12 +70,14 @@ function SupportPage() {
     return <div className="p-12 text-center font-code-snippet uppercase mt-10 text-xl font-bold">PLEASE AUTHENTICATE TO ACCESS SECURE COMM CHANNELS.</div>;
   }
 
-  // Active tickets: show OPEN and IN_PROGRESS tickets, strictly excluding CLOSED and RESOLVED
+  // Active tickets: show only recognized active statuses: OPEN and IN PROGRESS.
+  // Do NOT silently treat missing, null, empty, or unknown statuses as active.
   const activeTickets = tickets.filter(t => {
-    if (!t || typeof t !== 'object') return false;
-    const raw = (t.status || 'open').toString().toLowerCase().trim();
-    const s = raw.replace(/[\s-]+/g, '_');
-    return s === 'open' || s === 'in_progress';
+    if (!t || typeof t !== 'object' || typeof t.status !== 'string') return false;
+    const trimmed = t.status.trim().toLowerCase();
+    if (!trimmed) return false;
+    const normalized = trimmed.replace(/[\s-]+/g, '_');
+    return normalized === 'open' || normalized === 'in_progress';
   });
 
   return (
@@ -199,7 +201,7 @@ function SupportPage() {
         ) : (
           <ul className="flex flex-col">
             {activeTickets.map(t => {
-              const statusNormalized = (t.status || 'open').toString().toLowerCase().trim().replace(/[\s-]+/g, '_');
+              const statusNormalized = (typeof t.status === 'string' ? t.status : '').trim().toLowerCase().replace(/[\s-]+/g, '_');
               const isProgress = statusNormalized === 'in_progress';
               const isOpen = statusNormalized === 'open';
 

@@ -3554,16 +3554,19 @@ app.post('/api/support', requireAuth, async (req, res) => {
     }
 });
 
+export const isTicketStatusActive = (status) => {
+    if (!status || typeof status !== 'string') return false;
+    const trimmed = status.trim().toLowerCase();
+    if (!trimmed) return false;
+    const normalized = trimmed.replace(/[\s-]+/g, '_');
+    return normalized === 'open' || normalized === 'in_progress';
+};
+
 app.get('/api/support', requireAuth, async (req, res) => {
     try {
         const { includeClosed } = req.query;
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
         let query = {};
         if (req.user.role === 'admin') {
@@ -3584,12 +3587,7 @@ app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, r
     try {
         const { activeOnly } = req.query;
         const activeCondition = {
-            $or: [
-                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
-                { status: { $exists: false } },
-                { status: null },
-                { status: '' }
-            ]
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
         };
         const query = activeOnly === 'true' ? activeCondition : {};
         const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
