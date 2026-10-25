@@ -196,10 +196,10 @@ export async function reconcileStorageLedger(db = mongoose.connection?.db) {
         const reservationsCol = db.collection(STORAGE_RESERVATIONS_COLLECTION);
         const now = new Date();
 
-        // 1. Mark expired pending reservations
+        // 1. Mark expired pending reservations based on lease expiration
         await reservationsCol.updateMany(
             { type: 'reservation', status: 'pending', expiresAt: { $lt: now } },
-            { $set: { status: 'expired', expiredAt: now } }
+            { $set: { status: 'expired', expiredAt: now, updatedAt: now } }
         );
 
         // 2. Measure actual committed bytes in GridFS files collection
@@ -218,7 +218,7 @@ export async function reconcileStorageLedger(db = mongoose.connection?.db) {
             actualCommittedBytes = 0;
         }
 
-        // 3. Sum active unexpired reservations
+        // 3. Sum active unexpired reservations strictly
         let activeReservedBytes = 0;
         try {
             const [activeRes] = await reservationsCol.aggregate([
@@ -234,15 +234,15 @@ export async function reconcileStorageLedger(db = mongoose.connection?.db) {
 
         const totalBytes = actualCommittedBytes + activeReservedBytes;
 
-        // 4. Update / Upsert single ledger tracking document
+        // 4. Update / Upsert single ledger tracking document with non-negative constraints
         const ledger = await reservationsCol.findOneAndUpdate(
             { _id: STORAGE_LEDGER_DOC_ID },
             {
                 $set: {
-                    committedBytes: actualCommittedBytes,
-                    reservedBytes: activeReservedBytes,
-                    totalBytes,
-                    filesCount,
+                    committedBytes: Math.max(0, actualCommittedBytes),
+                    reservedBytes: Math.max(0, activeReservedBytes),
+                    totalBytes: Math.max(0, totalBytes),
+                    filesCount: Math.max(0, filesCount),
                     lastReconciledAt: now,
                     updatedAt: now
                 }
@@ -274,7 +274,7 @@ export async function reserveGridFSCapacity({ additionalBytes, registrationId, u
     const reservationsCol = db.collection(STORAGE_RESERVATIONS_COLLECTION);
     const budgetLimit = customBudgetBytes || PROOF_STORAGE_BUDGET_BYTES;
 
-    // 1. Enforce overall cluster ceiling using dbStats if available
+    // 1. Enforce overall cluster ceiling using dbStats as an admission preflight safeguard
     try {
         const stats = await db.command({ dbStats: 1 });
         const totalDbBytes = (stats.storageSize || stats.dataSize || 0) + (stats.indexSize || 0);
@@ -371,7 +371,7 @@ export async function reserveGridFSCapacity({ additionalBytes, registrationId, u
         };
     }
 
-    // Record the individual reservation document
+    // Record the individual reservation document with active pending state
     await reservationsCol.insertOne({
         _id: reservationId,
         type: 'reservation',
@@ -394,75 +394,166 @@ export async function reserveGridFSCapacity({ additionalBytes, registrationId, u
 }
 
 /**
- * Commits a reservation upon successful GridFS write.
+ * Renews an active reservation lease for an ongoing in-flight upload.
+ * Can only succeed if the reservation is still in 'pending' status and unexpired.
  */
-export async function commitGridFSCapacity(reservationId, actualFileBytes) {
-    if (!mongoose.connection || !mongoose.connection.db || !reservationId) return;
+export async function renewReservationLease(reservationId, extensionMs = 60000) {
+    if (!mongoose.connection || !mongoose.connection.db || !reservationId) {
+        return { renewed: false, reason: 'NO_DB_OR_RESERVATION_ID' };
+    }
 
     try {
         const db = mongoose.connection.db;
         const reservationsCol = db.collection(STORAGE_RESERVATIONS_COLLECTION);
-        const resDoc = await reservationsCol.findOne({ _id: reservationId });
+        const now = new Date();
+        const newExpiry = new Date(Date.now() + extensionMs);
 
-        if (!resDoc || resDoc.status !== 'pending') return;
+        // Atomic check-and-set: only renew if currently 'pending' AND not yet expired
+        const renewedDoc = await reservationsCol.findOneAndUpdate(
+            {
+                _id: reservationId,
+                status: 'pending',
+                expiresAt: { $gt: now }
+            },
+            {
+                $set: {
+                    expiresAt: newExpiry,
+                    updatedAt: now
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!renewedDoc) {
+            return { renewed: false, reason: 'EXPIRED_OR_NOT_PENDING' };
+        }
+
+        return { renewed: true, expiresAt: newExpiry };
+    } catch (err) {
+        console.error('[RENEW RESERVATION LEASE ERROR]', err.message);
+        return { renewed: false, error: err.message };
+    }
+}
+
+/**
+ * Commits a reservation upon successful GridFS write.
+ * Uses atomic CAS so only a pending reservation can be committed (fencing against expired writes).
+ */
+export async function commitGridFSCapacity(reservationId, actualFileBytes) {
+    if (!mongoose.connection || !mongoose.connection.db || !reservationId) {
+        return { committed: false, reason: 'NO_DB_OR_RESERVATION_ID' };
+    }
+
+    try {
+        const db = mongoose.connection.db;
+        const reservationsCol = db.collection(STORAGE_RESERVATIONS_COLLECTION);
+        const now = new Date();
+
+        // Atomic check-and-set: only a 'pending' reservation can transition to 'committed'
+        const resDoc = await reservationsCol.findOneAndUpdate(
+            { _id: reservationId, status: 'pending' },
+            {
+                $set: {
+                    status: 'committed',
+                    committedBytes: actualFileBytes,
+                    committedAt: now,
+                    updatedAt: now
+                }
+            },
+            { returnDocument: 'before' }
+        );
+
+        if (!resDoc) {
+            // Either already committed, released, or expired
+            const existing = await reservationsCol.findOne({ _id: reservationId });
+            return {
+                committed: false,
+                reason: existing ? existing.status.toUpperCase() : 'NOT_FOUND'
+            };
+        }
 
         const reservedBytes = resDoc.bytes || actualFileBytes;
         const delta = actualFileBytes - reservedBytes;
 
-        await reservationsCol.updateOne(
-            { _id: reservationId },
-            { $set: { status: 'committed', committedBytes: actualFileBytes, committedAt: new Date() } }
-        );
-
+        // Atomically update ledger, guaranteeing values never drop below 0
         await reservationsCol.updateOne(
             { _id: STORAGE_LEDGER_DOC_ID },
-            {
-                $inc: {
-                    reservedBytes: -reservedBytes,
-                    committedBytes: actualFileBytes,
-                    totalBytes: delta,
-                    filesCount: 1
-                },
-                $set: { updatedAt: new Date() }
-            }
+            [
+                {
+                    $set: {
+                        reservedBytes: { $max: [0, { $subtract: [{ $ifNull: ['$reservedBytes', 0] }, reservedBytes] }] },
+                        committedBytes: { $add: [{ $ifNull: ['$committedBytes', 0] }, actualFileBytes] },
+                        totalBytes: { $max: [0, { $add: [{ $ifNull: ['$totalBytes', 0] }, delta] }] },
+                        filesCount: { $add: [{ $ifNull: ['$filesCount', 0] }, 1] },
+                        updatedAt: now
+                    }
+                }
+            ]
         );
+
+        return { committed: true, committedBytes: actualFileBytes };
     } catch (err) {
         console.error('[COMMIT RESERVATION ERROR]', err.message);
+        return { committed: false, error: err.message };
     }
 }
 
 /**
  * Releases a reservation upon upload failure or cancellation.
+ * Uses atomic CAS so release happens exactly once.
  */
 export async function releaseGridFSCapacity(reservationId) {
-    if (!mongoose.connection || !mongoose.connection.db || !reservationId) return;
+    if (!mongoose.connection || !mongoose.connection.db || !reservationId) {
+        return { released: false, reason: 'NO_DB_OR_RESERVATION_ID' };
+    }
 
     try {
         const db = mongoose.connection.db;
         const reservationsCol = db.collection(STORAGE_RESERVATIONS_COLLECTION);
-        const resDoc = await reservationsCol.findOne({ _id: reservationId });
+        const now = new Date();
 
-        if (!resDoc || resDoc.status !== 'pending') return;
+        // Atomic check-and-set: only a 'pending' reservation can transition to 'released'
+        const resDoc = await reservationsCol.findOneAndUpdate(
+            { _id: reservationId, status: 'pending' },
+            {
+                $set: {
+                    status: 'released',
+                    releasedAt: now,
+                    updatedAt: now
+                }
+            },
+            { returnDocument: 'before' }
+        );
+
+        if (!resDoc) {
+            // Already released, committed, or expired -> safe idempotent no-op
+            const existing = await reservationsCol.findOne({ _id: reservationId });
+            return {
+                released: false,
+                reason: existing ? existing.status.toUpperCase() : 'NOT_FOUND'
+            };
+        }
 
         const reservedBytes = resDoc.bytes || 0;
 
-        await reservationsCol.updateOne(
-            { _id: reservationId },
-            { $set: { status: 'released', releasedAt: new Date() } }
-        );
-
+        // Atomically decrement ledger, guaranteeing values never drop below 0
         await reservationsCol.updateOne(
             { _id: STORAGE_LEDGER_DOC_ID },
-            {
-                $inc: {
-                    reservedBytes: -reservedBytes,
-                    totalBytes: -reservedBytes
-                },
-                $set: { updatedAt: new Date() }
-            }
+            [
+                {
+                    $set: {
+                        reservedBytes: { $max: [0, { $subtract: [{ $ifNull: ['$reservedBytes', 0] }, reservedBytes] }] },
+                        totalBytes: { $max: [0, { $subtract: [{ $ifNull: ['$totalBytes', 0] }, reservedBytes] }] },
+                        updatedAt: now
+                    }
+                }
+            ]
         );
+
+        return { released: true, releasedBytes: reservedBytes };
     } catch (err) {
         console.error('[RELEASE RESERVATION ERROR]', err.message);
+        return { released: false, error: err.message };
     }
 }
 
@@ -540,13 +631,14 @@ export async function checkGridFSCapacity(additionalBytes = 0, customBudgetBytes
  * Concurrency-safely reserves capacity before writing chunks, commits upon success,
  * and releases on error.
  */
-export async function uploadProofToGridFS({ buffer, mimeType, extension, registrationId, userId, customBudgetBytes = null }) {
+export async function uploadProofToGridFS({ buffer, mimeType, extension, registrationId, userId, customBudgetBytes = null, ttlMs = 60000 }) {
     // 1. Concurrency-Safe Atomic Capacity Reservation Guard
     const reservation = await reserveGridFSCapacity({
         additionalBytes: buffer.length,
         registrationId,
         userId,
-        customBudgetBytes
+        customBudgetBytes,
+        ttlMs
     });
 
     if (!reservation.allowed) {
@@ -556,6 +648,8 @@ export async function uploadProofToGridFS({ buffer, mimeType, extension, registr
             error: reservation.error || 'Payment proof storage quota exceeded.'
         };
     }
+
+    let uploadStreamId = null;
 
     try {
         const bucket = getGridFSBucket();
@@ -574,14 +668,32 @@ export async function uploadProofToGridFS({ buffer, mimeType, extension, registr
             }
         });
 
+        uploadStreamId = uploadStream.id;
+
         await new Promise((resolve, reject) => {
             uploadStream.on('finish', resolve);
             uploadStream.on('error', reject);
             uploadStream.end(buffer);
         });
 
-        // 2. Commit the capacity reservation upon successful write
-        await commitGridFSCapacity(reservation.reservationId, buffer.length);
+        // 2. Commit the capacity reservation upon successful write with atomic fencing check
+        const commitResult = await commitGridFSCapacity(reservation.reservationId, buffer.length);
+
+        if (!commitResult || !commitResult.committed) {
+            // Reservation lease expired or was invalidated during write!
+            // Clean up the written chunks immediately so no orphaned storage leaks occur.
+            try {
+                await bucket.delete(uploadStreamId);
+            } catch (cleanupErr) {
+                console.error('[GRIDFS LEASE ABORT CLEANUP ERROR]', cleanupErr.message);
+            }
+
+            return {
+                success: false,
+                statusCode: 503,
+                error: 'Payment proof upload aborted: Storage reservation lease expired before write completion.'
+            };
+        }
 
         return {
             success: true,
@@ -596,8 +708,15 @@ export async function uploadProofToGridFS({ buffer, mimeType, extension, registr
         };
     } catch (err) {
         console.error('[GRIDFS UPLOAD ERROR]', err.message);
-        // Release reservation on failure
+        // Release reservation exactly once on failure
         await releaseGridFSCapacity(reservation.reservationId);
+        // Clean up any partially created stream if possible
+        if (uploadStreamId) {
+            try {
+                const bucket = getGridFSBucket();
+                await bucket.delete(uploadStreamId);
+            } catch { /* ignore cleanup error */ }
+        }
         return {
             success: false,
             statusCode: 500,
@@ -621,19 +740,21 @@ export async function deleteGridFSProof(fileId) {
 
         await bucket.delete(objectId);
 
-        // Adjust ledger
+        // Adjust ledger with safe non-negative updates
         if (mongoose.connection?.db && fileLength > 0) {
             const reservationsCol = mongoose.connection.db.collection(STORAGE_RESERVATIONS_COLLECTION);
             await reservationsCol.updateOne(
                 { _id: STORAGE_LEDGER_DOC_ID },
-                {
-                    $inc: {
-                        committedBytes: -fileLength,
-                        totalBytes: -fileLength,
-                        filesCount: -1
-                    },
-                    $set: { updatedAt: new Date() }
-                }
+                [
+                    {
+                        $set: {
+                            committedBytes: { $max: [0, { $subtract: [{ $ifNull: ['$committedBytes', 0] }, fileLength] }] },
+                            totalBytes: { $max: [0, { $subtract: [{ $ifNull: ['$totalBytes', 0] }, fileLength] }] },
+                            filesCount: { $max: [0, { $subtract: [{ $ifNull: ['$filesCount', 0] }, 1] }] },
+                            updatedAt: new Date()
+                        }
+                    }
+                ]
             );
         }
 

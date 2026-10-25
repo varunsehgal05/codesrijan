@@ -50,6 +50,8 @@ server/*.tmp
 !server/test_audit_journeys.mjs
 !server/test_gridfs_storage.mjs
 !server/test_gridfs_concurrency.mjs
+!server/test_cors_policies.mjs
+!server/test_gridfs_lease_lifecycle.mjs
 *.png
 platform-screenshots/
 test-results/

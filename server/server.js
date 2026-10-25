@@ -44,11 +44,55 @@ const swaggerOptions = {
 };
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+export const PRODUCTION_ORIGIN = 'https://codesrijan-nine.vercel.app';
+
+// Local development origins allowed strictly in non-production environments
+export const LOCAL_DEV_ORIGINS = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173'
+];
+
+// Project-specific preview regex: matches ONLY codesrijan project preview deployments
+// (e.g. https://codesrijan-nine.vercel.app, https://codesrijan-git-*.vercel.app, https://codesrijan-*.vercel.app)
+// Strictly rejects arbitrary Vercel apps (e.g. https://attacker.vercel.app, https://malicious.vercel.app)
+export const CODESRIJAN_PROJECT_PREVIEW_REGEX = /^https:\/\/codesrijan(?:-[a-z0-9-]+)?\.vercel\.app$/i;
+
+export function isOriginAllowed(origin) {
+    if (!origin || typeof origin !== 'string') return false;
+
+    // 1. Exact canonical production frontend
+    if (origin === PRODUCTION_ORIGIN) return true;
+
+    // 2. Explicitly configured FRONTEND_URL if provided
+    if (process.env.FRONTEND_URL) {
+        const cleanFrontendUrl = process.env.FRONTEND_URL.replace(/\/$/, '');
+        if (origin === cleanFrontendUrl) return true;
+    }
+
+    // 3. Project-specific preview deployments on Vercel strictly scoped to codesrijan
+    if (CODESRIJAN_PROJECT_PREVIEW_REGEX.test(origin)) return true;
+
+    // 4. Local development origins ONLY allowed in non-production environments
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (!isProduction && LOCAL_DEV_ORIGINS.includes(origin)) {
+        return true;
+    }
+
+    return false;
+}
+
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: (origin, callback) => {
+            if (!origin || isOriginAllowed(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error('Blocked by CORS policy'));
+        },
+        methods: ["GET", "POST"],
+        credentials: true
     }
 });
 
@@ -84,20 +128,17 @@ io.on('connection', (socket) => {
     });
 });
 
-const allowedOrigins = [
-    'https://codesrijan-nine.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'http://localhost:4173',
-    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, '')] : [])
-];
-
 app.use(cors({
     origin: (origin, callback) => {
-        if (!origin || allowedOrigins.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+        // Missing origin (same-origin, curl, server-to-server) receives safe handling without CORS headers
+        if (!origin) {
             return callback(null, true);
         }
-        return callback(new Error('Blocked by CORS policy'));
+        if (isOriginAllowed(origin)) {
+            return callback(null, true);
+        }
+        // Disallow untrusted origin cleanly without setting Access-Control-Allow-Origin
+        return callback(null, false);
     },
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
