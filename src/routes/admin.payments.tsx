@@ -90,8 +90,9 @@ function AdminPaymentsPage() {
         if (activeReceipt) {
             setImgLoading(true);
             setZoomActual(false);
+            const isUrl = activeReceipt.url.startsWith('http') || activeReceipt.url.startsWith('/api');
             const isMock = !activeReceipt.url || 
-                activeReceipt.url.length < 200 || 
+                (!isUrl && activeReceipt.url.length < 200) || 
                 activeReceipt.url === 'data:image/png;base64,aGVsbG8=' ||
                 activeReceipt.url.startsWith('test') ||
                 activeReceipt.url === 'placeholder';
@@ -412,7 +413,17 @@ function AdminPaymentsPage() {
                                     </div>
                                     {reg.paymentProofUrl && (
                                         <button
-                                            onClick={() => setActiveReceipt({ url: reg.paymentProofUrl!, utr: reg.transactionReference || 'N/A', regId: reg.id, reg })}
+                                            onClick={() => {
+                                                const token = localStorage.getItem("codesrijan_auth_token") || '';
+                                                let targetUrl = reg.paymentProofUrl || '';
+                                                if (targetUrl.startsWith('/api')) {
+                                                    const baseApi = API_URL.replace(/\/api$/, '');
+                                                    targetUrl = `${baseApi}${targetUrl}${targetUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+                                                } else if (targetUrl.startsWith('http') && targetUrl.includes('/receipt/file')) {
+                                                    targetUrl = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
+                                                }
+                                                setActiveReceipt({ url: targetUrl, utr: reg.transactionReference || 'N/A', regId: reg.id, reg });
+                                            }}
                                             className="bg-electric-blue hover:bg-white text-black px-3 py-1 font-bold text-xs uppercase transition-colors flex items-center gap-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                                         >
                                             <span className="material-symbols-outlined text-xs">visibility</span>

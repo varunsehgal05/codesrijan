@@ -123,7 +123,7 @@ const registrationSchema = new mongoose.Schema({
     },
     transactionReference: { type: String, index: true },
     paymentProofUrl: String,
-    storageProvider: { type: String, enum: ['firebase', 'direct', 'none', 'unprovisioned'], default: 'none' },
+    storageProvider: { type: String, enum: ['gridfs', 'firebase', 'direct', 'none', 'unprovisioned'], default: 'none' },
     storagePath: String,
     storageBucket: String,
     proofMimeType: String,

@@ -48,6 +48,7 @@ server/*.tmp
 !server/migrate-qa-data.mjs
 !server/test-qa-data-isolation.mjs
 !server/test_audit_journeys.mjs
+!server/test_gridfs_storage.mjs
 *.png
 platform-screenshots/
 test-results/

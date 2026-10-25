@@ -94,7 +94,7 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
-import { validatePaymentProofFile, uploadProofToFirebaseStorage } from './services/storage.js';
+import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream } from './services/storage.js';
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
@@ -1073,8 +1073,9 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
     }
 });
 
-// SUBMIT PAYMENT PROOF (UTR & RECEIPT ATTACHMENT)
+// SUBMIT PAYMENT PROOF (UTR & GRIDFS PRIVATE RECEIPT ATTACHMENT)
 app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student']), async (req, res) => {
+    let uploadedFileId = null;
     try {
         const hackathonId = req.params.id;
         const userId = req.user.id;
@@ -1092,51 +1093,21 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             return res.status(400).json({ message: "Transaction reference / UTR contains invalid characters." });
         }
 
-        // 2. Validate Payment Proof Attachment
+        // 2. Validate Payment Proof Attachment Format and Magic Bytes
         if (!paymentProofUrl || typeof paymentProofUrl !== 'string') {
-            return res.status(400).json({ message: "Payment proof attachment (screenshot or receipt URL) is required." });
+            return res.status(400).json({ message: "Payment proof attachment (screenshot or receipt image) is required." });
         }
 
-        let storageMetadata = {
-            storageProvider: 'none',
-            storagePath: null,
-            storageBucket: null,
-            proofMimeType: null,
-            proofSizeBytes: null
-        };
-
         if (!paymentProofUrl.startsWith('data:')) {
-            return res.status(400).json({ message: "Payment proof must be a valid image file (JPEG, PNG, WebP)." });
+            return res.status(400).json({ message: "Payment proof must be a valid image data URI (JPEG, PNG, WebP)." });
         }
 
         const validatedProof = validatePaymentProofFile(paymentProofUrl);
         if (!validatedProof.valid) {
             return res.status(validatedProof.statusCode || 400).json({ message: validatedProof.error });
         }
-        storageMetadata.proofMimeType = validatedProof.mimeType;
-        storageMetadata.proofSizeBytes = validatedProof.sizeBytes;
 
-        // Attempt Firebase Cloud Storage upload using server-side Admin SDK
-        const fbUpload = await uploadProofToFirebaseStorage({
-            buffer: validatedProof.buffer,
-            mimeType: validatedProof.mimeType,
-            extension: validatedProof.extension,
-            registrationId: hackathonId + '-' + userId,
-            userId
-        });
-
-        if (!fbUpload.success) {
-            return res.status(503).json({
-                error: 'PAYMENT_STORAGE_UNAVAILABLE',
-                message: 'Payment proof upload service is currently unavailable. Cloud storage is not provisioned. Your registration has not been marked as under review; please retry later.'
-            });
-        }
-
-        storageMetadata.storageProvider = 'firebase';
-        storageMetadata.storagePath = fbUpload.storagePath;
-        storageMetadata.storageBucket = fbUpload.storageBucket;
-
-        // 3. Locate Registration for this hackathon and student/team
+        // 3. Locate Registration for this hackathon and student/team BEFORE storage mutation
         let registration = await Registration.findOne({
             hackathonId,
             $or: [
@@ -1166,20 +1137,39 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             return res.status(409).json({ message: "Duplicate transaction reference: This UTR has already been submitted for another registration." });
         }
 
-        // Claim the state transition atomically: simultaneous retries dispatch only once.
-        registration = await Registration.findOneAndUpdate({
+        // 5. Stream validated image into private MongoDB GridFS storage
+        const gridfsUpload = await uploadProofToGridFS({
+            buffer: validatedProof.buffer,
+            mimeType: validatedProof.mimeType,
+            extension: validatedProof.extension,
+            registrationId: registration.id,
+            userId
+        });
+
+        if (!gridfsUpload.success) {
+            return res.status(gridfsUpload.statusCode || 503).json({
+                error: 'PAYMENT_STORAGE_UNAVAILABLE',
+                message: gridfsUpload.error || 'Payment proof upload service is currently unavailable. Your registration has not been marked as under review; please retry later.'
+            });
+        }
+
+        uploadedFileId = gridfsUpload.fileId;
+        const relativeReceiptUrl = `/api/student/registrations/${registration.id}/receipt/file`;
+
+        // 6. Atomically claim state transition and persist GridFS metadata
+        const updatedRegistration = await Registration.findOneAndUpdate({
             _id: registration._id,
             entryType: 'paid',
             paymentStatus: { $in: ['pending_proof', 'rejected'] }
         }, {
             $set: {
                 transactionReference: cleanUtr,
-                paymentProofUrl,
-                storageProvider: storageMetadata.storageProvider,
-                storagePath: storageMetadata.storagePath,
-                storageBucket: storageMetadata.storageBucket,
-                proofMimeType: storageMetadata.proofMimeType,
-                proofSizeBytes: storageMetadata.proofSizeBytes,
+                paymentProofUrl: relativeReceiptUrl,
+                storageProvider: 'gridfs',
+                storagePath: gridfsUpload.storagePath,
+                storageBucket: gridfsUpload.storageBucket,
+                proofMimeType: gridfsUpload.mimeType,
+                proofSizeBytes: gridfsUpload.sizeBytes,
                 paymentSubmittedAt: new Date(),
                 paymentStatus: 'payment_under_review',
                 status: 'payment_under_review',
@@ -1190,9 +1180,18 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
                 status: 'payment_under_review', reason: 'Proof submitted by operative', timestamp: new Date()
             } }
         }, { returnDocument: 'after', runValidators: true });
-        if (!registration) return res.status(409).json({ message: 'Payment submission already processed or registration is not awaiting payment.' });
 
-        // The queue is already durable. Email or outcome-write failure cannot undo it.
+        if (!updatedRegistration) {
+            // State transition failed (race condition or invalid status) - clean up orphan GridFS object!
+            console.warn(`[GRIDFS] State transition failed for registration ${registration.id}; cleaning up orphan object ${uploadedFileId}.`);
+            await deleteGridFSProof(uploadedFileId);
+            uploadedFileId = null;
+            return res.status(409).json({ message: 'Payment submission already processed or registration is not awaiting payment.' });
+        }
+
+        registration = updatedRegistration;
+
+        // 7. Dispatch Notification (Queue is already durable; notification failure does not roll back registration)
         try {
             const event = await Hackathon.findOne({ id: hackathonId });
             const team = registration.teamId ? await Team.findOne({ id: registration.teamId }) : null;
@@ -1209,7 +1208,7 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             console.warn('[PAYMENT NOTIFICATION] Delivery or outcome recording failed; submission remains in review queue.');
         }
 
-        // 6. Record System Activity Log
+        // 8. Record System Activity Log
         try {
             const activity = new ActivityLog({
                 id: `act-${Date.now()}`,
@@ -1227,6 +1226,11 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             registration
         });
     } catch (err) {
+        // If an unexpected error occurred after GridFS upload, clean up orphan file
+        if (uploadedFileId) {
+            console.warn(`[GRIDFS] Exception during submission; cleaning up orphan file ${uploadedFileId}:`, err.message);
+            await deleteGridFSProof(uploadedFileId).catch(() => {});
+        }
         res.status(500).json({ message: "Failed to submit payment proof.", error: err.message });
     }
 });
@@ -1530,6 +1534,86 @@ app.get('/api/student/registrations/:registrationId/receipt', requireAuth, async
             proofSizeBytes: registration.proofSizeBytes || null,
             submittedAt: registration.paymentSubmittedAt
         });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// STREAM RECEIPT BINARY OBJECT FROM GRIDFS
+async function streamReceiptFile(registration, res) {
+    if (!registration.paymentProofUrl) {
+        return res.status(404).json({ message: "No payment receipt on file." });
+    }
+
+    if (registration.storageProvider === 'gridfs' && registration.storagePath) {
+        const { found, file, stream, error } = await getGridFSProofStream(registration.storagePath);
+        if (!found) {
+            return res.status(404).json({ message: "Payment proof binary file not found in storage.", error });
+        }
+
+        const mime = file.metadata?.contentType || file.metadata?.mimeType || file.contentType || registration.proofMimeType || 'image/jpeg';
+        const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+
+        res.setHeader('Content-Type', mime);
+        if (file.length) res.setHeader('Content-Length', file.length);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+        res.setHeader('Content-Security-Policy', "default-src 'none'");
+        res.setHeader('Content-Disposition', `inline; filename="receipt-${registration.id}.${ext}"`);
+
+        stream.on('error', (streamErr) => {
+            console.error('[GRIDFS STREAM ERROR]', streamErr.message);
+            if (!res.headersSent) {
+                res.status(500).json({ message: "Failed to stream proof file." });
+            }
+        });
+
+        return stream.pipe(res);
+    }
+
+    // Fallback for legacy direct data URIs
+    if (registration.paymentProofUrl.startsWith('data:')) {
+        const matches = registration.paymentProofUrl.match(/^data:([^;]+);base64,(.+)$/);
+        if (matches) {
+            const mime = matches[1];
+            const buffer = Buffer.from(matches[2], 'base64');
+            res.setHeader('Content-Type', mime);
+            res.setHeader('Content-Length', buffer.length);
+            res.setHeader('X-Content-Type-Options', 'nosniff');
+            res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+            return res.send(buffer);
+        }
+    }
+
+    return res.status(404).json({ message: "Payment proof binary storage is unavailable for this record." });
+}
+
+// ADMIN PROTECTED RECEIPT FILE STREAMING
+app.get('/api/admin/payments/:registrationId/receipt/file', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const registration = await Registration.findOne({ id: req.params.registrationId });
+        if (!registration) return res.status(404).json({ message: "Registration not found." });
+        return await streamReceiptFile(registration, res);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// STUDENT PROTECTED RECEIPT FILE STREAMING (Strict Owner / Team Member / Admin Clearance)
+app.get('/api/student/registrations/:registrationId/receipt/file', requireAuth, async (req, res) => {
+    try {
+        const registration = await Registration.findOne({ id: req.params.registrationId });
+        if (!registration) return res.status(404).json({ message: "Registration not found." });
+
+        const isOwner = registration.userId === req.user.id ||
+            registration.rosterMembers?.some(m => m.userId === req.user.id) ||
+            req.user.role === 'admin';
+
+        if (!isOwner) {
+            return res.status(403).json({ message: "Forbidden: You are not authorized to view another student's payment proof." });
+        }
+
+        return await streamReceiptFile(registration, res);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
