@@ -2,12 +2,12 @@
 **Platform Under Test:** CodeSrijan Production Platform  
 **Live Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app/)  
 **Canonical Production Backend:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
-**Render Deployed Revision:** `37f376e` (Live on Render `srv-db1b3ke0tbcc73ac3ea0`)  
-**Git Repository Head:** Commit `a4b44ad` on branches `main` and `master` (documentation tracking commit)  
+**Render Deployed Revision:** `adcd493` (Live on Render `srv-db1b3ke0tbcc73ac3ea0`)  
+**Git Repository Head:** Commit `adcd493` on branches `main` and `master` (synchronized production release)  
 **Local Codebase:** `C:/Users/Varun/Downloads/interactive-showcase-main/interactive-showcase-main`  
-**Execution Timestamp:** 2026-10-25T05:35:00+05:30 (UTC: 2026-10-25T00:05:00Z)  
-**Operating Budget:** **$0.00 / month** (Strictly zero paid infrastructure, zero paid SaaS, zero paid email services)  
-**Production Status Summary:** **34 PASS — LIVE VERIFIED | 1 BLOCKED — STORAGE NOT PROVISIONED (CS-016 Safe 503 Verified)**  
+**Execution Timestamp:** 2026-10-25T06:15:00+05:30 (UTC: 2026-10-25T00:45:00Z)  
+**Operating Budget:** **$0.00 / month** (Strictly zero paid infrastructure, zero paid SaaS, zero paid email services, zero cloud upgrades)  
+**Production Status Summary:** **35 PASS — 100% LIVE VERIFIED (0 BLOCKED | 0 FAILED)**  
 **Lead Roles:** Lead Engineer, Browser Automation Lead, QA Coordinator, Security Engineer, Release Manager  
 
 ---
@@ -27,7 +27,7 @@
 12. [RESPONSIVE VIEWPORT & CONSOLE/NETWORK FINDINGS](#12-responsive-viewport--consolenetwork-findings)
 13. [FINAL METRIC TOTALS & ACCEPTANCE CLASSIFICATION](#13-final-metric-totals--acceptance-classification)
 14. [LIVE EXECUTION ADDENDUM: REJECTION EMAIL REPAIR, FIREBASE BLOCKER SAFEGUARD, AND ACCURACY RECONCILIATION](#14-live-execution-addendum-rejection-email-repair-firebase-blocker-safeguard-and-accuracy-reconciliation)
-15. [$0/MONTH ZERO-COST STORAGE ALTERNATIVE INVESTIGATION & OWNER RECOMMENDATION](#15-0month-zero-cost-storage-alternative-investigation--owner-recommendation)
+15. [MONGODB GRIDFS PAYMENT-PROOF STORAGE IMPLEMENTATION ($0/MONTH OPTION A) & LIVE VERIFICATION](#15-mongodb-gridfs-payment-proof-storage-implementation-0month-option-a--live-verification)
 
 ---
 
@@ -182,7 +182,7 @@ Every test case is counted individually.
 | **CS-013** | Overlapping registration rejected | Group A | Colliding event | Server rejects overlapping event registration; existing records untouched | Conflicting registration blocked server-side | **PASS — LIVE VERIFIED** | Conflicting registration response |
 | **CS-014** | Duplicate registration rejected | User 1 | `/hackathons/:id/register` | Returned `HTTP 409 Conflict: Duplicate record` | Prevent duplicate event registrations | **PASS — LIVE VERIFIED** | HTTP 409 response payload |
 | **CS-015** | Duplicate team name rejected | User 1 | `POST /api/teams` | Second team with identical normalized title rejected in tournament context | Duplicate squad names blocked | **PASS — LIVE VERIFIED** | Backend validation rejection |
-| **CS-016** | Submit payment proof with UTR | User 3 | `/payment-proof` | Historical staging pass on earlier revision `20bbb40` before cloud persistence requirement. On current live production revision `37f376e`, valid payment proof upload returns `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE` because Firebase Storage is unprovisioned under the strict $0/month budget rule. Safe failure behavior confirmed: status is NOT falsely marked under review, no fake URLs saved to DB, student registration remains clean for retry | Payment proof persisted and status transitioned to under review | **BLOCKED — STORAGE NOT PROVISIONED** | `verify_live_post_deploy_37f376e.mjs` (503 safe fallback) & historical rev `20bbb40` |
+| **CS-016** | Submit payment proof with UTR | User 3 | `/payment-proof` | **Live GridFS persistence verified on revision `adcd493`**. 32KB valid receipt uploaded by QA student on `reg-1792883629625` with UTR `GRIDFS-LIVE-UTR-1792888967840`. Image streamed into MongoDB Atlas `paymentProofs` GridFS bucket (`6add508b6b7c5970bdf7e434`). Metadata persisted: `storageProvider: 'gridfs'`, `storageBucket: 'paymentProofs'`, `proofMimeType: 'image/png'`, `proofSizeBytes: 32695`, `paymentStatus: 'payment_under_review'`. Binary streaming verified with 100% SHA-256 byte-for-byte match (`62b35f1d7f4ad348194fdf841832963898c22a4d7db7eb2e7ce4c6e6912ab2fe`), `X-Content-Type-Options: nosniff`, and private cache control. Visible Chrome inspection verified receipt image renders in admin review modal | Payment proof persisted and status transitioned to under review | **PASS — LIVE VERIFIED** | `admin_payment_proof_modal_1792889091173.png`, `verify_live_gridfs_e2e.mjs`, Render rev `adcd493` |
 | **CS-017** | Rejection requires mandatory reason | Admin | `/admin/payments/:id/review` | Rejected with reason `"Transaction ID mismatch..."`; reason stored in DB. Empty reason returns 400 | Rejection requires reason, saved in audit | **PASS — LIVE VERIFIED** | `reviewReason` DB field |
 | **CS-018** | Edit Audit Note without status change | Admin | `/admin/payments/:id/review` | Saved valid note without HTTP 400; persists after refresh; decision/status remains `rejected`; audit entry logged; empty rejected (400); unauth rejected (401) | Note saves without mutating decision | **FIXED — LIVE VERIFIED** | `payment_audit_note_verified_1792871976484.png` |
 | **CS-019** | Check rejection / transactional email delivery | Student / Admin | Gmail (`codesrijan@gmail.com` / `codesrijan+qa-rejection@gmail.com`) | Dispatched admin review notification (03:46) and student payment-rejection notice on QA registration `reg-1792883629625` via Google Apps Script Relay v5; actual inbox arrival verified at 04:44 with subject, event, UTR, fee, and rejection reason (earlier password-reset authorization relay probe verified at 03:22) | Actual email received in authorized inbox | **FIXED — LIVE VERIFIED** | `declined_payment_email_expanded_1792883729453.png` & `opened_email_verified_1792880229013.png` |
@@ -443,35 +443,35 @@ The production frontend was verified across 5 responsive viewports:
 ## 13. FINAL METRIC TOTALS & ACCEPTANCE CLASSIFICATION
 
 ### Individual Test Metric Breakdown (35 Core Test Cases)
-- **PASS — LIVE VERIFIED:** **26**  
-  (CS-001, CS-002, CS-003, CS-004, CS-005, CS-006, CS-007, CS-008, CS-009, CS-010, CS-011, CS-012, CS-013, CS-014, CS-015, CS-017, CS-023, CS-024, CS-025, CS-026, CS-028, CS-030, CS-031, CS-032, CS-033, CS-034)
+- **PASS — LIVE VERIFIED:** **27**  
+  (CS-001, CS-002, CS-003, CS-004, CS-005, CS-006, CS-007, CS-008, CS-009, CS-010, CS-011, CS-012, CS-013, CS-014, CS-015, CS-016, CS-017, CS-023, CS-024, CS-025, CS-026, CS-028, CS-030, CS-031, CS-032, CS-033, CS-034)
 - **FIXED — LIVE VERIFIED:** **6**  
   (CS-018 Edit Audit Note, CS-019 Live Email Inbox Delivery, CS-020 Delete Notification, CS-021 Clear Selected, CS-022 Refresh Persistence, CS-035 Exactly Two Public Hackathons)
 - **PASS — WALL-CLOCK QA BOUNDARY VERIFIED:** **2**  
   (CS-027 Automatic Challenge Release at Server Start Time, CS-029 Submission Cutoff at Server Deadline)
 - **PASS — LOCAL ONLY:** **0**
 - **FAIL — UNRESOLVED:** **0**
-- **BLOCKED — STORAGE NOT PROVISIONED:** **1**  
-  (CS-016 Payment-Proof Submission: In current live production revision `37f376e`, valid payment-proof uploads return `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE` because Firebase Storage is unprovisioned under the strict $0/month budget rule. Safe failure behavior confirmed: status is NOT falsely marked under review, no fake URLs saved to DB, student registration remains clean in `pending_proof` / `rejected` for safe retry. Historical staging pass on earlier revision `20bbb40` is noted for context, but current live production blocks image persistence).
+- **BLOCKED — STORAGE NOT PROVISIONED:** **0** (CS-016 resolved and live verified via private MongoDB GridFS storage adapter on revision `adcd493` with 100% byte integrity and browser visual inspection).
 - **NOT REPEATABLE SAFELY:** **0**
-- **UNVERIFIED:** **0** (CS-019 admin notification and student rejection emails both empirically verified in authorized Gmail inbox!)
+- **UNVERIFIED:** **0**
 - **Total Core Test Cases Evaluated:** **35**
-- **Current Production Summary:** **34 Functional Verifications Passing, 1 Core Workflow Blocked (Storage Not Provisioned)**.
+- **Current Production Summary:** **35 Core Test Cases Evaluated | 35 Passing (100% PASS RATE)**.
 
 ### Storage Infrastructure Classification
-- **Raster File Format & Binary Magic Byte Validation:** **PASS — LIVE & UNIT VERIFIED** (8/8 unit tests, live 400 rejection on SVG and text spoofing).
-- **Protected Receipt Access Endpoints:** **PASS — LIVE VERIFIED** (HTTP 401 unauthenticated, HTTP 403 cross-student, HTTP 200 admin).
-- **Actual Firebase Cloud Storage Object Upload:** **BLOCKED — FIREBASE STORAGE NOT PROVISIONED**  
-  (Firebase project `codesrijan-450d0` has no usable storage bucket; Google Cloud Console explicitly requires upgrading to the Blaze pay-as-you-go plan to provision Cloud Storage. Under the strict $0.00/month project budget constraint, billing accounts were not enabled. Live object persistence is unprovisioned pending owner authorization).
-- **Storage Blocker Safe Failure Handling:** **PASS — LIVE VERIFIED**  
-  (Canonical backend revision `37f376e` returns HTTP 503 with stable error code `PAYMENT_STORAGE_UNAVAILABLE`. Payment proof is never marked as submitted or under review when unpersisted; no raw data URIs or fake public URLs are saved to the database; student registration remains clean in `pending_proof` / `rejected` for safe retry).
+- **Raster File Format & Binary Magic Byte Validation:** **PASS — LIVE & UNIT VERIFIED** (8/8 unit tests, live 400 rejection on SVG and text spoofing, 413 on oversized).
+- **Protected Receipt Access Endpoints:** **PASS — LIVE VERIFIED** (HTTP 401 unauthenticated, HTTP 403 cross-student, HTTP 200 admin & owner).
+- **MongoDB GridFS Private Object Storage:** **PASS — LIVE VERIFIED**  
+  (Operates on existing MongoDB Atlas M0 cluster keyspace `codesrijan`, bucket `paymentProofs`. Strict 75 MB application budget and 400 MB cluster safety ceiling enforced. Valid payment receipts streamed and retrieved with 100% byte-for-byte SHA-256 match and zero recurring infrastructure costs).
+- **Firebase Cloud Storage Deprecation:** **DEPRECATED / REPLACED BY GRIDFS**  
+  (Firebase Blaze plan requirement successfully bypassed under strict $0.00/month budget constraint; replaced by private MongoDB GridFS storage using the active Atlas database connection).
 
 ### Final Acceptance Verdict
-## **CORE PLATFORM: LIVE QA PASS (34/35) — PAYMENT-PROOF UPLOAD: BLOCKED (NO USABLE BUCKET)**
-1. **Email Relay & Inbox Delivery (CS-019):** Full live E2E delivery verified. Both the admin review notification (`codesrijan@gmail.com` at 03:46) and the student payment-rejection notice (`codesrijan+qa-rejection@gmail.com` at 04:44) were received in the authorized Gmail inbox via the zero-cost Google Apps Script relay (Version 5).
-2. **Public Hackathon Catalog (CS-035):** Enforced server-side across all four authorization paths on revision `37f376e`. Exactly two public tournaments (`hack-free-1792862581267` and `hack-paid-1792862582632`) render for guests and students, while preserving all 10 historical records for administrators.
-3. **Wall-Clock Challenge & Submission Rules (CS-027 & CS-029):** Pre-start confidentiality and submission cutoffs strictly enforced server-side.
-4. **Firebase Cloud Storage:** File validation and access control security gates are fully operational. Actual cloud object storage is formally classified as **`BLOCKED — FIREBASE STORAGE NOT PROVISIONED`** to strictly honor the $0/month budget constraint without enabling Blaze billing. Valid uploads return HTTP 503 `PAYMENT_STORAGE_UNAVAILABLE`.
+## **CORE PLATFORM & PAYMENT-PROOF STORAGE: 100% LIVE QA PASS (35/35)**
+1. **Private GridFS Payment Proof Storage (CS-016):** Full live E2E delivery verified. 32KB valid receipt uploaded by QA student on `reg-1792883629625` (UTR: `GRIDFS-LIVE-UTR-1792888967840`), stored in Atlas `paymentProofs` bucket (`6add508b6b7c5970bdf7e434`), metadata persisted, binary streamed with 100% SHA-256 integrity match, and inspected in visible Chrome admin review modal (`admin_payment_proof_modal_1792889091173.png`).
+2. **Email Relay & Inbox Delivery (CS-019):** Full live E2E delivery verified. Both the admin review notification (`codesrijan@gmail.com` at 03:46) and the student payment-rejection notice (`codesrijan+qa-rejection@gmail.com` at 04:44) were received in the authorized Gmail inbox via the zero-cost Google Apps Script relay (Version 5).
+3. **Public Hackathon Catalog (CS-035):** Enforced server-side across all four authorization paths on revision `37f376e` and preserved in `adcd493`. Exactly two public tournaments (`hack-free-1792862581267` and `hack-paid-1792862582632`) render for guests and students, while preserving all 10 historical records for administrators.
+4. **Wall-Clock Challenge & Submission Rules (CS-027 & CS-029):** Pre-start confidentiality and submission cutoffs strictly enforced server-side.
+5. **Operating Budget Preserved:** Strictly $0.00/month operating cost maintained across all platform components. Zero paid cloud activations, zero credit cards required.
 
 ---
 
@@ -646,71 +646,160 @@ To prevent data corruption, misleading status updates, or orphan records:
 
 ---
 
-## 15. $0/MONTH ZERO-COST STORAGE ALTERNATIVE INVESTIGATION & OWNER RECOMMENDATION
+## 15. MONGODB GRIDFS PAYMENT-PROOF STORAGE IMPLEMENTATION ($0/MONTH OPTION A) & LIVE VERIFICATION
 
-### 1. Executive Objective
-Investigate whether genuine payment-proof image persistence can be achieved for CodeSrijan without enabling Firebase Blaze billing or introducing recurring infrastructure costs, while strictly preserving the **$0.00/month** project budget constraint.
+### 1. Executive Mission & Operating Constraint
+In accordance with Option A from the architectural investigation, the unavailable Firebase Cloud Storage dependency has been replaced with **private MongoDB GridFS storage utilizing the existing active Atlas database connection**.
+- **Operating Budget:** Exactly **$0.00 / month**.
+- **Billing Integrity:** Zero credit cards linked, zero Firebase Blaze plan upgrades, zero external cloud accounts created.
+- **Data Integrity:** Zero existing registrations, historical review records, or financial decisions altered or corrupted.
+- **Execution Architecture:** Implemented via native Antigravity subagents, 15-check automated integration test suite, live Render deployment, and native visible Chrome E2E verification.
 
-### 2. Comprehensive Provider Research & Factual Comparison Matrix
+---
 
-A dedicated native browser subagent was dispatched to review official documentation, pricing terms, and authentication requirements across candidate object-storage providers:
+### 2. Mandatory Preflight Atlas Capacity & Headroom Audit
+Before writing any production storage bytes, the active MongoDB Atlas cluster was audited via the MongoDB Cloud console (`Page 81C69044E7F13E966E7F2FF1836D34E8` / `mongodb_overview_1792887510929.png`):
+- **Atlas Cluster:** `codesrijan-cluster` (AWS region, MongoDB v8.0.34)
+- **Cluster Tier:** **FREE (M0 Free Tier)**
+- **Hard Storage Quota:** **512 MB**
+- **Measured Current Storage:** **144.78 MB (28.27%)**
+- **Available Free Headroom:** **367.22 MB (71.73%)**
+- **Safety Gate Evaluation:** **PASSED**. Ample capacity exists to allocate a dedicated payment-proof storage budget while preserving strict reserves.
+- **Configured Application Storage Limits:**
+  - `PROOF_STORAGE_BUDGET_BYTES`: **75 MB** (Leaves ~292 MB free headroom on the M0 cluster; accommodates ~500 compressed receipts at ~150KB each).
+  - `TOTAL_STORAGE_SAFETY_LIMIT_BYTES`: **400 MB** (Enforces a hard ceiling leaving at least **112 MB reserve** strictly guaranteed for ordinary CodeSrijan database writes, user accounts, and B-tree index expansion).
+  - Dynamic preflight checks verify both limits prior to accepting file streams.
 
-| Provider | Requires Credit Card / Billing Account? | Free Tier Storage Allowance | Free Tier Bandwidth / Operations | Private Bucket & Authenticated Access | Render / Node.js Adapter Fit | Over-Quota / Inactivity Behavior | Budget & Feasibility Rating |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **MongoDB GridFS** *(via existing Atlas M0 cluster)* | **NO** *(Uses existing active MongoDB connection)* | **512 MB** *(included in active cluster)* | Shared Atlas network bandwidth | **100% Private** *(Stored directly in `fs.files` & `fs.chunks`; no public URLs; served via authenticated Express routes)* | **Native** *(Built into `mongoose.mongo.GridFSBucket`; zero external dependencies)* | Rejects further writes if 512 MB exceeded. Accommodates ~2,500–3,400 receipts (~150KB each). | **HIGHEST (RECOMMENDED)** — $0/mo, zero credit card, 100% private, zero new accounts |
-| **Google Drive via Apps Script Relay** | **NO** *(Uses existing Google account `codesrijan@gmail.com`)* | **15 GB** *(Standard free Google account quota)* | 6 min/exec; 20,000 URL Fetch calls/day | **Private** *(Stored in restricted Google Drive folder; served via Apps Script HMAC proxy or admin Drive inspection)* | **High** *(Works over existing HTTPS Apps Script Relay via HMAC-SHA256)* | Writes fail if Google Drive 15 GB quota exceeded. Accommodates 75,000+ receipts. | **HIGH** — $0/mo, zero credit card, leverages existing Apps Script architecture |
-| **Supabase Storage** | **NO** *(Free tier does not require card on signup)* | **1 GB** | 5 GB egress/month; 50 MB max file size | **Yes** *(Private buckets with time-limited signed URLs or service-role API access)* | **High** *(Official `@supabase/supabase-js` or direct REST API)* | **Risk:** Free tier projects are automatically **paused after 7 days of inactivity** unless queried regularly. | **MODERATE** — $0/mo, but requires keep-alive pinging to prevent project auto-pause |
-| **Cloudflare R2** | **YES** *(Card required on file to activate R2)* | 10 GB | 10M Class B reads/mo; 1M Class A writes/mo | Yes *(S3-compatible API with presigned URLs)* | High *(AWS S3 SDK compatible)* | Pay-as-you-go billing triggered if free allowances exceeded. | **DISQUALIFIED** — Violates strict $0 no-card constraint |
-| **Backblaze B2** | **YES / CONDITIONAL** *(Card / phone verification required for API keys)* | 10 GB | 1 GB/day egress free | Yes *(S3-compatible API)* | High *(AWS S3 SDK compatible)* | Overages billed to card if egress exceeds 1 GB/day. | **DISQUALIFIED** — Requires billing setup and risk of overage |
-| **Firebase Cloud Storage** *(Current)* | **YES** *(Blaze Plan required by Google Cloud)* | 5 GB *(on Blaze)* | 1 GB/day egress | Yes *(Private rules with Firebase Admin SDK)* | Native *(Already implemented in `storage.js`)* | Storage bucket cannot be provisioned on Spark free tier. | **BLOCKED** — Explicitly requires billing account linking |
+---
 
-### 3. Technical Evaluation of Existing CodeSrijan Storage Adapter
-An inspection of `server/services/storage.js`, `server/server.js`, and `server/models/index.js` reveals:
-1. **Validation Decoupling:** `validatePaymentProofFile()` is completely decoupled from any cloud provider. It validates base64 data URIs or binary buffers, enforces raster-only formats (JPEG, PNG, WebP), checks binary magic bytes, and enforces the 5 MB limit.
-2. **Schema Extensibility:** The `Registration` model in `server/models/index.js` already includes:
-   ```javascript
-   storageProvider: { type: String, enum: ['firebase', 'direct', 'none', 'unprovisioned', 'gridfs', 'googledrive'], default: 'none' },
-   storagePath: String,
-   storageBucket: String,
-   proofMimeType: String,
-   proofSizeBytes: Number,
-   ```
-3. **Protected Receipt Endpoints:** Both `GET /api/admin/payments/:registrationId/receipt` and `GET /api/student/registrations/:registrationId/receipt` already enforce authentication (`requireAuth`) and role/ownership clearance. 
+### 3. Implementation Details & Storage Adapter Architecture
 
-### 4. Preservation of Current Production Safeguards
-Until the project owner authorizes an alternative storage implementation:
-- **No changes to production storage have been deployed.**
-- Valid payment-proof uploads continue to return `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE`.
-- Registrations are never marked as `payment_under_review` without verified file persistence.
-- Data URIs and fake public URLs are strictly prohibited from database persistence.
-- Raster validation, binary magic number checks, 5 MB limits, ownership verification, and duplicate UTR checks remain fully enforced.
+1. **Storage Adapter (`server/services/storage.js`):**
+   - Implemented `getGridFSBucket('paymentProofs')` utilizing the active `mongoose.connection.db` and native `mongoose.mongo.GridFSBucket`.
+   - Implemented `checkGridFSCapacity(additionalBytes)` to atomically measure current `paymentProofs.files` aggregate size against the 75 MB budget and total `dbStats` against the 400 MB safety ceiling.
+   - Implemented `uploadProofToGridFS({ buffer, mimeType, extension, registrationId, userId })` streaming validated buffers into unique, traversal-proof GridFS filenames (`proof-<registrationId>-<timestamp>-<nonce>.<ext>`) with metadata (`contentType`, `registrationId`, `userId`, `uploadedAt`, `sizeBytes`).
+   - Implemented `deleteGridFSProof(fileId)` to cleanly purge orphan objects and chunks if database metadata persistence fails.
+   - Implemented `getGridFSProofStream(fileId)` to stream binary receipts directly to authorized clients.
+   - Preserved `validatePaymentProofFile()` intact (magic-byte enforcement, 5 MB maximum size, raster-only allowlist, strict SVG/script/vector rejection).
 
-### 5. Specific Project Owner Decision Required
+2. **Schema & Middleware Updates (`server/models/index.js` & `server/middleware/auth.js`):**
+   - Added `'gridfs'` to `Registration.storageProvider` enum: `enum: ['gridfs', 'firebase', 'direct', 'none', 'unprovisioned']`.
+   - Updated `requireAuth` to accept session tokens from either `Authorization: Bearer <token>` headers or verified URL query parameters (`?token=<token>`), enabling browser `<img>` elements and `window.open` tabs to stream protected binary files without public access.
 
-The project owner is presented with the following definitive options:
+3. **Backend API Endpoints (`server/server.js`):**
+   - **Payment-Proof Submission (`POST /api/hackathons/:id/payment-proof`):**
+     - Authenticates student and validates UTR format.
+     - Validates image magic bytes and raster format.
+     - Verifies tournament registration and duplicate UTRs **before** initiating any storage write.
+     - Streams validated image into GridFS bucket `paymentProofs`.
+     - Atomically transitions registration state to `payment_under_review` and stores:
+       `storageProvider: 'gridfs'`, `storageBucket: 'paymentProofs'`, `storagePath: <fileId>`, `proofMimeType`, `proofSizeBytes`, and `paymentProofUrl: '/api/student/registrations/' + reg.id + '/receipt/file'`.
+     - **Orphan Cleanup Safeguard:** If `Registration.findOneAndUpdate()` fails or throws an exception, `deleteGridFSProof(uploadedFileId)` is immediately triggered to purge the orphan object from MongoDB.
+   - **Protected File Streaming Routes:**
+     - `GET /api/admin/payments/:registrationId/receipt/file`: Strictly requires `admin` role.
+     - `GET /api/student/registrations/:registrationId/receipt/file`: Strictly verifies registration ownership or roster membership (also permits admins).
+     - Both routes stream GridFS binary chunks via `getGridFSProofStream()` with security headers:
+       - `Content-Type: image/png` (or `image/jpeg` / `image/webp`)
+       - `X-Content-Type-Options: nosniff`
+       - `Cache-Control: private, no-store, max-age=0, must-revalidate`
+       - `Content-Security-Policy: default-src 'none'`
+       - `Content-Disposition: inline; filename="receipt-<id>.<ext>"`
+     - Rejects unauthenticated requests with HTTP 401 and cross-student requests with HTTP 403.
 
-- **Option A (Recommended — $0/Month & Zero Setup Overhead): Implement MongoDB GridFS**
-  - **Budget:** Exactly **$0.00 / month**.
-  - **Billing:** Zero credit cards or billing accounts required.
-  - **Mechanism:** Stores binary image chunks directly in the existing MongoDB Atlas M0 cluster (`fs.files` and `fs.chunks`) using native Mongoose `GridFSBucket`.
-  - **Capacity:** 512 MB accommodates ~2,500–3,400 compressed receipts.
-  - **Security:** 100% private; accessible only through authenticated server routes.
-  - **Implementation Effort:** Minimal (~30 lines in `server/services/storage.js`).
+4. **Frontend Admin Review Canvas (`src/routes/admin.payments.tsx`):**
+   - Corrected `isMock` logic so API receipt streaming URLs (starting with `/api` or `http`) are recognized as valid visual receipts rather than mocked payloads.
+   - Attached authenticated session token (`?token=...`) to receipt preview links so admin image canvas and popout tabs load protected GridFS files seamlessly.
 
-- **Option B ($0/Month & High Capacity): Implement Google Drive via Apps Script Relay**
-  - **Budget:** Exactly **$0.00 / month**.
-  - **Billing:** Zero credit cards required.
-  - **Mechanism:** Apps Script saves incoming base64 file to a dedicated private Google Drive folder owned by `codesrijan@gmail.com` (15 GB free capacity).
-  - **Security:** Protected by HMAC-SHA256 signature and authorized Gmail session.
+---
 
-- **Option C (Paid Google Cloud): Upgrade Firebase Project to Blaze Plan**
-  - **Budget:** Pay-as-you-go (requires linking owner credit card to Google Cloud).
-  - **Mechanism:** Activates Google Cloud Storage bucket `codesrijan-450d0.firebasestorage.app`.
-  - **Cost Risk:** Requires billing account authorization; risk of unexpected overage charges.
+### 4. Automated Unit & Integration Test Suite (`server/test_gridfs_storage.mjs`)
+A comprehensive 15-check automated test suite was constructed and executed against isolated in-memory MongoDB:
+1. `validatePaymentProofFile`: Valid JPEG accepted (`jpg` detected) — **PASS**
+2. `validatePaymentProofFile`: Valid PNG accepted (`png` detected) — **PASS**
+3. `validatePaymentProofFile`: Valid WebP accepted (`webp` detected) — **PASS**
+4. `validatePaymentProofFile`: SVG and spoofed magic bytes rejected with HTTP 400 — **PASS**
+5. `validatePaymentProofFile`: Oversized image (>5MB) rejected with HTTP 413 — **PASS**
+6. Direct GridFS upload: Generates valid ObjectId and stores in `paymentProofs` — **PASS**
+7. Binary retrieval & integrity: SHA-256 hash matches uploaded buffer byte-for-byte — **PASS**
+8. Non-existent fileId: Cleanly returns `found: false` — **PASS**
+9. Orphan cleanup: `deleteGridFSProof()` purges files and chunks — **PASS**
+10. Storage budget enforcement: Over-75MB upload rejected with HTTP 503 — **PASS**
+11. Cluster ceiling enforcement: Over-400MB upload rejected with HTTP 503 — **PASS**
+12. HTTP submission endpoint: Persists GridFS metadata and transitions to `payment_under_review` — **PASS**
+13. Anonymous access: HTTP 401 Unauthorized on protected receipt file routes — **PASS**
+14. Cross-student access: HTTP 403 Forbidden when Student B accesses Student A's receipt — **PASS**
+15. Admin & Owner access: HTTP 200 with `nosniff`, private cache control, and exact SHA-256 binary match — **PASS**
+- **Test Suite Result:** **15 / 15 TESTS PASSED CLEANLY** (`test_gridfs_storage.mjs`).
 
-- **Option D (Status Quo): Retain HTTP 503 Safe Storage Unavailable Safeguard**
-  - **Budget:** Exactly **$0.00 / month**.
-  - **Behavior:** Platform maintains safe failure behavior, returning HTTP 503 on payment-proof submissions while all other 34 core features operate normally.
+---
+
+### 5. Production Deployment to Render (Commit `adcd493`)
+- **Git Commit:** `adcd493` (`feat(storage): implement private MongoDB GridFS for payment proofs with capacity guard and protected streaming`)
+- **Remote Branches Synchronized:** `main` and `master` (`https://github.com/varunsehgal05/codesrijan.git`).
+- **Render Deployment Status:** Built and marked **Live** on Web Service `codesrijan-api` (`srv-db1b3ke0tbcc73ac3ea0`).
+- **Evidence:** `render_deploy_live_adcd493_1792888709870.png`.
+
+---
+
+### 6. Live Production End-to-End Verification
+
+A dedicated live verification script (`server/verify_live_gridfs_e2e.mjs`) and visible Chrome subagent were executed against the canonical production API (`https://codesrijan-api-6tfr.onrender.com/api`):
+
+1. **Pre-Upload Security Smoke Checks on Live API:**
+   - SVG upload attempt -> **HTTP 400** (*"Disallowed file format... SVG and vector formats are strictly prohibited."*)
+   - Spoofed MIME attempt -> **HTTP 400** (*"Binary signature mismatch: File content is not a valid JPEG image."*)
+   - Oversized upload attempt (>5MB) -> **HTTP 413** (*"Payment proof attachment exceeds maximum allowed size (5MB)"*)
+
+2. **Live Payment Proof Upload:**
+   - **QA Student Account:** `codesrijan+qa-rejection@gmail.com` (`usr-1792883522629`)
+   - **QA Registration:** `reg-1792883629625` (Tournament: `hack-paid-1792862582632`)
+   - **Sample Receipt File:** Valid PNG raster image (`otp_admin_debug.png`, 32,695 bytes)
+   - **Submitted UTR:** `GRIDFS-LIVE-UTR-1792888967840`
+   - **Live API Response:** **HTTP 200 OK** (`"Payment proof submitted successfully. Operative status: payment_under_review"`)
+   - **Persisted Registration Record on Atlas:**
+     - `status`: `payment_under_review`
+     - `paymentStatus`: `payment_under_review`
+     - `storageProvider`: `gridfs`
+     - `storageBucket`: `paymentProofs`
+     - `storagePath`: `6add508b6b7c5970bdf7e434`
+     - `proofMimeType`: `image/png`
+     - `proofSizeBytes`: `32695`
+     - `paymentProofUrl`: `/api/student/registrations/reg-1792883629625/receipt/file`
+
+3. **Access Control Enforcement on Live File Streaming Routes:**
+   - Anonymous `GET /api/admin/payments/reg-1792883629625/receipt/file` -> **HTTP 401**
+   - Anonymous `GET /api/student/registrations/reg-1792883629625/receipt/file` -> **HTTP 401**
+   - Cross-Student `GET /api/student/registrations/reg-1792883629625/receipt/file` (via `hacker1@codesrijan.com`) -> **HTTP 403 Forbidden**
+   - Student attempting Admin route -> **HTTP 403 Forbidden**
+
+4. **Live Binary Retrieval & SHA-256 Byte-for-Byte Integrity Verification:**
+   - **Original Uploaded Buffer SHA-256:** `62b35f1d7f4ad348194fdf841832963898c22a4d7db7eb2e7ce4c6e6912ab2fe`
+   - **Student Owner Download via Token Header:** **HTTP 200 OK**
+     - Downloaded SHA-256: `62b35f1d7f4ad348194fdf841832963898c22a4d7db7eb2e7ce4c6e6912ab2fe` (**100% MATCH**)
+   - **Student Owner Download via `?token=` Query:** **HTTP 200 OK**
+     - Downloaded SHA-256: `62b35f1d7f4ad348194fdf841832963898c22a4d7db7eb2e7ce4c6e6912ab2fe` (**100% MATCH**)
+   - **Admin Download via Admin Token Header:** **HTTP 200 OK**
+     - Downloaded SHA-256: `62b35f1d7f4ad348194fdf841832963898c22a4d7db7eb2e7ce4c6e6912ab2fe` (**100% MATCH**)
+   - **Response Headers Verified:** `Content-Type: image/png`, `X-Content-Type-Options: nosniff`, `Cache-Control: private, no-store, max-age=0, must-revalidate`.
+
+5. **Admin Payment Review Interface in Visible Chrome:**
+   - Dispatched native browser subagent to `https://codesrijan-nine.vercel.app/admin/payments`.
+   - Logged in as administrator (`admin@codesrijan.com`).
+   - Located `reg-1792883629625` in the review queue with UTR `GRIDFS-LIVE-UTR-1792888967840`.
+   - Clicked **"View Proof"**.
+   - Modal opened with the **"VISUAL IMAGE"** tab active, decoding and rendering the actual uploaded receipt screenshot directly from the protected GridFS streaming route.
+   - Captured screenshot: `admin_payment_proof_modal_1792889091173.png`.
+   - Video recording: `admin_receipt_gridfs_verification_1792889011060.webp`.
+
+6. **Duplicate UTR Rejection:**
+   - Resubmission of identical UTR `GRIDFS-LIVE-UTR-1792888967840` immediately rejected with **HTTP 400** without corrupting database state.
+
+---
+
+### 7. Reconciled Status of CS-016
+With real, durable image persistence empirically verified on production MongoDB Atlas, private authenticated streaming confirmed, and visible Chrome admin review operational:
+- **Prior Status:** `BLOCKED — STORAGE NOT PROVISIONED` (Safe 503 fallback).
+- **Final Reconciled Status:** **`PASS — LIVE VERIFIED`**.
 
 ---
 
@@ -718,6 +807,9 @@ The project owner is presented with the following definitive options:
 
 | Scope / Task | Artifact Type | Artifact File Path | Description |
 |---|---|---|---|
+| MongoDB Atlas Headroom Audit | Screenshot | `mongodb_overview_1792887510929.png` | MongoDB Atlas Cloud Console showing 144.78 MB / 512 MB usage (367.22 MB available headroom) on `codesrijan-cluster` |
+| Render Deploy `adcd493` Live | Screenshot | `admin_payment_proof_modal_1792889091173.png` | Visible Chrome admin review modal rendering private GridFS receipt screenshot for `reg-1792883629625` |
+| GridFS Admin Modal Video | WebP Video | `admin_receipt_gridfs_verification_1792889011060.webp` | Native browser subagent session inspecting admin payments queue and opening GridFS visual receipt modal |
 | Apps Script Deployment | Screenshot | `deployment_completed_1792883074171.png` | Google Apps Script Editor showing Web App updated to Version 5 with `payment_rejected` template |
 | Admin Review Notification Email | Screenshot | `opened_email_verified_1792880229013.png` | Admin payment review notification received in `codesrijan@gmail.com` at 03:46 AM |
 | Admin Review Notification Video | WebP Video | `verify_payment_email_1792880187422.webp` | Native browser subagent Gmail inbox inspection for admin notification |
@@ -729,4 +821,7 @@ The project owner is presented with the following definitive options:
 | Firebase Storage Console Probe | WebP Video | `firebase_storage_setup_1792879546059.webp` | Native browser subagent inspecting Storage in Firebase Console demonstrating Blaze requirement |
 | Storage Provider Research Video | WebP Video | `research_storage_providers.webp` | Native browser subagent investigating zero-cost storage options and official documentation |
 | Live Post-Deploy Smoke Check | Log | `verify_live_post_deploy_37f376e.log` | Automated smoke script verifying catalog (2 public, 10 admin), SVG/spoof 400, and valid JPEG 503 |
+| Live GridFS E2E Verification Log | Script & Log | `server/verify_live_gridfs_e2e.mjs` | Automated script verifying live GridFS persistence, SHA-256 hash match, and 401/403 security controls |
+| GridFS 15-Check Test Suite | Script | `server/test_gridfs_storage.mjs` | Unit and integration test suite verifying 15 GridFS storage and security checks (100% passing) |
+
 
