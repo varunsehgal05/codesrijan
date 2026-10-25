@@ -282,7 +282,7 @@ function LeaderboardPage() {
                             </>
                           ) : (
                             <span className="text-amber-700 bg-amber-100 px-2 py-0.5 border border-amber-400 font-bold text-[10px]">
-                              ⚡ ENROLLED IN TOURNAMENT
+                              ⚡ ENROLLED / AWAITING EVALUATION
                             </span>
                           )}
                         </div>
@@ -295,9 +295,9 @@ function LeaderboardPage() {
                           {t.isScored ? 'NET SCORE' : 'STATUS'}
                         </div>
                         <div className={`font-display-lg text-2xl md:text-3xl px-3 py-1 border-2 border-stark-black ${
-                          t.isScored ? 'text-electric-blue bg-surface-container-lowest' : 'text-zinc-600 bg-zinc-100 text-sm font-mono'
+                          t.isScored ? 'text-electric-blue bg-surface-container-lowest' : 'text-zinc-600 bg-zinc-100 text-xs font-mono font-bold'
                         }`}>
-                          {t.isScored ? t.totalScore : 'IN MATRIX'}
+                          {t.isScored ? t.totalScore : 'AWAITING EVAL'}
                         </div>
                       </div>
                       <span className="material-symbols-outlined text-stark-black transition-transform duration-300" style={{ transform: expandedTeam === t.id ? 'rotate(180deg)' : 'none' }}>
@@ -336,7 +336,7 @@ function LeaderboardPage() {
                       </div>
 
                       {/* Score Breakdown if scored */}
-                      {t.isScored && (
+                      {t.isScored ? (
                         <div>
                           <h4 className="font-label-bold uppercase text-xs text-stark-black mb-2 tracking-widest flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-[16px]">rubric</span>
@@ -367,6 +367,11 @@ function LeaderboardPage() {
                               )}
                             </div>
                           )}
+                        </div>
+                      ) : (
+                        <div className="bg-surface-container p-4 border-2 border-stark-black text-center font-code-snippet text-xs text-on-surface-variant uppercase flex items-center justify-center gap-2">
+                          <span className="material-symbols-outlined text-[16px] text-amber-600">hourglass_top</span>
+                          UNRANKED / AWAITING EVALUATION — OFFICIALLY ENROLLED SQUAD (NO FABRICATED SCORES)
                         </div>
                       )}
                     </div>

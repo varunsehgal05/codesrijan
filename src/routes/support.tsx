@@ -25,7 +25,7 @@ function SupportPage() {
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       if (!token) return;
-      const endpoint = currentUser?.role === 'admin' ? `${BASE}/admin/support` : `${BASE}/support`;
+      const endpoint = currentUser?.role === 'admin' ? `${BASE}/admin/support?activeOnly=true` : `${BASE}/support`;
       const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -43,6 +43,10 @@ function SupportPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (currentUser?.role === 'admin') {
+      toast.error("Administrators cannot create student support tickets from this view.");
+      return;
+    }
     setLoading(true);
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -66,10 +70,12 @@ function SupportPage() {
     return <div className="p-12 text-center font-code-snippet uppercase mt-10 text-xl font-bold">PLEASE AUTHENTICATE TO ACCESS SECURE COMM CHANNELS.</div>;
   }
 
-  // Active tickets: show open and in-progress tickets, strictly excluding closed tickets
+  // Active tickets: show OPEN and IN_PROGRESS tickets, strictly excluding CLOSED and RESOLVED
   const activeTickets = tickets.filter(t => {
-    const s = (t.status || 'open').toLowerCase().trim();
-    return s !== 'closed';
+    if (!t || typeof t !== 'object') return false;
+    const raw = (t.status || 'open').toString().toLowerCase().trim();
+    const s = raw.replace(/[\s-]+/g, '_');
+    return s === 'open' || s === 'in_progress';
   });
 
   return (
@@ -193,10 +199,9 @@ function SupportPage() {
         ) : (
           <ul className="flex flex-col">
             {activeTickets.map(t => {
-              const statusLower = (t.status || 'open').toLowerCase().trim();
-              const isProgress = statusLower === 'in_progress';
-              const isOpen = statusLower === 'open';
-              const isResolved = statusLower === 'resolved';
+              const statusNormalized = (t.status || 'open').toString().toLowerCase().trim().replace(/[\s-]+/g, '_');
+              const isProgress = statusNormalized === 'in_progress';
+              const isOpen = statusNormalized === 'open';
 
               return (
                 <li key={t.id} className="border-b-2 border-stark-black p-6 hover:bg-surface-container transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group">
@@ -206,15 +211,11 @@ function SupportPage() {
                         #{t.id.substring(0, 10)}
                       </span>
                       <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase border-2 ${
-                        isOpen 
-                          ? 'border-error text-error bg-error/10' 
-                          : isProgress 
+                        isProgress 
                           ? 'border-[#854D0E] text-[#854D0E] bg-[#FEF08A]' 
-                          : isResolved 
-                          ? 'border-success text-success bg-success/10' 
-                          : 'border-electric-blue text-electric-blue bg-electric-blue/10'
+                          : 'border-error text-error bg-error/10'
                       }`}>
-                        {isProgress ? '⚡ IN PROGRESS' : isOpen ? '● OPEN' : (t.status || 'OPEN').toUpperCase()}
+                        {isProgress ? '⚡ IN PROGRESS' : '● OPEN'}
                       </span>
                       {currentUser.role === 'admin' && t.userId && (
                         <span className="text-[11px] font-mono text-on-surface-variant bg-surface-container-high px-2 py-0.5 border border-stark-black/20">

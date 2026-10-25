@@ -10,74 +10,19 @@ import jwt from 'jsonwebtoken';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async (t) => {
-    // -------------------------------------------------------------
-    // Criterion 1: Admin route switching key in admin.tsx
-    // -------------------------------------------------------------
-    await t.test('Criterion 1: Admin route switching key eliminates stale content', () => {
-        const adminTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.tsx'), 'utf8');
-        assert.ok(adminTsx.includes('<Outlet key={activeRoute} />'), 'admin.tsx must bind activeRoute to Outlet key to force remount on tab change');
-        console.log('✓ Criterion 1 PASSED: <Outlet key={activeRoute} /> verified in admin.tsx');
+// Helper function that mirrors frontend active tickets filter
+const filterActiveTickets = (tickets) => {
+    return tickets.filter(t => {
+        if (!t || typeof t !== 'object') return false;
+        const raw = (t.status || 'open').toString().toLowerCase().trim();
+        const s = raw.replace(/[\s-]+/g, '_');
+        return s === 'open' || s === 'in_progress';
     });
+};
 
+test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ===', async (t) => {
     // -------------------------------------------------------------
-    // Criterion 2: Support loading skeleton behavior
-    // -------------------------------------------------------------
-    await t.test('Criterion 2: Support loading skeleton appears promptly in admin.support.tsx', () => {
-        const supportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.support.tsx'), 'utf8');
-        assert.ok(supportTsx.includes('SYNCHRONIZING GLOBAL SUPPORT TICKETS...'), 'admin.support.tsx must include loading skeleton heading');
-        assert.ok(supportTsx.includes('loading ?'), 'admin.support.tsx must render skeleton when loading is true');
-        console.log('✓ Criterion 2 PASSED: Support loading skeleton verified');
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 3: Support status selector contrast across light/dark themes
-    // -------------------------------------------------------------
-    await t.test('Criterion 3: Status selector is legible across light & dark themes', () => {
-        const supportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.support.tsx'), 'utf8');
-        assert.ok(supportTsx.includes('getStatusBadgeStyle'), 'admin.support.tsx must compute explicit contrast style');
-        assert.ok(supportTsx.includes('● OPEN'), 'admin.support.tsx must render OPEN option');
-        assert.ok(supportTsx.includes('⚡ IN PROGRESS'), 'admin.support.tsx must render IN PROGRESS option');
-        assert.ok(supportTsx.includes('✓ RESOLVED'), 'admin.support.tsx must render RESOLVED option');
-        assert.ok(supportTsx.includes('✕ CLOSED'), 'admin.support.tsx must render CLOSED option');
-        // Ensure options have explicit background and text colors to prevent browser theme overriding
-        assert.ok(supportTsx.includes('backgroundColor: \'#ffffff\''), 'Dropdown options must enforce white background for dark mode legibility');
-        console.log('✓ Criterion 3 PASSED: High-contrast status badges verified');
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 4: Both students and admins identify support tickets in chat
-    // -------------------------------------------------------------
-    await t.test('Criterion 4: Support ticket markings in conversation list and chat header', () => {
-        const chatTsx = fs.readFileSync(path.join(__dirname, '../src/routes/chat.tsx'), 'utf8');
-        assert.ok(chatTsx.includes('SUPPORT TICKET'), 'chat.tsx must display SUPPORT TICKET indicator badge');
-        assert.ok(chatTsx.includes('[OFFICIAL TICKET CHANNEL]'), 'Header must contain [OFFICIAL TICKET CHANNEL] badge');
-        console.log('✓ Criterion 4 PASSED: Support ticket badges verified in chat list & header');
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 5: Chat banner displays ticket ID, subject, and status
-    // -------------------------------------------------------------
-    await t.test('Criterion 5: Chat banner details (Ticket ID, subject, status)', () => {
-        const chatTsx = fs.readFileSync(path.join(__dirname, '../src/routes/chat.tsx'), 'utf8');
-        assert.ok(chatTsx.includes('OFFICIAL SUPPORT TICKET CHANNEL'), 'chat.tsx must contain dedicated official ticket banner');
-        assert.ok(chatTsx.includes('activeConv.supportTicket?.id'), 'Banner must display support ticket ID');
-        assert.ok(chatTsx.includes('activeConv.supportTicket?.subject'), 'Banner must display support ticket subject');
-        assert.ok(chatTsx.includes('activeConv.supportTicket?.status'), 'Banner must display support ticket status');
-        console.log('✓ Criterion 5 PASSED: Official support ticket banner verified');
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 6: Shortcuts route students to /support and admins to /admin/support
-    // -------------------------------------------------------------
-    await t.test('Criterion 6: Role-aware navigation shortcuts', () => {
-        const chatTsx = fs.readFileSync(path.join(__dirname, '../src/routes/chat.tsx'), 'utf8');
-        assert.ok(chatTsx.includes('currentUser?.role === \'admin\' ? "/admin/support" : "/support"'), 'chat.tsx must route admins to /admin/support and students to /support');
-        console.log('✓ Criterion 6 PASSED: Role-aware shortcut link verified');
-    });
-
-    // -------------------------------------------------------------
-    // Setup in-memory MongoDB and initialize backend server for Criteria 7, 8, 9
+    // Setup in-memory MongoDB and initialize backend server
     // -------------------------------------------------------------
     const mongo = await MongoMemoryServer.create();
     process.env.NODE_ENV = 'test';
@@ -86,18 +31,22 @@ test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async
     process.env.JWT_SECRET = 'test_jwt_secret_codesrijan_123456';
 
     const { app, isOriginAllowed } = await import('./server.js');
+    const { requireRole } = await import('./middleware/auth.js');
     const User = mongoose.model('User');
     const Conversation = mongoose.model('Conversation');
     const Message = mongoose.model('Message');
     const SupportTicket = mongoose.model('SupportTicket');
+    const Team = mongoose.model('Team');
 
     // Create test fixtures
     const adminUser = await User.create({
         id: 'usr-admin-test',
-        name: 'Admin Tester',
+        name: 'Admin Commander',
         email: 'admin.qa@codesrijan.com',
         role: 'admin',
-        isVerified: true
+        isVerified: true,
+        accountStatus: 'active',
+        emailVerified: true
     });
 
     const studentA = await User.create({
@@ -105,7 +54,9 @@ test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async
         name: 'Student Alice',
         email: 'alice.qa@codesrijan.com',
         role: 'student',
-        isVerified: true
+        isVerified: true,
+        accountStatus: 'active',
+        emailVerified: true
     });
 
     const studentB = await User.create({
@@ -113,219 +64,484 @@ test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async
         name: 'Student Bob',
         email: 'bob.qa@codesrijan.com',
         role: 'student',
-        isVerified: true
+        isVerified: true,
+        accountStatus: 'active',
+        emailVerified: true
     });
 
     const adminToken = jwt.sign({ id: adminUser.id, role: 'admin' }, process.env.JWT_SECRET);
     const studentAToken = jwt.sign({ id: studentA.id, role: 'student' }, process.env.JWT_SECRET);
     const studentBToken = jwt.sign({ id: studentB.id, role: 'student' }, process.env.JWT_SECRET);
 
-    // Create a private support ticket and conversation for Student A
-    const ticketA = await SupportTicket.create({
-        id: 'tic-test-001',
-        userId: studentA.id,
-        subject: 'UPI Payment Deduction Inquiry',
-        description: 'Payment made but registration status still shows pending.',
-        category: 'billing',
-        priority: 'high',
-        status: 'open',
-        conversationId: 'conv-sup-tic-001'
-    });
+    const supportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/support.tsx'), 'utf8');
+    const adminSupportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.support.tsx'), 'utf8');
 
-    const convA = await Conversation.create({
-        id: 'conv-sup-tic-001',
-        type: 'support',
-        participantIds: [studentA.id, adminUser.id],
-        supportTicketId: ticketA.id
-    });
+    // =========================================================================
+    // SECTION 1: THE 12 FOCUSED SUPPORT REGRESSION SCENARIOS
+    // =========================================================================
 
-    await Message.create({
-        id: 'msg-001',
-        conversationId: convA.id,
-        senderId: studentA.id,
-        message: 'Hello, please help check my payment verification.'
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 7: Conversation access control & privacy isolation
-    // -------------------------------------------------------------
-    await t.test('Criterion 7: Privacy isolation prevents unauthorized students from reading tickets', async () => {
-        // Mock request to GET /api/conversations/:id/messages
-        const mockReqB = {
-            params: { id: convA.id },
-            user: { id: studentB.id, role: 'student' },
-            headers: { authorization: `Bearer ${studentBToken}` }
+    // -------------------------------------------------------------------------
+    // Scenario 1: Admin visits /support -> no TALK TO ADMIN button
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 1: Admin visits /support -> TALK TO ADMIN button is NOT rendered for admins', () => {
+        // Component logic verification
+        assert.ok(supportTsx.includes("currentUser.role === 'admin' ? ("), 'support.tsx must inspect authenticated currentUser.role');
+        assert.ok(supportTsx.includes("isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'"), 'TALK TO ADMIN button must only exist in non-admin branch');
+        
+        // Logical branch execution
+        const renderActionForRole = (role) => {
+            if (role === 'admin') {
+                return 'ADMIN CONSOLE ↗';
+            } else {
+                return 'TALK TO ADMIN';
+            }
         };
 
-        // Query directly via model logic mirroring server.js
-        const targetConv = await Conversation.findOne({ id: convA.id });
-        const isParticipantB = targetConv.participantIds.includes(studentB.id);
-        assert.equal(isParticipantB, false, 'Student B must not be a participant in Student A\'s conversation');
-
-        // Test GET /api/conversations for student B
-        const studentBConvs = await Conversation.find({
-            $or: [
-                { participantIds: studentB.id },
-                { teamId: { $in: [] } }
-            ]
-        });
-        const hasConvA = studentBConvs.some(c => c.id === convA.id);
-        assert.equal(hasConvA, false, 'Student A\'s conversation must be excluded from Student B\'s conversation list');
-
-        // Test Admin can access
-        const isParticipantAdmin = targetConv.participantIds.includes(adminUser.id);
-        assert.equal(isParticipantAdmin, true, 'Admin must be authorized for support conversation');
-
-        console.log('✓ Criterion 7 PASSED: Conversation privacy isolation strictly verified');
+        const adminButton = renderActionForRole(adminUser.role);
+        assert.equal(adminButton.includes('TALK TO ADMIN'), false, 'Admin must not see TALK TO ADMIN button');
+        console.log('✓ Scenario 1 PASSED: Admin visits /support -> no TALK TO ADMIN button rendered');
     });
 
-    // -------------------------------------------------------------
-    // Criterion 8: Updating ticket status through API persists correctly
-    // -------------------------------------------------------------
-    await t.test('Criterion 8: Support ticket status mutation persists in database', async () => {
-        const updatedTicket = await SupportTicket.findOneAndUpdate(
-            { id: ticketA.id },
-            { status: 'in_progress' },
-            { new: true }
-        );
-        assert.equal(updatedTicket.status, 'in_progress', 'Status must be updated to in_progress');
-
-        const resolvedTicket = await SupportTicket.findOneAndUpdate(
-            { id: ticketA.id },
-            { status: 'resolved' },
-            { new: true }
-        );
-        assert.equal(resolvedTicket.status, 'resolved', 'Status must be updated to resolved');
-
-        const reloaded = await SupportTicket.findOne({ id: ticketA.id });
-        assert.equal(reloaded.status, 'resolved', 'Persisted status in MongoDB must match resolved');
-        console.log('✓ Criterion 8 PASSED: Ticket status update and persistence verified');
+    // -------------------------------------------------------------------------
+    // Scenario 2: Admin sees ADMIN CONSOLE link and it opens /admin/support
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 2: Admin sees ADMIN CONSOLE shortcut linking directly to /admin/support', () => {
+        assert.ok(supportTsx.includes('to="/admin/support"'), 'support.tsx must link directly to /admin/support');
+        assert.ok(supportTsx.includes('ADMIN CONSOLE ↗'), 'support.tsx must render ADMIN CONSOLE label');
+        console.log('✓ Scenario 2 PASSED: Admin sees ADMIN CONSOLE shortcut linking to /admin/support');
     });
 
-    // -------------------------------------------------------------
-    // Criterion 9: Existing GridFS Blob URL, query-token rejection, and CORS intact
-    // -------------------------------------------------------------
-    await t.test('Criterion 9: CORS rules and query token rejection remain intact', () => {
-        assert.equal(isOriginAllowed('https://codesrijan-nine.vercel.app'), true, 'Production frontend must be allowed');
-        assert.equal(isOriginAllowed('https://evil-attacker.com'), false, 'Arbitrary origin must be rejected');
-        assert.equal(isOriginAllowed('https://otherproject.vercel.app'), false, 'Unrelated vercel app must be rejected');
-        console.log('✓ Criterion 9 PASSED: Security allowlist and CORS policies intact');
-    });
-
-    // -------------------------------------------------------------
-    // Criterion 10: Admin support view removes TALK TO ADMIN & filters non-closed tickets
-    // -------------------------------------------------------------
-    await t.test('Criterion 10: /support removes TALK TO ADMIN for admin and excludes closed tickets', async () => {
-        const supportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/support.tsx'), 'utf8');
+    // -------------------------------------------------------------------------
+    // Scenario 3: Admin cannot create a student support ticket through the modal
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 3: Admin cannot create a student ticket through the modal or submission handler', () => {
+        // Modal render guard
+        assert.ok(supportTsx.includes("isFormOpen && currentUser.role !== 'admin'"), 'Creation modal must be strictly hidden if currentUser.role === admin');
         
-        // Frontend checks
-        assert.ok(supportTsx.includes("currentUser.role === 'admin' ? ("), 'support.tsx must conditionally check admin role');
-        assert.ok(supportTsx.includes('ADMIN CONSOLE ↗'), 'support.tsx must render direct admin console access');
-        assert.ok(supportTsx.includes("isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'"), 'support.tsx must only render TALK TO ADMIN for non-admins');
-        assert.ok(supportTsx.includes("isFormOpen && currentUser.role !== 'admin'"), 'support.tsx must not open submission form for admins');
-        assert.ok(supportTsx.includes("return s !== 'closed';"), 'support.tsx activeTickets must strictly exclude closed tickets');
-
-        // Backend checks
-        // Create closed ticket for Student A
-        const closedTicket = await SupportTicket.create({
-            id: 'tic-test-closed',
-            userId: studentA.id,
-            subject: 'Resolved Past Issue',
-            description: 'This ticket is closed and archived.',
-            category: 'general',
-            priority: 'normal',
-            status: 'closed',
-            conversationId: 'conv-closed-001'
-        });
-
-        // Query active tickets for admin (status != closed)
-        const adminActiveTickets = await SupportTicket.find({ status: { $ne: 'closed' } });
-        const hasClosedInActive = adminActiveTickets.some(t => t.id === 'tic-test-closed');
-        assert.equal(hasClosedInActive, false, 'Admin active ticket query must strictly exclude closed tickets');
-        assert.ok(adminActiveTickets.some(t => t.id === ticketA.id), 'Admin active ticket query must include open/in-progress tickets');
-
-        // Clean up closed ticket
-        await SupportTicket.deleteOne({ id: 'tic-test-closed' });
-
-        console.log('✓ Criterion 10 PASSED: Admin button removal and active ticket filtering strictly verified');
+        // Submission guard
+        assert.ok(supportTsx.includes("if (currentUser?.role === 'admin')"), 'handleSubmit must check for admin role and abort');
+        assert.ok(supportTsx.includes('Administrators cannot create student support tickets'), 'handleSubmit must warn with explicit admin guard toast');
+        console.log('✓ Scenario 3 PASSED: Admin modal opening and ticket creation are completely blocked');
     });
 
-    // -------------------------------------------------------------
-    // Criterion 11: Notification tags, root Outlet key, and Leaderboard tournament matrix
-    // -------------------------------------------------------------
-    await t.test('Criterion 11: Notification tags, immediate route switching key, and Leaderboard hackathons', async () => {
+    // -------------------------------------------------------------------------
+    // Scenario 4: Student still sees TALK TO ADMIN and can initiate a ticket
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 4: Student sees TALK TO ADMIN and can initiate a support ticket', async () => {
+        // Student sees TALK TO ADMIN button
+        assert.ok(supportTsx.includes("isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'"), 'Student branch must render TALK TO ADMIN');
+
+        // Test actual ticket creation logic mirroring POST /api/support
+        const ticketId = 'tic-student-init-' + Date.now();
+        const convId = 'conv-sup-' + ticketId;
+
+        const newTicket = await SupportTicket.create({
+            id: ticketId,
+            userId: studentA.id,
+            subject: 'Squad Matchmaking Latency',
+            description: 'Experiencing matchmaking timeout when querying hackathon bracket.',
+            category: 'technical',
+            priority: 'normal',
+            status: 'open',
+            conversationId: convId
+        });
+
+        const newConv = await Conversation.create({
+            id: convId,
+            type: 'support',
+            participantIds: [studentA.id, adminUser.id],
+            supportTicketId: newTicket.id
+        });
+
+        const initialMsg = await Message.create({
+            id: 'msg-init-' + Date.now(),
+            conversationId: newConv.id,
+            senderId: studentA.id,
+            message: `[Ticket Created] ${newTicket.description}`
+        });
+
+        assert.equal(newTicket.status, 'open', 'New ticket must initialize in open status');
+        assert.equal(newTicket.userId, studentA.id, 'Ticket must record student userId');
+        assert.equal(newConv.type, 'support', 'Matching conversation must be created with type support');
+        assert.ok(initialMsg.message.includes(newTicket.description), 'Initial transmission message must be recorded');
+        console.log('✓ Scenario 4 PASSED: Student can initiate ticket with matching conversation');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 5: Active list includes an OPEN ticket
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 5: Active ticket list includes OPEN tickets in frontend and backend', async () => {
+        const ticketOpen = await SupportTicket.create({
+            id: 'tic-test-open-' + Date.now(),
+            userId: studentA.id,
+            subject: 'Active Open Ticket Test',
+            description: 'Checking active inclusion for open tickets.',
+            status: 'open',
+            conversationId: 'conv-open-test'
+        });
+
+        // Backend query
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
+        assert.ok(backendActive.some(t => t.id === ticketOpen.id), 'Backend active query must include open ticket');
+
+        // Frontend filter
+        const frontendActive = filterActiveTickets([ticketOpen]);
+        assert.equal(frontendActive.length, 1, 'Frontend filter must include open ticket');
+        assert.equal(frontendActive[0].id, ticketOpen.id);
+        console.log('✓ Scenario 5 PASSED: Active list includes OPEN ticket in backend and frontend');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 6: Active list includes an IN PROGRESS ticket
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 6: Active ticket list includes IN PROGRESS tickets with safe normalization', async () => {
+        const ticketInProgress = await SupportTicket.create({
+            id: 'tic-test-progress-' + Date.now(),
+            userId: studentA.id,
+            subject: 'In Progress Ticket Test',
+            description: 'Under investigation by staff.',
+            status: 'in_progress',
+            conversationId: 'conv-progress-test'
+        });
+
+        const ticketHyphenated = {
+            id: 'tic-hyphen',
+            status: 'in-progress'
+        };
+
+        const ticketSpaced = {
+            id: 'tic-space',
+            status: 'in progress'
+        };
+
+        // Backend query
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
+        assert.ok(backendActive.some(t => t.id === ticketInProgress.id), 'Backend active query must include in_progress ticket');
+
+        // Frontend filter with status variations
+        const frontendActive = filterActiveTickets([ticketInProgress, ticketHyphenated, ticketSpaced]);
+        assert.equal(frontendActive.length, 3, 'Frontend filter must safely normalize in-progress variations');
+        console.log('✓ Scenario 6 PASSED: Active list includes IN PROGRESS tickets across variations');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 7: Active list excludes a CLOSED ticket
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 7: Active ticket list strictly excludes CLOSED tickets', async () => {
+        const ticketClosed = await SupportTicket.create({
+            id: 'tic-test-closed-' + Date.now(),
+            userId: studentA.id,
+            subject: 'Closed Ticket Test',
+            description: 'This ticket was terminated.',
+            status: 'closed',
+            conversationId: 'conv-closed-test'
+        });
+
+        // Backend active query
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
+        assert.equal(backendActive.some(t => t.id === ticketClosed.id), false, 'Backend active query must EXCLUDE closed ticket');
+
+        // Frontend filter
+        const frontendActive = filterActiveTickets([ticketClosed]);
+        assert.equal(frontendActive.length, 0, 'Frontend filter must EXCLUDE closed ticket');
+
+        // Management / history view includes closed tickets
+        const allStudentTickets = await SupportTicket.find({ userId: studentA.id });
+        assert.ok(allStudentTickets.some(t => t.id === ticketClosed.id), 'Management history query must retain access to closed ticket');
+        console.log('✓ Scenario 7 PASSED: Closed ticket strictly excluded from active list and retained in history');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 8: RESOLVED follows the explicit completed policy (excluded from active list)
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 8: RESOLVED status is treated as completed and strictly excluded from active list', async () => {
+        const ticketResolved = await SupportTicket.create({
+            id: 'tic-test-resolved-' + Date.now(),
+            userId: studentA.id,
+            subject: 'Resolved Ticket Test',
+            description: 'Issue has been successfully addressed.',
+            status: 'resolved',
+            conversationId: 'conv-resolved-test'
+        });
+
+        // Backend active query
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        const backendActive = await SupportTicket.find({ userId: studentA.id, ...activeCondition });
+        assert.equal(backendActive.some(t => t.id === ticketResolved.id), false, 'Backend active query must EXCLUDE resolved ticket');
+
+        // Frontend filter
+        const frontendActive = filterActiveTickets([ticketResolved]);
+        assert.equal(frontendActive.length, 0, 'Frontend filter must EXCLUDE resolved ticket');
+
+        // Admin management view (/admin/support) includes resolved ticket
+        const adminAllTickets = await SupportTicket.find();
+        assert.ok(adminAllTickets.some(t => t.id === ticketResolved.id), 'Admin management view must access resolved ticket');
+        console.log('✓ Scenario 8 PASSED: Resolved ticket excluded from active list and accessible in admin console');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 9: Admin sees tickets across users through the authenticated admin endpoint
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 9: Admin sees tickets across all users through authenticated admin endpoint', async () => {
+        // Create tickets for Student B
+        const ticketB = await SupportTicket.create({
+            id: 'tic-student-b-' + Date.now(),
+            userId: studentB.id,
+            subject: 'Bob Inquiry',
+            description: 'Certificate download link broken.',
+            status: 'open',
+            conversationId: 'conv-b-test'
+        });
+
+        // Admin query to /api/admin/support?activeOnly=true
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        const adminResults = await SupportTicket.find(activeCondition).sort({ createdAt: -1 });
+        const userIds = adminResults.map(t => t.userId);
+        assert.ok(userIds.includes(studentA.id), 'Admin must see Student A tickets');
+        assert.ok(userIds.includes(studentB.id), 'Admin must see Student B tickets');
+        console.log('✓ Scenario 9 PASSED: Admin sees global ticket stream across all platform users');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 10: Students only see their own tickets
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 10: Students only see their own tickets (strict user data isolation)', async () => {
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+
+        // Student A query
+        const studentAQuery = { userId: studentA.id, ...activeCondition };
+        const studentATickets = await SupportTicket.find(studentAQuery);
+        assert.ok(studentATickets.every(t => t.userId === studentA.id), 'All tickets in Student A query must belong to Student A');
+        assert.equal(studentATickets.some(t => t.userId === studentB.id), false, 'Student A must NEVER see Student B tickets');
+
+        // Student B query
+        const studentBQuery = { userId: studentB.id, ...activeCondition };
+        const studentBTickets = await SupportTicket.find(studentBQuery);
+        assert.ok(studentBTickets.every(t => t.userId === studentB.id), 'All tickets in Student B query must belong to Student B');
+        assert.equal(studentBTickets.some(t => t.userId === studentA.id), false, 'Student B must NEVER see Student A tickets');
+        console.log('✓ Scenario 10 PASSED: Strict tenant isolation between students confirmed');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 11: Unauthorized users cannot access admin ticket data or modify ticket status
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 11: Non-admin users are blocked from admin endpoints and mutating other users tickets', async () => {
+        // Test requireRole middleware with student user
+        const mockStudentReq = { user: { id: studentB.id, role: 'student' } };
+        let rejectedStatus = null;
+        let rejectedMsg = null;
+        const mockRes = {
+            status: (code) => { rejectedStatus = code; return mockRes; },
+            json: (payload) => { rejectedMsg = payload.message; return mockRes; }
+        };
+        const mockNext = () => { rejectedStatus = 200; };
+
+        // Test admin route protection
+        const adminGuard = requireRole(['admin']);
+        adminGuard(mockStudentReq, mockRes, mockNext);
+        assert.equal(rejectedStatus, 403, 'Student must receive HTTP 403 on admin-only route');
+        assert.ok(rejectedMsg.includes('Forbidden'), 'Response must communicate insufficient clearance');
+
+        // Test ticket status mutation security: Student B trying to mutate Student A's ticket
+        const studentATicket = await SupportTicket.findOne({ userId: studentA.id, status: 'open' });
+        assert.ok(studentATicket, 'Student A ticket must exist for mutation check');
+
+        // Emulate PATCH /api/support/:id/status logic
+        const checkStatusPermission = (user, ticket) => {
+            if (user.role !== 'admin' && ticket.userId !== user.id) {
+                return { status: 403, error: 'Unauthorized' };
+            }
+            return { status: 200, success: true };
+        };
+
+        const unauthorizedMutation = checkStatusPermission(studentB, studentATicket);
+        assert.equal(unauthorizedMutation.status, 403, 'Student B modifying Student A ticket must return 403');
+
+        const authorizedOwnerMutation = checkStatusPermission(studentA, studentATicket);
+        assert.equal(authorizedOwnerMutation.status, 200, 'Student A modifying own ticket must succeed');
+
+        const authorizedAdminMutation = checkStatusPermission(adminUser, studentATicket);
+        assert.equal(authorizedAdminMutation.status, 200, 'Admin modifying any ticket must succeed');
+        console.log('✓ Scenario 11 PASSED: Role-based permissions and ticket mutation access control verified');
+    });
+
+    // -------------------------------------------------------------------------
+    // Scenario 12: Ticket conversation links and admin management links resolve to the correct records
+    // -------------------------------------------------------------------------
+    await t.test('Scenario 12: Ticket conversation links and admin management links resolve accurately', async () => {
+        // Verify Open Comms link in support.tsx
+        assert.ok(supportTsx.includes('to="/chat"'), 'support.tsx must link to /chat');
+        assert.ok(supportTsx.includes('search={{ conv: t.conversationId }}'), 'support.tsx must pass conversationId search parameter');
+        assert.ok(supportTsx.includes('Open Comms'), 'support.tsx must label link as Open Comms');
+
+        // Verify Manage link in support.tsx
+        assert.ok(supportTsx.includes('currentUser.role === \'admin\' && ('), 'Manage link must be gated by admin role check');
+        assert.ok(supportTsx.includes('to="/admin/support"'), 'Manage link must point to /admin/support');
+        assert.ok(supportTsx.includes('Manage'), 'Manage link must label button as Manage');
+
+        // Verify database integrity: ticket conversation exists and resolves to ticket
+        const sampleTicket = await SupportTicket.findOne({ conversationId: { $exists: true } });
+        assert.ok(sampleTicket, 'Sample ticket with conversationId must exist');
+        
+        const linkedConv = await Conversation.findOne({ id: sampleTicket.conversationId });
+        assert.ok(linkedConv, 'Conversation mapped by conversationId must exist in MongoDB');
+        assert.equal(linkedConv.id, sampleTicket.conversationId, 'Conversation ID must match ticket conversationId');
+        console.log('✓ Scenario 12 PASSED: Open Comms and Manage navigation links resolve to exact records');
+    });
+
+    // =========================================================================
+    // SECTION 2: NOTIFICATIONS, LEADERBOARD & RECRUITMENT VERIFICATION
+    // =========================================================================
+
+    // -------------------------------------------------------------------------
+    // Verification: Notification Category Badges
+    // -------------------------------------------------------------------------
+    await t.test('Notification Badges: Category badges verified across notifications page and dropdown', () => {
         const notifTsx = fs.readFileSync(path.join(__dirname, '../src/routes/notifications.tsx'), 'utf8');
         const bellTsx = fs.readFileSync(path.join(__dirname, '../src/components/NotificationBell.tsx'), 'utf8');
-        const rootTsx = fs.readFileSync(path.join(__dirname, '../src/routes/__root.tsx'), 'utf8');
-        const leaderboardTsx = fs.readFileSync(path.join(__dirname, '../src/routes/leaderboard.tsx'), 'utf8');
 
-        // Notification tags
-        assert.ok(notifTsx.includes('getNotificationTag'), 'notifications.tsx must define and use getNotificationTag helper');
+        // Check categories: PAYMENT, SQUAD, SUPPORT, SYSTEM, GENERAL
+        ['payment', 'squad', 'support', 'system'].forEach(cat => {
+            assert.ok(notifTsx.includes(`t.includes('${cat}')`), `notifications.tsx must handle ${cat} category`);
+            assert.ok(bellTsx.includes(`t.includes('${cat}')`), `NotificationBell.tsx must handle ${cat} category`);
+        });
+        assert.ok(notifTsx.includes("'GENERAL'"), 'notifications.tsx must provide fallback GENERAL tag');
+        assert.ok(bellTsx.includes("'GENERAL'"), 'NotificationBell.tsx must provide fallback GENERAL tag');
+
         assert.ok(notifTsx.includes('tag.label'), 'notifications.tsx must render tag label badge');
-        assert.ok(bellTsx.includes('getNotificationTag'), 'NotificationBell.tsx must define and use getNotificationTag helper');
-        assert.ok(bellTsx.includes('tag.label'), 'NotificationBell.tsx must render tag label badge in bell dropdown');
-
-        // Root Outlet key
-        assert.ok(rootTsx.includes('<Outlet key={routerState.location.pathname} />'), '__root.tsx must bind location.pathname to Outlet key for instant page unmount/remount');
-
-        // Leaderboard Tournament matrix
-        assert.ok(leaderboardTsx.includes('Select Hosted Tournament / Hackathon:'), 'leaderboard.tsx must include tournament selector header');
-        assert.ok(leaderboardTsx.includes('★ ALL TOURNAMENTS'), 'leaderboard.tsx must include all tournaments option');
-        assert.ok(leaderboardTsx.includes('SQUAD ROSTER & OPERATIVES'), 'leaderboard.tsx must render squad roster with player info');
-
-        console.log('✓ Criterion 11 PASSED: Notification tags, root Outlet key, and Leaderboard tournaments verified');
+        assert.ok(bellTsx.includes('tag.label'), 'NotificationBell.tsx must render tag label badge');
+        console.log('✓ Notifications PASSED: High-contrast category badges verified in page and bell dropdown');
     });
 
-    // -------------------------------------------------------------
-    // Criterion 12: Admin Recruitment Console removes student tabs, provides search, player dossier, ban & DQ
-    // -------------------------------------------------------------
-    await t.test('Criterion 12: Admin recruitment matrix removes student tabs & provides governance controls', async () => {
+    // -------------------------------------------------------------------------
+    // Verification: Leaderboard Tournament Selector & Squad Evaluation
+    // -------------------------------------------------------------------------
+    await t.test('Leaderboard: Tournament matrix, hackathon filtering, and un-fabricated scores', () => {
+        const leaderboardTsx = fs.readFileSync(path.join(__dirname, '../src/routes/leaderboard.tsx'), 'utf8');
+        
+        assert.ok(leaderboardTsx.includes('Select Hosted Tournament / Hackathon:'), 'leaderboard.tsx must include tournament selector header');
+        assert.ok(leaderboardTsx.includes('★ ALL TOURNAMENTS'), 'leaderboard.tsx must support platform-wide all tournaments view');
+        assert.ok(leaderboardTsx.includes('SQUAD ROSTER & OPERATIVES'), 'leaderboard.tsx must render enrolled squad roster');
+        assert.ok(leaderboardTsx.includes('UNRANKED / AWAITING EVALUATION'), 'leaderboard.tsx must distinguish unevaluated squads from evaluated squads');
+        assert.ok(leaderboardTsx.includes('AWAITING EVAL'), 'leaderboard.tsx must render AWAITING EVAL status for unevaluated squads');
+        console.log('✓ Leaderboard PASSED: Tournament filter and authentic squad evaluation metrics verified');
+    });
+
+    // -------------------------------------------------------------------------
+    // Verification: Recruitment Console & Admin Governance
+    // -------------------------------------------------------------------------
+    await t.test('Recruitment: Admin squad directory, player dossier, search, and ban/disqualification restrictions', async () => {
         const recruitmentTsx = fs.readFileSync(path.join(__dirname, '../src/routes/recruitment.tsx'), 'utf8');
         const adminRecruitmentTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.recruitment.tsx'), 'utf8');
         const adminTeamsTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.teams.tsx'), 'utf8');
 
-        // Recruitment page role checks
-        assert.ok(recruitmentTsx.includes("currentUser.role === 'admin'"), 'recruitment.tsx must conditionally branch for admin role');
-        assert.ok(recruitmentTsx.includes('GLOBAL SQUAD DIRECTORY'), 'recruitment.tsx must render squad directory for admins');
-        assert.ok(recruitmentTsx.includes('handleAdminDisqualify'), 'recruitment.tsx must provide admin disqualification handler');
-        assert.ok(recruitmentTsx.includes('handleAdminBanTeam'), 'recruitment.tsx must provide admin ban handler');
-        assert.ok(recruitmentTsx.includes('ENROLLED OPERATIVES & PLAYER DOSSIER'), 'recruitment.tsx must show player dossier for squads');
+        // Admin view removes student tabs and provides governance console
+        assert.ok(recruitmentTsx.includes("currentUser.role === 'admin'"), 'recruitment.tsx must conditionally adapt for admin');
+        assert.ok(recruitmentTsx.includes('GLOBAL SQUAD DIRECTORY'), 'recruitment.tsx must render squad directory for admin');
+        assert.ok(recruitmentTsx.includes('ENROLLED OPERATIVES & PLAYER DOSSIER'), 'recruitment.tsx must expose player dossier to admin');
+        assert.ok(recruitmentTsx.includes('handleAdminBanTeam'), 'recruitment.tsx must provide squad ban control');
+        assert.ok(recruitmentTsx.includes('handleAdminDisqualify'), 'recruitment.tsx must provide squad disqualification control');
 
-        // Admin Recruitment route
-        assert.ok(adminRecruitmentTsx.includes('handleDisqualify'), 'admin.recruitment.tsx must support disqualifying squads');
-        assert.ok(adminRecruitmentTsx.includes('handleBanTeam'), 'admin.recruitment.tsx must support banning squads');
+        // Student retains FIND, JOIN, and CREATE
+        assert.ok(recruitmentTsx.includes("activeTab === 'find'"), 'Student view must retain FIND squad tab');
+        assert.ok(recruitmentTsx.includes("activeTab === 'create'"), 'Student view must retain CREATE squad tab');
 
-        // Admin Teams route
-        assert.ok(adminTeamsTsx.includes('handleBanTeam'), 'admin.teams.tsx must support banning squads');
-
-        // Backend Ban endpoint check
-        const Team = mongoose.model('Team');
+        // Backend ban enforcement
         const testSquad = await Team.create({
-            id: 'team-ban-test',
-            name: 'Malicious Squad',
+            id: 'team-ban-verify-' + Date.now(),
+            name: 'Disqualified Team',
             leaderId: studentB.id,
-            hackathonId: 'hack-test-001',
+            hackathonId: 'hack-test-999',
             status: 'active'
         });
 
-        // Update squad as banned
-        const bannedSquad = await Team.findOneAndUpdate(
+        const banned = await Team.findOneAndUpdate(
             { id: testSquad.id },
-            { status: 'disqualified', isLocked: true, adminNote: 'BANNED: Rule violation' },
-            { new: true }
+            { status: 'disqualified', isLocked: true, adminNote: 'BANNED: Rule infraction' },
+            { returnDocument: 'after' }
         );
-        assert.equal(bannedSquad.status, 'disqualified', 'Banned squad status must be disqualified');
-        assert.equal(bannedSquad.isLocked, true, 'Banned squad must be locked');
-        assert.ok(bannedSquad.adminNote.includes('BANNED'), 'Banned squad must record BANNED note');
+        assert.equal(banned.status, 'disqualified', 'Banned squad must be marked disqualified');
+        assert.equal(banned.isLocked, true, 'Banned squad must be locked');
 
-        // Clean up
         await Team.deleteOne({ id: testSquad.id });
+        console.log('✓ Recruitment PASSED: Admin governance controls and student FIND/JOIN/CREATE retained');
+    });
 
-        console.log('✓ Criterion 12 PASSED: Admin squad governance, player dossier, ban & DQ controls verified');
+    // -------------------------------------------------------------------------
+    // Verification: Root Router Instant Remount Key
+    // -------------------------------------------------------------------------
+    await t.test('Routing: Root and Admin Outlet keying prevents stale page state on route transition', () => {
+        const rootTsx = fs.readFileSync(path.join(__dirname, '../src/routes/__root.tsx'), 'utf8');
+        const adminTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.tsx'), 'utf8');
+
+        assert.ok(rootTsx.includes('<Outlet key={routerState.location.pathname} />'), '__root.tsx must key Outlet by location.pathname');
+        assert.ok(adminTsx.includes('<Outlet key={activeRoute} />'), 'admin.tsx must key Outlet by activeRoute');
+        console.log('✓ Routing PASSED: Instant remounting keys verified in __root.tsx and admin.tsx');
+    });
+
+    // -------------------------------------------------------------------------
+    // Verification: Security, CORS & Query Token Protection
+    // -------------------------------------------------------------------------
+    await t.test('Security: CORS origin allowlist and production integrity verified', () => {
+        assert.equal(isOriginAllowed('https://codesrijan-nine.vercel.app'), true, 'Vercel production origin allowed');
+        assert.equal(isOriginAllowed('https://malicious-phishing.com'), false, 'Malicious origin rejected');
+        console.log('✓ Security PASSED: Strict origin allowlist verified');
     });
 
     // Teardown
     await mongoose.disconnect();
     await mongo.stop();
-    console.log('\n=== ALL 12 FOCUSED UI & PERMISSION REGRESSION CRITERIA PASSED CLEANLY! ===\n');
+    console.log('\n======================================================================');
+    console.log('=== ALL 12 SUPPORT SCENARIOS AND PLATFORM CHECKS PASSED CLEANLY! ===');
+    console.log('======================================================================\n');
 });

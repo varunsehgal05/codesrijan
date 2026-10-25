@@ -4,17 +4,19 @@
 **Production Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app)  
 **Canonical Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
-**Current Repository Commit:** `f88a905` (`docs: finalize master platform documentation, reconcile evidence classifications, and add focused UI regression suite`)  
+**Current Repository Commit:** `99b5ccf` (`feat(notifications,leaderboard,recruitment): add notification category tags, tournament leaderboard matrix, and admin squad governance console`)  
 **Previous Verified Release Revisions:**  
+- `f2d3603` — `fix(support): remove talk to admin button for admins and filter active tickets to open and in-progress` (`COMMITTED — PASS LOCAL & REGRESSION VERIFIED`)  
+- `7bd83b0` — `docs: finalize master platform documentation, reconcile evidence classifications, and add focused UI regression suite`  
 - `3da6e65` — `docs: restructure docs directory, purge redundant legacy markdown files, and complete master platform documentation`  
 - `d1576dc` — `docs: generate comprehensive platform master documentation covering all 67 routes, components, workflows, APIs, models, and controls`  
-- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — NOT LIVE-VERIFIED / SOURCE-VERIFIED`)  
-- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — NOT LIVE-VERIFIED / SOURCE-VERIFIED`)  
+- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — SOURCE-VERIFIED`)  
+- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — SOURCE-VERIFIED`)  
 - `7bd9699` — `docs: reconcile authoritative report for hardened GridFS release 8bbb8df, query token removal, and concurrency reservations`  
 - `8bbb8df` — `feat(security): harden GridFS authentication, add concurrency-safe capacity reservations, and enforce no-referrer privacy` (`LIVE-VERIFIED` on Render `srv-db1b3ke0tbcc73ac3ea0`)  
 - `adcd493` — `feat: implement MongoDB GridFS Option A payment proof storage ($0/month)` (`LIVE-VERIFIED`)  
 - `37f376e` — `fix: public catalog confidentiality and rejection relay delivery` (`LIVE-VERIFIED`)  
-**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `f88a905` across local and remote `origin`.
+**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `99b5ccf` across local and remote `origin`.
 
 ---
 
@@ -458,10 +460,15 @@ graph TD
   - **Official Support Ticket Channels:** Prominently tagged with red `[SUPPORT TICKET]` badges in conversation lists, top banner notice displaying Ticket ID, subject, and status, and direct shortcut link to Support HQ (`/support` for students, `/admin/support` for administrators).
 
 #### 37. Student Support HQ (`/support`)
-- **Route:** `/support` | **Component:** `src/routes/support.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Role-Adaptive Support HQ)
+- **Route:** `/support` | **Component:** `src/routes/support.tsx` | **Evidence:** COMMITTED — PASS LOCAL & REGRESSION VERIFIED (Role-Adaptive Support HQ)
 - **Purpose:** Student & Admin Support Transmission Center.
-  - **Student View:** Displays the `TALK TO ADMIN` action which toggles an issue submission drawer allowing operatives to dispatch tickets with Category (`technical`, `billing`, `report`, `general`), Priority (`low`, `normal`, `high`, `critical`), Subject, and Payload description. Shows the operative's active transmissions (`ACTIVE TRANSMISSIONS (N)`), strictly excluding closed tickets.
-  - **Administrator View:** Dynamically removes the `TALK TO ADMIN` button and ticket authoring form; provides a direct `ADMIN CONSOLE ↗` shortcut to `/admin/support`. Displays a global live feed of all platform tickets currently in `open` or `in_progress` state (`status !== 'closed'`), with user identifier chips, status badges, `Open Comms` (`/chat?conv=...`), and `Manage` shortcuts. Automatically queries `${BASE}/admin/support` and filters out closed transmissions.
+  - **Student View:** Displays the `TALK TO ADMIN` action which toggles an issue submission drawer allowing operatives to dispatch tickets with Category (`technical`, `billing`, `report`, `general`), Priority (`low`, `normal`, `high`, `critical`), Subject, and Payload description. Shows the operative's active transmissions (`ACTIVE TRANSMISSIONS (N)`), strictly whitelisting `OPEN` and `IN PROGRESS` tickets, and excluding `CLOSED` and `RESOLVED` tickets.
+  - **Administrator View:** Dynamically removes the `TALK TO ADMIN` button and completely blocks the ticket creation modal; displays a direct `ADMIN CONSOLE ↗` shortcut linking to `/admin/support`. Displays a global live feed of all platform tickets currently in `open` or `in_progress` state, with user identifier chips, status badges (`● OPEN` or `⚡ IN PROGRESS`), `Open Comms` (`/chat?conv=...`), and `Manage` shortcuts. Automatically queries `${BASE}/admin/support?activeOnly=true`. Role checks are strictly verified against authenticated user identity supplied by the application session (`currentUser.role`), not query parameters or client-side spoofing.
+  - **Active Status Policy:** The active ticket list follows a strict status policy synchronized across frontend and backend:
+    - **Active List Whitelist:** Strictly includes `OPEN` and `IN PROGRESS` tickets.
+    - **Completed Status Exclusions:** Never shows `CLOSED` or `RESOLVED` tickets in the active transmission list.
+    - **Status Normalization:** Safe normalization handles variations (`in_progress`, `in-progress`, `in progress`). Missing, null, or empty statuses default safely to `open`. Unknown statuses never expose completed tickets as active.
+    - **Management Access:** Closed and resolved tickets remain fully accessible in the administrative management console (`/admin/support`) and history views.
 
 ---
 
@@ -991,13 +998,13 @@ The platform is validated by an automated regression suite achieving **100% pass
 
 | Test Suite File | Coverage Scope | Checks Executed | Result |
 | :--- | :--- | :---: | :---: |
-| `server/test_focused_regression.mjs` | Focused UI & permissions (9 criteria: routing key, skeleton, contrast, badges, banner, shortcuts, privacy, status persistence, CORS). | 9 | **PASS (100%)** |
+| `server/test_focused_regression.mjs` | Focused support regression (12 scenarios), notification tags, leaderboard tournament matrix, unranked score integrity, admin squad governance, root outlet remount keys, and CORS allowlist. | 18 | **PASS (100%)** |
 | `server/test_cors_policies.mjs` | CORS allowlist, project-scoped preview regex, external origin rejection, preflight OPTIONS. | 7 | **PASS (100%)** |
 | `server/test_gridfs_lease_lifecycle.mjs` | 60s lease expiry, abort on late commit, orphan chunk purge, active lease renewal, idempotent release. | 5 | **PASS (100%)** |
 | `server/test_gridfs_concurrency.mjs` | Parallel upload capacity admission, 75MB budget enforcement, release on failure. | 4 | **PASS (100%)** |
 | `server/test_gridfs_storage.mjs` | Raster magic byte checks, prohibited SVG rejection, SHA-256 byte match, query token 401 rejection. | 15 | **PASS (100%)** |
 | `server/test_firebase_and_catalog_regression.mjs` | File format validations, oversized image rejection, binary spoof detection. | 8 | **PASS (100%)** |
-| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage** | **48** | **48 / 48 (100%)** |
+| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage** | **57** | **57 / 57 (100%)** |
 
 ---
 

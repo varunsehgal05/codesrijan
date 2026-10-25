@@ -3557,11 +3557,21 @@ app.post('/api/support', requireAuth, async (req, res) => {
 app.get('/api/support', requireAuth, async (req, res) => {
     try {
         const { includeClosed } = req.query;
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
         let query = {};
         if (req.user.role === 'admin') {
-            query = includeClosed === 'true' ? {} : { status: { $ne: 'closed' } };
+            query = includeClosed === 'true' ? {} : activeCondition;
         } else {
-            query = includeClosed === 'true' ? { userId: req.user.id } : { userId: req.user.id, status: { $ne: 'closed' } };
+            query = includeClosed === 'true' 
+                ? { userId: req.user.id } 
+                : { userId: req.user.id, ...activeCondition };
         }
         const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
         res.json(tickets);
@@ -3573,7 +3583,15 @@ app.get('/api/support', requireAuth, async (req, res) => {
 app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
         const { activeOnly } = req.query;
-        const query = activeOnly === 'true' ? { status: { $ne: 'closed' } } : {};
+        const activeCondition = {
+            $or: [
+                { status: { $in: ['open', 'in_progress', 'in-progress', 'in progress', 'OPEN', 'IN_PROGRESS', 'IN-PROGRESS'] } },
+                { status: { $exists: false } },
+                { status: null },
+                { status: '' }
+            ]
+        };
+        const query = activeOnly === 'true' ? activeCondition : {};
         const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
         res.json(tickets);
     } catch (e) {
