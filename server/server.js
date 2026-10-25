@@ -3323,12 +3323,16 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
                 if (ticket) {
                     const ticketUser = await User.findOne({ id: ticket.userId });
                     const userName = ticketUser ? ticketUser.name : (ticket.userId || 'Hacker');
-                    convObj.targetName = req.user.role === 'admin' ? `${userName} - ${ticket.subject || 'Support Ticket'}` : 'Admin Support';
-                    convObj.targetRole = req.user.role === 'admin' ? `Ticket #${ticket.id.substring(0,8)} · ${ticket.priority.toUpperCase()}` : 'Support Request';
+                    convObj.targetName = req.user.role === 'admin' 
+                        ? `[SUPPORT] ${userName} - ${ticket.subject || 'Ticket'}` 
+                        : `[SUPPORT TICKET] ${ticket.subject || 'Admin Support'}`;
+                    convObj.targetRole = req.user.role === 'admin' 
+                        ? `Support Ticket #${ticket.id.substring(0,8)} · ${ticket.priority.toUpperCase()} · ${ticket.status.toUpperCase()}` 
+                        : `Official Support Ticket #${ticket.id.substring(0,8)} · Status: ${ticket.status.toUpperCase()}`;
                     convObj.supportTicket = ticket;
                 } else {
-                    convObj.targetName = 'Admin Support';
-                    convObj.targetRole = 'Support Request';
+                    convObj.targetName = '[SUPPORT] Admin Support';
+                    convObj.targetRole = 'Official Support Channel';
                     convObj.supportTicket = null;
                 }
             }

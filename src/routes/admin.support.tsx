@@ -10,6 +10,7 @@ export const Route = createFileRoute("/admin/support")({
 
 function AdminSupport() {
   const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { currentUser, users } = useAppStore();
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
@@ -25,9 +26,11 @@ function AdminSupport() {
       const res = await axios.get(`${BASE}/admin/support`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTickets(res.data);
+      setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error("Failed to fetch tickets");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -38,6 +41,7 @@ function AdminSupport() {
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      toast.success(`Ticket status updated to ${newStatus.toUpperCase()}`);
       await loadTickets();
     } catch (e) {
       toast.error("Failed to update status");
@@ -60,6 +64,20 @@ function AdminSupport() {
 
   const openTicketCount = tickets.filter(t => t.status === 'open').length;
 
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case 'in_progress':
+        return { backgroundColor: '#FEF08A', color: '#854D0E', borderColor: '#000000' };
+      case 'resolved':
+        return { backgroundColor: '#DCFCE7', color: '#166534', borderColor: '#000000' };
+      case 'closed':
+        return { backgroundColor: '#E5E7EB', color: '#1F2937', borderColor: '#000000' };
+      case 'open':
+      default:
+        return { backgroundColor: '#FEE2E2', color: '#991B1B', borderColor: '#000000' };
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
       <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center">
@@ -76,7 +94,13 @@ function AdminSupport() {
       </div>
 
       <div className="bg-pure-white brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-0 text-stark-black overflow-hidden">
-        {tickets.length === 0 ? (
+        {loading ? (
+          <div className="p-16 text-center flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-stark-black border-t-electric-blue rounded-full animate-spin mb-4"></div>
+            <h3 className="font-headline-md text-xl uppercase tracking-wider text-stark-black">SYNCHRONIZING GLOBAL SUPPORT TICKETS...</h3>
+            <p className="font-code-snippet mt-2 uppercase tracking-widest text-xs opacity-70 text-on-surface-variant">Querying real-time operative inquiries</p>
+          </div>
+        ) : tickets.length === 0 ? (
           <div className="p-16 text-center flex flex-col items-center justify-center">
               <span className="material-symbols-outlined text-6xl text-success mb-4">task_alt</span>
               <h3 className="font-headline-md text-2xl uppercase">INFRASTRUCTURE IS NOMINAL</h3>
@@ -102,39 +126,42 @@ function AdminSupport() {
                   const ticketUser = users.find(u => u.id === ticket.userId);
                   return (
                   <tr key={ticket.id} className="border-b-2 border-ink-black hover:bg-surface-container">
-                    <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">{ticket.id.substring(0,12)}</td>
+                    <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs font-bold">{ticket.id.substring(0,12)}</td>
                     <td className="p-4 border-r-2 border-ink-black font-code-snippet text-xs">
-                      <div className="font-bold">{ticketUser ? ticketUser.name : ticket.userId.substring(0,8)}</div>
+                      <div className="font-bold text-stark-black">{ticketUser ? ticketUser.name : ticket.userId.substring(0,8)}</div>
                       <div className="opacity-70 text-[10px]">{ticketUser ? ticketUser.email : 'Unknown'}</div>
                       <span className="mt-1 inline-block bg-surface-container-high px-2 py-0.5 rounded text-error font-bold" title="Total tickets created by this user">
                          {userTicketCount} TICKETS
                       </span>
                     </td>
-                    <td className="p-4 border-r-2 border-ink-black font-label-bold">{ticket.subject}</td>
-                    <td className="p-4 border-r-2 border-ink-black">{ticket.category}</td>
+                    <td className="p-4 border-r-2 border-ink-black font-label-bold text-stark-black">{ticket.subject}</td>
+                    <td className="p-4 border-r-2 border-ink-black uppercase text-xs font-mono font-bold">{ticket.category}</td>
                     <td className="p-4 border-r-2 border-ink-black">
-                      <span className={`px-2 py-1 text-xs font-bold uppercase ${ticket.priority === 'urgent' ? 'bg-error text-pure-white' : 'bg-surface-container-high'}`}>
+                      <span className={`px-2 py-1 text-xs font-bold uppercase border border-stark-black ${ticket.priority === 'urgent' ? 'bg-error text-pure-white' : 'bg-surface-container-high text-stark-black'}`}>
                         {ticket.priority}
                       </span>
                     </td>
                     <td className="p-4 border-r-2 border-ink-black">
                       <select 
-                        value={ticket.status} 
+                        value={ticket.status || 'open'} 
                         onChange={(e) => updateStatus(ticket.id, e.target.value)}
-                        className={`p-1 border-2 border-ink-black text-xs font-label-bold uppercase focus:outline-none ${ticket.status === 'in_progress' ? 'bg-[#FFD700] text-stark-black' : ticket.status === 'resolved' || ticket.status === 'closed' ? 'bg-success text-pure-white' : 'bg-pure-white text-stark-black'}`}
+                        style={getStatusBadgeStyle(ticket.status)}
+                        className="px-2.5 py-1.5 border-2 border-ink-black text-xs font-label-bold uppercase rounded cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus:outline-none transition-colors"
                       >
-                        <option value="open">OPEN</option>
-                        <option value="in_progress">PROCESSING (IN PROGRESS)</option>
-                        <option value="resolved">RESOLVED</option>
-                        <option value="closed">CLOSED</option>
+                        <option value="open" style={{ backgroundColor: '#ffffff', color: '#991B1B', fontWeight: 'bold' }}>● OPEN</option>
+                        <option value="in_progress" style={{ backgroundColor: '#ffffff', color: '#854D0E', fontWeight: 'bold' }}>⚡ IN PROGRESS</option>
+                        <option value="resolved" style={{ backgroundColor: '#ffffff', color: '#166534', fontWeight: 'bold' }}>✓ RESOLVED</option>
+                        <option value="closed" style={{ backgroundColor: '#ffffff', color: '#1F2937', fontWeight: 'bold' }}>✕ CLOSED</option>
                       </select>
                     </td>
                     <td className="p-4">
                       <div className="flex gap-2 items-center">
-                        <Link to="/chat" search={{ conv: ticket.conversationId }} className="bg-electric-blue text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all">
+                        <Link to="/chat" search={{ conv: ticket.conversationId }} className="bg-electric-blue text-pure-white px-2.5 py-1.5 font-label-bold uppercase text-[11px] brutal-border hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">forum</span>
                           Comms
                         </Link>
-                        <button onClick={() => handleDeleteTicket(ticket.id)} className="bg-error text-pure-white px-2 py-1 font-label-bold uppercase text-[11px] brutal-border hover:bg-stark-black transition-all">
+                        <button onClick={() => handleDeleteTicket(ticket.id)} className="bg-error text-pure-white px-2.5 py-1.5 font-label-bold uppercase text-[11px] brutal-border hover:bg-stark-black transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">delete</span>
                           Remove
                         </button>
                       </div>

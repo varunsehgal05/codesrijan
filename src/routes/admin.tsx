@@ -82,7 +82,7 @@ function AdminLayout() {
 
             {/* Main Content Area */}
             <main className="flex-grow flex-1 bg-surface-container-lowest overflow-y-auto bg-pattern relative z-0 h-screen">
-                <Outlet />
+                <Outlet key={activeRoute} />
             </main>
         </div>
     );

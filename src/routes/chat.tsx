@@ -293,7 +293,11 @@ function ChatDashboard() {
                     <p className="font-label-bold flex items-center gap-2 truncate max-w-[70%]">
                       {conv.type === 'direct' && <span className={`w-2 h-2 rounded-full ${activeConv?.id === conv.id ? 'bg-pure-white' : 'bg-success'}`}></span>}
                       {conv.type === 'team' && <span className="material-symbols-outlined text-[14px]">groups</span>}
-                      {conv.type === 'support' && <span className="material-symbols-outlined text-[14px]">confirmation_number</span>}
+                      {conv.type === 'support' && (
+                        <span className="bg-error text-pure-white px-1.5 py-0.5 text-[9px] font-mono font-black tracking-wider uppercase border border-ink-black shrink-0">
+                          SUPPORT TICKET
+                        </span>
+                      )}
                       <span className="truncate">{conv.targetName || conv.id.substring(0,8)}</span>
                     </p>
                     <span className={`text-[10px] font-label-bold whitespace-nowrap ${activeConv?.id === conv.id ? 'text-pure-white opacity-80' : 'text-text-muted'}`}>
@@ -302,7 +306,7 @@ function ChatDashboard() {
                   </div>
                   
                   <p className={`font-code-snippet text-[11px] mb-2 pl-1 truncate ${activeConv?.id === conv.id ? 'text-pure-white opacity-90' : 'text-primary-dark font-bold'}`}>
-                    {conv.targetRole}
+                    {conv.type === 'support' ? `🎧 ${conv.targetRole || 'Official Support Ticket'}` : conv.targetRole}
                   </p>
                   
                   <p className={`font-body-md text-sm line-clamp-2 pl-1 leading-snug ${activeConv?.id === conv.id ? 'text-pure-white opacity-95' : 'text-on-surface-variant'}`}>
@@ -332,16 +336,25 @@ function ChatDashboard() {
                     <span className="material-symbols-outlined">arrow_back</span>
                   </button>
                   <div className="w-10 h-10 md:w-12 md:h-12 bg-stark-black rounded-full flex items-center justify-center text-pure-white font-display-lg text-lg md:text-xl uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]">
-                     {activeConv.type === 'support' ? <span className="material-symbols-outlined">headset_mic</span> : 
+                     {activeConv.type === 'support' ? <span className="material-symbols-outlined text-error">headset_mic</span> : 
                       activeConv.type === 'team' ? <span className="material-symbols-outlined">diversity_3</span> : 
                       (activeConv.targetName ? activeConv.targetName.charAt(0) : 'U')}
                   </div>
                   <div>
-                    <h3 className="font-display-lg uppercase tracking-wider flex items-center gap-2 text-stark-black text-base md:text-lg">
-                      {activeConv.targetName || activeConv.id}
-                    </h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-display-lg uppercase tracking-wider text-stark-black text-base md:text-lg">
+                        {activeConv.targetName || activeConv.id}
+                      </h3>
+                      {activeConv.type === 'support' && (
+                        <span className="bg-error text-pure-white px-2 py-0.5 text-[10px] font-mono font-black uppercase tracking-widest border border-stark-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">support_agent</span>
+                          SUPPORT TICKET
+                        </span>
+                      )}
+                    </div>
                     <p className="font-code-snippet text-xs text-on-surface-variant mt-0.5 uppercase tracking-widest flex items-center gap-2">
                        {activeConv.type === 'direct' && <><span className="w-1.5 h-1.5 rounded-full bg-success"></span> Online &middot; </>}
+                       {activeConv.type === 'support' && <span className="font-bold text-error">[OFFICIAL TICKET CHANNEL]</span>}
                        {activeConv.targetRole}
                     </p>
                   </div>
@@ -358,6 +371,45 @@ function ChatDashboard() {
               
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
+                {activeConv.type === 'support' && (
+                  <div className="bg-[#FEF2F2] border-2 border-error p-3.5 shadow-[3px_3px_0px_0px_rgba(186,26,26,1)] mb-2 flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 bg-error text-pure-white flex items-center justify-center font-bold border border-stark-black">
+                        <span className="material-symbols-outlined text-[18px]">support_agent</span>
+                      </div>
+                      <div>
+                        <div className="font-label-bold text-xs uppercase tracking-wider text-error flex items-center gap-2">
+                          OFFICIAL SUPPORT TICKET CHANNEL
+                          {activeConv.supportTicket?.id && (
+                            <span className="bg-stark-black text-pure-white px-1.5 py-0.5 text-[10px] font-mono">
+                              #{activeConv.supportTicket.id.substring(0,12)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-code-snippet text-[11px] text-stark-black mt-0.5">
+                          {activeConv.supportTicket?.subject ? `Subject: "${activeConv.supportTicket.subject}"` : 'Direct synchronized channel with CodeSrijan Support'}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase border border-black ${
+                        activeConv.supportTicket?.status === 'resolved' || activeConv.supportTicket?.status === 'closed'
+                          ? 'bg-success text-pure-white'
+                          : activeConv.supportTicket?.status === 'in_progress'
+                          ? 'bg-[#FFD700] text-stark-black'
+                          : 'bg-error text-pure-white'
+                      }`}>
+                        STATUS: {activeConv.supportTicket?.status?.toUpperCase() || 'OPEN'}
+                      </span>
+                      <Link 
+                        to={currentUser?.role === 'admin' ? "/admin/support" : "/support"} 
+                        className="bg-pure-white text-stark-black px-2 py-1 text-[10px] font-label-bold uppercase border border-stark-black hover:bg-stark-black hover:text-pure-white transition-all shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        {currentUser?.role === 'admin' ? 'Support Console ↗' : 'My Tickets ↗'}
+                      </Link>
+                    </div>
+                  </div>
+                )}
                 {messages.length === 0 ? (
                   <div className="text-center font-code-snippet text-text-muted mt-auto mb-auto flex flex-col items-center">
                     <div className="w-20 h-20 border-4 border-ink-black flex items-center justify-center rounded-full mb-6 bg-pure-white shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
