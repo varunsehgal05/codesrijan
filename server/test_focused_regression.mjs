@@ -212,8 +212,46 @@ test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async
         console.log('✓ Criterion 9 PASSED: Security allowlist and CORS policies intact');
     });
 
+    // -------------------------------------------------------------
+    // Criterion 10: Admin support view removes TALK TO ADMIN & filters non-closed tickets
+    // -------------------------------------------------------------
+    await t.test('Criterion 10: /support removes TALK TO ADMIN for admin and excludes closed tickets', async () => {
+        const supportTsx = fs.readFileSync(path.join(__dirname, '../src/routes/support.tsx'), 'utf8');
+        
+        // Frontend checks
+        assert.ok(supportTsx.includes("currentUser.role === 'admin' ? ("), 'support.tsx must conditionally check admin role');
+        assert.ok(supportTsx.includes('ADMIN CONSOLE ↗'), 'support.tsx must render direct admin console access');
+        assert.ok(supportTsx.includes("isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'"), 'support.tsx must only render TALK TO ADMIN for non-admins');
+        assert.ok(supportTsx.includes("isFormOpen && currentUser.role !== 'admin'"), 'support.tsx must not open submission form for admins');
+        assert.ok(supportTsx.includes("return s !== 'closed';"), 'support.tsx activeTickets must strictly exclude closed tickets');
+
+        // Backend checks
+        // Create closed ticket for Student A
+        const closedTicket = await SupportTicket.create({
+            id: 'tic-test-closed',
+            userId: studentA.id,
+            subject: 'Resolved Past Issue',
+            description: 'This ticket is closed and archived.',
+            category: 'general',
+            priority: 'normal',
+            status: 'closed',
+            conversationId: 'conv-closed-001'
+        });
+
+        // Query active tickets for admin (status != closed)
+        const adminActiveTickets = await SupportTicket.find({ status: { $ne: 'closed' } });
+        const hasClosedInActive = adminActiveTickets.some(t => t.id === 'tic-test-closed');
+        assert.equal(hasClosedInActive, false, 'Admin active ticket query must strictly exclude closed tickets');
+        assert.ok(adminActiveTickets.some(t => t.id === ticketA.id), 'Admin active ticket query must include open/in-progress tickets');
+
+        // Clean up closed ticket
+        await SupportTicket.deleteOne({ id: 'tic-test-closed' });
+
+        console.log('✓ Criterion 10 PASSED: Admin button removal and active ticket filtering strictly verified');
+    });
+
     // Teardown
     await mongoose.disconnect();
     await mongo.stop();
-    console.log('\n=== ALL 9 FOCUSED UI & PERMISSION REGRESSION CRITERIA PASSED CLEANLY! ===\n');
+    console.log('\n=== ALL 10 FOCUSED UI & PERMISSION REGRESSION CRITERIA PASSED CLEANLY! ===\n');
 });

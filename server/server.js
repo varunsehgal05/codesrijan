@@ -3521,13 +3521,30 @@ app.post('/api/support', requireAuth, async (req, res) => {
 });
 
 app.get('/api/support', requireAuth, async (req, res) => {
-    const tickets = await SupportTicket.find({ userId: req.user.id }).sort({ createdAt: -1 });
-    res.json(tickets);
+    try {
+        const { includeClosed } = req.query;
+        let query = {};
+        if (req.user.role === 'admin') {
+            query = includeClosed === 'true' ? {} : { status: { $ne: 'closed' } };
+        } else {
+            query = includeClosed === 'true' ? { userId: req.user.id } : { userId: req.user.id, status: { $ne: 'closed' } };
+        }
+        const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
+        res.json(tickets);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to load support tickets." });
+    }
 });
 
 app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, res) => {
-    const tickets = await SupportTicket.find().sort({ createdAt: -1 });
-    res.json(tickets);
+    try {
+        const { activeOnly } = req.query;
+        const query = activeOnly === 'true' ? { status: { $ne: 'closed' } } : {};
+        const tickets = await SupportTicket.find(query).sort({ createdAt: -1 });
+        res.json(tickets);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to load admin support tickets." });
+    }
 });
 
 app.patch('/api/support/:id/status', requireAuth, async (req, res) => {

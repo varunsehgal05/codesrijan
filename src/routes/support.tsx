@@ -25,10 +25,11 @@ function SupportPage() {
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       if (!token) return;
-      const res = await axios.get(`${BASE}/support`, {
+      const endpoint = currentUser?.role === 'admin' ? `${BASE}/admin/support` : `${BASE}/support`;
+      const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setTickets(res.data);
+      setTickets(Array.isArray(res.data) ? res.data : []);
     } catch (e) {
       console.error("Failed to fetch tickets");
     }
@@ -65,6 +66,12 @@ function SupportPage() {
     return <div className="p-12 text-center font-code-snippet uppercase mt-10 text-xl font-bold">PLEASE AUTHENTICATE TO ACCESS SECURE COMM CHANNELS.</div>;
   }
 
+  // Active tickets: show open and in-progress tickets, strictly excluding closed tickets
+  const activeTickets = tickets.filter(t => {
+    const s = (t.status || 'open').toLowerCase().trim();
+    return s !== 'closed';
+  });
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-5xl mx-auto p-4 md:p-12">
       <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center flex-wrap gap-4">
@@ -73,18 +80,30 @@ function SupportPage() {
             SUPPORT HQ
           </h2>
           <p className="font-code-snippet text-xs mt-2 uppercase tracking-widest text-on-surface-variant">
-            Direct Line to Administration
+            {currentUser.role === 'admin' ? 'Global Admin Issue Monitor & Real-Time Transmissions' : 'Direct Line to Administration'}
           </p>
         </div>
-        <button 
-          onClick={() => setIsFormOpen(!isFormOpen)}
-          className="bg-stark-black text-pure-white px-6 py-3 font-label-bold uppercase brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
-        >
-          {isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'}
-        </button>
+        
+        {/* For admin users: Remove the 'TALK TO ADMIN' button and offer direct access to Admin Console */}
+        {currentUser.role === 'admin' ? (
+          <Link 
+            to="/admin/support"
+            className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold uppercase brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer flex items-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+            ADMIN CONSOLE ↗
+          </Link>
+        ) : (
+          <button 
+            onClick={() => setIsFormOpen(!isFormOpen)}
+            className="bg-stark-black text-pure-white px-6 py-3 font-label-bold uppercase brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer"
+          >
+            {isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'}
+          </button>
+        )}
       </div>
 
-      {isFormOpen && (
+      {isFormOpen && currentUser.role !== 'admin' && (
         <div className="bg-surface-container p-8 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <h3 className="font-headline-md uppercase mb-6 text-stark-black border-b-4 border-stark-black pb-2 inline-block">Initialize Ticket</h3>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -155,37 +174,79 @@ function SupportPage() {
 
       <div className="bg-pure-white brutal-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
         <div className="bg-ink-black text-pure-white p-4 flex justify-between items-center">
-          <h3 className="font-label-bold uppercase tracking-widest">ACTIVE TRANSMISSIONS ({tickets.length})</h3>
+          <h3 className="font-label-bold uppercase tracking-widest">
+            ACTIVE TRANSMISSIONS ({activeTickets.length})
+          </h3>
+          {currentUser.role === 'admin' && (
+            <span className="bg-electric-blue text-pure-white text-[10px] font-mono font-bold px-2.5 py-0.5 border border-pure-white">
+              ADMIN LIVE FEED (OPEN / IN PROGRESS)
+            </span>
+          )}
         </div>
         
-        {tickets.length === 0 ? (
+        {activeTickets.length === 0 ? (
           <div className="p-12 text-center font-code-snippet text-on-surface-variant uppercase">
-            [SYS] No active support tickets detected for this operative.
+            {currentUser.role === 'admin' 
+              ? '[SYS] ALL SUPPORT TRANSMISSIONS RESOLVED OR CLOSED.' 
+              : '[SYS] NO ACTIVE SUPPORT TICKETS DETECTED FOR THIS OPERATIVE.'}
           </div>
         ) : (
           <ul className="flex flex-col">
-            {tickets.map(t => (
-              <li key={t.id} className="border-b-2 border-stark-black p-6 hover:bg-surface-container transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="bg-stark-black text-pure-white px-2 py-0.5 text-[10px] font-label-bold uppercase">{t.id.substring(0,8)}</span>
-                    <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase border-2 ${t.status === 'open' ? 'border-error text-error' : t.status === 'resolved' ? 'border-success text-success' : 'border-electric-blue text-electric-blue'}`}>
-                      {t.status}
-                    </span>
+            {activeTickets.map(t => {
+              const statusLower = (t.status || 'open').toLowerCase().trim();
+              const isProgress = statusLower === 'in_progress';
+              const isOpen = statusLower === 'open';
+              const isResolved = statusLower === 'resolved';
+
+              return (
+                <li key={t.id} className="border-b-2 border-stark-black p-6 hover:bg-surface-container transition-colors flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <span className="bg-stark-black text-pure-white px-2 py-0.5 text-[10px] font-label-bold uppercase">
+                        #{t.id.substring(0, 10)}
+                      </span>
+                      <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase border-2 ${
+                        isOpen 
+                          ? 'border-error text-error bg-error/10' 
+                          : isProgress 
+                          ? 'border-[#854D0E] text-[#854D0E] bg-[#FEF08A]' 
+                          : isResolved 
+                          ? 'border-success text-success bg-success/10' 
+                          : 'border-electric-blue text-electric-blue bg-electric-blue/10'
+                      }`}>
+                        {isProgress ? '⚡ IN PROGRESS' : isOpen ? '● OPEN' : (t.status || 'OPEN').toUpperCase()}
+                      </span>
+                      {currentUser.role === 'admin' && t.userId && (
+                        <span className="text-[11px] font-mono text-on-surface-variant bg-surface-container-high px-2 py-0.5 border border-stark-black/20">
+                          USER: {t.userId.substring(0, 12)}
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-headline-sm font-bold text-stark-black">{t.subject}</h4>
+                    <p className="font-code-snippet text-xs text-on-surface-variant mt-1 line-clamp-1">{t.description}</p>
                   </div>
-                  <h4 className="font-headline-sm font-bold text-stark-black">{t.subject}</h4>
-                  <p className="font-code-snippet text-xs text-on-surface-variant mt-1 line-clamp-1">{t.description}</p>
-                </div>
-                <Link 
-                  to="/chat"
-                  search={{ conv: t.conversationId }}
-                  className="bg-surface-bright text-stark-black px-4 py-2 text-xs font-label-bold uppercase border-2 border-stark-black hover:bg-electric-blue hover:text-pure-white transition-colors flex items-center gap-2 whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0"
-                >
-                  <span className="material-symbols-outlined text-[16px]">forum</span>
-                  Open Comms
-                </Link>
-              </li>
-            ))}
+                  <div className="flex items-center gap-2">
+                    <Link 
+                      to="/chat"
+                      search={{ conv: t.conversationId }}
+                      className="bg-surface-bright text-stark-black px-4 py-2 text-xs font-label-bold uppercase border-2 border-stark-black hover:bg-electric-blue hover:text-pure-white transition-colors flex items-center gap-2 whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">forum</span>
+                      Open Comms
+                    </Link>
+                    {currentUser.role === 'admin' && (
+                      <Link 
+                        to="/admin/support"
+                        className="bg-stark-black text-pure-white px-4 py-2 text-xs font-label-bold uppercase border-2 border-stark-black hover:bg-electric-blue transition-colors flex items-center gap-2 whitespace-nowrap shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none translate-x-[2px] translate-y-[2px] hover:translate-x-0 hover:translate-y-0"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">tune</span>
+                        Manage
+                      </Link>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

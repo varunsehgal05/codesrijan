@@ -450,8 +450,10 @@ graph TD
   - **Official Support Ticket Channels:** Prominently tagged with red `[SUPPORT TICKET]` badges in conversation lists, top banner notice displaying Ticket ID, subject, and status, and direct shortcut link to Support HQ (`/support` for students, `/admin/support` for administrators).
 
 #### 37. Student Support HQ (`/support`)
-- **Route:** `/support` | **Component:** `src/routes/support.tsx` | **Evidence:** LIVE-VERIFIED
-- **Purpose:** Student support center. Allows operatives to submit official support requests with Category (`technical`, `billing`, `report`, `general`), Priority (`low`, `normal`, `high`, `critical`), Subject, and Message. Automatically provisions a synchronized real-time chat channel for direct communication with organizers.
+- **Route:** `/support` | **Component:** `src/routes/support.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Role-Adaptive Support HQ)
+- **Purpose:** Student & Admin Support Transmission Center.
+  - **Student View:** Displays the `TALK TO ADMIN` action which toggles an issue submission drawer allowing operatives to dispatch tickets with Category (`technical`, `billing`, `report`, `general`), Priority (`low`, `normal`, `high`, `critical`), Subject, and Payload description. Shows the operative's active transmissions (`ACTIVE TRANSMISSIONS (N)`), strictly excluding closed tickets.
+  - **Administrator View:** Dynamically removes the `TALK TO ADMIN` button and ticket authoring form; provides a direct `ADMIN CONSOLE ↗` shortcut to `/admin/support`. Displays a global live feed of all platform tickets currently in `open` or `in_progress` state (`status !== 'closed'`), with user identifier chips, status badges, `Open Comms` (`/chat?conv=...`), and `Manage` shortcuts. Automatically queries `${BASE}/admin/support` and filters out closed transmissions.
 
 ---
 
@@ -625,9 +627,10 @@ The following register indexes all major visible interactive controls across the
 | `STU-SET-001`  | `/settings` | Button | `TERMINATE SESSION` | Authenticated | Clears Zustand store & JWT; navigates to `/login`. | LIVE-VERIFIED |
 | `STU-NOTIF-001`| `/notifications` | Button | `CLEAR SELECTED` | >=1 item checked | Calls `POST /api/notifications/batch-delete`. Purges records. | LIVE-VERIFIED |
 | `STU-NOTIF-002`| `/notifications` | Icon Button | `delete` | Hover on card | Calls `DELETE /api/notifications/:id`. Deletes single item. | LIVE-VERIFIED |
-| `STU-SUPP-001` | `/support` | Button | `TALK TO ADMIN` | Authenticated | Toggles ticket authoring form drawer. | LIVE-VERIFIED |
+| `STU-SUPP-001` | `/support` | Button | `TALK TO ADMIN` | Student role only | Toggles ticket authoring form drawer. Hidden for Admins. | COMMITTED — NOT LIVE-VERIFIED |
 | `STU-SUPP-002` | `/support` | Button | `TRANSMIT TICKET` | Form valid | Calls `POST /api/support`. Creates ticket & chat channel. | LIVE-VERIFIED |
 | `STU-SUPP-003` | `/support` | Link | `OPEN COMMS` | Active ticket | Navigates to `/chat?conv=...` for support discussion. | LIVE-VERIFIED |
+| `STU-SUPP-004` | `/support` | Link | `ADMIN CONSOLE ↗` | Admin role only | Direct shortcut to `/admin/support` for global ticket governance. | COMMITTED — NOT LIVE-VERIFIED |
 | `STU-WRK-001`  | `/workspace` | Button | `SUBMIT REPO LINK` | Valid GitHub URL | Calls `POST /api/submissions`. Commits entry. | LIVE-VERIFIED |
 | `STU-REC-001`  | `/recruitment` | Button | `SEND SQUAD INVITE`| Leader role | Calls `POST /api/teams/:id/invite` to target user. | LIVE-VERIFIED |
 | `STU-BOT-001`  | Global (`*`) | FAB Button | SrijanBot Icon | None | Toggles floating AI assistant chat modal. | LIVE-VERIFIED |
@@ -818,6 +821,7 @@ The backend exposes over 80 REST endpoints in `server/server.js`, strictly organ
 | `/api/admin/support` | GET | Yes | Admin | Returns all platform support tickets. | `supportTickets`, `users` |
 | `/api/admin/support/:id/status` | PATCH | Yes | Admin | Updates support ticket status (open/progress/resolved). | `supportTickets` |
 | `/api/admin/support/:id` | DELETE | Yes | Admin | Permanently removes support ticket record. | `supportTickets` |
+| `/api/support` | GET | Yes | Student, Admin | Returns active (non-closed) tickets (Admin: platform-wide; Student: personal). `?includeClosed=true` returns closed. | `supportTickets` |
 | `/api/support` | POST | Yes | Student | Submits new support ticket, creates matching chat channel. | `supportTickets`, `conversations` |
 | `/api/conversations` | GET | Yes | Student, Admin | Returns all active messaging channels. | `conversations`, `messages` |
 | `/api/notifications` | GET | Yes | Student, Admin | Returns user-specific notifications. | `notifications` |
