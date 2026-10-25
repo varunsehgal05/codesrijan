@@ -2077,6 +2077,40 @@ app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admi
     res.json({ message: "Squad Restored", team });
 });
 
+app.post('/api/admin/teams/:id/ban', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { reason = "Violating platform integrity rules." } = req.body;
+        const team = await Team.findOneAndUpdate(
+            { id: req.params.id }, 
+            { status: 'disqualified', isLocked: true, adminNote: `BANNED: ${reason.trim()}` }, 
+            { new: true }
+        );
+        if (!team) return res.status(404).json({ message: "Squad missing." });
+
+        // Dispatch In-App Notification to all squad members
+        const members = Array.from(new Set([team.leaderId, ...(team.memberIds || [])])).filter(Boolean);
+        for (const uid of members) {
+            try {
+                await Notification.create({
+                    id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
+                    userId: uid,
+                    type: 'team_disqualified',
+                    title: 'Squad Banned from Tournament',
+                    message: `Your squad "${team.name}" was BANNED by administration. Reason: ${reason.trim()}`,
+                    referenceType: 'team',
+                    referenceId: team.id,
+                    rejectionReason: reason.trim(),
+                    isRead: false
+                });
+            } catch (ne) {}
+        }
+
+        res.json({ message: `Squad "${team.name}" banned successfully.`, team });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to ban squad." });
+    }
+});
+
 app.post('/api/admin/teams/:id/verify', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
         const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'verified', isLocked: true }, { new: true });
@@ -3905,11 +3939,17 @@ app.get('/api/gallery/projects', async (req, res) => {
 // --- PUBLIC LEADERBOARD ---
 app.get('/api/leaderboard', async (req, res) => {
     try {
+        const { hackathonId, includeAll } = req.query;
+
         // 1. Identify non-test genuine hackathons
-        const genuineHackathons = await Hackathon.find({
+        let hackathonQuery = {
             isTest: { $ne: true },
             id: { $not: /^qa[-_]/i }
-        }).select('id').lean();
+        };
+        if (hackathonId) {
+            hackathonQuery.id = hackathonId;
+        }
+        const genuineHackathons = await Hackathon.find(hackathonQuery).select('id name status startDate endDate').lean();
         const genuineHackathonIds = new Set(genuineHackathons.map(h => h.id));
 
         // 2. Identify teams associated with QA registrations or events
@@ -3929,8 +3969,16 @@ app.get('/api/leaderboard', async (req, res) => {
         const testTeamIds = new Set(testRegistrations.map(r => r.teamId).filter(Boolean));
         const genuineTeamIds = new Set(genuineRegistrations.map(r => r.teamId).filter(Boolean));
 
-        // 3. Query candidate submitted teams that are not explicitly marked as test
-        const candidateTeams = await Team.find({ isSubmitted: true, isTest: { $ne: true } }).lean();
+        // 3. Query candidate teams (include all joined teams if requested, or submitted teams)
+        const teamFilter = { isTest: { $ne: true } };
+        if (hackathonId) {
+            teamFilter.$or = [
+                { hackathonId },
+                { lockedForHackathonId: hackathonId }
+            ];
+        }
+
+        const candidateTeams = await Team.find(teamFilter).lean();
 
         // Filter out teams that only belong to QA registrations/events and lack genuine registrations
         const eligibleTeams = candidateTeams.filter(t => {
@@ -3940,14 +3988,13 @@ app.get('/api/leaderboard', async (req, res) => {
             const hasGenuineReg = genuineTeamIds.has(t.id) || 
                                   (t.hackathonId && genuineHackathonIds.has(t.hackathonId));
 
-            // If team is associated with QA activity and has NO genuine event participation, exclude from public leaderboard
             if ((hasQaEventRef || isLinkedToQaReg) && !hasGenuineReg) {
                 return false;
             }
             return true;
         });
 
-        // 4. Query evaluations strictly for genuine hackathons
+        // 4. Query evaluations
         const evals = await Evaluation.find({
             $or: [
                 { hackathonId: { $in: Array.from(genuineHackathonIds) } },
@@ -3956,7 +4003,6 @@ app.get('/api/leaderboard', async (req, res) => {
             ]
         }).lean();
 
-        // Exclude evaluations explicitly linked to QA hackathons
         const genuineEvals = evals.filter(e => !e.hackathonId || genuineHackathonIds.has(e.hackathonId));
 
         const leaderboardData = eligibleTeams.map((t) => {
@@ -3980,6 +4026,11 @@ app.get('/api/leaderboard', async (req, res) => {
             return {
                 id: t.id,
                 name: t.name,
+                hackathonId: t.hackathonId || t.lockedForHackathonId || null,
+                status: t.status || 'forming',
+                memberIds: t.memberIds || [],
+                memberCount: (t.memberIds || []).length,
+                isSubmitted: !!t.isSubmitted,
                 bonusPoints,
                 penaltyPoints,
                 evalScore,
@@ -3992,13 +4043,20 @@ app.get('/api/leaderboard', async (req, res) => {
             };
         });
 
-        // Sort descending
-        leaderboardData.sort((a, b) => b.totalScore - a.totalScore);
-        
-        // Filter out unscored teams if we only want evaluated ones
-        const scoredOnly = leaderboardData.filter(t => t.isScored);
+        // Sort descending: scored teams by totalScore desc, then submitted, then active
+        leaderboardData.sort((a, b) => {
+            if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+            if (b.isScored !== a.isScored) return b.isScored ? 1 : -1;
+            return (b.memberCount || 0) - (a.memberCount || 0);
+        });
 
-        res.json(scoredOnly);
+        // If includeAll === 'true' or hackathonId specified, return all joined teams; otherwise if scored teams exist return them, or fallback to all eligible
+        if (includeAll === 'true' || hackathonId) {
+            return res.json(leaderboardData);
+        }
+
+        const scoredOnly = leaderboardData.filter(t => t.isScored);
+        res.json(scoredOnly.length > 0 ? scoredOnly : leaderboardData);
     } catch (e) {
         res.status(500).json({ message: "Leaderboard error" });
     }

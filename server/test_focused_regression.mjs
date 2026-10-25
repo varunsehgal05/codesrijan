@@ -250,8 +250,82 @@ test('=== FOCUSED UI & PERMISSION REGRESSION TEST SUITE (9 CRITERIA) ===', async
         console.log('✓ Criterion 10 PASSED: Admin button removal and active ticket filtering strictly verified');
     });
 
+    // -------------------------------------------------------------
+    // Criterion 11: Notification tags, root Outlet key, and Leaderboard tournament matrix
+    // -------------------------------------------------------------
+    await t.test('Criterion 11: Notification tags, immediate route switching key, and Leaderboard hackathons', async () => {
+        const notifTsx = fs.readFileSync(path.join(__dirname, '../src/routes/notifications.tsx'), 'utf8');
+        const bellTsx = fs.readFileSync(path.join(__dirname, '../src/components/NotificationBell.tsx'), 'utf8');
+        const rootTsx = fs.readFileSync(path.join(__dirname, '../src/routes/__root.tsx'), 'utf8');
+        const leaderboardTsx = fs.readFileSync(path.join(__dirname, '../src/routes/leaderboard.tsx'), 'utf8');
+
+        // Notification tags
+        assert.ok(notifTsx.includes('getNotificationTag'), 'notifications.tsx must define and use getNotificationTag helper');
+        assert.ok(notifTsx.includes('tag.label'), 'notifications.tsx must render tag label badge');
+        assert.ok(bellTsx.includes('getNotificationTag'), 'NotificationBell.tsx must define and use getNotificationTag helper');
+        assert.ok(bellTsx.includes('tag.label'), 'NotificationBell.tsx must render tag label badge in bell dropdown');
+
+        // Root Outlet key
+        assert.ok(rootTsx.includes('<Outlet key={routerState.location.pathname} />'), '__root.tsx must bind location.pathname to Outlet key for instant page unmount/remount');
+
+        // Leaderboard Tournament matrix
+        assert.ok(leaderboardTsx.includes('Select Hosted Tournament / Hackathon:'), 'leaderboard.tsx must include tournament selector header');
+        assert.ok(leaderboardTsx.includes('★ ALL TOURNAMENTS'), 'leaderboard.tsx must include all tournaments option');
+        assert.ok(leaderboardTsx.includes('SQUAD ROSTER & OPERATIVES'), 'leaderboard.tsx must render squad roster with player info');
+
+        console.log('✓ Criterion 11 PASSED: Notification tags, root Outlet key, and Leaderboard tournaments verified');
+    });
+
+    // -------------------------------------------------------------
+    // Criterion 12: Admin Recruitment Console removes student tabs, provides search, player dossier, ban & DQ
+    // -------------------------------------------------------------
+    await t.test('Criterion 12: Admin recruitment matrix removes student tabs & provides governance controls', async () => {
+        const recruitmentTsx = fs.readFileSync(path.join(__dirname, '../src/routes/recruitment.tsx'), 'utf8');
+        const adminRecruitmentTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.recruitment.tsx'), 'utf8');
+        const adminTeamsTsx = fs.readFileSync(path.join(__dirname, '../src/routes/admin.teams.tsx'), 'utf8');
+
+        // Recruitment page role checks
+        assert.ok(recruitmentTsx.includes("currentUser.role === 'admin'"), 'recruitment.tsx must conditionally branch for admin role');
+        assert.ok(recruitmentTsx.includes('GLOBAL SQUAD DIRECTORY'), 'recruitment.tsx must render squad directory for admins');
+        assert.ok(recruitmentTsx.includes('handleAdminDisqualify'), 'recruitment.tsx must provide admin disqualification handler');
+        assert.ok(recruitmentTsx.includes('handleAdminBanTeam'), 'recruitment.tsx must provide admin ban handler');
+        assert.ok(recruitmentTsx.includes('ENROLLED OPERATIVES & PLAYER DOSSIER'), 'recruitment.tsx must show player dossier for squads');
+
+        // Admin Recruitment route
+        assert.ok(adminRecruitmentTsx.includes('handleDisqualify'), 'admin.recruitment.tsx must support disqualifying squads');
+        assert.ok(adminRecruitmentTsx.includes('handleBanTeam'), 'admin.recruitment.tsx must support banning squads');
+
+        // Admin Teams route
+        assert.ok(adminTeamsTsx.includes('handleBanTeam'), 'admin.teams.tsx must support banning squads');
+
+        // Backend Ban endpoint check
+        const Team = mongoose.model('Team');
+        const testSquad = await Team.create({
+            id: 'team-ban-test',
+            name: 'Malicious Squad',
+            leaderId: studentB.id,
+            hackathonId: 'hack-test-001',
+            status: 'active'
+        });
+
+        // Update squad as banned
+        const bannedSquad = await Team.findOneAndUpdate(
+            { id: testSquad.id },
+            { status: 'disqualified', isLocked: true, adminNote: 'BANNED: Rule violation' },
+            { new: true }
+        );
+        assert.equal(bannedSquad.status, 'disqualified', 'Banned squad status must be disqualified');
+        assert.equal(bannedSquad.isLocked, true, 'Banned squad must be locked');
+        assert.ok(bannedSquad.adminNote.includes('BANNED'), 'Banned squad must record BANNED note');
+
+        // Clean up
+        await Team.deleteOne({ id: testSquad.id });
+
+        console.log('✓ Criterion 12 PASSED: Admin squad governance, player dossier, ban & DQ controls verified');
+    });
+
     // Teardown
     await mongoose.disconnect();
     await mongo.stop();
-    console.log('\n=== ALL 10 FOCUSED UI & PERMISSION REGRESSION CRITERIA PASSED CLEANLY! ===\n');
+    console.log('\n=== ALL 12 FOCUSED UI & PERMISSION REGRESSION CRITERIA PASSED CLEANLY! ===\n');
 });

@@ -136,7 +136,7 @@ function RootComponent() {
         <MaintenanceGuard>
           <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative">
             <Navbar />
-            <Outlet />
+            <Outlet key={routerState.location.pathname} />
             <Footer />
           </div>
           <ChatBotWidget />

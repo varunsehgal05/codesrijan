@@ -105,6 +105,26 @@ function AdminTeams() {
     } finally { setLoadingId(null); }
   };
 
+  const handleBanTeam = async (teamId: string, teamName: string) => {
+    const reason = window.prompt(`CRITICAL: Enter permanent tournament BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
+    if (!reason || !reason.trim()) return;
+
+    setLoadingId(teamId);
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_BASE}/admin/teams/${teamId}/ban`, 
+        { reason: reason.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success(`Squad "${teamName}" BANNED permanently.`);
+      setStatusMsg({ type: "success", text: `Squad "${teamName}" BANNED permanently.` });
+      await refetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to ban squad.");
+      setStatusMsg({ type: "error", text: err.response?.data?.message || "Failed to ban squad." });
+    } finally { setLoadingId(null); }
+  };
+
   const handleVerifyTeam = async (teamId: string, teamName: string) => {
     setLoadingId(teamId);
     try {
@@ -293,15 +313,20 @@ function AdminTeams() {
 
                 {t.status !== "disqualified" ? (
                   <button onClick={() => { setDqTeam(t); setDqReason(""); setNotifyDq(true); }} disabled={loadingId === t.id}
-                    className="bg-error text-pure-white py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase disabled:opacity-50 flex items-center justify-center gap-1">
+                    className="bg-error text-pure-white py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer">
                     <span className="material-symbols-outlined text-sm">gavel</span>DISQUALIFY
                   </button>
                 ) : (
                   <button onClick={() => { setNotifyTarget(t); setNotifyMsg(""); }}
-                    className="bg-amber-500 text-stark-black py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase flex items-center justify-center gap-1">
+                    className="bg-amber-500 text-stark-black py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase flex items-center justify-center gap-1 cursor-pointer">
                     <span className="material-symbols-outlined text-sm">mail</span>MESSAGE
                   </button>
                 )}
+
+                <button onClick={() => handleBanTeam(t.id, t.name)} disabled={loadingId === t.id}
+                  className="bg-stark-black hover:bg-error text-pure-white py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer">
+                  <span className="material-symbols-outlined text-sm">block</span>BAN TEAM
+                </button>
               </div>
             </div>
           );

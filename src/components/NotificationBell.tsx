@@ -16,6 +16,23 @@ const NOTIF_META: Record<string, { icon: string; color: string; label: string }>
     chat_message:      { icon: 'chat',          color: 'text-sky-500',     label: 'Squad Chat' },
 };
 
+const getNotificationTag = (type: string) => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('payment') || t.includes('billing')) {
+        return { label: 'PAYMENT', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-600' };
+    }
+    if (t.includes('team') || t.includes('squad') || t.includes('join') || t.includes('invite')) {
+        return { label: 'SQUAD', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-600' };
+    }
+    if (t.includes('support') || t.includes('ticket')) {
+        return { label: 'SUPPORT', bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-600' };
+    }
+    if (t.includes('admin') || t.includes('system') || t.includes('broadcast')) {
+        return { label: 'SYSTEM', bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-600' };
+    }
+    return { label: 'GENERAL', bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-400' };
+};
+
 export function NotificationBell() {
     const { currentUser } = useAppStore();
     const [notifications, setNotifications] = useState<any[]>([]);
@@ -119,8 +136,16 @@ export function NotificationBell() {
                                         <div className="flex items-start justify-between gap-2 mb-1.5">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                                 <span className={`material-symbols-outlined text-lg shrink-0 ${meta.color}`}>{meta.icon}</span>
-                                                <div className="min-w-0">
+                                                <div className="min-w-0 flex items-center gap-1.5 flex-wrap">
                                                     <span className="font-label-bold uppercase text-ink-black text-xs block truncate">{n.title || meta.label}</span>
+                                                    {(() => {
+                                                        const tag = getNotificationTag(n.type);
+                                                        return (
+                                                            <span className={`text-[8px] font-black px-1.5 py-0.2 uppercase border font-mono tracking-wider ${tag.bg} ${tag.text} ${tag.border}`}>
+                                                                {tag.label}
+                                                            </span>
+                                                        );
+                                                    })()}
                                                     {!n.isRead && (
                                                         <span className="inline-block w-1.5 h-1.5 bg-electric-blue rounded-full"></span>
                                                     )}

@@ -22,6 +22,23 @@ const NOTIF_ICONS: Record<string, { icon: string; color: string; label: string }
     default:           { icon: 'notifications',    color: 'text-zinc-400',    label: 'System Notification' }
 };
 
+export const getNotificationTag = (type: string) => {
+    const t = (type || '').toLowerCase();
+    if (t.includes('payment') || t.includes('billing')) {
+        return { label: 'PAYMENT', bg: 'bg-emerald-100 dark:bg-emerald-950', text: 'text-emerald-800 dark:text-emerald-300', border: 'border-emerald-600' };
+    }
+    if (t.includes('team') || t.includes('squad') || t.includes('join') || t.includes('invite')) {
+        return { label: 'SQUAD', bg: 'bg-blue-100 dark:bg-blue-950', text: 'text-blue-800 dark:text-blue-300', border: 'border-blue-600' };
+    }
+    if (t.includes('support') || t.includes('ticket')) {
+        return { label: 'SUPPORT', bg: 'bg-rose-100 dark:bg-rose-950', text: 'text-rose-800 dark:text-rose-300', border: 'border-rose-600' };
+    }
+    if (t.includes('admin') || t.includes('system') || t.includes('broadcast')) {
+        return { label: 'SYSTEM', bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-800 dark:text-amber-300', border: 'border-amber-600' };
+    }
+    return { label: 'GENERAL', bg: 'bg-zinc-100 dark:bg-zinc-800', text: 'text-zinc-800 dark:text-zinc-300', border: 'border-zinc-400' };
+};
+
 export function NotificationCenterComponent() {
     const { currentUser } = useAppStore();
     const navigate = useNavigate();
@@ -317,11 +334,14 @@ export function NotificationCenterComponent() {
                                                         NEW
                                                     </span>
                                                 )}
-                                                {n.type && (
-                                                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
-                                                        [{n.type}]
-                                                    </span>
-                                                )}
+                                                {n.type && (() => {
+                                                    const tag = getNotificationTag(n.type);
+                                                    return (
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 uppercase border font-mono tracking-wider shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${tag.bg} ${tag.text} ${tag.border}`}>
+                                                            {tag.label}
+                                                        </span>
+                                                    );
+                                                })()}
                                             </div>
 
                                             <p className="text-xs text-stark-black leading-relaxed font-semibold">

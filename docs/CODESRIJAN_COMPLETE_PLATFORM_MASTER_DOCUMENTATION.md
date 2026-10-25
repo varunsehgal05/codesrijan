@@ -296,9 +296,13 @@ graph TD
 - **Key Sections:** Search input, category accordions (Registration, Squads, Payments, Submissions, Judging), link to SrijanBot AI assistant.
 
 #### 8. Global Public Leaderboard (`/leaderboard`)
-- **Route:** `/leaderboard` | **Component:** `src/routes/leaderboard.tsx` | **Evidence:** LIVE-VERIFIED
-- **Purpose:** Public scoreboard displaying squad rankings, score breakdowns, and tournament standings when unfreezed by administrators.
-- **Key Sections:** Podium cards (1st, 2nd, 3rd place), searchable standings table, track filter.
+- **Route:** `/leaderboard` | **Component:** `src/routes/leaderboard.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Hosted Tournament & Squad Matrix)
+- **Purpose:** Public tournament scoreboard displaying hosted hackathons and all enrolled squads with live standings and evaluation breakdown matrices.
+- **Key Sections:**
+  - **Tournament Selector Tabs:** Quickly toggle between `★ ALL TOURNAMENTS` and individual hosted hackathons with live indicator pulse.
+  - **Active Arena Card:** Details tournament status (`LIVE`, `ACTIVE`, `CONCLUDED`), problem statements, and registration status.
+  - **Enrolled Squad Roster:** Displays every squad registered for the tournament, rank (🥇🥈🥉), member count, member avatar chips, and net score (or `⚡ ENROLLED IN TOURNAMENT` if awaiting judge scoring).
+  - **Expandable Rubric Matrix:** Clickable breakdown card revealing detailed scores across all criteria, operational bonuses, and penalty infractions.
 
 #### 9. Ethical Code of Conduct (`/code-of-conduct`)
 - **Route:** `/code-of-conduct` | **Component:** `src/routes/code-of-conduct.tsx` | **Evidence:** LIVE-VERIFIED
@@ -378,16 +382,20 @@ graph TD
 - **Purpose:** Account settings: email notifications toggle, real-time sound alert toggle, password change form, session termination button.
 
 #### 26. Tactical Notification Center (`/notifications`)
-- **Route:** `/notifications` | **Component:** `src/routes/notifications.tsx` | **Evidence:** LIVE-VERIFIED (CS-020, CS-021, CS-022 passed)
-- **Purpose:** Centralized alert feed. Categorizes notices into `all`, `unread`, `payment`, `team`, and `system`. Supports single trash icon deletion and multi-select "Clear Selected" batch deletion with strict cross-user isolation.
+- **Route:** `/notifications` | **Component:** `src/routes/notifications.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (High-Contrast Category Tags)
+- **Purpose:** Centralized alert feed. Categorizes notices into `all`, `unread`, `payment`, and `squads`. 
+  - **Category Tags:** Every notification item across the Center and the `NotificationBell` dropdown is prominently tagged with a stylized neo-brutalist badge: `PAYMENT` (emerald), `SQUAD` (blue), `SUPPORT` (rose), `SYSTEM` (amber), or `GENERAL` (zinc).
+  - Supports single trash icon deletion and multi-select "Clear Selected" batch deletion with strict cross-user isolation.
 
 #### 27. Collaborative Squad Workspace (`/workspace`)
 - **Route:** `/workspace` | **Component:** `src/routes/workspace.tsx` | **Evidence:** LIVE-VERIFIED
 - **Purpose:** Squad collaboration room during active hackathons. Features a Kanban task board (Backlog, In Progress, Review, Completed), shared scratchpad, GitHub repository link, and final project submission modal.
 
-#### 28. Hacker Recruitment Matrix (`/recruitment`)
-- **Route:** `/recruitment` | **Component:** `src/routes/recruitment.tsx` | **Evidence:** LIVE-VERIFIED
-- **Purpose:** Talent discovery board where students without teams can mark themselves available and squad leaders can browse hacker profiles and dispatch join invitations.
+#### 28. Hacker Recruitment Matrix & Squad Directorate (`/recruitment`)
+- **Route:** `/recruitment` | **Component:** `src/routes/recruitment.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Role-Adaptive Governance Matrix)
+- **Purpose:** Role-Adaptive Talent Discovery & Squad Governance Console:
+  - **Student View:** Displays `FIND`, `JOIN`, and `CREATE` tabs for operatives to recruit free hackers, enter squad authorization codes, or initialize new teams locked to registered hackathons.
+  - **Administrator View:** Dynamically removes the `FIND`, `JOIN`, and `CREATE` tabs. Replaces them with the **Global Squad Directorate**, featuring a live search bar (by team name, ID, player name, email), tournament filter dropdown to observe squad placement per hackathon, full player dossier cards (names, emails, user IDs, leader badges), Disqualify (DIQ), Undo Disqualify (RESTORE), and permanent Ban Team actions.
 
 #### 29. Live Problem Arena (`/challenge`)
 - **Route:** `/challenge` | **Component:** `src/routes/challenge.tsx` | **Evidence:** LIVE-VERIFIED
@@ -828,6 +836,10 @@ The backend exposes over 80 REST endpoints in `server/server.js`, strictly organ
 | `/api/notifications/:id` | DELETE | Yes | Student, Admin | Deletes individual notification record. | `notifications` |
 | `/api/notifications/batch-delete` | POST | Yes | Student, Admin | Batch deletes array of user notification IDs. | `notifications` |
 | `/api/admin/settings` | PATCH | Yes | Admin | Updates platform settings (maintenance, registration). | `systemSettings` |
+| `/api/leaderboard` | GET | None | All | Returns tournament squad rankings. Supports `?hackathonId=...` and `?includeAll=true`. | `teams`, `evaluations`, `hackathons` |
+| `/api/admin/teams/:id/disqualify` | POST | Yes | Admin | Disqualifies squad, records reason note, and dispatches in-app member alerts. | `teams`, `notifications` |
+| `/api/admin/teams/:id/undo-disqualify` | POST | Yes | Admin | Reinstates disqualified squad to active tournament standing. | `teams`, `notifications` |
+| `/api/admin/teams/:id/ban` | POST | Yes | Admin | Permanently locks squad with ban notice and dispatches disciplinary notifications. | `teams`, `notifications` |
 
 ---
 
