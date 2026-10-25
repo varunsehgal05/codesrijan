@@ -2,9 +2,12 @@
 **Platform Under Test:** CodeSrijan Production Platform  
 **Live Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app/)  
 **Canonical Production Backend:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
+**Render Deployed Revision:** `37f376e` (Live on Render `srv-db1b3ke0tbcc73ac3ea0`)  
+**Git Repository Head:** Commit `a4b44ad` on branches `main` and `master` (documentation tracking commit)  
 **Local Codebase:** `C:/Users/Varun/Downloads/interactive-showcase-main/interactive-showcase-main`  
-**Execution Timestamp:** 2026-10-25T04:55:00+05:30 (UTC: 2026-10-24T23:25:00Z)  
+**Execution Timestamp:** 2026-10-25T05:35:00+05:30 (UTC: 2026-10-25T00:05:00Z)  
 **Operating Budget:** **$0.00 / month** (Strictly zero paid infrastructure, zero paid SaaS, zero paid email services)  
+**Production Status Summary:** **34 PASS — LIVE VERIFIED | 1 BLOCKED — STORAGE NOT PROVISIONED (CS-016 Safe 503 Verified)**  
 **Lead Roles:** Lead Engineer, Browser Automation Lead, QA Coordinator, Security Engineer, Release Manager  
 
 ---
@@ -23,13 +26,27 @@
 11. [TEAM, EVENT, REGISTRATION, PAYMENT & HISTORY CONSISTENCY](#11-team-event-registration-payment--history-consistency)
 12. [RESPONSIVE VIEWPORT & CONSOLE/NETWORK FINDINGS](#12-responsive-viewport--consolenetwork-findings)
 13. [FINAL METRIC TOTALS & ACCEPTANCE CLASSIFICATION](#13-final-metric-totals--acceptance-classification)
-14. [LIVE EXECUTION ADDENDUM: REJECTION EMAIL REPAIR, FIREBASE BLOCKER SAFEGUARD, AND ACCURACY RECONCILIATION (2026-10-25)](#14-live-execution-addendum-rejection-email-repair-firebase-blocker-safeguard-and-accuracy-reconciliation-2026-10-25)
+14. [LIVE EXECUTION ADDENDUM: REJECTION EMAIL REPAIR, FIREBASE BLOCKER SAFEGUARD, AND ACCURACY RECONCILIATION](#14-live-execution-addendum-rejection-email-repair-firebase-blocker-safeguard-and-accuracy-reconciliation)
+15. [$0/MONTH ZERO-COST STORAGE ALTERNATIVE INVESTIGATION & OWNER RECOMMENDATION](#15-0month-zero-cost-storage-alternative-investigation--owner-recommendation)
 
 ---
 
 ## 1. EXECUTIVE SUMMARY & PROOF OF NATIVE BROWSER SUBAGENT EXECUTION
 
 In strict compliance with requirements, **actual native visible Chrome browser subagents were dispatched against the live production deployment** (`https://codesrijan-nine.vercel.app` and `https://codesrijan-api-6tfr.onrender.com/api`) and the authorized Gmail inbox (`codesrijan@gmail.com`). Zero mock frontends, simulated mail recipients, or local-only tests were substituted.
+
+### Current Empirical Status Overview
+1. **Core Application & Security Controls (34 / 35 Verified Live):**
+   - Public Hackathons Catalog authorization (CS-035) enforces pre-start confidentiality and displays exactly 2 hackathons across all 4 access paths on revision `37f376e`.
+   - Real wall-clock challenge release (CS-027) and deadline cutoff (CS-029) verified with unaccelerated server time.
+   - Edit Audit Note (CS-018) verified on live QA record without payment decision mutation.
+   - Notification Suite (CS-020, CS-021, CS-022) verified on live site with DB deletion and reload persistence.
+   - Transactional Email Delivery (CS-019) verified across all three flows: password reset authorization (03:22), admin review notification (03:46), and student-facing payment rejection email (04:44) via Google Apps Script Relay Version 5 in `codesrijan@gmail.com`.
+2. **Payment-Proof Binary Storage (CS-016: 1 / 35 Blocked):**
+   - Cloud Storage is unprovisioned because Firebase project `codesrijan-450d0` requires an upgrade to Google Cloud's Blaze plan.
+   - Under the strict **$0.00/month** project budget constraint, billing was not enabled.
+   - **Safe Fallback Verified:** Submitting valid payment proof returns `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE`. The server does NOT mark proofs as under review without persistence, does NOT store fake public URLs or data URIs in MongoDB, and preserves student registrations cleanly in `pending_proof` / `rejected` for safe retry.
+   - Acceptance total is accurately recorded as **34 PASS, 1 BLOCKED**.
 
 ### Empirical Evidence of Native Browser Subagent Execution
 - **Chrome Session 1 (Public Tournaments Hub & Problem Statement Policies):**
@@ -64,10 +81,10 @@ In strict compliance with requirements, **actual native visible Chrome browser s
     - `notifications_loaded_1792876441332.png` (Notification center loaded with cards and filter tabs)
     - `notifications_cleared_1792876656998.png` (Post-deletion empty state "No Transmissions Recorded" after refresh)
 
-- **Chrome Session 6 (Deploy Commit a72187d on Render & Verify Build):**
+- **Chrome Session 6 (Deploy Intermediate Commit a72187d on Render & Verify Build):**
   - **Video Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/deploy_a72187d_1792877619263.webp`
   - **Captured Screenshots:**
-    - `render_deploy_live_confirmed_1792877731923.png` (Render service `codesrijan-api` confirmed Live running revision `a72187d`)
+    - `render_deploy_live_confirmed_1792877731923.png` (Render service `codesrijan-api` confirmed Live running intermediate revision `a72187d`)
 
 - **Chrome Session 7 (CS-035 Live Verification — Exactly Two Public Hackathons):**
   - **Video Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/public_catalog_exact_two_1792877762699.webp`
@@ -77,15 +94,15 @@ In strict compliance with requirements, **actual native visible Chrome browser s
 - **Chrome Session 8 (CS-019 Email Inbox Inspection in Gmail):**
   - **Video Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/inspect_gmail_inbox_1792878646556.webp`
   - **Captured Screenshots:**
-    - `codesrijan_identity_verification_email_1792878661080.png` (Opened email in `codesrijan@gmail.com` inbox showing Passkey 272168)
+    - `codesrijan_identity_verification_email_1792878661080.png` (Opened email in `codesrijan@gmail.com` inbox showing Passkey `[REDACTED]`)
 
 - **Chrome Session 9 (CS-019 Fresh Live Email Delivery Verification):**
   - **Video Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/check_gmail_delivery_1792878728608.webp`
   - **Captured Screenshots:**
     - `gmail_inbox_password_reset_1792878757577.png` (Gmail inbox with fresh email arrived at 03:22)
-    - `gmail_open_password_reset_email_1792878794655.png` (Opened email showing subject `CodeSrijan [PASSWORD RESET AUTHORIZATION]`, reset link button, and 1-hour expiration)
+    - `gmail_open_password_reset_email_1792878794655.png` (Opened email showing subject `CodeSrijan [PASSWORD RESET AUTHORIZATION]`, reset link button, and 1-hour expiration; reset token `[REDACTED]`)
 
-- **Chrome Session 10 (Deploy Commit 9a8ae0e on Render & Security Verification):**
+- **Chrome Session 10 (Deploy Intermediate Commit 9a8ae0e on Render & Security Verification):**
   - **Video Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/deploy_9a8ae0e_1792879021125.webp`
   - **Captured Screenshots:**
     - `deploy_success_1792879111760.png` (Render service `codesrijan-api` confirmed Live running revision `9a8ae0e`)
@@ -111,22 +128,19 @@ In strict compliance with requirements, **actual native visible Chrome browser s
 ## 2. RENDER DEPLOYMENT VERIFICATION & INFRASTRUCTURE STATUS
 
 - **Canonical Git Repository:** `https://github.com/varunsehgal05/codesrijan.git`
-- **Active Branch:** `main` (mirrored to `master`)
-- **HEAD Commit SHA:** `37f376e33db37ebf8691f3a2283cb7a835b6c3bc` (`37f376e`)
-- **Commit Message:** `fix(payment): return HTTP 503 PAYMENT_STORAGE_UNAVAILABLE when storage unprovisioned and sync payment_rejected relay template`
+- **Active Branches:** `main` and `master` (synchronized at HEAD commit `a4b44ad`)
+- **Render Backend Runtime Revision:** **`37f376e`** (Service ID: `srv-db1b3ke0tbcc73ac3ea0`, duration 49.7s, Live 🎉 at `https://codesrijan-api-6tfr.onrender.com`)
+  - Commit `37f376e` contains all backend code changes: HTTP 503 `PAYMENT_STORAGE_UNAVAILABLE` safe failure handling and `Code.gs` Apps Script sync.
+  - Subsequent commit `a4b44ad` on `main`/`master` updated documentation only (`docs/CODESRIJAN_LIVE_E2E_TEST_AND_REPAIR_REPORT.md`), modifying zero backend code. To preserve production stability, Render was not triggered for documentation-only changes.
 - **Vercel Frontend Deployment:**
   - URL: `https://codesrijan-nine.vercel.app`
   - Status: Built and deployed with zero errors (`npm run build`). Route `/notifications` returns HTTP 200.
-- **Render Canonical Backend Deployment:**
-  - Service Name: `codesrijan-api` / Host: `codesrijan-api-6tfr.onrender.com`
-  - Service ID: `srv-db1b3ke0tbcc73ac3ea0` (Free Tier)
-  - Current Live Deployed Commit: **`37f376e`** (Confirmed Live in Render Dashboard via subagent `render_live_check`)
-  - Provider Status: **Live and Healthy**
-  - Server Log Confirmation:
-    - `Server & WebSockets running on port 5001`
-    - `MongoDB Connected to keyspace codesrijan`
-    - `Your service is live 🎉 at https://codesrijan-api-6tfr.onrender.com`
-  - Operational Setting: Database `maintenanceMode: false` active in MongoDB, allowing normal student and guest requests.
+- **Provider Status:** **Live and Healthy**
+- **Server Log Confirmation:**
+  - `Server & WebSockets running on port 5001`
+  - `MongoDB Connected to keyspace codesrijan`
+  - `Your service is live 🎉 at https://codesrijan-api-6tfr.onrender.com`
+- **Operational Setting:** Database `maintenanceMode: false` active in MongoDB, allowing normal student and guest requests.
 
 ---
 
@@ -168,10 +182,10 @@ Every test case is counted individually.
 | **CS-013** | Overlapping registration rejected | Group A | Colliding event | Server rejects overlapping event registration; existing records untouched | Conflicting registration blocked server-side | **PASS — LIVE VERIFIED** | Conflicting registration response |
 | **CS-014** | Duplicate registration rejected | User 1 | `/hackathons/:id/register` | Returned `HTTP 409 Conflict: Duplicate record` | Prevent duplicate event registrations | **PASS — LIVE VERIFIED** | HTTP 409 response payload |
 | **CS-015** | Duplicate team name rejected | User 1 | `POST /api/teams` | Second team with identical normalized title rejected in tournament context | Duplicate squad names blocked | **PASS — LIVE VERIFIED** | Backend validation rejection |
-| **CS-016** | Submit payment proof with UTR | User 3 | `/payment-proof` | Submitted `UTR-QA-GROUPB-PAID-1792862`; status became `payment_under_review` | Status transitions to under review | **PASS — LIVE VERIFIED** | `paymentNotificationStatus: sent` |
+| **CS-016** | Submit payment proof with UTR | User 3 | `/payment-proof` | Historical staging pass on earlier revision `20bbb40` before cloud persistence requirement. On current live production revision `37f376e`, valid payment proof upload returns `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE` because Firebase Storage is unprovisioned under the strict $0/month budget rule. Safe failure behavior confirmed: status is NOT falsely marked under review, no fake URLs saved to DB, student registration remains clean for retry | Payment proof persisted and status transitioned to under review | **BLOCKED — STORAGE NOT PROVISIONED** | `verify_live_post_deploy_37f376e.mjs` (503 safe fallback) & historical rev `20bbb40` |
 | **CS-017** | Rejection requires mandatory reason | Admin | `/admin/payments/:id/review` | Rejected with reason `"Transaction ID mismatch..."`; reason stored in DB. Empty reason returns 400 | Rejection requires reason, saved in audit | **PASS — LIVE VERIFIED** | `reviewReason` DB field |
 | **CS-018** | Edit Audit Note without status change | Admin | `/admin/payments/:id/review` | Saved valid note without HTTP 400; persists after refresh; decision/status remains `rejected`; audit entry logged; empty rejected (400); unauth rejected (401) | Note saves without mutating decision | **FIXED — LIVE VERIFIED** | `payment_audit_note_verified_1792871976484.png` |
-| **CS-019** | Check rejection / transactional email delivery | Student / Admin | Gmail (`codesrijan@gmail.com` / `codesrijan+qa-rejection@gmail.com`) | Dispatched admin review notification (03:46) and student payment-rejection notice on QA registration `reg-1792883629625` via Google Apps Script Relay v5; actual inbox arrival verified at 04:44 with subject, event, UTR, fee, and rejection reason | Actual email received in authorized inbox | **FIXED — LIVE VERIFIED** | `declined_payment_email_expanded_1792883729453.png` & `opened_email_verified_1792880229013.png` |
+| **CS-019** | Check rejection / transactional email delivery | Student / Admin | Gmail (`codesrijan@gmail.com` / `codesrijan+qa-rejection@gmail.com`) | Dispatched admin review notification (03:46) and student payment-rejection notice on QA registration `reg-1792883629625` via Google Apps Script Relay v5; actual inbox arrival verified at 04:44 with subject, event, UTR, fee, and rejection reason (earlier password-reset authorization relay probe verified at 03:22) | Actual email received in authorized inbox | **FIXED — LIVE VERIFIED** | `declined_payment_email_expanded_1792883729453.png` & `opened_email_verified_1792880229013.png` |
 | **CS-020** | Delete one notification | Student | `DELETE /api/notifications/:id` | Single notification deleted via trash icon on live site; returns HTTP 200; siblings intact | Only target removed | **FIXED — LIVE VERIFIED** | `notifications_center_verify_*.webp` |
 | **CS-021** | Select all and clear selected | Student | `POST /clear-selected` | Checkboxes selected items; batch clear succeeded; deleted from live DB | Only selected items removed | **FIXED — LIVE VERIFIED** | Live API HTTP 200 response |
 | **CS-022** | Refresh after notification deletion | Student | `/notifications` | Deleted notifications remain deleted upon page reload; empty state persisted | Persistence verified | **FIXED — LIVE VERIFIED** | `notifications_cleared_1792876656998.png` |
@@ -193,30 +207,47 @@ Every test case is counted individually.
 
 ## 5. CS-019 LIVE VERIFICATION: ACTUAL EMAIL INBOX DELIVERY
 
-In strict fulfillment of Phase 1 requirements, actual inbox delivery was proven using the owner-authorized Gmail account `codesrijan@gmail.com` via the existing zero-cost Google Apps Script MailApp relay:
+In strict fulfillment of Phase 1 requirements, actual inbox delivery was proven using the owner-authorized Gmail account `codesrijan@gmail.com` via the existing zero-cost Google Apps Script MailApp relay. Transactional delivery was verified across three sequential operational flows:
 
-1. **Email Pipeline Architecture:**
-   - Provider: Google Apps Script Web App HTTPS Relay (`MailApp.sendEmail`).
-   - Cost: **$0.00 / month** (zero paid infrastructure, zero SMTP port blocks on Render free tier).
-   - Recipient Validation: Strictly enforces RFC-compliant recipient validation and HMAC-SHA256 signature verification.
-2. **Authorized Inbox Identification:**
-   - Mailbox: `codesrijan@gmail.com` (already authenticated in active Chrome session `Page 07C8AE23AF38C1171F8E050F628015EA`).
-3. **Execution of Live Workflow:**
-   - Triggered live password reset authorization transaction via `POST https://codesrijan-api-6tfr.onrender.com/api/auth/forgot-password` with `{ email: "codesrijan@gmail.com" }`.
-   - Server dispatched payload signed with HMAC-SHA256 to Apps Script relay.
-   - Relay accepted request and dispatched transmission via `MailApp.sendEmail`.
-4. **Direct Inbox Inspection via Native Chrome Subagent:**
-   - Subagent `check_gmail_delivery` navigated to `https://mail.google.com/mail/u/1/#inbox`.
-   - Fresh message arrived at **03:22** (matching the trigger timestamp).
-   - **Sender:** `CodeSrijan <codesrijan@gmail.com>`
-   - **Recipient:** `codesrijan@gmail.com`
-   - **Subject:** `CodeSrijan [PASSWORD RESET AUTHORIZATION]`
-   - **Body:** Rendered official Neo-Brutalist template with `CODESRIJAN KEY_RECOVERY_PROTOCOL`, `Password Reset Requested`, security advisory ("will expire in 1 hour"), and authorized `RESET CREDENTIALS` button.
-   - **Screenshot Evidence:**
-     - `gmail_inbox_password_reset_1792878757577.png` (Inbox feed)
-     - `gmail_open_password_reset_email_1792878794655.png` (Opened email body)
-   - **Recording Evidence:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/check_gmail_delivery_1792878728608.webp`
-5. **Outcome Classification:** **`FIXED — LIVE VERIFIED`** (Full inbox arrival confirmed).
+### 1. Email Pipeline Architecture & Zero-Cost Infrastructure
+- **Relay Provider:** Google Apps Script Web App HTTPS Relay (`MailApp.sendEmail`).
+- **Cost:** **$0.00 / month** (zero paid infrastructure, zero SMTP port blocks on Render free tier).
+- **Security Gates:** Enforces RFC-compliant recipient validation, HMAC-SHA256 signature verification, 5-minute replay-prevention clock skew, nonces cached via `CacheService`, and HTML sanitization.
+- **Authorized Mailbox:** `codesrijan@gmail.com` (authenticated in active Chrome session).
+
+### 2. Stage 1: Initial Relay Transport Probe (Password Reset Authorization)
+- **Live Workflow:** Dispatched password reset authorization transaction via `POST /api/auth/forgot-password` with `{ email: "codesrijan@gmail.com" }`.
+- **Relay Dispatch:** Backend generated HMAC-SHA256 signature; Apps Script relay accepted request and sent via `MailApp.sendEmail`.
+- **Inbox Arrival:** Fresh message arrived at **03:22 AM** in `codesrijan@gmail.com`.
+  - **Sender:** `CodeSrijan <codesrijan@gmail.com>`
+  - **Recipient:** `codesrijan@gmail.com`
+  - **Subject:** `CodeSrijan [PASSWORD RESET AUTHORIZATION]`
+  - **Body Content:** Rendered Neo-Brutalist template with `CODESRIJAN KEY_RECOVERY_PROTOCOL`, security advisory, and authorized `RESET CREDENTIALS` button with secure token `[REDACTED]`.
+  - **Evidence:** `gmail_inbox_password_reset_1792878757577.png`, `gmail_open_password_reset_email_1792878794655.png`, recording `check_gmail_delivery_1792878728608.webp`.
+
+### 3. Stage 2: Admin Payment Review Notification Delivery
+- **Live Workflow:** Payment proof submitted for paid registration `reg-1792862807255`.
+- **Relay Dispatch:** Backend triggered `sendPaymentReviewNotification()` with template `payment_review_notification`.
+- **Inbox Arrival:** Arrived at **03:46 AM** in `codesrijan@gmail.com`.
+  - **Sender:** `CodeSrijan <codesrijan@gmail.com>`
+  - **Subject:** `CodeSrijan [PAYMENT REVIEW: PENDING - CodeSrijan 24-Hour Innovation Hackathon]`
+  - **Evidence:** `opened_email_verified_1792880229013.png`, recording `verify_payment_email_1792880187422.webp`.
+
+### 4. Stage 3: Student-Facing Payment Rejection Delivery (Apps Script Relay Version 5)
+- **Defect Discovered in Version 4:** Relay rejected `payment_rejected` template (`HTTP 200 { success: false, error: 'Unsupported template: payment_rejected' }`).
+- **Relay Upgrade (Version 5):** Added `payment_rejected` template in `google-apps-script/Code.gs`, safely escaped all fields (`escapeHtml()`), validated `retryUrl`, and deployed Version 5 on existing stable Web App URL `.../AKfycby5O5Mebck13ZOit2vJIAXPtvwyuUsod8L6P5w1CsY59biQbgzAqPhQKHlBdwQ8P4yKkw/exec`.
+- **Live E2E Verification:**
+  - Registered reachable student `codesrijan+qa-rejection@gmail.com` (`usr-1792883522629`) and created safe QA registration `reg-1792883629625`.
+  - Administrator triggered rejection via `POST /api/admin/payments/reg-1792883629625/review` with reason `"QA Compliance Audit: Transaction receipt unreadable and UTR mismatched. Please re-upload clear proof."`.
+  - **Inbox Arrival:** Confirmed fresh arrival in `codesrijan@gmail.com` at **04:44 AM**:
+    - **Sender:** `CodeSrijan <codesrijan@gmail.com>`
+    - **Recipient:** `codesrijan+qa-rejection@gmail.com`
+    - **Subject:** `CodeSrijan [PAYMENT REVIEW: DECLINED - CodeSrijan 24-Hour Innovation Hackathon]`
+    - **Body Content:** Rendered official decline notice with rejection reason, expected fee (`100 INR`), and `RESUBMIT PAYMENT PROOF` button.
+  - **Evidence:** `declined_payment_email_expanded_1792883729453.png`, `deployment_completed_1792883074171.png`, recording `verify_live_rejection_email.webp`.
+
+### 5. Outcome Classification
+**`FIXED — LIVE VERIFIED`** (All three transactional email pathways empirically verified in authorized Gmail inbox).
 
 ---
 
@@ -412,20 +443,22 @@ The production frontend was verified across 5 responsive viewports:
 ## 13. FINAL METRIC TOTALS & ACCEPTANCE CLASSIFICATION
 
 ### Individual Test Metric Breakdown (35 Core Test Cases)
-- **PASS — LIVE VERIFIED:** **27**  
-  (CS-001, CS-002, CS-003, CS-004, CS-005, CS-006, CS-007, CS-008, CS-009, CS-010, CS-011, CS-012, CS-013, CS-014, CS-015, CS-016, CS-017, CS-023, CS-024, CS-025, CS-026, CS-028, CS-030, CS-031, CS-032, CS-033, CS-034)
+- **PASS — LIVE VERIFIED:** **26**  
+  (CS-001, CS-002, CS-003, CS-004, CS-005, CS-006, CS-007, CS-008, CS-009, CS-010, CS-011, CS-012, CS-013, CS-014, CS-015, CS-017, CS-023, CS-024, CS-025, CS-026, CS-028, CS-030, CS-031, CS-032, CS-033, CS-034)
 - **FIXED — LIVE VERIFIED:** **6**  
   (CS-018 Edit Audit Note, CS-019 Live Email Inbox Delivery, CS-020 Delete Notification, CS-021 Clear Selected, CS-022 Refresh Persistence, CS-035 Exactly Two Public Hackathons)
 - **PASS — WALL-CLOCK QA BOUNDARY VERIFIED:** **2**  
   (CS-027 Automatic Challenge Release at Server Start Time, CS-029 Submission Cutoff at Server Deadline)
 - **PASS — LOCAL ONLY:** **0**
 - **FAIL — UNRESOLVED:** **0**
-- **BLOCKED:** **0** (All 35 core platform test cases verified)
+- **BLOCKED — STORAGE NOT PROVISIONED:** **1**  
+  (CS-016 Payment-Proof Submission: In current live production revision `37f376e`, valid payment-proof uploads return `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE` because Firebase Storage is unprovisioned under the strict $0/month budget rule. Safe failure behavior confirmed: status is NOT falsely marked under review, no fake URLs saved to DB, student registration remains clean in `pending_proof` / `rejected` for safe retry. Historical staging pass on earlier revision `20bbb40` is noted for context, but current live production blocks image persistence).
 - **NOT REPEATABLE SAFELY:** **0**
 - **UNVERIFIED:** **0** (CS-019 admin notification and student rejection emails both empirically verified in authorized Gmail inbox!)
 - **Total Core Test Cases Evaluated:** **35**
+- **Current Production Summary:** **34 Functional Verifications Passing, 1 Core Workflow Blocked (Storage Not Provisioned)**.
 
-### Storage Infrastructure Classification (Task 2)
+### Storage Infrastructure Classification
 - **Raster File Format & Binary Magic Byte Validation:** **PASS — LIVE & UNIT VERIFIED** (8/8 unit tests, live 400 rejection on SVG and text spoofing).
 - **Protected Receipt Access Endpoints:** **PASS — LIVE VERIFIED** (HTTP 401 unauthenticated, HTTP 403 cross-student, HTTP 200 admin).
 - **Actual Firebase Cloud Storage Object Upload:** **BLOCKED — FIREBASE STORAGE NOT PROVISIONED**  
@@ -434,11 +467,11 @@ The production frontend was verified across 5 responsive viewports:
   (Canonical backend revision `37f376e` returns HTTP 503 with stable error code `PAYMENT_STORAGE_UNAVAILABLE`. Payment proof is never marked as submitted or under review when unpersisted; no raw data URIs or fake public URLs are saved to the database; student registration remains clean in `pending_proof` / `rejected` for safe retry).
 
 ### Final Acceptance Verdict
-## **CORE PLATFORM: LIVE QA PASS — STORAGE PROVIDER: BLOCKED (NO USABLE BUCKET)**
+## **CORE PLATFORM: LIVE QA PASS (34/35) — PAYMENT-PROOF UPLOAD: BLOCKED (NO USABLE BUCKET)**
 1. **Email Relay & Inbox Delivery (CS-019):** Full live E2E delivery verified. Both the admin review notification (`codesrijan@gmail.com` at 03:46) and the student payment-rejection notice (`codesrijan+qa-rejection@gmail.com` at 04:44) were received in the authorized Gmail inbox via the zero-cost Google Apps Script relay (Version 5).
 2. **Public Hackathon Catalog (CS-035):** Enforced server-side across all four authorization paths on revision `37f376e`. Exactly two public tournaments (`hack-free-1792862581267` and `hack-paid-1792862582632`) render for guests and students, while preserving all 10 historical records for administrators.
 3. **Wall-Clock Challenge & Submission Rules (CS-027 & CS-029):** Pre-start confidentiality and submission cutoffs strictly enforced server-side.
-4. **Firebase Cloud Storage:** File validation and access control security gates are fully operational. Actual cloud object storage is formally classified as **`BLOCKED — FIREBASE STORAGE NOT PROVISIONED`** to strictly honor the $0/month budget constraint without enabling Blaze billing.
+4. **Firebase Cloud Storage:** File validation and access control security gates are fully operational. Actual cloud object storage is formally classified as **`BLOCKED — FIREBASE STORAGE NOT PROVISIONED`** to strictly honor the $0/month budget constraint without enabling Blaze billing. Valid uploads return HTTP 503 `PAYMENT_STORAGE_UNAVAILABLE`.
 
 ---
 
@@ -593,23 +626,97 @@ To prevent data corruption, misleading status updates, or orphan records:
 
 1. **Deployed Revisions & Branches:**
    - **Render Web Service (`codesrijan-api`):** Revision `37f376e` is **Live** (`srv-db1b3ke0tbcc73ac3ea0`, duration 49.7s).
-   - **GitHub Repository:** Both `main` and `master` branches are in sync at HEAD commit `37f376e`.
-   - **Documentation Track:** Previous documentation update was commit `03c83d8`. Current update reconciles the report directly against deployed revision `37f376e`.
+     - Commit `37f376e` contains all backend application code modifications: HTTP 503 `PAYMENT_STORAGE_UNAVAILABLE` safe failure handling and `Code.gs` Apps Script sync.
+   - **GitHub Repository:** Both `main` and `master` branches are synchronized at HEAD commit `a4b44ad`.
+     - Commit `a4b44ad` is a documentation reconciliation commit targeting `docs/CODESRIJAN_LIVE_E2E_TEST_AND_REPAIR_REPORT.md` only (modifying 0 application code files). To preserve production stability, Render was not triggered for documentation-only changes.
+   - **Historical Revision Progression:**
+     - `e4f795a`: Initial payment note controller fix and notification endpoints.
+     - `a72187d`: Public hackathons catalog filtering.
+     - `9a8ae0e`: Submission deadline cutoff and pre-start problem statement lockdown.
+     - `20bbb40`: Initial payment review email dispatch and catalog regression verification.
+     - `37f376e`: **Canonical Production Backend Revision** — Safe HTTP 503 storage unprovisioned handling and Apps Script Version 5 relay sync.
 2. **Public Hackathon Catalog Live Smoke Check:**
    - Path 1: Anonymous `GET /api/hackathons` -> exactly **2** hackathons.
    - Path 2: Anonymous `GET /api/hackathons?includeArchived=true` -> exactly **2** hackathons (bypass blocked).
    - Path 3: Student `GET /api/hackathons?includeArchived=true` -> exactly **2** hackathons.
    - Path 4: Admin `GET /api/hackathons?includeArchived=true` -> all **10** historical hackathons preserved.
    - Frontend UI: Verified at `https://codesrijan-nine.vercel.app/hackathons` showing exactly the two active tournaments (`public_hackathons_verified_37f376e_1792884317957.png`).
-3. **Required Project Owner Decision:**
-   - To enable live file persistence in Firebase Cloud Storage, project owner must authorize upgrading Firebase project `codesrijan-450d0` to Google Cloud's Blaze plan (pay-as-you-go).
-   - Until owner authorizes this upgrade, CodeSrijan operates safely under the zero-cost architecture with HTTP 503 `PAYMENT_STORAGE_UNAVAILABLE` safeguards preventing corrupted payment states.
+3. **Current Production Safeguard Status:**
+   - Valid uploads currently return `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE`. No fake state transitions or corrupted database records are permitted.
+
+---
+
+## 15. $0/MONTH ZERO-COST STORAGE ALTERNATIVE INVESTIGATION & OWNER RECOMMENDATION
+
+### 1. Executive Objective
+Investigate whether genuine payment-proof image persistence can be achieved for CodeSrijan without enabling Firebase Blaze billing or introducing recurring infrastructure costs, while strictly preserving the **$0.00/month** project budget constraint.
+
+### 2. Comprehensive Provider Research & Factual Comparison Matrix
+
+A dedicated native browser subagent was dispatched to review official documentation, pricing terms, and authentication requirements across candidate object-storage providers:
+
+| Provider | Requires Credit Card / Billing Account? | Free Tier Storage Allowance | Free Tier Bandwidth / Operations | Private Bucket & Authenticated Access | Render / Node.js Adapter Fit | Over-Quota / Inactivity Behavior | Budget & Feasibility Rating |
+|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **MongoDB GridFS** *(via existing Atlas M0 cluster)* | **NO** *(Uses existing active MongoDB connection)* | **512 MB** *(included in active cluster)* | Shared Atlas network bandwidth | **100% Private** *(Stored directly in `fs.files` & `fs.chunks`; no public URLs; served via authenticated Express routes)* | **Native** *(Built into `mongoose.mongo.GridFSBucket`; zero external dependencies)* | Rejects further writes if 512 MB exceeded. Accommodates ~2,500–3,400 receipts (~150KB each). | **HIGHEST (RECOMMENDED)** — $0/mo, zero credit card, 100% private, zero new accounts |
+| **Google Drive via Apps Script Relay** | **NO** *(Uses existing Google account `codesrijan@gmail.com`)* | **15 GB** *(Standard free Google account quota)* | 6 min/exec; 20,000 URL Fetch calls/day | **Private** *(Stored in restricted Google Drive folder; served via Apps Script HMAC proxy or admin Drive inspection)* | **High** *(Works over existing HTTPS Apps Script Relay via HMAC-SHA256)* | Writes fail if Google Drive 15 GB quota exceeded. Accommodates 75,000+ receipts. | **HIGH** — $0/mo, zero credit card, leverages existing Apps Script architecture |
+| **Supabase Storage** | **NO** *(Free tier does not require card on signup)* | **1 GB** | 5 GB egress/month; 50 MB max file size | **Yes** *(Private buckets with time-limited signed URLs or service-role API access)* | **High** *(Official `@supabase/supabase-js` or direct REST API)* | **Risk:** Free tier projects are automatically **paused after 7 days of inactivity** unless queried regularly. | **MODERATE** — $0/mo, but requires keep-alive pinging to prevent project auto-pause |
+| **Cloudflare R2** | **YES** *(Card required on file to activate R2)* | 10 GB | 10M Class B reads/mo; 1M Class A writes/mo | Yes *(S3-compatible API with presigned URLs)* | High *(AWS S3 SDK compatible)* | Pay-as-you-go billing triggered if free allowances exceeded. | **DISQUALIFIED** — Violates strict $0 no-card constraint |
+| **Backblaze B2** | **YES / CONDITIONAL** *(Card / phone verification required for API keys)* | 10 GB | 1 GB/day egress free | Yes *(S3-compatible API)* | High *(AWS S3 SDK compatible)* | Overages billed to card if egress exceeds 1 GB/day. | **DISQUALIFIED** — Requires billing setup and risk of overage |
+| **Firebase Cloud Storage** *(Current)* | **YES** *(Blaze Plan required by Google Cloud)* | 5 GB *(on Blaze)* | 1 GB/day egress | Yes *(Private rules with Firebase Admin SDK)* | Native *(Already implemented in `storage.js`)* | Storage bucket cannot be provisioned on Spark free tier. | **BLOCKED** — Explicitly requires billing account linking |
+
+### 3. Technical Evaluation of Existing CodeSrijan Storage Adapter
+An inspection of `server/services/storage.js`, `server/server.js`, and `server/models/index.js` reveals:
+1. **Validation Decoupling:** `validatePaymentProofFile()` is completely decoupled from any cloud provider. It validates base64 data URIs or binary buffers, enforces raster-only formats (JPEG, PNG, WebP), checks binary magic bytes, and enforces the 5 MB limit.
+2. **Schema Extensibility:** The `Registration` model in `server/models/index.js` already includes:
+   ```javascript
+   storageProvider: { type: String, enum: ['firebase', 'direct', 'none', 'unprovisioned', 'gridfs', 'googledrive'], default: 'none' },
+   storagePath: String,
+   storageBucket: String,
+   proofMimeType: String,
+   proofSizeBytes: Number,
+   ```
+3. **Protected Receipt Endpoints:** Both `GET /api/admin/payments/:registrationId/receipt` and `GET /api/student/registrations/:registrationId/receipt` already enforce authentication (`requireAuth`) and role/ownership clearance. 
+
+### 4. Preservation of Current Production Safeguards
+Until the project owner authorizes an alternative storage implementation:
+- **No changes to production storage have been deployed.**
+- Valid payment-proof uploads continue to return `HTTP 503 PAYMENT_STORAGE_UNAVAILABLE`.
+- Registrations are never marked as `payment_under_review` without verified file persistence.
+- Data URIs and fake public URLs are strictly prohibited from database persistence.
+- Raster validation, binary magic number checks, 5 MB limits, ownership verification, and duplicate UTR checks remain fully enforced.
+
+### 5. Specific Project Owner Decision Required
+
+The project owner is presented with the following definitive options:
+
+- **Option A (Recommended — $0/Month & Zero Setup Overhead): Implement MongoDB GridFS**
+  - **Budget:** Exactly **$0.00 / month**.
+  - **Billing:** Zero credit cards or billing accounts required.
+  - **Mechanism:** Stores binary image chunks directly in the existing MongoDB Atlas M0 cluster (`fs.files` and `fs.chunks`) using native Mongoose `GridFSBucket`.
+  - **Capacity:** 512 MB accommodates ~2,500–3,400 compressed receipts.
+  - **Security:** 100% private; accessible only through authenticated server routes.
+  - **Implementation Effort:** Minimal (~30 lines in `server/services/storage.js`).
+
+- **Option B ($0/Month & High Capacity): Implement Google Drive via Apps Script Relay**
+  - **Budget:** Exactly **$0.00 / month**.
+  - **Billing:** Zero credit cards required.
+  - **Mechanism:** Apps Script saves incoming base64 file to a dedicated private Google Drive folder owned by `codesrijan@gmail.com` (15 GB free capacity).
+  - **Security:** Protected by HMAC-SHA256 signature and authorized Gmail session.
+
+- **Option C (Paid Google Cloud): Upgrade Firebase Project to Blaze Plan**
+  - **Budget:** Pay-as-you-go (requires linking owner credit card to Google Cloud).
+  - **Mechanism:** Activates Google Cloud Storage bucket `codesrijan-450d0.firebasestorage.app`.
+  - **Cost Risk:** Requires billing account authorization; risk of unexpected overage charges.
+
+- **Option D (Status Quo): Retain HTTP 503 Safe Storage Unavailable Safeguard**
+  - **Budget:** Exactly **$0.00 / month**.
+  - **Behavior:** Platform maintains safe failure behavior, returning HTTP 503 on payment-proof submissions while all other 34 core features operate normally.
 
 ---
 
 ### SUMMARY OF EVIDENCE ARTIFACTS
 
-| Test / Task | Artifact Type | Artifact File Path | Description |
+| Scope / Task | Artifact Type | Artifact File Path | Description |
 |---|---|---|---|
 | Apps Script Deployment | Screenshot | `deployment_completed_1792883074171.png` | Google Apps Script Editor showing Web App updated to Version 5 with `payment_rejected` template |
 | Admin Review Notification Email | Screenshot | `opened_email_verified_1792880229013.png` | Admin payment review notification received in `codesrijan@gmail.com` at 03:46 AM |
@@ -620,3 +727,6 @@ To prevent data corruption, misleading status updates, or orphan records:
 | Render Deploy `37f376e` Live | Screenshot | `render_deploy_37f376e_live_1792884218730.png` | Render dashboard showing commit `37f376e` built in 49.7s and marked Live |
 | Public Catalog UI Verification | Screenshot | `public_hackathons_verified_37f376e_1792884317957.png` | Public Hackathons catalog at `/hackathons` in visible Chrome showing exactly two hackathons |
 | Firebase Storage Console Probe | WebP Video | `firebase_storage_setup_1792879546059.webp` | Native browser subagent inspecting Storage in Firebase Console demonstrating Blaze requirement |
+| Storage Provider Research Video | WebP Video | `research_storage_providers.webp` | Native browser subagent investigating zero-cost storage options and official documentation |
+| Live Post-Deploy Smoke Check | Log | `verify_live_post_deploy_37f376e.log` | Automated smoke script verifying catalog (2 public, 10 admin), SVG/spoof 400, and valid JPEG 503 |
+
