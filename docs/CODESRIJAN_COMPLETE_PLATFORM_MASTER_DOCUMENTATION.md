@@ -4,15 +4,17 @@
 **Production Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app)  
 **Canonical Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
-**Current Repository Commit:** `df56bcd` (`docs: restructure docs directory, purge redundant legacy markdown files, and complete master platform documentation`)  
+**Current Repository Commit:** `f88a905` (`docs: finalize master platform documentation, reconcile evidence classifications, and add focused UI regression suite`)  
 **Previous Verified Release Revisions:**  
-- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — SOURCE-VERIFIED / LOCAL SUITE PASS`)  
-- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — SOURCE-VERIFIED / LOCAL SUITE PASS`)  
+- `3da6e65` — `docs: restructure docs directory, purge redundant legacy markdown files, and complete master platform documentation`  
+- `d1576dc` — `docs: generate comprehensive platform master documentation covering all 67 routes, components, workflows, APIs, models, and controls`  
+- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — NOT LIVE-VERIFIED / SOURCE-VERIFIED`)  
+- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — NOT LIVE-VERIFIED / SOURCE-VERIFIED`)  
 - `7bd9699` — `docs: reconcile authoritative report for hardened GridFS release 8bbb8df, query token removal, and concurrency reservations`  
 - `8bbb8df` — `feat(security): harden GridFS authentication, add concurrency-safe capacity reservations, and enforce no-referrer privacy` (`LIVE-VERIFIED` on Render `srv-db1b3ke0tbcc73ac3ea0`)  
 - `adcd493` — `feat: implement MongoDB GridFS Option A payment proof storage ($0/month)` (`LIVE-VERIFIED`)  
 - `37f376e` — `fix: public catalog confidentiality and rejection relay delivery` (`LIVE-VERIFIED`)  
-**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `d1576dc` across local and remote `origin`.
+**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `f88a905` across local and remote `origin`.
 
 ---
 
@@ -209,7 +211,7 @@ The application defines 67 distinct routes in `src/routes/`, organized into 10 f
 | `/admin/leaderboard` | Admin | `AdminLeaderboard` | Yes | Admin | Scoreboard auditor: freeze leaderboard, manual score adjustments. | LIVE-VERIFIED |
 | `/admin/certificates` | Admin | `AdminCertificates` | Yes | Admin | Certificate dispatch engine: bulk generation, QR code stamps. | LIVE-VERIFIED |
 | `/admin/recruitment` | Admin | `AdminRecruitment` | Yes | Admin | Squad formation engine: orphan node detector, auto-matcher. | LIVE-VERIFIED |
-| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | COMMITTED — SOURCE-VERIFIED |
+| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | COMMITTED — NOT LIVE-VERIFIED |
 | `/admin/sponsors` | Admin | `AdminSponsors` | Yes | Admin | Corporate alliance desk: partner logo upload, tier management. | LIVE-VERIFIED |
 | `/admin/logs` | Admin | `AdminLogs` | Yes | Admin | Security audit trail: IP logs, role changes, financial audits. | LIVE-VERIFIED |
 | `/admin/settings` | Admin | `AdminSettings` | Yes | Admin | Platform control switches: maintenance mode, registration locks. | LIVE-VERIFIED |
@@ -441,7 +443,7 @@ graph TD
 ### 7.7 Real-Time Communications & Official Support Desk (COMM)
 
 #### 36. Tactical Communications Hub (`/chat`)
-- **Route:** `/chat` | **Component:** `src/routes/chat.tsx` | **Evidence:** LIVE-VERIFIED / COMMITTED — SOURCE-VERIFIED
+- **Route:** `/chat` | **Component:** `src/routes/chat.tsx` | **Evidence:** LIVE-VERIFIED / COMMITTED — NOT LIVE-VERIFIED
 - **Purpose:** Bi-directional messaging terminal powered by WebSockets and REST persistence:
   - Direct 1-on-1 Messages between participants.
   - Team Squad Channels for collaborative hackathon engineering.
@@ -476,7 +478,7 @@ graph TD
 ### 7.10 Comprehensive Administrator Command Console (ADMIN)
 
 #### 41. Admin Layout & Guard Container (`/admin`)
-- **Route:** `/admin` | **Component:** `src/routes/admin.tsx` | **Evidence:** COMMITTED — SOURCE-VERIFIED (Commit `3b9dc4f`)
+- **Route:** `/admin` | **Component:** `src/routes/admin.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Commit `3b9dc4f`)
 - **Purpose:** Parent layout for all administrative views. Enforces admin clearance check (`role === 'admin'`). Implements `<Outlet key={activeRoute} />` to guarantee instantaneous, lag-free route switching between administrative sub-modules without stale DOM artifacts.
 
 #### 42. Admin Executive Dashboard (`/admin/index`)
@@ -493,7 +495,7 @@ graph TD
   - Supports "Edit Audit Note" (`noteOnly: true`), allowing administrators to annotate payment records without mutating financial status.
 
 #### 44. Global Support Tickets Directorate (`/admin/support`)
-- **Route:** `/admin/support` | **Component:** `src/routes/admin.support.tsx` | **Evidence:** COMMITTED — SOURCE-VERIFIED (Commit `3b9dc4f`)
+- **Route:** `/admin/support` | **Component:** `src/routes/admin.support.tsx` | **Evidence:** COMMITTED — NOT LIVE-VERIFIED (Commit `3b9dc4f`)
 - **Purpose:** Real-time customer support console. Displays all user support tickets, priority tags, and user ticket totals.
 - **Enhanced Features (Commit `3b9dc4f`):**
   - **Instant Routing Response:** Eliminates lag when switching from `/admin/recruitment` to `/admin/support` via `<Outlet key={activeRoute} />`.
@@ -636,15 +638,15 @@ The following register indexes all major visible interactive controls across the
 | `HACK-REG-001` | `/hackathons/:id/register` | Button | `TRANSMIT ENROLLMENT`| Proof & UTR set | Calls `POST /api/hackathons/:id/payment-proof` to GridFS. | LIVE-VERIFIED |
 | `PAY-PORT-001` | `/payment` | Button | `VERIFY TRANSACTION` | UTR entered | Calls `POST /api/payment/verify`. Submits UTR. | LIVE-VERIFIED |
 | `COMM-CHAT-001`| `/chat` | Button | `SEND (ENTER)` | Non-empty input | Emits socket message & calls `POST /api/conversations/...`. | LIVE-VERIFIED |
-| `COMM-CHAT-002`| `/chat` | Link | `VIEW TICKET HQ` | Support conv | Navigates to `/support` (Student) or `/admin/support` (Admin).| COMMITTED — SOURCE-VERIFIED |
-| `ADMIN-NAV-001`| `/admin/*` | Sidebar Link| Admin Sub-tabs | Admin role | Instantaneous view remount via `<Outlet key={activeRoute} />`.| COMMITTED — SOURCE-VERIFIED |
+| `COMM-CHAT-002`| `/chat` | Link | `VIEW TICKET HQ` | Support conv | Navigates to `/support` (Student) or `/admin/support` (Admin).| COMMITTED — NOT LIVE-VERIFIED |
+| `ADMIN-NAV-001`| `/admin/*` | Sidebar Link| Admin Sub-tabs | Admin role | Instantaneous view remount via `<Outlet key={activeRoute} />`.| COMMITTED — NOT LIVE-VERIFIED |
 | `ADMIN-PAY-001`| `/admin/payments` | Button | `REVIEW RECEIPT` | Pending payment | Fetches GridFS image via Bearer auth; opens Blob modal. | LIVE-VERIFIED |
 | `ADMIN-PAY-002`| `/admin/payments` | Link | `OPEN TAB ↗` | Blob loaded | Opens secure Blob URL in isolated new browser window. | LIVE-VERIFIED |
 | `ADMIN-PAY-003`| `/admin/payments` | Button | `APPROVE PAYMENT`| Receipt verified | Calls `POST /api/admin/payments/:id/review` (`approve`). | LIVE-VERIFIED |
 | `ADMIN-PAY-004`| `/admin/payments` | Button | `REJECT PAYMENT` | Rejection reason | Calls `POST /api/admin/payments/:id/review` (`reject`). | LIVE-VERIFIED |
 | `ADMIN-PAY-005`| `/admin/payments` | Button | `SAVE AUDIT NOTE`| Note text entered| Calls `POST /api/admin/payments/:id/review` (`noteOnly`). | LIVE-VERIFIED |
-| `ADMIN-SUP-001`| `/admin/support` | Select | Status Dropdown | Admin role | Calls `PATCH /api/admin/support/:id/status`. High-contrast. | COMMITTED — SOURCE-VERIFIED |
-| `ADMIN-SUP-002`| `/admin/support` | Link | `COMMS` | Admin role | Navigates to `/chat?conv=...` marked as Support Ticket. | COMMITTED — SOURCE-VERIFIED |
+| `ADMIN-SUP-001`| `/admin/support` | Select | Status Dropdown | Admin role | Calls `PATCH /api/admin/support/:id/status`. High-contrast. | COMMITTED — NOT LIVE-VERIFIED |
+| `ADMIN-SUP-002`| `/admin/support` | Link | `COMMS` | Admin role | Navigates to `/chat?conv=...` marked as Support Ticket. | COMMITTED — NOT LIVE-VERIFIED |
 | `ADMIN-SUP-003`| `/admin/support` | Button | `REMOVE` | Admin role | Confirms prompt and calls `DELETE /api/admin/support/:id`. | LIVE-VERIFIED |
 | `ADMIN-HACK-001`| `/admin/hackathons`| Button | `CREATE TOURNAMENT`| Admin role | Navigates to `/admin/hackathons/create`. | LIVE-VERIFIED |
 | `ADMIN-HACK-002`| `/admin/hackathons/:id`| Toggle | `RELEASE PROBLEMS` | Admin role | Toggles problem statement lock state in database. | LIVE-VERIFIED |
@@ -973,12 +975,13 @@ The platform is validated by an automated regression suite achieving **100% pass
 
 | Test Suite File | Coverage Scope | Checks Executed | Result |
 | :--- | :--- | :---: | :---: |
+| `server/test_focused_regression.mjs` | Focused UI & permissions (9 criteria: routing key, skeleton, contrast, badges, banner, shortcuts, privacy, status persistence, CORS). | 9 | **PASS (100%)** |
 | `server/test_cors_policies.mjs` | CORS allowlist, project-scoped preview regex, external origin rejection, preflight OPTIONS. | 7 | **PASS (100%)** |
 | `server/test_gridfs_lease_lifecycle.mjs` | 60s lease expiry, abort on late commit, orphan chunk purge, active lease renewal, idempotent release. | 5 | **PASS (100%)** |
 | `server/test_gridfs_concurrency.mjs` | Parallel upload capacity admission, 75MB budget enforcement, release on failure. | 4 | **PASS (100%)** |
 | `server/test_gridfs_storage.mjs` | Raster magic byte checks, prohibited SVG rejection, SHA-256 byte match, query token 401 rejection. | 15 | **PASS (100%)** |
 | `server/test_firebase_and_catalog_regression.mjs` | File format validations, oversized image rejection, binary spoof detection. | 8 | **PASS (100%)** |
-| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage** | **39** | **39 / 39 (100%)** |
+| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage** | **48** | **48 / 48 (100%)** |
 
 ---
 
@@ -1026,7 +1029,7 @@ The platform is validated by an automated regression suite achieving **100% pass
 | **Database Collections / Schemas** | 15 | 15 | **100% Complete** |
 | **User Roles (RBAC Matrix)** | 5 | 5 | **100% Complete** |
 | **Core End-to-End Workflows** | 6 | 6 | **100% Complete** |
-| **Automated Test Matrix Checks** | 39 | 39 | **100% Passing** |
+| **Automated Test Matrix Checks** | 48 | 48 | **100% Passing** |
 | **Recurring Monthly Budget** | **$0.00** | **$0.00** | **Strictly Preserved** |
 
 **Conclusion:** All platform pages, components, interactive controls, workflows, security mechanisms, and data schemas are fully documented in this authoritative master document with empirical evidence, source code traceability, and zero unresolved architectural ambiguities.
