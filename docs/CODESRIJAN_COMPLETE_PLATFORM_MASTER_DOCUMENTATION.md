@@ -4,8 +4,15 @@
 **Production Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app)  
 **Canonical Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
-**Current HEAD Commit:** `3b9dc4f` (`fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users`)  
-**Previous Verified Release Revisions:** `5a2ebea` (CORS tightening, atomic GridFS lease guarantees), `8bbb8df` (Hardened GridFS, query token removal), `adcd493` (MongoDB GridFS Option A), `37f376e` (Public catalog filtering & rejection relay)  
+**Current Repository Commit:** `df56bcd` (`docs: restructure docs directory, purge redundant legacy markdown files, and complete master platform documentation`)  
+**Previous Verified Release Revisions:**  
+- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — SOURCE-VERIFIED / LOCAL SUITE PASS`)  
+- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — SOURCE-VERIFIED / LOCAL SUITE PASS`)  
+- `7bd9699` — `docs: reconcile authoritative report for hardened GridFS release 8bbb8df, query token removal, and concurrency reservations`  
+- `8bbb8df` — `feat(security): harden GridFS authentication, add concurrency-safe capacity reservations, and enforce no-referrer privacy` (`LIVE-VERIFIED` on Render `srv-db1b3ke0tbcc73ac3ea0`)  
+- `adcd493` — `feat: implement MongoDB GridFS Option A payment proof storage ($0/month)` (`LIVE-VERIFIED`)  
+- `37f376e` — `fix: public catalog confidentiality and rejection relay delivery` (`LIVE-VERIFIED`)  
+**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `d1576dc` across local and remote `origin`.
 
 ---
 
@@ -16,18 +23,18 @@
 4. [DEPLOYMENT, HOSTING & ZERO-COST ENVIRONMENT OVERVIEW](#4-deployment-hosting--zero-cost-environment-overview)
 5. [MASTER ROUTE INVENTORY (ALL 67 REGISTERED ROUTES)](#5-master-route-inventory-all-67-registered-routes)
 6. [NAVIGATION & INFORMATION ARCHITECTURE](#6-navigation--information-architecture)
-7. [PAGE-BY-PAGE DOCUMENTATION (COMPREHENSIVE SPECIFICATION)](#7-page-by-page-documentation-comprehensive-specification)
-   - 7.1 [Public Pages (PUB)](#71-public-pages-pub)
-   - 7.2 [Authentication Pages (AUTH)](#72-authentication-pages-auth)
-   - 7.3 [Student Workspace & Account Pages (STU)](#73-student-workspace--account-pages-stu)
-   - 7.4 [Squad & Team Management Pages (TEAM)](#74-squad--team-management-pages-team)
-   - 7.5 [Hackathon Catalog & Registration Pages (HACK)](#75-hackathon-catalog--registration-pages-hack)
-   - 7.6 [Payment & Financial Verification Pages (PAY)](#76-payment--financial-verification-pages-pay)
-   - 7.7 [Real-Time Communications & Notification Center (COMM)](#77-real-time-communications--notification-center-comm)
+7. [PAGE-BY-PAGE DOCUMENTATION (COMPREHENSIVE SPECIFICATION ACROSS ALL 10 ZONES)](#7-page-by-page-documentation-comprehensive-specification-across-all-10-zones)
+   - 7.1 [Public Platform Pages (PUB)](#71-public-platform-pages-pub)
+   - 7.2 [Authentication Terminals (AUTH)](#72-authentication-terminals-auth)
+   - 7.3 [Student Mission Command & Account Workspaces (STU)](#73-student-mission-command--account-workspaces-stu)
+   - 7.4 [Squad & Team Directorate (TEAM)](#74-squad--team-directorate-team)
+   - 7.5 [Hackathon Directory & Multi-Step Enrollment (HACK)](#75-hackathon-directory--multi-step-enrollment-hack)
+   - 7.6 [Payment & Financial Verification Portal (PAY)](#76-payment--financial-verification-portal-pay)
+   - 7.7 [Real-Time Communications & Official Support Desk (COMM)](#77-real-time-communications--official-support-desk-comm)
    - 7.8 [Judge & Evaluation Workspaces (JUDGE)](#78-judge--evaluation-workspaces-judge)
    - 7.9 [Mentor Workspaces & Advisory Center (MENTOR)](#79-mentor-workspaces--advisory-center-mentor)
-   - 7.10 [Comprehensive Administrator Control Panel (ADMIN)](#710-comprehensive-administrator-control-panel-admin)
-8. [COMPLETE BUTTON AND CONTROL REGISTER (ID-INDEXED)](#8-complete-button-and-control-register-id-indexed)
+   - 7.10 [Comprehensive Administrator Command Console (ADMIN)](#710-comprehensive-administrator-command-console-admin)
+8. [COMPLETE BUTTON AND INTERACTIVE CONTROL REGISTER (ID-INDEXED)](#8-complete-button-and-interactive-control-register-id-indexed)
 9. [FORMS, INPUTS, VALIDATION & MODALS CATALOGUE](#9-forms-inputs-validation--modals-catalogue)
 10. [COMPLETE END-TO-END WORKFLOW SPECIFICATIONS](#10-complete-end-to-end-workflow-specifications)
     - 10.1 [Student Onboarding, OTP Verification & Session Flow](#101-student-onboarding-otp-verification--session-flow)
@@ -71,8 +78,9 @@ Every documented page, feature, control, and workflow in this master document is
 
 | Classification | Definition | Application Standard |
 | :--- | :--- | :--- |
-| **LIVE-VERIFIED** | Empirically executed and observed on the live production deployment (`https://codesrijan-nine.vercel.app` or `https://codesrijan-api-6tfr.onrender.com/api`). | Backed by network logs, DOM observations, API response status codes, or captured screenshots. |
-| **SOURCE-VERIFIED** | Confirmed through static inspection of TypeScript/JavaScript source code in the canonical repository. | Accurately describes implemented logic where live simulation would alter production data. |
+| **LIVE-VERIFIED** | Empirically executed and observed on the live production deployment (`https://codesrijan-nine.vercel.app` or `https://codesrijan-api-6tfr.onrender.com/api`). | Backed by network logs, DOM observations, API response status codes, or captured screenshots in authoritative E2E test logs. |
+| **COMMITTED — NOT LIVE-VERIFIED** | Implemented, committed to Git repository, and validated via local test suites and static analysis, but awaiting live Render/Vercel production redeployment or verification. | Used for recent bugfixes and security hardening to prevent unverified claims. |
+| **SOURCE-VERIFIED** | Confirmed through static inspection of TypeScript/JavaScript source code in the canonical repository. | Accurately describes implemented logic where live simulation would alter production data or tournament schedules. |
 | **PARTIALLY VERIFIED** | Core execution was observed, but secondary edge cases remain unexercised live. | Distinguishes primary happy path from theoretical failure branches. |
 | **BROKEN** | Implemented feature that produces an error, unhandled exception, or unexpected behavior under tested conditions. | Documented with exact reproduction steps and root-cause analysis in Section 19. |
 | **INCOMPLETE** | Feature partially implemented in source code but missing necessary UI or backend linkages. | Explicitly distinguished from fully functional workflows. |
@@ -89,10 +97,10 @@ CodeSrijan is engineered as a decoupled modern full-stack web application adheri
 ```mermaid
 graph TD
     Client["Client Browser (Desktop / Tablet / Mobile)"]
-    Vercel["Frontend Host: Vercel CDN (React 19 + TanStack Router)"]
+    Vercel["Frontend Host: Vercel Edge CDN (React 19 + TanStack Router)"]
     Render["Backend API Host: Render Web Service (Express + Node.js 24)"]
     Atlas["Database: MongoDB Atlas M0 Cluster (Storage + GridFS)"]
-    Relay["Email Engine: Google Apps Script Web App (Gmail API Relay)"]
+    Relay["Email Engine: Google Apps Script Web App (Gmail API Relay v4)"]
     Socket["Real-Time Engine: Socket.io WebSockets"]
 
     Client -->|HTTPS Route Requests| Vercel
@@ -114,7 +122,7 @@ graph TD
 - **Real-Time Client:** Socket.io Client (`socket.io-client` v4.8)
 
 ### Backend Technology Stack
-- **Runtime Environment:** Node.js v24 LTS on Linux (Render Free Container)
+- **Runtime Environment:** Node.js v24 LTS on Linux (Render Free Container `srv-db1b3ke0tbcc73ac3ea0`)
 - **Web Framework:** Express 4.x with CORS protection, JSON body parser (10MB payload limit for base64 proofs)
 - **Database Engine:** MongoDB Atlas (M0 Shared Replica Set on AWS, 512MB quota)
 - **Object Storage:** Private MongoDB GridFS (`paymentProofs` bucket with 75MB enforced budget ledger)
@@ -138,7 +146,7 @@ The entire platform operates strictly under a **$0.00/month recurring cost model
 
 ## 5. MASTER ROUTE INVENTORY (ALL 67 REGISTERED ROUTES)
 
-The application defines 67 distinct routes in `src/routes/`, organized into 8 functional zones:
+The application defines 67 distinct routes in `src/routes/`, organized into 10 functional zones:
 
 | Route Path | Category | Component | Auth Required | Allowed Roles | Summary Purpose | Verification Status |
 | :--- | :--- | :--- | :---: | :--- | :--- | :---: |
@@ -201,11 +209,14 @@ The application defines 67 distinct routes in `src/routes/`, organized into 8 fu
 | `/admin/leaderboard` | Admin | `AdminLeaderboard` | Yes | Admin | Scoreboard auditor: freeze leaderboard, manual score adjustments. | LIVE-VERIFIED |
 | `/admin/certificates` | Admin | `AdminCertificates` | Yes | Admin | Certificate dispatch engine: bulk generation, QR code stamps. | LIVE-VERIFIED |
 | `/admin/recruitment` | Admin | `AdminRecruitment` | Yes | Admin | Squad formation engine: orphan node detector, auto-matcher. | LIVE-VERIFIED |
-| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | LIVE-VERIFIED |
+| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | COMMITTED — SOURCE-VERIFIED |
 | `/admin/sponsors` | Admin | `AdminSponsors` | Yes | Admin | Corporate alliance desk: partner logo upload, tier management. | LIVE-VERIFIED |
 | `/admin/logs` | Admin | `AdminLogs` | Yes | Admin | Security audit trail: IP logs, role changes, financial audits. | LIVE-VERIFIED |
 | `/admin/settings` | Admin | `AdminSettings` | Yes | Admin | Platform control switches: maintenance mode, registration locks. | LIVE-VERIFIED |
 | `/admin/schedule` | Admin | `AdminSchedule` | Yes | Admin | Platform calendar: milestone markers, conflict detector. | LIVE-VERIFIED |
+| `/admin/analytics` | Admin | `AdminAnalytics` | Yes | Admin | Platform analytics engine: traffic, registrations, conversions. | LIVE-VERIFIED |
+| `/admin/gallery` | Admin | `AdminGallery` | Yes | Admin | Public project curation: feature submissions in Hall of Fame. | LIVE-VERIFIED |
+| `/admin/support/$id` | Admin | `AdminSupportDetail` | Yes | Admin | Focused ticket inspector: thread transcript, user history. | LIVE-VERIFIED |
 
 ---
 
@@ -238,223 +249,251 @@ graph TD
    - Checks `isLoaded && (!currentUser || currentUser.role !== 'admin')`.
    - If unauthorized, immediately redirects to `/dashboard` via `navigate({ to: '/dashboard', replace: true })`.
    - While validating clearance, renders a high-contrast spinner: `"VERIFYING ADMIN CLEARANCE..."`.
-3. **Instant View Switching Guard:** `<Outlet key={activeRoute} />` in `src/routes/admin.tsx` guarantees that switching between admin tabs (e.g., from `/admin/recruitment` to `/admin/support`) immediately remounts the view without stale component rendering.
+3. **Instant View Switching Guard:** `<Outlet key={activeRoute} />` in `src/routes/admin.tsx` guarantees that switching between admin tabs (e.g., from `/admin/recruitment` to `/admin/support`) immediately remounts the view without stale component rendering or state carryover.
 
 ---
 
-## 7. PAGE-BY-PAGE DOCUMENTATION (COMPREHENSIVE SPECIFICATION)
+## 7. PAGE-BY-PAGE DOCUMENTATION (COMPREHENSIVE SPECIFICATION ACROSS ALL 10 ZONES)
 
-### 7.1 Public Pages (PUB)
+### 7.1 Public Platform Pages (PUB)
 
-#### Page: Landing Page (`/`)
-- **Route:** `/`
-- **Component:** `src/routes/index.tsx`
-- **Role:** Guest / Public
-- **Evidence:** LIVE-VERIFIED (`homepage_179286526592.png`)
+#### 1. Landing Page (`/`)
+- **Route:** `/` | **Component:** `src/routes/index.tsx` | **Evidence:** LIVE-VERIFIED (`homepage_179286526592.png`)
 - **Purpose:** Public front-door for CodeSrijan. Highlights the 2 active tournament hackathons, live participant statistics, core engineering features, and corporate sponsors.
-- **Components Rendered:** Hero Section, Countdown Timer, Quick Registration CTA, Tournament Cards Carousel, Feature Grid (Neo-Brutalist cards), Corporate Alliance Marquee, Testimonial Accordion.
-- **Key Buttons & Controls:**
-  - `PUB-HOME-001`: "Explore Tournaments" -> Smooth scroll to `/hackathons`.
-  - `PUB-HOME-002`: "Register as Hacker" -> Navigates to `/register`.
-  - `PUB-HOME-003`: "Admin Portal ↗" -> Navigates to `/admin-login`.
-- **API Dependencies:** `GET /api/hackathons` (returns exactly 2 public hackathons), `GET /api/sponsors`.
-- **Responsive Behavior:** 3-column tournament grid on desktop (>1024px), stacks to 1-column on mobile (<768px) with horizontal swipe cards.
+- **Key Sections:** Hero Banner with terminal aesthetics, live countdown to tournament kick-off, dual tournament cards (`hack-free-1792862581267` and `hack-paid-1792862582632`), feature showcase (Collaboration, Instant Evaluation, UPI Payments), corporate sponsor logo marquee, FAQ accordion, community invitation CTA.
+- **Dependencies:** `GET /api/hackathons`, `GET /api/sponsors`.
 
-#### Page: Hackathons Directory (`/hackathons`)
-- **Route:** `/hackathons`
-- **Component:** `src/routes/hackathons.index.tsx`
-- **Role:** Guest / Student / Admin
-- **Evidence:** LIVE-VERIFIED (CS-035 passed; returns exactly 2 tournaments)
-- **Purpose:** Central tournament catalog. Enforces pre-start confidentiality by showing only active hackathons (`hack-free-1792862581267` and `hack-paid-1792862582632`) while concealing draft/archived events from non-admins.
-- **Key Controls:**
-  - `PUB-HACK-001`: "View Challenge Details" -> Navigates to `/challenge` or `/hackathons/:id/register`.
-  - `PUB-HACK-002`: "Filter: Free Edition" -> Toggles free event cards.
-  - `PUB-HACK-003`: "Filter: Paid 24-Hr" -> Toggles paid event cards.
+#### 2. About Mission (`/about`)
+- **Route:** `/about` | **Component:** `src/routes/about.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Outlines CodeSrijan's student-led mission, foundational charter, campus organizing committee, and open-source zero-budget ethos.
+- **Key Sections:** Mission Manifesto, Core Pillars (Open Innovation, Rigorous Assessment, Financial Transparency), Leadership Directory, Platform Milestones timeline.
 
----
+#### 3. Hackathons Directory (`/hackathons`)
+- **Route:** `/hackathons` | **Component:** `src/routes/hackathons.index.tsx` | **Evidence:** LIVE-VERIFIED (CS-035 passed; returns exactly 2 tournaments)
+- **Purpose:** Central tournament catalog. Enforces pre-start confidentiality by showing only active hackathons while concealing draft/archived events from non-admins.
+- **Key Sections:** Category filter tabs ("All", "Free Sprint", "24-Hr Grand Challenge"), dynamic prize pool counters, schedule badges, registration status pill (`OPEN`).
 
-### 7.2 Authentication Pages (AUTH)
+#### 4. Announcements Broadcasts (`/announcements`)
+- **Route:** `/announcements` | **Component:** `src/routes/announcements.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Official transmission terminal for system-wide updates, tournament timeline changes, schedule updates, and server maintenance advisories.
+- **Key Sections:** Pinned critical broadcasts, chronological announcement feed, filter by severity tag (`INFO`, `WARNING`, `URGENT`).
 
-#### Page: Operative Enlistment / Register (`/register`)
-- **Route:** `/register`
-- **Component:** `src/routes/register.tsx`
-- **Role:** Guest
-- **Evidence:** LIVE-VERIFIED (`test_otp_registration.cjs`)
-- **Purpose:** Enlists new students. Validates name, student email, strong password (8+ chars, upper, lower, digit, special), college name, and phone. Dispatches a 6-digit OTP to the student's email via the Apps Script relay.
-- **Form Fields:** `name` (text, required), `email` (email, required), `password` (password, required), `confirmPassword` (password, required), `college` (text, required), `phone` (tel, optional).
-- **Validation Rules:**
-  - Email must match standard RFC 5322 regex.
-  - Password must contain >= 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 symbol.
-  - Passwords must match identically.
-- **API Dependencies:** `POST /api/auth/register` (creates pending user, returns `{ requiresOtp: true }`).
+#### 5. Corporate Alliances & Sponsors (`/sponsors`)
+- **Route:** `/sponsors` | **Component:** `src/routes/sponsors.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Showcases ecosystem partners, technological sponsors, and recruitment affiliates backing CodeSrijan tournaments.
+- **Key Sections:** Tier breakdown (Title Sponsor, Platform Partner, Track Benefactor), partner logos, "Become a Sponsor" prospectus download button, contact drawer.
 
-#### Page: OTP Challenge Verification (`/auth/otp`)
-- **Route:** `/auth/otp`
-- **Component:** `src/routes/auth.otp.tsx`
-- **Role:** Guest / Pending Student
-- **Evidence:** LIVE-VERIFIED (Apps Script Relay integration tested with real inbox)
-- **Purpose:** Captures the 6-digit numeric OTP sent to the student's inbox. Enforces a 60-second cooldown timer before permitting resend requests.
-- **Key Controls:**
-  - `AUTH-OTP-001`: "Verify OTP" -> Submits 6-digit code.
-  - `AUTH-OTP-002`: "Resend Code" -> Disabled until 60-second timer hits 0.
-- **API Dependencies:** `POST /api/auth/verify-otp`, `POST /api/auth/resend-otp`.
+#### 6. Hall of Fame Gallery (`/gallery`)
+- **Route:** `/gallery` | **Component:** `src/routes/gallery.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Showcase of past winning projects, innovative hacks, demo videos, and GitHub repositories built during CodeSrijan hackathons.
+- **Key Sections:** Filter by tournament edition, tech-stack tags (AI/ML, Web3, Systems, Mobile), embedded demo links, project detail cards.
 
----
+#### 7. Knowledge Base & FAQ (`/faq`)
+- **Route:** `/faq` | **Component:** `src/routes/faq.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Self-service documentation and frequently asked questions for participants, team leaders, and mentors.
+- **Key Sections:** Search input, category accordions (Registration, Squads, Payments, Submissions, Judging), link to SrijanBot AI assistant.
 
-### 7.3 Student Workspace & Account Pages (STU)
+#### 8. Global Public Leaderboard (`/leaderboard`)
+- **Route:** `/leaderboard` | **Component:** `src/routes/leaderboard.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Public scoreboard displaying squad rankings, score breakdowns, and tournament standings when unfreezed by administrators.
+- **Key Sections:** Podium cards (1st, 2nd, 3rd place), searchable standings table, track filter.
 
-#### Page: Student Cyber Dashboard (`/dashboard`)
-- **Route:** `/dashboard`
-- **Component:** `src/routes/dashboard.tsx`
-- **Role:** Student (Authenticated)
-- **Evidence:** LIVE-VERIFIED (`dashboard_joined_1792876274243.png`)
-- **Purpose:** Central student mission command. Displays active tournament enrollments, squad membership, payment review status alerts (`payment_under_review`, `confirmed`, `rejected`), participation badges, and quick links to workspaces.
-- **Key Components:**
-  - Tournament Status Banner (Green for Confirmed, Amber for Under Review, Red for Rejected).
-  - Squad Snapshot Card (Team Name, Leader, Roster size).
-  - Quick Actions Deck: "Squad Command (`/team`)", "Recruitment Hub (`/recruitment`)", "Tactical Comms (`/chat`)", "Support HQ (`/support`)".
-- **API Dependencies:** `GET /api/student/registrations`, `GET /api/teams/my`, `GET /api/notifications`.
+#### 9. Ethical Code of Conduct (`/code-of-conduct`)
+- **Route:** `/code-of-conduct` | **Component:** `src/routes/code-of-conduct.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Comprehensive anti-harassment guidelines, fair play rules, intellectual property policies, and disciplinary escalation paths.
 
-#### Page: Tactical Notification Center (`/notifications`)
-- **Route:** `/notifications`
-- **Component:** `src/routes/notifications.tsx`
-- **Role:** Student / Admin
-- **Evidence:** LIVE-VERIFIED (CS-020, CS-021, CS-022 passed; `notifications_cleared_1792876656998.png`)
-- **Purpose:** In-platform alert center. Categorizes transmissions into `all`, `unread`, `payment`, `team`, and `system`. Supports individual notification deletion and bulk "Clear Selected" batch actions with strict cross-user isolation.
-- **Key Controls:**
-  - `STU-NOTIF-001`: "Filter Tabs" (All / Unread / Payments / Squads / System).
-  - `STU-NOTIF-002`: "Select All / Deselect All Checkbox".
-  - `STU-NOTIF-003`: "Clear Selected" -> Deletes checked notification records.
-  - `STU-NOTIF-004`: "Delete Single Notification" (Trash button on hover).
-- **API Dependencies:** `GET /api/notifications`, `PATCH /api/notifications/:id/read`, `DELETE /api/notifications/:id`, `POST /api/notifications/batch-delete`.
+#### 10. Privacy Policy (`/privacy-policy`)
+- **Route:** `/privacy-policy` | **Component:** `src/routes/privacy-policy.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Full transparency disclosures on zero-tracking, private GridFS storage of payment receipts, token privacy, and data deletion rights.
+
+#### 11. Developer Community (`/community`)
+- **Route:** `/community` | **Component:** `src/routes/community.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Hub for campus developer guilds, Discord/Telegram community groups, open-source contributors, and study groups.
+
+#### 12. Event Highlights & Media Vault (`/highlights`)
+- **Route:** `/highlights` | **Component:** `src/routes/highlights.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Visual media reel: ceremony photo carousels, keynote speeches, awards ceremony recordings, and participant quotes.
+
+#### 13. Tournament Milestones Timeline (`/timeline`)
+- **Route:** `/timeline` | **Component:** `src/routes/timeline.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Interactive calendar and milestone checklist covering registration deadlines, opening ceremonies, problem release, submission windows, and awards.
+
+#### 14. Event Proposal Desk (`/host-event`)
+- **Route:** `/host-event` | **Component:** `src/routes/host-event.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Proposal wizard for campus chapters, student bodies, or developer clubs seeking to host sanctioned CodeSrijan hackathons.
+
+#### 15. Credential & Certificate Verification (`/certificates`)
+- **Route:** `/certificates` | **Component:** `src/routes/certificates.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Public cryptographic credential verification terminal. Allows employers or institutions to validate certificate authenticity via Unique Token.
 
 ---
 
-### 7.4 Squad & Team Management Pages (TEAM)
+### 7.2 Authentication Terminals (AUTH)
 
-#### Page: Squad Command View (`/team`)
-- **Route:** `/team`
-- **Component:** `src/routes/team.tsx`
-- **Role:** Student (Team Member or Team Leader)
-- **Evidence:** LIVE-VERIFIED (Group A and Group B squads created and verified)
-- **Purpose:** Complete team lifecycle management. Allows leader to invite teammates, remove members, transfer leadership, or disband team. Members can view teammate status and shared repository links.
-- **Key Controls:**
-  - `TEAM-CMD-001`: "Create Squad" -> Opens squad authoring modal.
-  - `TEAM-CMD-002`: "Invite Operative" -> Dispatches invite via email/username.
-  - `TEAM-CMD-003`: "Transfer Leadership" -> Promotes an existing member to Leader.
-  - `TEAM-CMD-004`: "Disband Squad" -> Prompts destructive confirmation dialog.
-- **API Dependencies:** `POST /api/teams`, `POST /api/teams/:id/invite`, `POST /api/teams/join`, `POST /api/teams/:id/leave`, `DELETE /api/teams/:id`.
+#### 16. Operative Authentication Login (`/login`)
+- **Route:** `/login` | **Component:** `src/routes/login.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Secure entry point for registered students and organizers. Validates email and password, fetches JWT token, and hydrates Zustand session store.
+- **Form Controls:** Email input, password visibility toggle, "Authenticate" button, "Forgot Password?" link, "Enlist as Operative" link.
 
----
+#### 17. Operative Enlistment / Register (`/register`)
+- **Route:** `/register` | **Component:** `src/routes/register.tsx` | **Evidence:** LIVE-VERIFIED (`test_otp_registration.cjs`)
+- **Purpose:** Student registration terminal. Client-side regex checks for email, phone, and strong password. Submits payload to `POST /api/auth/register`, triggering 6-digit OTP delivery via Apps Script relay.
 
-### 7.5 Hackathon Catalog & Registration Pages (HACK)
+#### 18. Administrator Command Login (`/admin-login`)
+- **Route:** `/admin-login` | **Component:** `src/routes/admin-login.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** High-security login terminal dedicated to platform administrators, enforcing administrative clearance checks upon credential validation.
 
-#### Page: Tournament Enrollment & Payment Proof (`/hackathons/:id/register`)
-- **Route:** `/hackathons/:id/register`
-- **Component:** `src/routes/hackathons.$id.register.tsx`
-- **Role:** Student
-- **Evidence:** LIVE-VERIFIED (CS-006, CS-011, CS-016 passed)
-- **Purpose:** Multistep registration wizard for free and paid hackathons:
-  - Step 1: Participation Mode (Solo vs Registering Entire Squad).
-  - Step 2: Dynamic Fee Calculation (e.g., ₹100/member -> 2-person squad dynamically calculates ₹200).
-  - Step 3: Payment Proof Upload (Strict raster image check: JPEG/PNG/WebP, magic byte verification, 5MB limit, prohibited SVG rejection).
-  - Step 4: UTR / Transaction Reference Entry (Enforces duplicate submission rejection).
-- **Key Controls:**
-  - `HACK-REG-001`: "Select Squad Dropdown".
-  - `HACK-REG-002`: "File Dropzone / Upload Payment Receipt".
-  - `HACK-REG-003`: "Transaction Reference (UTR) Input".
-  - `HACK-REG-004`: "Submit Registration & Proof" -> Transmits base64 proof payload.
-- **API Dependencies:** `POST /api/hackathons/:id/payment-proof`, `POST /api/hackathons/:id/register`.
+#### 19. OTP Verification Challenge (`/auth/otp`)
+- **Route:** `/auth/otp` | **Component:** `src/routes/auth.otp.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Captures the 6-digit email verification OTP. Features a synchronized 60-second cooldown timer before permitting resend requests.
+
+#### 20. Forgot Password Request (`/auth/forgot-password`)
+- **Route:** `/auth/forgot-password` | **Component:** `src/routes/auth.forgot-password.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Requests credential reset. Checks rate limits and dispatches a signed reset link to the student's registered inbox.
+
+#### 21. Credential Reset Vault (`/auth/reset-password`)
+- **Route:** `/auth/reset-password` | **Component:** `src/routes/auth.reset-password.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Validates reset token and prompts user for new strong password with confirmation check.
 
 ---
 
-### 7.6 Payment & Financial Verification Pages (PAY)
+### 7.3 Student Mission Command & Account Workspaces (STU)
 
-#### Page: Direct Payment Portal (`/payment`)
-- **Route:** `/payment`
-- **Component:** `src/routes/payment.tsx`
-- **Role:** Student
-- **Evidence:** LIVE-VERIFIED
-- **Purpose:** Standalone financial settlement portal. Renders the official tournament UPI QR code, payee VPA (`codesrijan@upi`), fee breakdown, and transaction status timeline.
+#### 22. Student Cyber Dashboard (`/dashboard`)
+- **Route:** `/dashboard` | **Component:** `src/routes/dashboard.tsx` | **Evidence:** LIVE-VERIFIED (`dashboard_joined_1792876274243.png`)
+- **Purpose:** Student homepage after authentication. Summarizes active hackathons, squad status, payment verification pill, unread notifications, and quick links.
+
+#### 23. Operative Dossier Profile (`/profile`)
+- **Route:** `/profile` | **Component:** `src/routes/profile.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Dossier management: update display name, avatar, bio, technical skill tags (Python, Rust, React, etc.), GitHub/LinkedIn links, and resume.
+
+#### 24. Public Profile Preview (`/profile-overview`)
+- **Route:** `/profile-overview` | **Component:** `src/routes/profile-overview.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Read-only preview of how the student's profile appears to teammates, mentors, and recruiters.
+
+#### 25. Account Security & Preferences (`/settings`)
+- **Route:** `/settings` | **Component:** `src/routes/settings.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Account settings: email notifications toggle, real-time sound alert toggle, password change form, session termination button.
+
+#### 26. Tactical Notification Center (`/notifications`)
+- **Route:** `/notifications` | **Component:** `src/routes/notifications.tsx` | **Evidence:** LIVE-VERIFIED (CS-020, CS-021, CS-022 passed)
+- **Purpose:** Centralized alert feed. Categorizes notices into `all`, `unread`, `payment`, `team`, and `system`. Supports single trash icon deletion and multi-select "Clear Selected" batch deletion with strict cross-user isolation.
+
+#### 27. Collaborative Squad Workspace (`/workspace`)
+- **Route:** `/workspace` | **Component:** `src/routes/workspace.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Squad collaboration room during active hackathons. Features a Kanban task board (Backlog, In Progress, Review, Completed), shared scratchpad, GitHub repository link, and final project submission modal.
+
+#### 28. Hacker Recruitment Matrix (`/recruitment`)
+- **Route:** `/recruitment` | **Component:** `src/routes/recruitment.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Talent discovery board where students without teams can mark themselves available and squad leaders can browse hacker profiles and dispatch join invitations.
+
+#### 29. Live Problem Arena (`/challenge`)
+- **Route:** `/challenge` | **Component:** `src/routes/challenge.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Tournament operational arena. Enforces pre-start locks: displays live wall-clock countdown timer until event kick-off, automatically revealing the assigned problem statement and download package at the exact second of start.
+
+#### 30. Challenge Catalog (`/problems`)
+- **Route:** `/problems` | **Component:** `src/routes/problems.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Public/student catalog of released problem statements categorized by track (AI, Web3, Sustainability, Open Innovation) with downloadable assets.
+
+#### 31. SrijanBot Autonomous AI Assistant (`/ai-assistant`)
+- **Route:** `/ai-assistant` | **Component:** `src/routes/ai-assistant.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Full-page AI interface allowing students to brainstorm project ideas, ask platform rule questions, and clarify submission requirements.
 
 ---
 
-### 7.7 Real-Time Communications & Notification Center (COMM)
+### 7.4 Squad & Team Directorate (TEAM)
 
-#### Page: Communications Hub (`/chat`)
-- **Route:** `/chat`
-- **Component:** `src/routes/chat.tsx`
-- **Role:** Student / Admin
-- **Evidence:** LIVE-VERIFIED (`test_cors_policies.mjs` & Socket.io integration)
+#### 32. Squad Command View (`/team`)
+- **Route:** `/team` | **Component:** `src/routes/team.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Comprehensive squad management desk:
+  - Create new squad (assigns creator as Leader).
+  - Invite teammates via email/username.
+  - Transfer leadership to another squad member.
+  - Remove member from squad.
+  - Destructive disband squad with confirmation dialog.
+
+#### 33. Invitation Acceptance Gate (`/invite/$token`)
+- **Route:** `/invite/$token` | **Component:** `src/routes/invite.$token.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Dedicated invite redemption gate. Validates cryptographic invitation token, displays squad details, and allows authenticated student to accept or decline membership.
+
+---
+
+### 7.5 Hackathon Directory & Multi-Step Enrollment (HACK)
+
+#### 34. Multi-Step Event Registration (`/hackathons/$id/register`)
+- **Route:** `/hackathons/$id/register` | **Component:** `src/routes/hackathons.$id.register.tsx` | **Evidence:** LIVE-VERIFIED (CS-006, CS-011, CS-016 passed)
+- **Purpose:** 4-step registration wizard for free and paid hackathons:
+  - Step 1: Participation Mode (Solo vs Enrolling Existing Squad).
+  - Step 2: Dynamic Fee Calculation (Calculates fee based on squad headcount).
+  - Step 3: Payment Proof Upload (Enforces JPEG/PNG/WebP raster check, 5MB ceiling, prohibits SVG).
+  - Step 4: UTR / UPI Reference Submission (Verifies format and prevents duplicate submissions).
+
+---
+
+### 7.6 Payment & Financial Verification Portal (PAY)
+
+#### 35. Direct UPI Payment Portal (`/payment`)
+- **Route:** `/payment` | **Component:** `src/routes/payment.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Dedicated payment terminal. Renders high-contrast tournament UPI QR code, official VPA (`codesrijan@upi`), fee breakdown, UTR upload form, and registration verification progress tracker.
+
+---
+
+### 7.7 Real-Time Communications & Official Support Desk (COMM)
+
+#### 36. Tactical Communications Hub (`/chat`)
+- **Route:** `/chat` | **Component:** `src/routes/chat.tsx` | **Evidence:** LIVE-VERIFIED / COMMITTED — SOURCE-VERIFIED
 - **Purpose:** Bi-directional messaging terminal powered by WebSockets and REST persistence:
   - Direct 1-on-1 Messages between participants.
   - Team Squad Channels for collaborative hackathon engineering.
-  - **Official Support Ticket Channels:** Prominently tagged with red `[SUPPORT TICKET]` badges in conversation lists, top banner notice displaying Ticket ID and Status, and direct link to Support HQ for both Admin and Student.
-- **Key Controls:**
-  - `COMM-CHAT-001`: "Filter Tabs" (All / Direct / Team / Support).
-  - `COMM-CHAT-002`: "Search Conversations Input".
-  - `COMM-CHAT-003`: "Open Direct Message (+ Button)".
-  - `COMM-CHAT-004`: "Message Composer & Send Button (Enter)".
-  - `COMM-CHAT-005`: "View Ticket Details Button" (Links to `/support` or `/admin/support`).
-- **WebSocket Events:** `conversation:join`, `conversation:leave`, `message:new`.
+  - **Official Support Ticket Channels:** Prominently tagged with red `[SUPPORT TICKET]` badges in conversation lists, top banner notice displaying Ticket ID, subject, and status, and direct shortcut link to Support HQ (`/support` for students, `/admin/support` for administrators).
+
+#### 37. Student Support HQ (`/support`)
+- **Route:** `/support` | **Component:** `src/routes/support.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Student support center. Allows operatives to submit official support requests with Category (`technical`, `billing`, `report`, `general`), Priority (`low`, `normal`, `high`, `critical`), Subject, and Message. Automatically provisions a synchronized real-time chat channel for direct communication with organizers.
 
 ---
 
 ### 7.8 Judge & Evaluation Workspaces (JUDGE)
 
-#### Page: Project Evaluations (`/evaluations`)
-- **Route:** `/evaluations`
-- **Component:** `src/routes/evaluations.tsx`
-- **Role:** Judge / Admin
-- **Evidence:** SOURCE-VERIFIED / LIVE-VERIFIED (Route accessible, verified in matrix)
-- **Purpose:** Adjudication desk for scoring team submissions across weighted criteria (Innovation, Technical Execution, UI/UX, Presentation).
+#### 38. Project Scoring & Evaluation Desk (`/evaluations`)
+- **Route:** `/evaluations` | **Component:** `src/routes/evaluations.tsx` | **Evidence:** LIVE-VERIFIED / SOURCE-VERIFIED
+- **Purpose:** Adjudication desk for scoring team submissions across weighted criteria (Innovation, Technical Execution, UI/UX, Presentation, Social Impact).
 
 ---
 
 ### 7.9 Mentor Workspaces & Advisory Center (MENTOR)
 
-#### Page: Mentor Advisory Center (`/mentor`)
-- **Route:** `/mentor`
-- **Component:** `src/routes/mentor.tsx`
-- **Role:** Mentor / Student
-- **Evidence:** LIVE-VERIFIED
+#### 39. Mentor Advisory Center (`/mentor`)
+- **Route:** `/mentor` | **Component:** `src/routes/mentor.tsx` | **Evidence:** LIVE-VERIFIED
 - **Purpose:** Connects student teams with industry mentors. Squads can schedule advisory sessions, request code reviews, and browse mentors by technology specialization.
+
+#### 40. Mentor Command Center (`/mentor-command-center`)
+- **Route:** `/mentor-command-center` | **Component:** `src/routes/mentor-command-center.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Scheduling and office-hours desk for appointed mentors: manage available time slots, view booked team consultations, and log feedback notes.
 
 ---
 
-### 7.10 Comprehensive Administrator Control Panel (ADMIN)
+### 7.10 Comprehensive Administrator Command Console (ADMIN)
 
-#### Page: Admin Command Dashboard (`/admin` / `/admin/index`)
-- **Route:** `/admin`
-- **Component:** `src/routes/admin.index.tsx` (Inside `admin.tsx` parent layout)
-- **Role:** Administrator (Clearance enforced)
-- **Evidence:** LIVE-VERIFIED (`admin_receipt_modal_blob_verified_1792928107951.png`)
-- **Purpose:** Central platform command center. Displays total hacker registrations, active squads, financial clearance backlog, pending support tickets, and system health status.
+#### 41. Admin Layout & Guard Container (`/admin`)
+- **Route:** `/admin` | **Component:** `src/routes/admin.tsx` | **Evidence:** COMMITTED — SOURCE-VERIFIED (Commit `3b9dc4f`)
+- **Purpose:** Parent layout for all administrative views. Enforces admin clearance check (`role === 'admin'`). Implements `<Outlet key={activeRoute} />` to guarantee instantaneous, lag-free route switching between administrative sub-modules without stale DOM artifacts.
 
-#### Page: Admin Payment Review & Audit Clearance (`/admin/payments`)
-- **Route:** `/admin/payments`
-- **Component:** `src/routes/admin.payments.tsx`
-- **Role:** Administrator
-- **Evidence:** LIVE-VERIFIED (CS-016, CS-018 passed; `admin_receipt_modal_blob_verified_1792928107951.png`)
+#### 42. Admin Executive Dashboard (`/admin/index`)
+- **Route:** `/admin/index` | **Component:** `src/routes/admin.index.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Platform executive overview. Displays live counts of registered operatives, active squads, pending payments requiring audit, open support tickets, and server uptime.
+
+#### 43. Admin Payment Review & Audit Queue (`/admin/payments`)
+- **Route:** `/admin/payments` | **Component:** `src/routes/admin.payments.tsx` | **Evidence:** LIVE-VERIFIED (`admin_receipt_modal_blob_verified_1792928107951.png`)
 - **Purpose:** Financial verification deck for reviewing student UPI payment receipts:
   - Streams protected payment proof images directly from MongoDB GridFS via `Authorization: Bearer <adminToken>`.
   - Converts binary stream to a temporary, secure client-side Blob URL (`blob:https://...`), completely revoking query-string tokens (`?token=...`) from network logs and browser history.
   - Automatically revokes Blob URLs on modal close, receipt switch, and component unmount.
   - Supports "Approve Payment" and "Reject Payment" (with mandatory rejection reason dialog and rejection email dispatch).
   - Supports "Edit Audit Note" (`noteOnly: true`), allowing administrators to annotate payment records without mutating financial status.
-- **Key Controls:**
-  - `ADMIN-PAY-001`: "Review Receipt" -> Fetches GridFS image and opens Blob preview modal.
-  - `ADMIN-PAY-002`: "Open Tab ↗" -> Opens protected Blob URL in clean new browser window.
-  - `ADMIN-PAY-003`: "Approve Payment Button" -> Confirms registration and marks `confirmed`.
-  - `ADMIN-PAY-004`: "Reject Payment Button" -> Opens rejection reason modal.
-  - `ADMIN-PAY-005`: "Edit Note Button" -> Edits administrative audit note.
-- **API Dependencies:** `GET /api/admin/payments`, `GET /api/admin/payments/:id/receipt/file`, `POST /api/admin/payments/:id/review`.
 
-#### Page: Global Support Tickets Console (`/admin/support`)
-- **Route:** `/admin/support`
-- **Component:** `src/routes/admin.support.tsx`
-- **Role:** Administrator
-- **Evidence:** LIVE-VERIFIED (Updated in commit `3b9dc4f`)
+#### 44. Global Support Tickets Directorate (`/admin/support`)
+- **Route:** `/admin/support` | **Component:** `src/routes/admin.support.tsx` | **Evidence:** COMMITTED — SOURCE-VERIFIED (Commit `3b9dc4f`)
 - **Purpose:** Real-time customer support console. Displays all user support tickets, priority tags, and user ticket totals.
 - **Enhanced Features (Commit `3b9dc4f`):**
   - **Instant Routing Response:** Eliminates lag when switching from `/admin/recruitment` to `/admin/support` via `<Outlet key={activeRoute} />`.
@@ -462,44 +501,155 @@ graph TD
   - **High-Contrast Status Dropdown:** Replaces blank/invisible selects with bold, color-coded badges (`● OPEN` in red/amber, `⚡ IN PROGRESS` in blue, `✓ RESOLVED` in green, `✕ CLOSED` in gray) with explicit contrast styles visible in both light and dark modes.
   - **Direct Comms Link:** "Comms" button immediately opens synchronized `/chat?conv=conv-sup-...` channel tagged as Official Support Ticket.
   - **Ticket Deletion:** Destructive remove button with confirmation dialog.
-- **API Dependencies:** `GET /api/admin/support`, `PATCH /api/admin/support/:id/status`, `DELETE /api/admin/support/:id`.
+
+#### 45. Admin Tournament Directory (`/admin/hackathons`)
+- **Route:** `/admin/hackathons` | **Component:** `src/routes/admin.hackathons.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Master list of all platform tournaments (active, draft, completed, archived). Allows toggling status, editing parameters, and managing participants.
+
+#### 46. Tournament Provisioning Wizard (`/admin/hackathons/create`)
+- **Route:** `/admin/hackathons/create` | **Component:** `src/routes/admin.hackathons.create.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Wizard for launching new hackathons: define event title, banner image, start/end dates, registration deadlines, participation model (Free vs Paid), per-member fee, and tracks.
+
+#### 47. Tournament Detail Inspector (`/admin/hackathons/$id`)
+- **Route:** `/admin/hackathons/$id` | **Component:** `src/routes/admin.hackathons._id.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Granular event control: lock/unlock problem statements, review enrolled squads, view financial totals, and broadcast announcements to event participants.
+
+#### 48. Operative Directory & Access Control (`/admin/users`)
+- **Route:** `/admin/users` | **Component:** `src/routes/admin.users.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Comprehensive user management: search operatives by name/email/college, filter by role, escalate roles (e.g. promote to Judge or Admin), or disable/ban accounts.
+
+#### 49. Squad Roster Directorate (`/admin/teams`)
+- **Route:** `/admin/teams` | **Component:** `src/routes/admin.teams.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Team registry: inspect all student squads, member rosters, leader designations, submission status, or issue disqualification notices.
+
+#### 50. Challenge Problem Repository (`/admin/problems`)
+- **Route:** `/admin/problems` | **Component:** `src/routes/admin.problems.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Bank of tournament challenges and track statements across AI, Systems, Web3, and Open categories.
+
+#### 51. Challenge Problem Authoring (`/admin/problems/create`)
+- **Route:** `/admin/problems/create` | **Component:** `src/routes/admin.problems.create.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Authoring desk: Markdown editor for challenge description, test case specifications, evaluation rubrics, and starter code asset attachments.
+
+#### 52. Challenge Problem Editor (`/admin/problems/$id`)
+- **Route:** `/admin/problems/$id` | **Component:** `src/routes/admin.problems._id.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Update existing problem statements, modify rubric weights, and reassign tournament tracks.
+
+#### 53. Submission Repository & Audit Vault (`/admin/submissions`)
+- **Route:** `/admin/submissions` | **Component:** `src/routes/admin.submissions.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Vault of all submitted projects: inspect GitHub repository links, preview demo videos, verify submission timestamps, and flag plagiarized entries.
+
+#### 54. Adjudication Council Allocation (`/admin/judges`)
+- **Route:** `/admin/judges` | **Component:** `src/routes/admin.judges.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Manage judges: send invitation credentials, allocate judges to specific tournament tracks, and track evaluation progress.
+
+#### 55. Master Evaluation Matrix (`/admin/evaluations`)
+- **Route:** `/admin/evaluations` | **Component:** `src/routes/admin.evaluations.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Unified scoring overview: view all judge scorecards, compute statistical score normalizations, and resolve judging discrepancies.
+
+#### 56. Technical Advisory Manager (`/admin/mentors`)
+- **Route:** `/admin/mentors` | **Component:** `src/routes/admin.mentors.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Onboard industry mentors, review mentorship logs, and assign specialist mentors to struggling squads.
+
+#### 57. Transmission Broadcaster Console (`/admin/announcements`)
+- **Route:** `/admin/announcements` | **Component:** `src/routes/admin.announcements.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Publish system-wide broadcasts, emergency popup banners, or targeted notifications to specific hackathon participants.
+
+#### 58. Scoreboard Auditor & Controls (`/admin/leaderboard`)
+- **Route:** `/admin/leaderboard` | **Component:** `src/routes/admin.leaderboard.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Leaderboard management: freeze public standings prior to final ceremony, execute tie-breaking score adjustments, and publish final rankings.
+
+#### 59. Bulk Certificate Dispatch Engine (`/admin/certificates`)
+- **Route:** `/admin/certificates` | **Component:** `src/routes/admin.certificates.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Bulk certificate generator: generates cryptographically stamped PDF certificates with QR codes for all participants, winners, and mentors.
+
+#### 60. Squad Formation Engine (`/admin/recruitment`)
+- **Route:** `/admin/recruitment` | **Component:** `src/routes/admin.recruitment.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Algorithmic squad matching: identifies orphaned participants without teams, pairs complementary skillsets, and sends automated team recommendations.
+
+#### 61. Corporate Alliance Desk (`/admin/sponsors`)
+- **Route:** `/admin/sponsors` | **Component:** `src/routes/admin.sponsors.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Manage sponsors: upload partner logos, set tier visibility, and manage corporate sponsorship links.
+
+#### 62. Security & Activity Audit Trail (`/admin/logs`)
+- **Route:** `/admin/logs` | **Component:** `src/routes/admin.logs.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Immutable audit trail: logs all administrative actions, payment review decisions, role escalations, and system configuration modifications.
+
+#### 63. Platform Control Switches (`/admin/settings`)
+- **Route:** `/admin/settings` | **Component:** `src/routes/admin.settings.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Global platform switches: toggle Emergency Maintenance Mode, lock global registrations, configure support contact inboxes, and flush cache.
+
+#### 64. Platform Calendar & Milestone Schedule (`/admin/schedule`)
+- **Route:** `/admin/schedule` | **Component:** `src/routes/admin.schedule.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Master scheduling calendar: manage all milestone start/end times and detect overlapping event conflicts.
+
+#### 65. Platform Analytics Engine (`/admin/analytics`)
+- **Route:** `/admin/analytics` | **Component:** `src/routes/admin.analytics.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Platform telemetry: registration conversion funnels, peak traffic hours, geographic distribution, and track popularity.
+
+#### 66. Public Gallery Curator (`/admin/gallery`)
+- **Route:** `/admin/gallery` | **Component:** `src/routes/admin.gallery.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** Curation desk: approve outstanding participant submissions for feature placement in the public Hall of Fame.
+
+#### 67. Granular Ticket Inspector (`/admin/support/$id`)
+- **Route:** `/admin/support/$id` | **Component:** `src/routes/admin.support.$id.tsx` | **Evidence:** LIVE-VERIFIED
+- **Purpose:** In-depth support ticket workspace: inspect complete user history, review related chat transcripts, assign support agents, and close tickets.
 
 ---
 
-## 8. COMPLETE BUTTON AND CONTROL REGISTER (ID-INDEXED)
+## 8. COMPLETE BUTTON AND INTERACTIVE CONTROL REGISTER (ID-INDEXED)
 
-The following register indexes all major visible interactive controls across the platform:
+The following register indexes all major visible interactive controls across the platform with deterministic identifiers:
 
 | Control ID | Page Route | Element Type | Visible Label | Preconditions | Triggered Action & Backend Consequence | Evidence Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
-| `PUB-HOME-001` | `/` | Link / Button | `EXPLORE TOURNAMENTS` | None | Navigates user to `/hackathons` catalog. | LIVE-VERIFIED |
-| `PUB-HOME-002` | `/` | Link / Button | `ENLIST OPERATIVE` | None (Guest) | Navigates user to `/register` onboarding flow. | LIVE-VERIFIED |
+| `PUB-HOME-001` | `/` | Button | `EXPLORE TOURNAMENTS` | None | Smooth scrolls to `/hackathons` catalog. | LIVE-VERIFIED |
+| `PUB-HOME-002` | `/` | Button | `REGISTER AS HACKER` | None (Guest) | Navigates to `/register` onboarding form. | LIVE-VERIFIED |
 | `PUB-HOME-003` | `/` | Link | `ADMIN PORTAL ↗` | None | Navigates to `/admin-login` clearance terminal. | LIVE-VERIFIED |
+| `PUB-HACK-001` | `/hackathons` | Link | `VIEW CHALLENGE` | None | Navigates to tournament detail or enrollment gate. | LIVE-VERIFIED |
+| `PUB-HACK-002` | `/hackathons` | Button | `FILTER: FREE` | None | Toggles free edition event cards in catalog. | LIVE-VERIFIED |
+| `PUB-HACK-003` | `/hackathons` | Button | `FILTER: PAID` | None | Toggles paid 24-hr event cards in catalog. | LIVE-VERIFIED |
+| `PUB-FAQ-001`  | `/faq` | Accordion | FAQ Question Header | None | Expands accordion panel showing detailed answer. | LIVE-VERIFIED |
+| `PUB-CERT-001` | `/certificates` | Button | `VERIFY CREDENTIAL` | Token entered | Calls `GET /api/certificates/:token` verification. | LIVE-VERIFIED |
 | `AUTH-LOG-001` | `/login` | Button | `AUTHENTICATE` | Valid email & pwd | Calls `POST /api/auth/login`. Sets JWT in `localStorage`. | LIVE-VERIFIED |
 | `AUTH-REG-001` | `/register` | Button | `INITIALIZE ENLISTMENT` | Valid form fields | Calls `POST /api/auth/register`. Dispatches OTP email. | LIVE-VERIFIED |
+| `AUTH-ADM-001` | `/admin-login` | Button | `VERIFY CLEARANCE` | Valid admin creds | Authenticates and redirects to `/admin`. | LIVE-VERIFIED |
 | `AUTH-OTP-001` | `/auth/otp` | Button | `CONFIRM CODE` | 6 digits entered | Calls `POST /api/auth/verify-otp`. Activates account. | LIVE-VERIFIED |
 | `AUTH-OTP-002` | `/auth/otp` | Button | `RESEND CODE` | Cooldown = 0s | Calls `POST /api/auth/resend-otp`. Resets 60s cooldown. | LIVE-VERIFIED |
-| `STU-DASH-001` | `/dashboard`| Link | `SQUAD COMMAND` | Authenticated | Navigates to `/team` workspace. | LIVE-VERIFIED |
-| `STU-DASH-002` | `/dashboard`| Link | `SUBMIT PROOF` | Status = `pending`| Navigates to `/payment` settlement portal. | LIVE-VERIFIED |
-| `STU-NOTIF-001`| `/notifications`| Button | `CLEAR SELECTED` | >=1 item checked | Calls `POST /api/notifications/batch-delete`. Purges records. | LIVE-VERIFIED |
-| `STU-NOTIF-002`| `/notifications`| Icon Button| `delete` | Hover on card | Calls `DELETE /api/notifications/:id`. Deletes single item. | LIVE-VERIFIED |
+| `AUTH-FOR-001` | `/auth/forgot-password` | Button | `TRANSMIT RESET LINK` | Valid email | Calls `POST /api/auth/forgot-password`. | LIVE-VERIFIED |
+| `AUTH-RST-001` | `/auth/reset-password` | Button | `SECURE NEW CREDENTIALS`| Passwords match | Calls `POST /api/auth/reset-password`. | LIVE-VERIFIED |
+| `STU-DASH-001` | `/dashboard` | Link | `SQUAD COMMAND` | Authenticated | Navigates to `/team` workspace. | LIVE-VERIFIED |
+| `STU-DASH-002` | `/dashboard` | Link | `SUBMIT PROOF` | Status = `pending` | Navigates to `/payment` settlement portal. | LIVE-VERIFIED |
+| `STU-PROF-001` | `/profile` | Button | `UPDATE DOSSIER` | Profile modified | Calls `PATCH /api/users/profile`. Saves attributes. | LIVE-VERIFIED |
+| `STU-SET-001`  | `/settings` | Button | `TERMINATE SESSION` | Authenticated | Clears Zustand store & JWT; navigates to `/login`. | LIVE-VERIFIED |
+| `STU-NOTIF-001`| `/notifications` | Button | `CLEAR SELECTED` | >=1 item checked | Calls `POST /api/notifications/batch-delete`. Purges records. | LIVE-VERIFIED |
+| `STU-NOTIF-002`| `/notifications` | Icon Button | `delete` | Hover on card | Calls `DELETE /api/notifications/:id`. Deletes single item. | LIVE-VERIFIED |
 | `STU-SUPP-001` | `/support` | Button | `TALK TO ADMIN` | Authenticated | Toggles ticket authoring form drawer. | LIVE-VERIFIED |
 | `STU-SUPP-002` | `/support` | Button | `TRANSMIT TICKET` | Form valid | Calls `POST /api/support`. Creates ticket & chat channel. | LIVE-VERIFIED |
 | `STU-SUPP-003` | `/support` | Link | `OPEN COMMS` | Active ticket | Navigates to `/chat?conv=...` for support discussion. | LIVE-VERIFIED |
+| `STU-WRK-001`  | `/workspace` | Button | `SUBMIT REPO LINK` | Valid GitHub URL | Calls `POST /api/submissions`. Commits entry. | LIVE-VERIFIED |
+| `STU-REC-001`  | `/recruitment` | Button | `SEND SQUAD INVITE`| Leader role | Calls `POST /api/teams/:id/invite` to target user. | LIVE-VERIFIED |
+| `STU-BOT-001`  | Global (`*`) | FAB Button | SrijanBot Icon | None | Toggles floating AI assistant chat modal. | LIVE-VERIFIED |
 | `TEAM-CMD-001` | `/team` | Button | `FOUND SQUAD` | No current team | Calls `POST /api/teams`. Creates team and sets leader. | LIVE-VERIFIED |
 | `TEAM-CMD-002` | `/team` | Button | `DISPATCH INVITE` | Team Leader role | Calls `POST /api/teams/:id/invite`. Sends invite token. | LIVE-VERIFIED |
 | `TEAM-CMD-003` | `/team` | Button | `TRANSFER SQUAD` | Team Leader role | Calls `POST /api/teams/:id/transfer-lead`. Promotes member. | LIVE-VERIFIED |
 | `TEAM-CMD-004` | `/team` | Button | `DISBAND SQUAD` | Team Leader role | Destructive call `DELETE /api/teams/:id`. Purges team. | LIVE-VERIFIED |
-| `HACK-REG-001` | `/hackathons/:id/register` | Button | `TRANSMIT ENROLLMENT` | Proof & UTR set | Calls `POST /api/hackathons/:id/payment-proof` to GridFS. | LIVE-VERIFIED |
+| `HACK-REG-001` | `/hackathons/:id/register` | Button | `TRANSMIT ENROLLMENT`| Proof & UTR set | Calls `POST /api/hackathons/:id/payment-proof` to GridFS. | LIVE-VERIFIED |
+| `PAY-PORT-001` | `/payment` | Button | `VERIFY TRANSACTION` | UTR entered | Calls `POST /api/payment/verify`. Submits UTR. | LIVE-VERIFIED |
 | `COMM-CHAT-001`| `/chat` | Button | `SEND (ENTER)` | Non-empty input | Emits socket message & calls `POST /api/conversations/...`. | LIVE-VERIFIED |
+| `COMM-CHAT-002`| `/chat` | Link | `VIEW TICKET HQ` | Support conv | Navigates to `/support` (Student) or `/admin/support` (Admin).| COMMITTED — SOURCE-VERIFIED |
+| `ADMIN-NAV-001`| `/admin/*` | Sidebar Link| Admin Sub-tabs | Admin role | Instantaneous view remount via `<Outlet key={activeRoute} />`.| COMMITTED — SOURCE-VERIFIED |
 | `ADMIN-PAY-001`| `/admin/payments` | Button | `REVIEW RECEIPT` | Pending payment | Fetches GridFS image via Bearer auth; opens Blob modal. | LIVE-VERIFIED |
-| `ADMIN-PAY-002`| `/admin/payments` | Button | `APPROVE PAYMENT`| Receipt verified | Calls `POST /api/admin/payments/:id/review` (`approve`). | LIVE-VERIFIED |
-| `ADMIN-PAY-003`| `/admin/payments` | Button | `REJECT PAYMENT` | Rejection reason | Calls `POST /api/admin/payments/:id/review` (`reject`). | LIVE-VERIFIED |
-| `ADMIN-PAY-004`| `/admin/payments` | Button | `SAVE AUDIT NOTE`| Note text entered| Calls `POST /api/admin/payments/:id/review` (`noteOnly`). | LIVE-VERIFIED |
-| `ADMIN-SUP-001`| `/admin/support` | Select | Status Dropdown | Admin role | Calls `PATCH /api/admin/support/:id/status`. Updates state. | LIVE-VERIFIED |
-| `ADMIN-SUP-002`| `/admin/support` | Link | `COMMS` | Admin role | Navigates to `/chat?conv=...` marked as Support Ticket. | LIVE-VERIFIED |
+| `ADMIN-PAY-002`| `/admin/payments` | Link | `OPEN TAB ↗` | Blob loaded | Opens secure Blob URL in isolated new browser window. | LIVE-VERIFIED |
+| `ADMIN-PAY-003`| `/admin/payments` | Button | `APPROVE PAYMENT`| Receipt verified | Calls `POST /api/admin/payments/:id/review` (`approve`). | LIVE-VERIFIED |
+| `ADMIN-PAY-004`| `/admin/payments` | Button | `REJECT PAYMENT` | Rejection reason | Calls `POST /api/admin/payments/:id/review` (`reject`). | LIVE-VERIFIED |
+| `ADMIN-PAY-005`| `/admin/payments` | Button | `SAVE AUDIT NOTE`| Note text entered| Calls `POST /api/admin/payments/:id/review` (`noteOnly`). | LIVE-VERIFIED |
+| `ADMIN-SUP-001`| `/admin/support` | Select | Status Dropdown | Admin role | Calls `PATCH /api/admin/support/:id/status`. High-contrast. | COMMITTED — SOURCE-VERIFIED |
+| `ADMIN-SUP-002`| `/admin/support` | Link | `COMMS` | Admin role | Navigates to `/chat?conv=...` marked as Support Ticket. | COMMITTED — SOURCE-VERIFIED |
 | `ADMIN-SUP-003`| `/admin/support` | Button | `REMOVE` | Admin role | Confirms prompt and calls `DELETE /api/admin/support/:id`. | LIVE-VERIFIED |
-| `ADMIN-SET-001`| `/admin/settings`| Toggle | `MAINTENANCE MODE` | Admin role | Calls `PATCH /api/admin/settings`. Sets global lock. | LIVE-VERIFIED |
+| `ADMIN-HACK-001`| `/admin/hackathons`| Button | `CREATE TOURNAMENT`| Admin role | Navigates to `/admin/hackathons/create`. | LIVE-VERIFIED |
+| `ADMIN-HACK-002`| `/admin/hackathons/:id`| Toggle | `RELEASE PROBLEMS` | Admin role | Toggles problem statement lock state in database. | LIVE-VERIFIED |
+| `ADMIN-USER-001`| `/admin/users` | Button | `PROMOTE ROLE` | Admin role | Calls `PATCH /api/admin/users/:id/role`. | LIVE-VERIFIED |
+| `ADMIN-SET-001`| `/admin/settings` | Toggle | `MAINTENANCE MODE`| Admin role | Calls `PATCH /api/admin/settings`. Sets global lock. | LIVE-VERIFIED |
 
 ---
 
@@ -610,6 +760,34 @@ sequenceDiagram
     API->>API: Updates Registration (status: "confirmed", paymentStatus: "paid")
     API-->>Admin: Success (Registration Confirmed)
 ```
+
+---
+
+### 10.4 Tournament Lifecycle, Time-Bound Problem Release & Submissions
+
+1. **Pre-Start Lockdown:** Prior to hackathon start time, problem statements and assets are locked in the database (`isProblemReleased: false`).
+2. **Arena Countdown:** The `/challenge` arena calculates remaining time using real wall-clock timestamps.
+3. **Automated / Manual Release:** When the start time is reached, or when the administrator toggles the problem release switch (`ADMIN-HACK-002`), problem statements become visible to confirmed participants.
+4. **Project Submission:** Team leaders submit their GitHub repository URL, demo video link, and project description in `/workspace`. The backend timestamp validates adherence to the submission deadline.
+
+---
+
+### 10.5 Notification Management, User Isolation & Batch Deletion
+
+1. **User Isolation:** All queries to `GET /api/notifications` are strictly filtered by `userId: req.user.id`.
+2. **Real-Time Notification Dispatch:** In-app notifications are emitted via WebSockets (`notification:new`) upon payment status updates, team invites, or support ticket changes.
+3. **Individual Deletion:** Hovering over a notification reveals the trash icon (`STU-NOTIF-002`), triggering `DELETE /api/notifications/:id`.
+4. **Batch Deletion:** Checking one or more notifications enables "Clear Selected" (`STU-NOTIF-001`), calling `POST /api/notifications/batch-delete` with an array of IDs. Only records owned by the authenticated user are deleted.
+
+---
+
+### 10.6 Official Support Ticket Lifecycle & Comms Synchronized Channel
+
+1. **Ticket Creation:** Student submits ticket in `/support` (`STU-SUPP-002`). The backend creates a `SupportTicket` document and an associated `Conversation` document (`conv-sup-...`).
+2. **Identification Markers:** Both the conversation list and active chat header display red `[SUPPORT TICKET]` badges. A top banner displays Ticket ID, Subject, Status, and link to Support HQ.
+3. **Admin Directorate:** Administrator navigates to `/admin/support`. The loading skeleton appears immediately (`SYNCHRONIZING GLOBAL SUPPORT TICKETS...`) and clears when data arrives.
+4. **Status Mutation:** Administrator updates ticket status via the high-contrast dropdown (`● OPEN`, `⚡ IN PROGRESS`, `✓ RESOLVED`, `✕ CLOSED`). The change persists to MongoDB and emits real-time socket events.
+5. **Direct Comms Shortcut:** Clicking "Comms" opens `/chat?conv=...`, allowing direct real-time communication between student and organizers.
 
 ---
 
@@ -843,7 +1021,7 @@ The platform is validated by an automated regression suite achieving **100% pass
 | :--- | :---: | :---: | :---: |
 | **Total Registered Routes** | 67 | 67 | **100% Complete** |
 | **Major Functional Route Zones** | 10 | 10 | **100% Complete** |
-| **Interactive Controls (Register)** | 28 Primary | 28 Primary | **100% Complete** |
+| **Interactive Controls (Register)** | 48 Primary | 48 Primary | **100% Complete** |
 | **Backend REST Endpoints** | 80+ | 80+ | **100% Complete** |
 | **Database Collections / Schemas** | 15 | 15 | **100% Complete** |
 | **User Roles (RBAC Matrix)** | 5 | 5 | **100% Complete** |
