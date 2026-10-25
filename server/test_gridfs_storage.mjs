@@ -259,9 +259,17 @@ test('=== GRIDFS STORAGE ADAPTER & SECURITY TEST SUITE (15 CHECKS) ===', async (
         const anonAdminRes = await request(`/admin/payments/${regId}/receipt/file`, null, 'GET');
         assert.equal(anonAdminRes.status, 401, 'Check 6b: Anonymous admin route rejected with 401');
 
-        // Check 7: Cross-student retrieval denial
+        // Check 6c & 6d: Query Parameter Session Token Rejection (Security Hardening)
+        const queryStudentRes = await request(`/student/registrations/${regId}/receipt/file?token=${ownerToken}`, null, 'GET');
+        assert.equal(queryStudentRes.status, 401, 'Check 6c: Query parameter token on student route strictly rejected with 401');
+        const queryAdminRes = await request(`/admin/payments/${regId}/receipt/file?token=${adminToken}`, null, 'GET');
+        assert.equal(queryAdminRes.status, 401, 'Check 6d: Query parameter token on admin route strictly rejected with 401');
+
+        // Check 7: Cross-student retrieval denial & student access to admin endpoint denial
         const strangerAccessRes = await request(`/student/registrations/${regId}/receipt/file`, strangerToken, 'GET');
-        assert.equal(strangerAccessRes.status, 403, 'Check 7: Cross-student access denied with HTTP 403');
+        assert.equal(strangerAccessRes.status, 403, 'Check 7a: Cross-student access denied with HTTP 403');
+        const studentOnAdminRes = await request(`/admin/payments/${regId}/receipt/file`, ownerToken, 'GET');
+        assert.equal(studentOnAdminRes.status, 403, 'Check 7b: Student access to admin endpoint denied with HTTP 403');
 
         // Check 8: Authorized admin retrieval
         const adminAccessRes = await request(`/admin/payments/${regId}/receipt/file`, adminToken, 'GET');
@@ -269,12 +277,14 @@ test('=== GRIDFS STORAGE ADAPTER & SECURITY TEST SUITE (15 CHECKS) ===', async (
         assert.equal(adminAccessRes.headers.get('content-type'), 'image/jpeg', 'Check 8b: Correct content-type header');
         assert.equal(adminAccessRes.headers.get('x-content-type-options'), 'nosniff', 'Check 8c: nosniff security header present');
         assert.equal(adminAccessRes.headers.get('cache-control'), 'private, no-store, max-age=0, must-revalidate', 'Check 8d: private cache-control present');
-        assert.equal(crypto.createHash('sha256').update(adminAccessRes.data).digest('hex'), crypto.createHash('sha256').update(validJpegBuffer).digest('hex'), 'Check 8e: Admin binary payload matches uploaded file exactly');
+        assert.equal(adminAccessRes.headers.get('referrer-policy'), 'no-referrer', 'Check 8e: Referrer-Policy: no-referrer header present');
+        assert.equal(crypto.createHash('sha256').update(adminAccessRes.data).digest('hex'), crypto.createHash('sha256').update(validJpegBuffer).digest('hex'), 'Check 8f: Admin binary payload matches uploaded file exactly');
 
         // Check 9: Authorized owner retrieval
         const ownerAccessRes = await request(`/student/registrations/${regId}/receipt/file`, ownerToken, 'GET');
         assert.equal(ownerAccessRes.status, 200, 'Check 9a: Authorized owner accesses receipt file (HTTP 200)');
-        assert.equal(crypto.createHash('sha256').update(ownerAccessRes.data).digest('hex'), crypto.createHash('sha256').update(validJpegBuffer).digest('hex'), 'Check 9b: Owner binary payload matches uploaded file exactly');
+        assert.equal(ownerAccessRes.headers.get('referrer-policy'), 'no-referrer', 'Check 9b: Referrer-Policy: no-referrer header present on owner stream');
+        assert.equal(crypto.createHash('sha256').update(ownerAccessRes.data).digest('hex'), crypto.createHash('sha256').update(validJpegBuffer).digest('hex'), 'Check 9c: Owner binary payload matches uploaded file exactly');
 
         // Check 14: Existing legacy receipt metadata compatibility
         const adminMetaRes = await request(`/admin/payments/${regId}/receipt`, adminToken, 'GET');
@@ -286,7 +296,7 @@ test('=== GRIDFS STORAGE ADAPTER & SECURITY TEST SUITE (15 CHECKS) ===', async (
         assert.equal(studentMetaRes.status, 200, 'Check 14b: Student metadata endpoint backward compatibility');
         assert.equal(studentMetaRes.data.storageProvider, 'gridfs');
 
-        console.log('\n[SUCCESS] ALL 15 AUTOMATED GRIDFS TESTS PASSED CLEANLY!\n');
+        console.log('\n[SUCCESS] ALL AUTOMATED GRIDFS TESTS (INCLUDING QUERY-TOKEN REJECTION & SECURITY HEADERS) PASSED CLEANLY!\n');
     } finally {
         setTestAppsScriptDispatcher(null);
         if (server?.listening) await new Promise(resolve => server.close(resolve));

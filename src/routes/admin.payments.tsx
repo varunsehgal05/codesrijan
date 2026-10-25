@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -76,6 +76,7 @@ function AdminPaymentsPage() {
     
     // Modals
     const [activeReceipt, setActiveReceipt] = useState<{ url: string; utr: string; regId: string; reg: PaymentRegistration } | null>(null);
+    const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
     const [receiptViewTab, setReceiptViewTab] = useState<'visual' | 'voucher' | 'raw'>('visual');
     const [imgLoading, setImgLoading] = useState(true);
     const [imgError, setImgError] = useState(false);
@@ -86,22 +87,83 @@ function AdminPaymentsPage() {
     const [editNoteText, setEditNoteText] = useState("");
     const [processingId, setProcessingId] = useState<string | null>(null);
 
+    const prevBlobUrlRef = useRef<string | null>(null);
     useEffect(() => {
+        if (prevBlobUrlRef.current && prevBlobUrlRef.current.startsWith('blob:') && prevBlobUrlRef.current !== receiptBlobUrl) {
+            URL.revokeObjectURL(prevBlobUrlRef.current);
+        }
+        prevBlobUrlRef.current = receiptBlobUrl;
+    }, [receiptBlobUrl]);
+
+    useEffect(() => {
+        return () => {
+            if (prevBlobUrlRef.current && prevBlobUrlRef.current.startsWith('blob:')) {
+                URL.revokeObjectURL(prevBlobUrlRef.current);
+            }
+        };
+    }, []);
+
+    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+
+    useEffect(() => {
+        let isMounted = true;
+
         if (activeReceipt) {
             setImgLoading(true);
             setZoomActual(false);
-            const isUrl = activeReceipt.url.startsWith('http') || activeReceipt.url.startsWith('/api');
-            const isMock = !activeReceipt.url || 
-                (!isUrl && activeReceipt.url.length < 200) || 
-                activeReceipt.url === 'data:image/png;base64,aGVsbG8=' ||
-                activeReceipt.url.startsWith('test') ||
-                activeReceipt.url === 'placeholder';
+            const rawUrl = activeReceipt.url || '';
+            const isUrl = rawUrl.startsWith('http') || rawUrl.startsWith('/api');
+            const isMock = !rawUrl || 
+                (!isUrl && rawUrl.length < 200) || 
+                rawUrl === 'data:image/png;base64,aGVsbG8=' ||
+                rawUrl.startsWith('test') ||
+                rawUrl === 'placeholder';
+
             setImgError(isMock);
             setReceiptViewTab(isMock ? 'voucher' : 'visual');
-        }
-    }, [activeReceipt?.regId, activeReceipt?.url]);
 
-    const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+            if (!isMock) {
+                if (rawUrl.startsWith('data:')) {
+                    setReceiptBlobUrl(rawUrl);
+                    setImgLoading(false);
+                } else {
+                    const token = localStorage.getItem("codesrijan_auth_token") || '';
+                    const fetchUrl = rawUrl.startsWith('/api') 
+                        ? `${API_URL.replace(/\/api$/, '')}${rawUrl}`
+                        : rawUrl;
+
+                    fetch(fetchUrl, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    })
+                        .then(async (res) => {
+                            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                            const blob = await res.blob();
+                            if (!isMounted) return;
+                            const objectUrl = URL.createObjectURL(blob);
+                            setReceiptBlobUrl(objectUrl);
+                            setImgLoading(false);
+                        })
+                        .catch((err) => {
+                            if (!isMounted) return;
+                            console.error('[RECEIPT FETCH ERROR]', err);
+                            setImgLoading(false);
+                            setImgError(true);
+                            setReceiptViewTab('voucher');
+                        });
+                }
+            } else {
+                setReceiptBlobUrl(null);
+                setImgLoading(false);
+            }
+        } else {
+            setReceiptBlobUrl(null);
+            setImgLoading(false);
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [activeReceipt?.regId, activeReceipt?.url, API_URL]);
 
     const fetchPayments = async () => {
         setLoading(true);
@@ -414,15 +476,12 @@ function AdminPaymentsPage() {
                                     {reg.paymentProofUrl && (
                                         <button
                                             onClick={() => {
-                                                const token = localStorage.getItem("codesrijan_auth_token") || '';
-                                                let targetUrl = reg.paymentProofUrl || '';
-                                                if (targetUrl.startsWith('/api')) {
-                                                    const baseApi = API_URL.replace(/\/api$/, '');
-                                                    targetUrl = `${baseApi}${targetUrl}${targetUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
-                                                } else if (targetUrl.startsWith('http') && targetUrl.includes('/receipt/file')) {
-                                                    targetUrl = `${targetUrl}${targetUrl.includes('?') ? '&' : '?'}token=${encodeURIComponent(token)}`;
-                                                }
-                                                setActiveReceipt({ url: targetUrl, utr: reg.transactionReference || 'N/A', regId: reg.id, reg });
+                                                setActiveReceipt({
+                                                    url: reg.paymentProofUrl || '',
+                                                    utr: reg.transactionReference || 'N/A',
+                                                    regId: reg.id,
+                                                    reg
+                                                });
                                             }}
                                             className="bg-electric-blue hover:bg-white text-black px-3 py-1 font-bold text-xs uppercase transition-colors flex items-center gap-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                                         >
@@ -649,7 +708,32 @@ function AdminPaymentsPage() {
                                     <span className="text-zinc-700">|</span>
                                     <button
                                         type="button"
-                                        onClick={() => window.open(activeReceipt.url, '_blank')}
+                                        onClick={() => {
+                                            if (!receiptBlobUrl) {
+                                                toast.error("Receipt image is not ready yet.");
+                                                return;
+                                            }
+                                            const newTab = window.open('', '_blank');
+                                            if (!newTab) {
+                                                toast.error("Popup blocked. Please allow popups to open the receipt in a new tab.");
+                                                return;
+                                            }
+                                            newTab.opener = null;
+                                            newTab.document.title = `Payment Receipt - ${activeReceipt?.utr || 'Proof'}`;
+                                            const img = newTab.document.createElement('img');
+                                            img.src = receiptBlobUrl;
+                                            img.style.maxWidth = '98vw';
+                                            img.style.maxHeight = '98vh';
+                                            img.style.objectFit = 'contain';
+                                            img.style.margin = 'auto';
+                                            newTab.document.body.style.margin = '0';
+                                            newTab.document.body.style.backgroundColor = '#0a0a0c';
+                                            newTab.document.body.style.display = 'flex';
+                                            newTab.document.body.style.alignItems = 'center';
+                                            newTab.document.body.style.justifyContent = 'center';
+                                            newTab.document.body.style.height = '100vh';
+                                            newTab.document.body.appendChild(img);
+                                        }}
                                         className="text-electric-blue hover:underline font-mono"
                                     >
                                         Open Tab ↗
@@ -672,10 +756,10 @@ function AdminPaymentsPage() {
                                         </div>
                                     )}
 
-                                    {!imgError ? (
+                                    {!imgError && receiptBlobUrl ? (
                                         <div className="w-full h-full flex flex-col items-center justify-center">
                                             <img
-                                                src={activeReceipt.url}
+                                                src={receiptBlobUrl}
                                                 alt="Payment Proof Receipt"
                                                 onLoad={(e) => {
                                                     const img = e.currentTarget;

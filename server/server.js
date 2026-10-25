@@ -84,7 +84,25 @@ io.on('connection', (socket) => {
     });
 });
 
-app.use(cors());
+const allowedOrigins = [
+    'https://codesrijan-nine.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4173',
+    ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL.replace(/\/$/, '')] : [])
+];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || /^https:\/\/.*\.vercel\.app$/.test(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('Blocked by CORS policy'));
+    },
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+}));
 app.use(express.json());
 
 // --- Schemas (Imported from modular directory) ---
@@ -1558,6 +1576,7 @@ async function streamReceiptFile(registration, res) {
         if (file.length) res.setHeader('Content-Length', file.length);
         res.setHeader('X-Content-Type-Options', 'nosniff');
         res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+        res.setHeader('Referrer-Policy', 'no-referrer');
         res.setHeader('Content-Security-Policy', "default-src 'none'");
         res.setHeader('Content-Disposition', `inline; filename="receipt-${registration.id}.${ext}"`);
 
@@ -1581,6 +1600,8 @@ async function streamReceiptFile(registration, res) {
             res.setHeader('Content-Length', buffer.length);
             res.setHeader('X-Content-Type-Options', 'nosniff');
             res.setHeader('Cache-Control', 'private, no-store, max-age=0, must-revalidate');
+            res.setHeader('Referrer-Policy', 'no-referrer');
+            res.setHeader('Content-Security-Policy', "default-src 'none'");
             return res.send(buffer);
         }
     }

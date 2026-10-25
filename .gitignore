@@ -49,6 +49,7 @@ server/*.tmp
 !server/test-qa-data-isolation.mjs
 !server/test_audit_journeys.mjs
 !server/test_gridfs_storage.mjs
+!server/test_gridfs_concurrency.mjs
 *.png
 platform-screenshots/
 test-results/
