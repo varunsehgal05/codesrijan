@@ -150,6 +150,21 @@ const activityLogSchema = new mongoose.Schema({
     userAgent: String
 }, { timestamps: true });
 
+// Enforce strict immutability: block updates and deletions on audit records
+activityLogSchema.pre(['updateOne', 'updateMany', 'findOneAndUpdate', 'deleteOne', 'deleteMany', 'findOneAndDelete', 'findOneAndRemove'], function(next) {
+    const error = new Error('ActivityLog entries are immutable and cannot be updated or deleted.');
+    if (typeof next === 'function') return next(error);
+    throw error;
+});
+activityLogSchema.pre('save', function(next) {
+    if (!this.isNew) {
+        const error = new Error('Existing ActivityLog records cannot be modified.');
+        if (typeof next === 'function') return next(error);
+        throw error;
+    }
+    if (typeof next === 'function') next();
+});
+
 // 24. System Settings
 const systemSettingSchema = new mongoose.Schema({
     key: { type: String, unique: true },

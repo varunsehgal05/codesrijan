@@ -387,6 +387,37 @@ test('=== CODESRIJAN 1.0 — PLATFORM HEALTH, OPERATIONS, SUPPORT & AUDIT SUITE 
         assert.equal(isTicketStatusActive('unknown'), false);
     });
 
+    // -------------------------------------------------------------
+    // Scenario 10: ActivityLog Immutability & Sensitive Field Audit
+    // -------------------------------------------------------------
+    await t.test('Scenario 10: ActivityLog enforces schema-level immutability against modifications and deletions', async () => {
+        const auditLog = await ActivityLog.findOne();
+        assert.ok(auditLog, 'Audit log entry must exist');
+
+        // Verify no sensitive credentials leaked
+        const rawLog = auditLog.toObject();
+        assert.equal(rawLog.password, undefined);
+        assert.equal(rawLog.token, undefined);
+        assert.equal(rawLog.otp, undefined);
+        assert.equal(rawLog.secret, undefined);
+
+        // Verify update is rejected by immutability middleware
+        await assert.rejects(
+            async () => {
+                await ActivityLog.updateOne({ _id: auditLog._id }, { action: 'MUTATED_ACTION' });
+            },
+            /immutable/i
+        );
+
+        // Verify deletion is rejected by immutability middleware
+        await assert.rejects(
+            async () => {
+                await ActivityLog.deleteOne({ _id: auditLog._id });
+            },
+            /immutable/i
+        );
+    });
+
     // Cleanup
     await new Promise(resolve => server.close(resolve));
     await mongoose.disconnect();

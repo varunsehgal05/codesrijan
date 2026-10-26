@@ -5,8 +5,10 @@
 **Production Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app)  
 **Canonical Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
-**Current Authoritative Release Gate:** `Release 1.0 (73 Automated Tests Passing, 100% Suite Clean)`  
+**Current Authoritative Release Gate:** `Release 1.0 (74 Automated Tests Passing, 100% Suite Clean across 8 Test Suites)`  
 **Recent Verified Release Revisions:**  
+- `5f54f5c` — `docs(qa): record automated browser subagent screenshots and live audit findings`  
+- `69528b4` — `feat(release-1.0): platform health dashboard, operations hub, audit trail, structured feedback, and release 1.0 audit reports`  
 - `d1ef11f` — `docs: reconcile test totals to 63 and document deployment verification checkpoints`  
 - `4af6b8d` — `fix(recruitment): resolve React rules of hooks violation and add unauth guard`  
 - `03e7481` — `fix(support): enforce strict active status whitelist excluding missing, null, empty and unknown statuses`  
@@ -22,7 +24,7 @@
 2. [EVIDENCE CLASSIFICATION & VERIFICATION METHODOLOGY](#2-evidence-classification--verification-methodology)
 3. [CURRENT PLATFORM ARCHITECTURE & RUNTIME STACK](#3-current-platform-architecture--runtime-stack)
 4. [DEPLOYMENT, HOSTING & ZERO-COST ENVIRONMENT OVERVIEW](#4-deployment-hosting--zero-cost-environment-overview)
-5. [MASTER ROUTE INVENTORY (ALL 67 REGISTERED ROUTES)](#5-master-route-inventory-all-67-registered-routes)
+5. [MASTER ROUTE INVENTORY (ALL 68 REGISTERED ROUTES)](#5-master-route-inventory-all-68-registered-routes)
 6. [NAVIGATION & INFORMATION ARCHITECTURE](#6-navigation--information-architecture)
 7. [PAGE-BY-PAGE DOCUMENTATION (COMPREHENSIVE SPECIFICATION ACROSS ALL 10 ZONES)](#7-page-by-page-documentation-comprehensive-specification-across-all-10-zones)
    - 7.1 [Public Platform Pages (PUB)](#71-public-platform-pages-pub)
@@ -101,7 +103,7 @@ graph TD
     Vercel["Frontend Host: Vercel Edge CDN (React 19 + TanStack Router)"]
     Render["Backend API Host: Render Web Service (Express + Node.js 24)"]
     Atlas["Database: MongoDB Atlas M0 Cluster (Storage + GridFS)"]
-    Relay["Email Engine: Google Apps Script Web App (Gmail API Relay v4)"]
+    Relay["Email Engine: Google Apps Script Web App (Gmail API Relay v5 - Deployment: AKfycby5O5Mebck13ZOit2vJIAXPtvwyuUsod8L6P5w1CsY59biQbgzAqPhQKHlBdwQ8P4yKkw)"]
     Socket["Real-Time Engine: Socket.io WebSockets"]
 
     Client -->|HTTPS Route Requests| Vercel
@@ -128,7 +130,7 @@ graph TD
 - **Database Engine:** MongoDB Atlas (M0 Shared Replica Set on AWS, 512MB quota)
 - **Object Storage:** Private MongoDB GridFS (`paymentProofs` bucket with 75MB enforced budget ledger)
 - **Real-Time Server:** Socket.io Server bound to Node.js HTTP server
-- **Email Delivery:** Google Apps Script Relay v4 executing via Gmail API with HMAC-SHA256 authentication
+- **Email Delivery:** Google Apps Script Relay v5 (`v5 - Add payment_rejected template`) executing via Gmail API with HMAC-SHA256 authentication
 
 ---
 
@@ -141,13 +143,13 @@ The entire platform operates strictly under a **$0.00/month recurring cost model
 | **Frontend CDN** | Vercel | `codesrijan-nine.vercel.app` | Unlimited deployments, 100GB bandwidth | Static Vite build output cached at edge with SPA rewrite rules. |
 | **Backend Web Service** | Render | `srv-db1b3ke0tbcc73ac3ea0` | 512MB RAM, 0.1 CPU, spun down after inactivity | Cold-start handling, memory-efficient streams for GridFS uploads. |
 | **Database & Object Storage** | MongoDB Atlas | Cluster: `CodeSrijan`, Keyspace: `codesrijan` | 512MB Storage Ceiling | Enforces strict 75MB proof budget via atomic ledger and 400MB cluster preflight check. |
-| **Email Gateway** | Google Workspace / Gmail | Apps Script Relay v4 | 100 emails/day consumer, 1,500/day Workspace | HMAC-SHA256 verified relay preventing unauthorized outbound quota depletion. |
+| **Email Gateway** | Google Workspace / Gmail | Apps Script Relay v5 | 100 emails/day consumer, 1,500/day Workspace | HMAC-SHA256 verified relay preventing unauthorized outbound quota depletion. |
 
 ---
 
-## 5. MASTER ROUTE INVENTORY (ALL 67 REGISTERED ROUTES)
+## 5. MASTER ROUTE INVENTORY (ALL 68 REGISTERED ROUTES)
 
-The application defines 67 distinct routes in `src/routes/`, organized into 10 functional zones:
+The application defines 68 distinct routes in `src/routes/`, organized into 10 functional zones:
 
 | Route Path | Category | Component | Auth Required | Allowed Roles | Summary Purpose | Verification Status |
 | :--- | :--- | :--- | :---: | :--- | :--- | :---: |
@@ -210,14 +212,15 @@ The application defines 67 distinct routes in `src/routes/`, organized into 10 f
 | `/admin/leaderboard` | Admin | `AdminLeaderboard` | Yes | Admin | Scoreboard auditor: freeze leaderboard, manual score adjustments. | LIVE-VERIFIED |
 | `/admin/certificates` | Admin | `AdminCertificates` | Yes | Admin | Certificate dispatch engine: bulk generation, QR code stamps. | LIVE-VERIFIED |
 | `/admin/recruitment` | Admin | `AdminRecruitment` | Yes | Admin | Squad formation engine: orphan node detector, auto-matcher. | LIVE-VERIFIED |
-| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | COMMITTED — NOT LIVE-VERIFIED |
+| `/admin/support` | Admin | `AdminSupport` | Yes | Admin | Global Support Tickets: real-time alerts, status dropdown, comms. | LIVE-VERIFIED |
 | `/admin/sponsors` | Admin | `AdminSponsors` | Yes | Admin | Corporate alliance desk: partner logo upload, tier management. | LIVE-VERIFIED |
 | `/admin/logs` | Admin | `AdminLogs` | Yes | Admin | Security audit trail: IP logs, role changes, financial audits. | LIVE-VERIFIED |
 | `/admin/settings` | Admin | `AdminSettings` | Yes | Admin | Platform control switches: maintenance mode, registration locks. | LIVE-VERIFIED |
 | `/admin/schedule` | Admin | `AdminSchedule` | Yes | Admin | Platform calendar: milestone markers, conflict detector. | LIVE-VERIFIED |
 | `/admin/analytics` | Admin | `AdminAnalytics` | Yes | Admin | Platform analytics engine: traffic, registrations, conversions. | LIVE-VERIFIED |
 | `/admin/gallery` | Admin | `AdminGallery` | Yes | Admin | Public project curation: feature submissions in Hall of Fame. | LIVE-VERIFIED |
-| `/admin/support/$id` | Admin | `AdminSupportDetail` | Yes | Admin | Focused ticket inspector: thread transcript, user history. | LIVE-VERIFIED |
+| `/admin/health` | Admin | `AdminHealth` | Yes | Admin | Platform Health & Telemetry: service status, GridFS budget headroom, DB diagnostics. | LIVE-VERIFIED |
+| `/admin/operations` | Admin | `AdminOperations` | Yes | Admin | Hackathon Operations Hub: tournament phase filters, roster metrics, CSV export. | LIVE-VERIFIED |
 
 ---
 
@@ -607,9 +610,15 @@ graph TD
 - **Route:** `/admin/gallery` | **Component:** `src/routes/admin.gallery.tsx` | **Evidence:** LIVE-VERIFIED
 - **Purpose:** Curation desk: approve outstanding participant submissions for feature placement in the public Hall of Fame.
 
-#### 67. Granular Ticket Inspector (`/admin/support/$id`)
-- **Route:** `/admin/support/$id` | **Component:** `src/routes/admin.support.$id.tsx` | **Evidence:** LIVE-VERIFIED
-- **Purpose:** In-depth support ticket workspace: inspect complete user history, review related chat transcripts, assign support agents, and close tickets.
+#### 67. Platform Health & Diagnostics Dashboard (`/admin/health`)
+- **Route:** `/admin/health` | **Component:** `src/routes/admin.health.tsx` | **Evidence:** LIVE-VERIFIED
+- **API Endpoint:** `GET /api/admin/health`
+- **Purpose:** Real-time administrative observability console. Displays live service connectivity status for Express backend, MongoDB Atlas M0, GridFS Storage Vault, Google Apps Script Email Relay, and system memory telemetry. Surfaces live operational metrics including pending payment reviews, active/resolved support tickets, tournament counts, and registrations. Evaluates GridFS capacity against the 75MB free-tier allocation ceiling with remaining headroom calculation and interactive manual synchronization.
+
+#### 68. Hackathon Operations Hub & CSV Export Console (`/admin/operations`)
+- **Route:** `/admin/operations` | **Component:** `src/routes/admin.operations.tsx` | **Evidence:** LIVE-VERIFIED
+- **API Endpoints:** `GET /api/admin/hackathon-operations`, `GET /api/admin/hackathons/:id/export-csv`
+- **Purpose:** Centralized tournament operations command center. Dynamically classifies hackathon lifecycles into chronological operational phases (`upcoming`, `registration_open`, `hacking`, `evaluating`, `concluded`) using server-side timestamps. Displays squad rosters, verified team allocations, submission deadlines, and pending evaluation backlogs. Provides authenticated, sanitized CSV export (`/api/admin/hackathons/:id/export-csv`) adhering to RFC 4180 with spreadsheet formula injection protection (escapes `=`, `+`, `-`, `@`, `\t`, `\r`).
 
 ---
 
@@ -907,10 +916,10 @@ erDiagram
 
 | Event Trigger | Recipient | Delivery Mechanism | Subject / Template | Security & Idempotency Rules |
 | :--- | :--- | :--- | :--- | :--- |
-| **Student Registration** | Student | Apps Script Relay v4 | `verification_otp` ("Your CodeSrijan OTP") | 6-digit numeric OTP, 10-minute expiry, 60s resend rate-limit. |
-| **Password Reset** | User | Apps Script Relay v4 | `password_reset` ("Reset CodeSrijan Password") | Signed token with 15-minute expiration window. |
-| **Payment Approved** | Student | In-App + Email Relay | `payment_approved` ("Registration Confirmed") | Dispatched upon admin confirmation; status -> `confirmed`. |
-| **Payment Rejected** | Student | In-App + Email Relay | `payment_rejected` ("Payment Declined") | Mandatory rejection reason required; status -> `rejected`. |
+| **Student Registration** | Student | Apps Script Relay v5 | `verification_otp` ("Your CodeSrijan OTP") | 6-digit numeric OTP, 10-minute expiry, 60s resend rate-limit. |
+| **Password Reset** | User | Apps Script Relay v5 | `password_reset` ("Reset CodeSrijan Password") | Signed token with 15-minute expiration window. |
+| **Payment Approved** | Student | In-App + Email Relay (v5) | `payment_approved` ("Registration Confirmed") | Dispatched upon admin confirmation; status -> `confirmed`. |
+| **Payment Rejected** | Student | In-App + Email Relay (v5) | `payment_rejected` ("Payment Declined") | Mandatory rejection reason required; status -> `rejected`. |
 | **Squad Invitation** | Student | In-App Notification | `team_invite` ("Squad Invitation") | Clickable join token with automatic expiration. |
 | **Support Ticket Created** | Admin / User | In-App Channel | `[Ticket Created]` Initial Message | Auto-creates synchronized chat channel linked to Ticket ID. |
 
@@ -1004,7 +1013,8 @@ The platform is validated by an automated regression suite achieving **100% pass
 | `server/test_gridfs_concurrency.mjs` | Parallel upload capacity admission, budget enforcement, reservation release on failure, abandoned reservation recovery, orphan chunk cleanup. | 4 | **PASS (100%)** |
 | `server/test_gridfs_lease_lifecycle.mjs` | Lease expiry, late commit abort, orphan chunk purge, active lease renewal, idempotent release & non-negative invariant, mixed concurrent uploads + DB writes. | 4 | **PASS (100%)** |
 | `server/test_gridfs_storage.mjs` | Raster magic byte checks, prohibited SVG rejection, SHA-256 byte match, query-token rejection with HTTP 401, security response headers (`Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`). | 15 | **PASS (100%)** |
-| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage (Reconciled Aggregate)** | **63** | **63 / 63 (100%)** |
+| `server/test_admin_health_and_ops.mjs` | Platform Health telemetry, operations hub phase calculations, RFC 4180 CSV export with formula injection escaping, support categories, student rate limits, and ActivityLog schema-level immutability. | 11 | **PASS (100%)** |
+| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage (Reconciled Aggregate across 8 Suites)** | **74** | **74 / 74 (100%)** |
 
 ---
 
@@ -1027,6 +1037,7 @@ The platform is validated by an automated regression suite achieving **100% pass
 3. **CORS Hardening:** Access is strictly limited to canonical production (`https://codesrijan-nine.vercel.app`), project-scoped preview deployments (`^https:\/\/codesrijan(?:-[a-z0-9-]+)?\.vercel\.app$`), and development localhost (strictly when `NODE_ENV !== 'production'`). Responses include `Vary: Origin`.
 4. **Data Isolation:** Notifications and support tickets strictly enforce user and tenant isolation. Students can only query and mutate their own records.
 5. **Financial Fencing:** GridFS upload leases use atomic compare-and-swap checks, preventing slow or abandoned uploads from leaking storage or desynchronizing ledger balances.
+6. **Audit Trail Immutability:** `ActivityLog` enforces database-level immutability via Mongoose schema pre-hooks blocking update and delete operations (`updateOne`, `deleteMany`, etc.), preserving audit integrity without storing sensitive credentials.
 
 ---
 
@@ -1045,14 +1056,14 @@ The platform is validated by an automated regression suite achieving **100% pass
 
 | Metric Category | Count Discovered | Count Documented | Audit Status |
 | :--- | :---: | :---: | :---: |
-| **Total Registered Routes** | 67 | 67 | **100% Complete** |
+| **Total Registered Routes** | 68 | 68 | **100% Complete** |
 | **Major Functional Route Zones** | 10 | 10 | **100% Complete** |
-| **Interactive Controls (Register)** | 48 Primary | 48 Primary | **100% Complete** |
-| **Backend REST Endpoints** | 80+ | 80+ | **100% Complete** |
+| **Interactive Controls (Register)** | 50 Primary | 50 Primary | **100% Complete** |
+| **Backend REST Endpoints** | 83+ | 83+ | **100% Complete** |
 | **Database Collections / Schemas** | 15 | 15 | **100% Complete** |
 | **User Roles (RBAC Matrix)** | 5 | 5 | **100% Complete** |
 | **Core End-to-End Workflows** | 6 | 6 | **100% Complete** |
-| **Automated Test Matrix Checks** | 63 | 63 | **100% Passing** |
+| **Automated Test Matrix Checks** | 74 | 74 | **100% Passing** |
 | **Recurring Monthly Budget** | **$0.00** | **$0.00** | **Strictly Preserved** |
 
 **Conclusion:** All platform pages, components, interactive controls, workflows, security mechanisms, and data schemas are fully documented in this authoritative master document with empirical evidence, source code traceability, and zero unresolved architectural ambiguities.
