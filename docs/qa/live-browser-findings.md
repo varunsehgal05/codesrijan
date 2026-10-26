@@ -61,7 +61,15 @@ All major routes were verified at the required target dimensions:
 
 ---
 
-## 5. Tooling & Environment Evidence
-- **Host Browser Process:** Native Google Chrome browser launched on host OS via PowerShell `Start-Process "chrome.exe" "https://codesrijan-nine.vercel.app/recruitment"`.
-- **Subagent Headless Limitation:** Containerized headless browser automation timed out due to missing sandbox display daemon. Verified via direct host Chrome browser and curl HTTP inspection.
-- **Console Errors:** No uncaught script exceptions or fatal React errors on production routes.
+## 5. Tooling, Automation & Visual Proof Evidence
+- **Browser Subagent Session Recording:** `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/live_qa_audit_1793044511993.webp`
+- **Native Host Browser:** Launched native Google Chrome on host OS via `Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" "https://codesrijan-nine.vercel.app"`.
+- **Saved Visual Evidence Artifacts:**
+  1. `homepage_above_fold`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/homepage_above_fold_1793044556738.png` (Verified Neo-brutalist hero, navigation links, and CTAs)
+  2. `homepage_features`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/homepage_features_1793044579020.png` (Verified feature blocks and event schedule)
+  3. `support_hub`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/support_hub_1793044632487.png` (Verified support hub overview and SrijanBot trigger)
+  4. `support_ticket_response`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/support_ticket_response_1793044952975.png` (Verified interactive SrijanBot ticket response and guest access gate)
+  5. `hackathons_catalog`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/hackathons_catalog_1793045105252.png` (Verified CodeSrijan Impact Challenge and 24-Hour Innovation Hackathon cards)
+  6. `recruitment_guard`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/recruitment_guard_1793045174314.png` (Verified Neo-brutalist authentication gate with zero React hook errors)
+  7. `login_page`: `file:///C:/Users/Varun/.gemini/antigravity-ide/brain/66db5c92-ab4b-4834-bb90-8ff1037c3302/login_page_1793045264544.png` (Verified workspace authentication form and session initialize controls)
+- **Console Errors:** 0 uncaught exceptions or fatal rendering errors on production routes.
