@@ -7,6 +7,9 @@
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
 **Current Authoritative Release Gate:** `Release 1.0 (74 Automated Tests Passing, 100% Suite Clean across 8 Test Suites)`  
 **Recent Verified Release Revisions:**  
+- `7be6506` — `docs(release): update final report with empirical Render 404 test results and release tag (VERIFIED LIVE ON RENDER & VERCEL)`  
+- `9c1458d` — `docs(release): add operations runbook and post-release product improvement backlog`  
+- `288b59e` — `feat(audit): reconcile master documentation to 68 routes and 74 tests, enforce ActivityLog immutability, and document provider deployment revisions`  
 - `5f54f5c` — `docs(qa): record automated browser subagent screenshots and live audit findings`  
 - `69528b4` — `feat(release-1.0): platform health dashboard, operations hub, audit trail, structured feedback, and release 1.0 audit reports`  
 - `d1ef11f` — `docs: reconcile test totals to 63 and document deployment verification checkpoints`  
@@ -15,7 +18,7 @@
 - `1cb89c1` — `feat(support,leaderboard): finalize active support ticket status policy, unranked leaderboard metrics, and 12-scenario regression suite`  
 - `99b5ccf` — `feat(notifications,leaderboard,recruitment): add notification category tags, tournament leaderboard matrix, and admin squad governance console`  
 - `f2d3603` — `fix(support): remove talk to admin button for admins and filter active tickets to open and in-progress`  
-**Branch Synchronization:** Branches `main` and `master` are fully aligned.
+**Branch Synchronization:** Branches `main` and `master` are fully aligned and tagged `v1.0.0` at commit `7be6506`.
 
 ---
 
