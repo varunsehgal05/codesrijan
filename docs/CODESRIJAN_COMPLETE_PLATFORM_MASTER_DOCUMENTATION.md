@@ -996,17 +996,18 @@ The CodeSrijan design language merges high-impact **Neo-Brutalism** with technic
 
 ## 20. END-TO-END TEST SUITE & QUALITY ACCEPTANCE MATRIX
 
-The platform is validated by an automated regression suite achieving **100% pass rate** across all critical security, concurrency, and functional criteria:
+The platform is validated by an automated regression suite achieving **100% pass rate** across all critical security, concurrency, data isolation, and functional criteria:
 
 | Test Suite File | Coverage Scope | Checks Executed | Result |
 | :--- | :--- | :---: | :---: |
-| `server/test_focused_regression.mjs` | Focused support regression (12 scenarios), notification tags, leaderboard tournament matrix, unranked score integrity, admin squad governance, root outlet remount keys, and CORS allowlist. | 18 | **PASS (100%)** |
-| `server/test_cors_policies.mjs` | CORS allowlist, project-scoped preview regex, external origin rejection, preflight OPTIONS. | 7 | **PASS (100%)** |
-| `server/test_gridfs_lease_lifecycle.mjs` | 60s lease expiry, abort on late commit, orphan chunk purge, active lease renewal, idempotent release. | 5 | **PASS (100%)** |
-| `server/test_gridfs_concurrency.mjs` | Parallel upload capacity admission, 75MB budget enforcement, release on failure. | 4 | **PASS (100%)** |
-| `server/test_gridfs_storage.mjs` | Raster magic byte checks, prohibited SVG rejection, SHA-256 byte match, query token 401 rejection. | 15 | **PASS (100%)** |
-| `server/test_firebase_and_catalog_regression.mjs` | File format validations, oversized image rejection, binary spoof detection. | 8 | **PASS (100%)** |
-| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage** | **57** | **57 / 57 (100%)** |
+| `server/test_focused_regression.mjs` | Focused support regression (13 scenarios including 16-case status matrix), notification tags, leaderboard tournament matrix, unranked score integrity, admin squad governance, root outlet remount keys, and CORS allowlist. | 19 | **PASS (100%)** |
+| `server/test-security-local.mjs` | Realtime socket auth, room tenant isolation, MongoDB URI safety guards, password hash redaction, disabled session denial, locked roster mutations, protected receipt auth. | 8 | **PASS (100%)** |
+| `server/test_cors_policies.mjs` | Exact production origin, project-scoped preview regex allowlist, arbitrary Vercel app rejection, external origin rejection, localhost environment switching & preflight headers. | 5 | **PASS (100%)** |
+| `server/test_firebase_and_catalog_regression.mjs` | File format validations (JPEG, PNG, WebP), prohibited SVG rejection (400), oversized image rejection (413), binary magic byte spoof detection. | 8 | **PASS (100%)** |
+| `server/test_gridfs_concurrency.mjs` | Parallel upload capacity admission, budget enforcement, reservation release on failure, abandoned reservation recovery, orphan chunk cleanup. | 4 | **PASS (100%)** |
+| `server/test_gridfs_lease_lifecycle.mjs` | Lease expiry, late commit abort, orphan chunk purge, active lease renewal, idempotent release & non-negative invariant, mixed concurrent uploads + DB writes. | 4 | **PASS (100%)** |
+| `server/test_gridfs_storage.mjs` | Raster magic byte checks, prohibited SVG rejection, SHA-256 byte match, query-token rejection with HTTP 401, security response headers (`Referrer-Policy: no-referrer`, `X-Content-Type-Options: nosniff`). | 15 | **PASS (100%)** |
+| **Total Automated Regression Checks** | **Comprehensive Full-Stack Coverage (Reconciled Aggregate)** | **63** | **63 / 63 (100%)** |
 
 ---
 
@@ -1054,7 +1055,7 @@ The platform is validated by an automated regression suite achieving **100% pass
 | **Database Collections / Schemas** | 15 | 15 | **100% Complete** |
 | **User Roles (RBAC Matrix)** | 5 | 5 | **100% Complete** |
 | **Core End-to-End Workflows** | 6 | 6 | **100% Complete** |
-| **Automated Test Matrix Checks** | 48 | 48 | **100% Passing** |
+| **Automated Test Matrix Checks** | 63 | 63 | **100% Passing** |
 | **Recurring Monthly Budget** | **$0.00** | **$0.00** | **Strictly Preserved** |
 
 **Conclusion:** All platform pages, components, interactive controls, workflows, security mechanisms, and data schemas are fully documented in this authoritative master document with empirical evidence, source code traceability, and zero unresolved architectural ambiguities.
