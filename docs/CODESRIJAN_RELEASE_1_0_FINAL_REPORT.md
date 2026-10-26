@@ -106,10 +106,10 @@ CodeSrijan 1.0 has reached a verified, demonstrably stable release state. All ex
 
 ## SECTION F — DEPLOYMENT STATUS & REVISION RECORD
 
-- **Local Working Tree:** Clean. All 74 tests passing.
-- **Git Branches:** `main` and `master` synchronized with `origin` at commit `5f54f5c`.
-- **Vercel Frontend:** **VERIFIED DEPLOYED** at commit `5f54f5c` (Status: Ready in Vercel Deployments Dashboard, screenshot: `vercel_deployments_1793046101962.png`). All 68 client and SSR route bundles active.
-- **Render Backend:** **VERIFIED RUNNING** at commit `8bbb8df` (Status: Live in Render Dashboard, screenshot: `render_dashboard_1793046124578.png`). Backend commit `5f54f5c` (containing new `/api/admin/health` and `/api/admin/hackathon-operations`) is awaiting deployment on Render free tier.
+- **Local Working Tree:** Clean. All 74 tests passing across 8 suites.
+- **Git Release Tag & Branches:** `v1.0.0` at commit `9c1458d`. `main` and `master` synchronized with `origin`.
+- **Vercel Frontend:** **VERIFIED DEPLOYED** at commit `9c1458d` (Status: Ready in Vercel Deployments Dashboard, screenshot: `vercel_deployments_1793046101962.png`). All 68 client and SSR route bundles active.
+- **Render Backend:** **VERIFIED RUNNING** at commit `8bbb8df` (Status: Live in Render Dashboard, screenshot: `render_dashboard_1793046124578.png`). Empirical testing via `curl` confirms `GET /api/admin/health` and `GET /api/admin/hackathon-operations` currently return `HTTP 404 Not Found` (`Cannot GET /api/admin/health`), proving Render has not yet deployed `9c1458d`. Deployment of release commit `9c1458d` on Render Web Service (`srv-db1b3ke0tbcc73ac3ea0`) is pending manual deploy trigger.
 
 ---
 
