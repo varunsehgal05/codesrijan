@@ -32,19 +32,36 @@ function RecruitmentMatrix() {
   const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
-  // Instant Loading Skeleton
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center p-8">
-        <div className="w-12 h-12 border-4 border-stark-black border-t-electric-blue rounded-full animate-spin mb-4"></div>
-        <p className="font-code-snippet uppercase tracking-widest text-sm font-bold text-stark-black">
-          SYNCHRONIZING SQUAD RECRUITMENT MATRIX...
-        </p>
-      </div>
-    );
-  }
+  // Filtered teams for Admin view - declared unconditionally before any early returns
+  const genuineHackathons = useMemo(() => {
+    const list = Array.isArray(hackathons) ? hackathons : [];
+    return list.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
+  }, [hackathons]);
 
-  if (!currentUser) return <Navigate to="/login" />;
+  const adminFilteredTeams = useMemo(() => {
+    const safeTeams = Array.isArray(teams) ? teams : [];
+    const safeUsers = Array.isArray(users) ? users : [];
+    return safeTeams.filter(team => {
+      const q = adminSearch.toLowerCase().trim();
+      const matchesSearch = !q || 
+        team.name?.toLowerCase().includes(q) || 
+        team.id?.toLowerCase().includes(q) ||
+        (team.memberIds || []).some(mid => {
+          const u = safeUsers.find(user => user.id === mid);
+          return u?.name?.toLowerCase().includes(q) || u?.email?.toLowerCase().includes(q);
+        });
+
+      const teamHackathon = team.hackathonId || (team as any).lockedForHackathonId;
+      const matchesHackathon = adminHackathonFilter === "ALL" || teamHackathon === adminHackathonFilter;
+      const matchesStatus = adminStatusFilter === "ALL" || (team.status || 'forming') === adminStatusFilter;
+
+      return matchesSearch && matchesHackathon && matchesStatus;
+    });
+  }, [teams, users, adminSearch, adminHackathonFilter, adminStatusFilter]);
+
+  const hasSquad = !!currentUser?.teamId;
+  const currentTeam = (teams || []).find(t => t.id === currentUser?.teamId);
+  const isTeamLeader = !!(currentTeam && currentUser && currentTeam.leaderId === currentUser.id);
 
   // --------------------------------------------------------------------------
   // ADMIN ACTIONS: Disqualify, Undo Disqualify, Ban
@@ -144,6 +161,7 @@ function RecruitmentMatrix() {
     }
 
     try {
+      if (!currentUser) return;
       await createTeam(name, currentUser.id, selectedHackathonId, "");
       navigate({ to: "/dashboard" });
     } catch (err: any) {
@@ -171,6 +189,7 @@ function RecruitmentMatrix() {
 
   const handleInvite = async (userId: string) => {
     try {
+      if (!currentUser?.teamId) return;
       setLoading(true);
       setErrorMsg("");
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -185,35 +204,38 @@ function RecruitmentMatrix() {
     }
   };
 
-  const hasSquad = !!currentUser.teamId;
-  const currentTeam = teams.find(t => t.id === currentUser.teamId);
-  const isTeamLeader = currentTeam?.leaderId === currentUser.id;
+  // Instant Loading Skeleton (after all hooks are called)
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center p-8">
+        <div className="w-12 h-12 border-4 border-stark-black border-t-electric-blue rounded-full animate-spin mb-4"></div>
+        <p className="font-code-snippet uppercase tracking-widest text-sm font-bold text-stark-black">
+          SYNCHRONIZING SQUAD RECRUITMENT MATRIX...
+        </p>
+      </div>
+    );
+  }
 
-  // Filtered teams for Admin view
-  const genuineHackathons = useMemo(() => {
-    const list = Array.isArray(hackathons) ? hackathons : [];
-    return list.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
-  }, [hackathons]);
-
-  const adminFilteredTeams = useMemo(() => {
-    const safeTeams = Array.isArray(teams) ? teams : [];
-    return safeTeams.filter(team => {
-      const q = adminSearch.toLowerCase().trim();
-      const matchesSearch = !q || 
-        team.name?.toLowerCase().includes(q) || 
-        team.id?.toLowerCase().includes(q) ||
-        (team.memberIds || []).some(mid => {
-          const u = users.find(user => user.id === mid);
-          return u?.name?.toLowerCase().includes(q) || u?.email?.toLowerCase().includes(q);
-        });
-
-      const teamHackathon = team.hackathonId || (team as any).lockedForHackathonId;
-      const matchesHackathon = adminHackathonFilter === "ALL" || teamHackathon === adminHackathonFilter;
-      const matchesStatus = adminStatusFilter === "ALL" || (team.status || 'forming') === adminStatusFilter;
-
-      return matchesSearch && matchesHackathon && matchesStatus;
-    });
-  }, [teams, users, adminSearch, adminHackathonFilter, adminStatusFilter]);
+  // Graceful Unauthenticated Guard
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center p-8">
+        <div className="max-w-md w-full bg-pure-white p-8 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center">
+          <span className="material-symbols-outlined text-5xl text-electric-blue mb-4">lock</span>
+          <h1 className="font-display-lg text-3xl mb-3 text-ink-black uppercase">AUTHENTICATION REQUIRED</h1>
+          <p className="font-body-md text-text-muted mb-6">
+            You must authenticate your operative clearance before deploying squads or accessing the recruitment matrix.
+          </p>
+          <Link 
+            to="/login" 
+            className="inline-block w-full bg-electric-blue text-pure-white py-3 px-6 font-label-bold uppercase brutal-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-stark-black transition-colors"
+          >
+            AUTHENTICATE IDENTITY ↗
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // ==========================================================================
   // RENDER: ADMIN SQUAD DIRECTORATE (NO FIND / JOIN / CREATE TABS)
