@@ -128,11 +128,13 @@ const supportTicketSchema = new mongoose.Schema({
     subject: String,
     description: String,
     category: String,
-    priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
+    priority: { type: String, enum: ['low', 'medium', 'normal', 'high', 'urgent'], default: 'medium' },
     status: { type: String, enum: ['open', 'in_progress', 'resolved', 'closed'], default: 'open' },
     assignedTo: String,
     attachments: [String],
-    resolvedAt: Date
+    resolvedAt: Date,
+    affectedPage: String,
+    conversationId: String
 }, { timestamps: true });
 
 // 23. Activity Logs (Admin Audit)

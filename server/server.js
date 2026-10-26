@@ -153,10 +153,37 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
-import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream } from './services/storage.js';
+import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
+
+/**
+ * Immutable server-side audit logging helper for administrative actions (Feature 7).
+ * Extracts caller identity strictly from validated session, records timestamp, IP, and target.
+ */
+export async function logAdminActivity(req, { action, entityType, entityId, description }) {
+    try {
+        if (!req?.user) return null;
+        const ipAddress = req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || '127.0.0.1';
+        const userAgent = req.headers?.['user-agent'] || 'unknown';
+        const log = await ActivityLog.create({
+            id: `log-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`,
+            userId: req.user.email || req.user.id || 'admin',
+            role: req.user.role || 'admin',
+            action: String(action || 'UNKNOWN_ACTION').toUpperCase(),
+            entityType: String(entityType || 'SYSTEM').toUpperCase(),
+            entityId: String(entityId || ''),
+            description: String(description || ''),
+            ipAddress,
+            userAgent
+        });
+        return log;
+    } catch (err) {
+        console.error('[AUDIT LOG ERROR]', err.message);
+        return null;
+    }
+}
 
 // Connect to MongoDB
 mongoose.connect(MONGO_URI, {
@@ -918,6 +945,13 @@ app.patch('/api/admin/hackathons/:id/reveal-problems', requireAuth, requireRole(
             }).catch(() => {});
         }
 
+        await logAdminActivity(req, {
+            action: 'REVEAL_PROBLEMS',
+            entityType: 'HACKATHON',
+            entityId: hackathon.id,
+            description: `Revealed problem statements for hackathon "${hackathon.name || hackathon.id}"`
+        });
+
         res.json({ success: true, hackathon, message: "Problem statements successfully revealed to all participants." });
     } catch (e) {
         res.status(500).json({ message: "Failed to reveal problem statements: " + e.message });
@@ -937,6 +971,13 @@ app.patch('/api/admin/hackathons/:id/hide-problems', requireAuth, requireRole(['
             { hackathonId: req.params.id },
             { isPublished: false, isLocked: true }
         );
+
+        await logAdminActivity(req, {
+            action: 'HIDE_PROBLEMS',
+            entityType: 'HACKATHON',
+            entityId: hackathon.id,
+            description: `Classified and hid problem statements for hackathon "${hackathon.name || hackathon.id}"`
+        });
 
         res.json({ success: true, hackathon, message: "Problem statements classified and locked." });
     } catch (e) {
@@ -1411,6 +1452,12 @@ app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(
                 { returnDocument: 'after' }
             );
             if (!registration) return res.status(404).json({ message: "Registration not found." });
+            await logAdminActivity(req, {
+                action: 'UPDATE_PAYMENT_NOTE',
+                entityType: 'REGISTRATION',
+                entityId: registration.id,
+                description: `Updated audit note for registration ${registration.id}: ${reason.trim().substring(0, 100)}`
+            });
             return res.json({ success: true, registration, message: "Audit note updated." });
         }
 
@@ -1536,6 +1583,13 @@ app.post('/api/admin/payments/:registrationId/review', requireAuth, requireRole(
                 }
             }
         }
+
+        await logAdminActivity(req, {
+            action: decision === 'approve' ? 'APPROVE_PAYMENT' : 'REJECT_PAYMENT',
+            entityType: 'REGISTRATION',
+            entityId: registration.id,
+            description: `${decision.toUpperCase()} payment for registration ${registration.id}. Reason: ${reviewReason.substring(0, 100)}`
+        });
 
         res.json({ success: true, decision, registration });
     } catch (err) {
@@ -2051,6 +2105,12 @@ app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']),
     }
 
     res.json({ message: "Squad Disqualified", team });
+    await logAdminActivity(req, {
+        action: 'DISQUALIFY_TEAM',
+        entityType: 'TEAM',
+        entityId: team.id,
+        description: `Disqualified squad "${team.name}". Reason: ${reason.trim()}`
+    });
 });
 
 app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
@@ -2073,6 +2133,13 @@ app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admi
             });
         } catch (ne) {}
     }
+
+    await logAdminActivity(req, {
+        action: 'REINSTATE_TEAM',
+        entityType: 'TEAM',
+        entityId: team.id,
+        description: `Reinstated squad "${team.name}" to active status.`
+    });
 
     res.json({ message: "Squad Restored", team });
 });
@@ -2104,6 +2171,13 @@ app.post('/api/admin/teams/:id/ban', requireAuth, requireRole(['admin']), async 
                 });
             } catch (ne) {}
         }
+
+        await logAdminActivity(req, {
+            action: 'BAN_TEAM',
+            entityType: 'TEAM',
+            entityId: team.id,
+            description: `Banned squad "${team.name}". Reason: ${reason.trim()}`
+        });
 
         res.json({ message: `Squad "${team.name}" banned successfully.`, team });
     } catch (e) {
@@ -2854,16 +2928,234 @@ app.delete('/api/admin/users/:id', requireAuth, requireRole(['admin']), async (r
     }
 });
 
-// TELEMETRY & LOGS
+// --- FEATURE 7: TELEMETRY & AUDIT TRAIL ---
 app.get('/api/admin/logs', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const logs = [
-            { id: 1, createdAt: new Date(Date.now() - 1000 * 60 * 5), userId: "admin@codesrijan.com", role: "ADMIN", action: "SYSTEM_BOOT", description: "Core systems initialized and ready.", ipAddress: "127.0.0.1" },
-            { id: 2, createdAt: new Date(Date.now() - 1000 * 60 * 2), userId: "SYSTEM", role: "CORE", action: "SYNC", description: "Synchronized with primary database cluster.", ipAddress: "10.0.0.1" }
-        ];
+        const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 100));
+        const logs = await ActivityLog.find().sort({ createdAt: -1 }).limit(limit);
         res.json(logs);
     } catch (e) {
-        res.status(500).json({ message: "Failed to fetch telemetry streams." });
+        res.status(500).json({ message: "Failed to fetch audit log trail." });
+    }
+});
+
+// --- FEATURE 1: PLATFORM HEALTH DASHBOARD TELEMETRY ---
+app.get('/api/admin/health', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const now = new Date();
+        const storageStats = await getStorageStats();
+        const isDbConnected = mongoose.connection.readyState === 1;
+
+        const [
+            pendingPaymentReviews,
+            activeSupportTickets,
+            resolvedSupportTickets,
+            activeHackathons,
+            totalRegistrations,
+            totalSquads,
+            totalUsers,
+            totalSubmissions
+        ] = await Promise.all([
+            Registration.countDocuments({
+                paymentStatus: { $in: ['under_review', 'pending_verification', 'payment_under_review'] }
+            }).catch(() => 0),
+            SupportTicket.countDocuments({
+                status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
+            }).catch(() => 0),
+            SupportTicket.countDocuments({
+                status: { $regex: /^\s*(resolved|closed)\s*$/i }
+            }).catch(() => 0),
+            Hackathon.countDocuments({
+                $or: [{ status: 'active' }, { isPublished: true }]
+            }).catch(() => 0),
+            Registration.countDocuments().catch(() => 0),
+            Team.countDocuments().catch(() => 0),
+            User.countDocuments().catch(() => 0),
+            Submission.countDocuments().catch(() => 0)
+        ]);
+
+        res.json({
+            status: isDbConnected ? 'operational' : 'degraded',
+            serverTime: now.toISOString(),
+            services: {
+                backend: {
+                    status: 'operational',
+                    uptimeSeconds: Math.floor(process.uptime()),
+                    memoryUsage: process.memoryUsage(),
+                    nodeVersion: process.version,
+                    environment: process.env.NODE_ENV || 'development'
+                },
+                database: {
+                    status: isDbConnected ? 'operational' : 'disconnected',
+                    readyState: mongoose.connection.readyState,
+                    databaseName: mongoose.connection?.name || 'codesrijan'
+                },
+                storage: storageStats,
+                emailRelay: {
+                    status: process.env.GOOGLE_APPS_SCRIPT_URL ? 'configured' : 'not_configured',
+                    provider: 'Google Apps Script Relay'
+                }
+            },
+            operationalMetrics: {
+                pendingPaymentReviews,
+                activeSupportTickets,
+                resolvedSupportTickets,
+                activeHackathons,
+                totalRegistrations,
+                totalSquads,
+                totalUsers,
+                totalSubmissions
+            }
+        });
+    } catch (err) {
+        console.error('[ADMIN HEALTH TELEMETRY ERROR]', err.message);
+        res.status(500).json({ status: 'error', error: err.message });
+    }
+});
+
+// --- FEATURE 2: HACKATHON OPERATIONS DASHBOARD ---
+app.get('/api/admin/hackathon-operations', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const now = new Date();
+        const hackathons = await Hackathon.find().sort({ startDate: -1 });
+
+        const operationsData = await Promise.all(hackathons.map(async (h) => {
+            const [
+                totalRegistrations,
+                verifiedRegistrations,
+                pendingPaymentBacklog,
+                activeSquads,
+                disqualifiedSquads,
+                submissionsCount
+            ] = await Promise.all([
+                Registration.countDocuments({ hackathonId: h.id }).catch(() => 0),
+                Registration.countDocuments({ hackathonId: h.id, paymentStatus: 'verified' }).catch(() => 0),
+                Registration.countDocuments({
+                    hackathonId: h.id,
+                    paymentStatus: { $in: ['under_review', 'pending_verification', 'payment_under_review'] }
+                }).catch(() => 0),
+                Team.countDocuments({ hackathonId: h.id, status: { $ne: 'disqualified' } }).catch(() => 0),
+                Team.countDocuments({ hackathonId: h.id, status: 'disqualified' }).catch(() => 0),
+                Submission.countDocuments({ hackathonId: h.id }).catch(() => 0)
+            ]);
+
+            const startDate = h.startDate ? new Date(h.startDate) : null;
+            const endDate = h.endDate ? new Date(h.endDate) : null;
+            const regDeadline = h.registrationDeadline ? new Date(h.registrationDeadline) : null;
+            const subDeadline = h.submissionDeadline ? new Date(h.submissionDeadline) : null;
+
+            let phase = 'upcoming';
+            if (endDate && now > endDate) {
+                phase = 'concluded';
+            } else if (subDeadline && now > subDeadline) {
+                phase = 'evaluating';
+            } else if (startDate && now >= startDate) {
+                phase = 'hacking';
+            } else if (regDeadline && now > regDeadline) {
+                phase = 'registration_closed';
+            } else {
+                phase = 'registration_open';
+            }
+
+            return {
+                id: h.id,
+                name: h.name || h.title || 'Untitled Hackathon',
+                status: h.status || 'draft',
+                isPaid: Boolean(h.fee && h.fee > 0),
+                fee: h.fee || 0,
+                currency: h.currency || 'INR',
+                phase,
+                problemStatementsRevealed: Boolean(h.problemStatementsRevealed),
+                startDate: h.startDate,
+                endDate: h.endDate,
+                registrationDeadline: h.registrationDeadline,
+                submissionDeadline: h.submissionDeadline,
+                serverTime: now.toISOString(),
+                metrics: {
+                    totalRegistrations,
+                    verifiedRegistrations,
+                    pendingPaymentBacklog,
+                    activeSquads,
+                    disqualifiedSquads,
+                    submissionsCount
+                }
+            };
+        }));
+
+        res.json({
+            serverTime: now.toISOString(),
+            totalHackathons: operationsData.length,
+            operations: operationsData
+        });
+    } catch (err) {
+        console.error('[HACKATHON OPERATIONS ERROR]', err.message);
+        res.status(500).json({ message: "Failed to load hackathon operations data: " + err.message });
+    }
+});
+
+// CSV EXPORT FOR HACKATHON ROSTERS (Feature 2)
+app.get('/api/admin/hackathons/:id/export-csv', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const hackathon = await Hackathon.findOne({ id: req.params.id });
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+        const registrations = await Registration.find({ hackathonId: req.params.id }).sort({ createdAt: -1 });
+        const teams = await Team.find({ hackathonId: req.params.id });
+        const teamMap = new Map(teams.map(t => [t.id, t]));
+
+        // Sanitize string to prevent Excel / Google Sheets formula injection
+        const sanitizeCsvCell = (val) => {
+            if (val == null) return '""';
+            let str = String(val).replace(/"/g, '""');
+            if (/^[=+\-@\t\r]/.test(str)) {
+                str = `'${str}`;
+            }
+            return `"${str}"`;
+        };
+
+        const headers = [
+            'Registration ID',
+            'Squad Name',
+            'Leader ID',
+            'Member Count',
+            'Payment Status',
+            'Fee Amount',
+            'Transaction Ref',
+            'Registration Status',
+            'Created At'
+        ];
+
+        const rows = registrations.map(r => {
+            const team = r.teamId ? teamMap.get(r.teamId) : null;
+            const memberCount = team ? (team.memberIds?.length || 1) : (r.rosterMembers?.length || 1);
+            return [
+                sanitizeCsvCell(r.id),
+                sanitizeCsvCell(team?.name || r.teamName || 'Solo / Unassigned'),
+                sanitizeCsvCell(team?.leaderId || r.userId),
+                sanitizeCsvCell(memberCount),
+                sanitizeCsvCell(r.paymentStatus || 'free'),
+                sanitizeCsvCell(r.feeAmount || 0),
+                sanitizeCsvCell(r.transactionReference || 'N/A'),
+                sanitizeCsvCell(r.status || 'pending'),
+                sanitizeCsvCell(r.createdAt ? new Date(r.createdAt).toISOString() : '')
+            ].join(',');
+        });
+
+        const csvContent = [headers.map(sanitizeCsvCell).join(','), ...rows].join('\r\n');
+
+        await logAdminActivity(req, {
+            action: 'EXPORT_HACKATHON_CSV',
+            entityType: 'HACKATHON',
+            entityId: hackathon.id,
+            description: `Exported roster CSV for hackathon "${hackathon.name || hackathon.id}" (${registrations.length} registrations)`
+        });
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="hackathon-${hackathon.id}-roster.csv"`);
+        res.status(200).send(csvContent);
+    } catch (err) {
+        console.error('[CSV EXPORT ERROR]', err.message);
+        res.status(500).json({ message: "Failed to generate CSV export: " + err.message });
     }
 });
 
@@ -3120,29 +3412,6 @@ app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req,
 });
 
 // Admin Support Routes
-app.get('/api/admin/support', requireAuth, requireRole(['admin']), async (req, res) => {
-    try {
-        const tickets = await mongoose.model('SupportTicket').find().sort({ createdAt: -1 });
-        res.json(tickets);
-    } catch (e) {
-        res.status(500).json({ message: "Failed to fetch tickets" });
-    }
-});
-
-app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), async (req, res) => {
-    try {
-        const { status } = req.body;
-        const ticket = await mongoose.model('SupportTicket').findOneAndUpdate(
-            { id: req.params.id }, 
-            { status }, 
-            { new: true }
-        );
-        res.json(ticket);
-    } catch (e) {
-        res.status(500).json({ message: "Failed to update ticket" });
-    }
-});
-
 // Admin Settings Routes
 app.get('/api/admin/settings', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
@@ -3512,21 +3781,69 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
         res.status(500).json({ message: "Failed to transmit message." });
     }
 });
-// --- SUPPORT TICKETS ---
+// --- SUPPORT TICKETS (Feature 3) ---
 app.post('/api/support', requireAuth, async (req, res) => {
     try {
-        const { subject, category, priority } = req.body;
-        const description = req.body.description || req.body.message || '';
+        // Enforce role separation: Admins cannot create student tickets through student interface
+        if (req.user.role === 'admin') {
+            return res.status(403).json({
+                message: "Administrators cannot create student tickets through the student-facing support interface. Please manage tickets from the Admin Console."
+            });
+        }
+
+        // Spam Prevention: Rate-limit to max 5 tickets per 15 minutes per user
+        const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+        const recentTicketsCount = await SupportTicket.countDocuments({
+            userId: req.user.id,
+            createdAt: { $gte: fifteenMinsAgo }
+        });
+        if (recentTicketsCount >= 5) {
+            return res.status(429).json({
+                message: "Rate limit exceeded. You may submit up to 5 tickets every 15 minutes."
+            });
+        }
+
+        // Input validation and sanitization
+        const subject = String(req.body.subject || '').trim();
+        if (!subject || subject.length < 3) {
+            return res.status(400).json({ message: "Subject must be at least 3 characters long." });
+        }
+        if (subject.length > 150) {
+            return res.status(400).json({ message: "Subject must not exceed 150 characters." });
+        }
+
+        const description = String(req.body.description || req.body.message || '').trim();
+        if (!description || description.length < 5) {
+            return res.status(400).json({ message: "Description must be at least 5 characters long." });
+        }
+        if (description.length > 3000) {
+            return res.status(400).json({ message: "Description must not exceed 3000 characters." });
+        }
+
+        const rawCategory = String(req.body.category || 'general').trim().toLowerCase();
+        const allowedCategories = new Set([
+            'general', 'payment', 'squad', 'support', 'system',
+            'bug_report', 'feature_request', 'feedback'
+        ]);
+        const category = allowedCategories.has(rawCategory) ? rawCategory : 'general';
+
+        const rawPriority = String(req.body.priority || 'medium').trim().toLowerCase();
+        const allowedPriorities = new Set(['low', 'medium', 'normal', 'high', 'urgent']);
+        const priority = allowedPriorities.has(rawPriority) ? (rawPriority === 'medium' ? 'normal' : rawPriority) : 'normal';
+
+        const affectedPage = req.body.affectedPage ? String(req.body.affectedPage).trim().substring(0, 100) : '';
+
         const ticketId = 'tkt-' + Date.now().toString();
         const convId = 'conv-sup-' + ticketId;
 
         const ticket = await SupportTicket.create({
             id: ticketId,
             userId: req.user.id,
-            subject: subject || 'Support Request',
-            category: category || 'general',
+            subject,
+            category,
+            priority,
             description,
-            priority: (priority === 'medium' ? 'normal' : (priority || 'normal')),
+            affectedPage,
             status: 'open',
             conversationId: convId
         });
@@ -3550,7 +3867,7 @@ app.post('/api/support', requireAuth, async (req, res) => {
 
         res.status(201).json(ticket);
     } catch (e) {
-        res.status(500).json({ message: "Failed to create support ticket." });
+        res.status(500).json({ message: "Failed to create support ticket: " + e.message });
     }
 });
 
@@ -3614,13 +3931,38 @@ app.patch('/api/support/:id/status', requireAuth, async (req, res) => {
 });
 
 app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), async (req, res) => {
-    const { status } = req.body;
-    const ticket = await SupportTicket.findOneAndUpdate(
-        { id: req.params.id }, 
-        { status },
-        { new: true }
-    );
-    res.json(ticket);
+    try {
+        const { status } = req.body;
+        if (!status || typeof status !== 'string') return res.status(400).json({ message: "Status is required." });
+        const normalized = status.trim().toLowerCase().replace(/[\s-]+/g, '_');
+        const validStatuses = new Set(['open', 'in_progress', 'resolved', 'closed']);
+        if (!validStatuses.has(normalized)) {
+            return res.status(400).json({ message: "Invalid ticket status. Allowed values: open, in_progress, resolved, closed." });
+        }
+
+        const updateData = { status: normalized };
+        if (normalized === 'resolved' || normalized === 'closed') {
+            updateData.resolvedAt = new Date();
+        }
+
+        const ticket = await SupportTicket.findOneAndUpdate(
+            { id: req.params.id }, 
+            updateData,
+            { new: true }
+        );
+        if (!ticket) return res.status(404).json({ message: "Ticket missing." });
+
+        await logAdminActivity(req, {
+            action: 'UPDATE_SUPPORT_STATUS',
+            entityType: 'SUPPORT_TICKET',
+            entityId: ticket.id,
+            description: `Updated support ticket ${ticket.id} status to ${normalized}`
+        });
+
+        res.json(ticket);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update ticket status: " + e.message });
+    }
 });
 
 app.post('/api/admin/support/:id/clone', requireAuth, requireRole(['admin']), async (req, res) => {
@@ -3744,16 +4086,6 @@ app.delete('/api/admin/announcements/:id', requireAuth, requireRole(['admin']), 
         res.json({ message: "Announcement deleted." });
     } catch (e) {
         res.status(500).json({ message: "Failed to delete announcement." });
-    }
-});
-
-// --- ACTIVITY LOGS (Admin Audit) ---
-app.get('/api/admin/logs', requireAuth, requireRole(['admin']), async (req, res) => {
-    try {
-        const logs = await ActivityLog.find().sort({ createdAt: -1 }).limit(100);
-        res.json(logs);
-    } catch (e) {
-        res.status(500).json({ message: "Failed to fetch logs." });
     }
 });
 

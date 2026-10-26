@@ -789,3 +789,63 @@ export async function getGridFSProofStream(fileId) {
     }
 }
 
+/**
+ * Returns storage metrics, budget headroom, and reconciliation timestamps
+ * for administrative platform health telemetry.
+ */
+export async function getStorageStats() {
+    try {
+        if (!mongoose.connection?.db) {
+            return {
+                provider: 'gridfs',
+                status: 'disconnected',
+                budgetBytes: PROOF_STORAGE_BUDGET_BYTES,
+                safetyLimitBytes: TOTAL_STORAGE_SAFETY_LIMIT_BYTES,
+                committedBytes: 0,
+                reservedBytes: 0,
+                totalBytes: 0,
+                filesCount: 0,
+                remainingBudgetBytes: PROOF_STORAGE_BUDGET_BYTES,
+                usagePercent: 0,
+                lastReconciledAt: null
+            };
+        }
+        const ledger = await reconcileStorageLedger(mongoose.connection.db);
+        const committedBytes = ledger?.committedBytes || 0;
+        const reservedBytes = ledger?.reservedBytes || 0;
+        const totalBytes = ledger?.totalBytes || (committedBytes + reservedBytes);
+        const filesCount = ledger?.filesCount || 0;
+        const remainingBudgetBytes = Math.max(0, PROOF_STORAGE_BUDGET_BYTES - totalBytes);
+        const usagePercent = Math.min(100, Math.round((totalBytes / PROOF_STORAGE_BUDGET_BYTES) * 10000) / 100);
+
+        return {
+            provider: 'gridfs',
+            status: 'operational',
+            budgetBytes: PROOF_STORAGE_BUDGET_BYTES,
+            safetyLimitBytes: TOTAL_STORAGE_SAFETY_LIMIT_BYTES,
+            committedBytes,
+            reservedBytes,
+            totalBytes,
+            filesCount,
+            remainingBudgetBytes,
+            usagePercent,
+            lastReconciledAt: ledger?.lastReconciledAt || new Date()
+        };
+    } catch (err) {
+        return {
+            provider: 'gridfs',
+            status: 'error',
+            error: err.message,
+            budgetBytes: PROOF_STORAGE_BUDGET_BYTES,
+            safetyLimitBytes: TOTAL_STORAGE_SAFETY_LIMIT_BYTES,
+            committedBytes: 0,
+            reservedBytes: 0,
+            totalBytes: 0,
+            filesCount: 0,
+            remainingBudgetBytes: PROOF_STORAGE_BUDGET_BYTES,
+            usagePercent: 0,
+            lastReconciledAt: null
+        };
+    }
+}
+

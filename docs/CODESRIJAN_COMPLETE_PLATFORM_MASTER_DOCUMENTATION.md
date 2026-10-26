@@ -1,22 +1,19 @@
 # CODESRIJAN — COMPLETE PLATFORM MASTER DOCUMENTATION
 **Authoritative Platform Specification, Architecture, Component Hierarchy, Button Register, Workflows, APIs, and Data Model Reference**  
+**Release Version:** Release 1.0  
 **Canonical Repository:** `C:/Users/Varun/Downloads/interactive-showcase-main/interactive-showcase-main`  
 **Production Frontend:** [https://codesrijan-nine.vercel.app](https://codesrijan-nine.vercel.app)  
 **Canonical Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Operating Budget:** **$0.00 / month** (Strict Zero-Cost Infrastructure — Render Free, Vercel Hobby, MongoDB Atlas M0, Google Apps Script Gmail Relay)  
-**Current Repository Commit:** `99b5ccf` (`feat(notifications,leaderboard,recruitment): add notification category tags, tournament leaderboard matrix, and admin squad governance console`)  
-**Previous Verified Release Revisions:**  
-- `f2d3603` — `fix(support): remove talk to admin button for admins and filter active tickets to open and in-progress` (`COMMITTED — PASS LOCAL & REGRESSION VERIFIED`)  
-- `7bd83b0` — `docs: finalize master platform documentation, reconcile evidence classifications, and add focused UI regression suite`  
-- `3da6e65` — `docs: restructure docs directory, purge redundant legacy markdown files, and complete master platform documentation`  
-- `d1576dc` — `docs: generate comprehensive platform master documentation covering all 67 routes, components, workflows, APIs, models, and controls`  
-- `3b9dc4f` — `fix(ui): eliminate admin navigation delay, fix support status dropdown contrast, and mark support ticket comms for admin and users` (`COMMITTED — SOURCE-VERIFIED`)  
-- `5a2ebea` — `feat(security): tighten CORS allowlist, enforce atomic GridFS reservation leases, and add lifecycle guarantees` (`COMMITTED — SOURCE-VERIFIED`)  
-- `7bd9699` — `docs: reconcile authoritative report for hardened GridFS release 8bbb8df, query token removal, and concurrency reservations`  
-- `8bbb8df` — `feat(security): harden GridFS authentication, add concurrency-safe capacity reservations, and enforce no-referrer privacy` (`LIVE-VERIFIED` on Render `srv-db1b3ke0tbcc73ac3ea0`)  
-- `adcd493` — `feat: implement MongoDB GridFS Option A payment proof storage ($0/month)` (`LIVE-VERIFIED`)  
-- `37f376e` — `fix: public catalog confidentiality and rejection relay delivery` (`LIVE-VERIFIED`)  
-**Branch Synchronization:** Branches `main` and `master` are fully synchronized at `99b5ccf` across local and remote `origin`.
+**Current Authoritative Release Gate:** `Release 1.0 (73 Automated Tests Passing, 100% Suite Clean)`  
+**Recent Verified Release Revisions:**  
+- `d1ef11f` — `docs: reconcile test totals to 63 and document deployment verification checkpoints`  
+- `4af6b8d` — `fix(recruitment): resolve React rules of hooks violation and add unauth guard`  
+- `03e7481` — `fix(support): enforce strict active status whitelist excluding missing, null, empty and unknown statuses`  
+- `1cb89c1` — `feat(support,leaderboard): finalize active support ticket status policy, unranked leaderboard metrics, and 12-scenario regression suite`  
+- `99b5ccf` — `feat(notifications,leaderboard,recruitment): add notification category tags, tournament leaderboard matrix, and admin squad governance console`  
+- `f2d3603` — `fix(support): remove talk to admin button for admins and filter active tickets to open and in-progress`  
+**Branch Synchronization:** Branches `main` and `master` are fully aligned.
 
 ---
 

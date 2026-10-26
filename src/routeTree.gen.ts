@@ -51,10 +51,12 @@ import { Route as AdminCertificatesRouteImport } from './routes/admin.certificat
 import { Route as AdminEvaluationsRouteImport } from './routes/admin.evaluations'
 import { Route as AdminGalleryRouteImport } from './routes/admin.gallery'
 import { Route as AdminHackathonsRouteImport } from './routes/admin.hackathons'
+import { Route as AdminHealthRouteImport } from './routes/admin.health'
 import { Route as AdminJudgesRouteImport } from './routes/admin.judges'
 import { Route as AdminLeaderboardRouteImport } from './routes/admin.leaderboard'
 import { Route as AdminLogsRouteImport } from './routes/admin.logs'
 import { Route as AdminMentorsRouteImport } from './routes/admin.mentors'
+import { Route as AdminOperationsRouteImport } from './routes/admin.operations'
 import { Route as AdminPaymentsRouteImport } from './routes/admin.payments'
 import { Route as AdminProblemsRouteImport } from './routes/admin.problems'
 import { Route as AdminRecruitmentRouteImport } from './routes/admin.recruitment'
@@ -286,6 +288,11 @@ const AdminHackathonsRoute = AdminHackathonsRouteImport.update({
   path: '/hackathons',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHealthRoute = AdminHealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminJudgesRoute = AdminJudgesRouteImport.update({
   id: '/judges',
   path: '/judges',
@@ -304,6 +311,11 @@ const AdminLogsRoute = AdminLogsRouteImport.update({
 const AdminMentorsRoute = AdminMentorsRouteImport.update({
   id: '/mentors',
   path: '/mentors',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminOperationsRoute = AdminOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPaymentsRoute = AdminPaymentsRouteImport.update({
@@ -449,10 +461,12 @@ export interface FileRoutesByFullPath {
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/health': typeof AdminHealthRoute
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
@@ -516,10 +530,12 @@ export interface FileRoutesByTo {
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/health': typeof AdminHealthRoute
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
@@ -585,10 +601,12 @@ export interface FileRoutesById {
   '/admin/evaluations': typeof AdminEvaluationsRoute
   '/admin/gallery': typeof AdminGalleryRoute
   '/admin/hackathons': typeof AdminHackathonsRouteWithChildren
+  '/admin/health': typeof AdminHealthRoute
   '/admin/judges': typeof AdminJudgesRoute
   '/admin/leaderboard': typeof AdminLeaderboardRoute
   '/admin/logs': typeof AdminLogsRoute
   '/admin/mentors': typeof AdminMentorsRoute
+  '/admin/operations': typeof AdminOperationsRoute
   '/admin/payments': typeof AdminPaymentsRoute
   '/admin/problems': typeof AdminProblemsRouteWithChildren
   '/admin/recruitment': typeof AdminRecruitmentRoute
@@ -655,10 +673,12 @@ export interface FileRouteTypes {
     | '/admin/evaluations'
     | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/health'
     | '/admin/judges'
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/operations'
     | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
@@ -722,10 +742,12 @@ export interface FileRouteTypes {
     | '/admin/evaluations'
     | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/health'
     | '/admin/judges'
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/operations'
     | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
@@ -790,10 +812,12 @@ export interface FileRouteTypes {
     | '/admin/evaluations'
     | '/admin/gallery'
     | '/admin/hackathons'
+    | '/admin/health'
     | '/admin/judges'
     | '/admin/leaderboard'
     | '/admin/logs'
     | '/admin/mentors'
+    | '/admin/operations'
     | '/admin/payments'
     | '/admin/problems'
     | '/admin/recruitment'
@@ -1157,6 +1181,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminHackathonsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/health': {
+      id: '/admin/health'
+      path: '/health'
+      fullPath: '/admin/health'
+      preLoaderRoute: typeof AdminHealthRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/judges': {
       id: '/admin/judges'
       path: '/judges'
@@ -1183,6 +1214,13 @@ declare module '@tanstack/react-router' {
       path: '/mentors'
       fullPath: '/admin/mentors'
       preLoaderRoute: typeof AdminMentorsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/operations': {
+      id: '/admin/operations'
+      path: '/operations'
+      fullPath: '/admin/operations'
+      preLoaderRoute: typeof AdminOperationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/payments': {
@@ -1363,10 +1401,12 @@ interface AdminRouteChildren {
   AdminEvaluationsRoute: typeof AdminEvaluationsRoute
   AdminGalleryRoute: typeof AdminGalleryRoute
   AdminHackathonsRoute: typeof AdminHackathonsRouteWithChildren
+  AdminHealthRoute: typeof AdminHealthRoute
   AdminJudgesRoute: typeof AdminJudgesRoute
   AdminLeaderboardRoute: typeof AdminLeaderboardRoute
   AdminLogsRoute: typeof AdminLogsRoute
   AdminMentorsRoute: typeof AdminMentorsRoute
+  AdminOperationsRoute: typeof AdminOperationsRoute
   AdminPaymentsRoute: typeof AdminPaymentsRoute
   AdminProblemsRoute: typeof AdminProblemsRouteWithChildren
   AdminRecruitmentRoute: typeof AdminRecruitmentRoute
@@ -1387,10 +1427,12 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminEvaluationsRoute: AdminEvaluationsRoute,
   AdminGalleryRoute: AdminGalleryRoute,
   AdminHackathonsRoute: AdminHackathonsRouteWithChildren,
+  AdminHealthRoute: AdminHealthRoute,
   AdminJudgesRoute: AdminJudgesRoute,
   AdminLeaderboardRoute: AdminLeaderboardRoute,
   AdminLogsRoute: AdminLogsRoute,
   AdminMentorsRoute: AdminMentorsRoute,
+  AdminOperationsRoute: AdminOperationsRoute,
   AdminPaymentsRoute: AdminPaymentsRoute,
   AdminProblemsRoute: AdminProblemsRouteWithChildren,
   AdminRecruitmentRoute: AdminRecruitmentRoute,

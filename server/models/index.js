@@ -370,10 +370,12 @@ const supportTicketSchema = new mongoose.Schema({
     subject: String,
     category: String,
     description: String,
-    priority: { type: String, enum: ['low', 'normal', 'medium', 'high', 'critical'], default: 'normal' },
+    priority: { type: String, enum: ['low', 'normal', 'medium', 'high', 'critical', 'urgent'], default: 'normal' },
     status: { type: String, enum: ['open', 'in_progress', 'waiting', 'resolved', 'closed'], default: 'open' },
     assignedTo: String,
-    conversationId: String
+    conversationId: String,
+    resolvedAt: Date,
+    affectedPage: String
 }, { timestamps: true });
 
 // 16. Notifications Collection

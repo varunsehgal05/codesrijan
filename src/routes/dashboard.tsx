@@ -180,6 +180,123 @@ function DashboardPage() {
                     </div>
                 </section>
 
+                {/* Feature 6: Operative Mission Readiness Checklist */}
+                {currentUser.role === 'student' && (() => {
+                    const userRegistration = (registrations || []).find((r: any) => r.userId === currentUser?.id);
+                    const isProfileComplete = Boolean(currentUser?.bio || currentUser?.phone || (currentUser?.skills && currentUser.skills.length > 0) || currentUser?.github);
+                    const hasSquad = Boolean(userTeam);
+                    const isEnrolled = Boolean(userRegistration);
+                    const isPaymentRequired = Boolean(userRegistration && userRegistration.feeAmount && userRegistration.feeAmount > 0);
+                    const isPaymentVerified = !isPaymentRequired || userRegistration?.paymentStatus === 'verified' || userRegistration?.paymentStatus === 'free';
+                    const hasTrack = Boolean(userTeam?.problemId);
+                    const hasSubmitted = Boolean(userTeam?.isSubmitted);
+
+                    const steps = [
+                        {
+                            id: 'profile',
+                            title: '1. Profile Intelligence',
+                            done: isProfileComplete,
+                            desc: 'Add bio, technical skills, or GitHub portfolio link.',
+                            link: '/profile',
+                            action: 'Edit Profile'
+                        },
+                        {
+                            id: 'squad',
+                            title: '2. Squad Allocation',
+                            done: hasSquad,
+                            desc: hasSquad ? `Connected to squad "${userTeam.name}".` : 'Recruit teammates or join a 1-4 operative squad.',
+                            link: '/recruitment',
+                            action: 'Recruitment'
+                        },
+                        {
+                            id: 'enrollment',
+                            title: '3. Tournament Enrollment',
+                            done: isEnrolled,
+                            desc: isEnrolled ? 'Successfully registered for tournament.' : 'Register your operative identity for active event.',
+                            link: '/hackathons',
+                            action: 'Catalog'
+                        },
+                        ...(isPaymentRequired ? [{
+                            id: 'payment',
+                            title: '4. Payment Verification',
+                            done: isPaymentVerified,
+                            desc: userRegistration?.paymentStatus === 'under_review' ? 'Proof submitted — awaiting admin approval.' : 'Submit transaction reference and payment screenshot.',
+                            link: '/payment',
+                            action: 'Verify Payment'
+                        }] : []),
+                        {
+                            id: 'track',
+                            title: '5. Problem Statement Track',
+                            done: hasTrack,
+                            desc: hasTrack ? `Locked track: ${userTeam.problemId}` : (hasSquad ? 'Lock an active problem statement for your team.' : 'Requires active squad before track selection.'),
+                            link: '/problems',
+                            action: 'View Tracks'
+                        },
+                        {
+                            id: 'submit',
+                            title: '6. Payload Submission',
+                            done: hasSubmitted,
+                            desc: hasSubmitted ? 'Final payload delivered successfully.' : 'Upload repository URL and project demo before deadline.',
+                            link: '/workspace',
+                            action: 'Workspace'
+                        }
+                    ];
+
+                    const completedCount = steps.filter(s => s.done).length;
+                    const allDone = completedCount === steps.length;
+
+                    return (
+                        <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-stark-black pb-4 mb-6">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-headline-md text-xl uppercase tracking-tight text-stark-black">
+                                            OPERATIVE MISSION READINESS
+                                        </h3>
+                                        <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase ${allDone ? 'bg-success text-pure-white' : 'bg-warning text-stark-black'}`}>
+                                            {allDone ? 'FULL CLEARANCE' : `${completedCount} / ${steps.length} COMPLETED`}
+                                        </span>
+                                    </div>
+                                    <p className="font-code-snippet text-xs text-surface-variant mt-1">
+                                        Complete each progression step to ensure tournament eligibility and submission clearance.
+                                    </p>
+                                </div>
+                                <div className="w-full md:w-48 bg-surface-container h-3 brutal-border overflow-hidden">
+                                    <div
+                                        className="bg-electric-blue h-full transition-all duration-500"
+                                        style={{ width: `${Math.round((completedCount / steps.length) * 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {steps.map(step => (
+                                    <div
+                                        key={step.id}
+                                        className={`p-4 brutal-border flex flex-col justify-between ${step.done ? 'bg-surface-bright/50 border-stark-black' : 'bg-surface-container-lowest border-electric-blue'}`}
+                                    >
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="font-label-bold text-xs uppercase text-stark-black">{step.title}</span>
+                                                <span className={`material-symbols-outlined text-sm ${step.done ? 'text-success' : 'text-surface-variant'}`}>
+                                                    {step.done ? 'check_circle' : 'radio_button_unchecked'}
+                                                </span>
+                                            </div>
+                                            <p className="font-code-snippet text-[11px] text-surface-variant mb-3">{step.desc}</p>
+                                        </div>
+                                        <Link
+                                            to={step.link}
+                                            className={`font-label-bold text-[10px] uppercase px-3 py-1.5 brutal-border text-center transition-all ${step.done ? 'bg-stark-black text-pure-white hover:bg-surface-variant' : 'bg-electric-blue text-pure-white hover:-translate-y-0.5 brutal-shadow-hover'}`}
+                                        >
+                                            {step.action} →
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    );
+                })()}
+
                 {/* Dynamic HUD Grid */}
                 <section className="grid grid-cols-1 md:grid-cols-12 gap-8">
 

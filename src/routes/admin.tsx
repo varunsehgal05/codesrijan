@@ -7,6 +7,8 @@ export const Route = createFileRoute("/admin")({
 
 const ADMIN_LINKS = [
     { label: "Dashboard", path: "/admin", icon: "dashboard" },
+    { label: "Platform Health", path: "/admin/health", icon: "health_and_safety" },
+    { label: "Operations Hub", path: "/admin/operations", icon: "tune" },
     { label: "Payment Review", path: "/admin/payments", icon: "receipt_long" },
     { label: "Hackathons", path: "/admin/hackathons", icon: "event" },
     { label: "Participants", path: "/admin/users", icon: "person" },

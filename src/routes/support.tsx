@@ -14,6 +14,7 @@ function SupportPage() {
   const [subject, setSubject] = useState("");
   const [category, setCategory] = useState("general");
   const [description, setDescription] = useState("");
+  const [affectedPage, setAffectedPage] = useState("");
   const [priority, setPriority] = useState("normal");
   const [loading, setLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -51,7 +52,7 @@ function SupportPage() {
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       await axios.post(`${BASE}/support`, {
-        subject, category, description, priority
+        subject, category, description, priority, affectedPage
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -59,8 +60,10 @@ function SupportPage() {
       setIsFormOpen(false);
       setSubject("");
       setDescription("");
-    } catch (e) {
-      toast.error("Failed to submit ticket.");
+      setAffectedPage("");
+      toast.success("Support transmission initialized successfully.");
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to submit ticket.");
     } finally {
       setLoading(false);
     }
@@ -85,10 +88,10 @@ function SupportPage() {
       <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center flex-wrap gap-4">
         <div>
           <h2 className="font-display-lg text-headline-xl uppercase text-pure-white bg-error px-2 py-1 inline-block transform -skew-x-6">
-            SUPPORT HQ
+            SUPPORT &amp; FEEDBACK HQ
           </h2>
           <p className="font-code-snippet text-xs mt-2 uppercase tracking-widest text-on-surface-variant">
-            {currentUser.role === 'admin' ? 'Global Admin Issue Monitor & Real-Time Transmissions' : 'Direct Line to Administration'}
+            {currentUser.role === 'admin' ? 'Global Admin Issue Monitor & Real-Time Transmissions' : 'Direct Line to Administration, Bug Reports & Feedback'}
           </p>
         </div>
         
@@ -113,7 +116,17 @@ function SupportPage() {
 
       {isFormOpen && currentUser.role !== 'admin' && (
         <div className="bg-surface-container p-8 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <h3 className="font-headline-md uppercase mb-6 text-stark-black border-b-4 border-stark-black pb-2 inline-block">Initialize Ticket</h3>
+          <div className="flex items-center justify-between border-b-4 border-stark-black pb-2 mb-6">
+            <h3 className="font-headline-md uppercase text-stark-black">Initialize Transmission / Feedback</h3>
+            <span className="font-code-snippet text-[10px] text-surface-variant uppercase">Structured Intake</span>
+          </div>
+
+          {/* Security Warning Notice */}
+          <div className="bg-[#ffeb3b]/30 border-2 border-stark-black p-3 mb-6 font-code-snippet text-xs text-stark-black flex items-center gap-2">
+            <span className="material-symbols-outlined text-base text-error">security</span>
+            <span><strong>SECURITY NOTICE:</strong> Never include passwords, session tokens, OTPs, or private payment details in your ticket.</span>
+          </div>
+
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
@@ -135,27 +148,40 @@ function SupportPage() {
                   className="bg-pure-white border-2 border-stark-black p-3 font-code-snippet text-sm uppercase focus:outline-none"
                 >
                   <option value="general">General Inquiry</option>
-                  <option value="technical">Technical Glitch</option>
-                  <option value="billing">Account / Billing</option>
-                  <option value="report">Report Operative</option>
+                  <option value="bug_report">Bug Report (Platform Defect)</option>
+                  <option value="feedback">Product Feedback &amp; Suggestions</option>
+                  <option value="feature_request">Feature Request</option>
+                  <option value="payment">Payment &amp; Proof Verification</option>
+                  <option value="squad">Squad &amp; Team Management</option>
+                  <option value="system">System / Access Glitch</option>
                 </select>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                    <label className="font-label-bold uppercase text-xs tracking-widest">Priority</label>
-                    <select 
-                    value={priority}
-                    onChange={e => setPriority(e.target.value)}
-                    className="bg-pure-white border-2 border-stark-black p-3 font-code-snippet text-sm uppercase focus:outline-none"
-                    >
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical (Blocker)</option>
-                    </select>
-                </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-bold uppercase text-xs tracking-widest">Priority</label>
+                <select 
+                  value={priority}
+                  onChange={e => setPriority(e.target.value)}
+                  className="bg-pure-white border-2 border-stark-black p-3 font-code-snippet text-sm uppercase focus:outline-none"
+                >
+                  <option value="low">Low (Non-urgent query)</option>
+                  <option value="normal">Normal (Routine support)</option>
+                  <option value="high">High (Hindering progress)</option>
+                  <option value="critical">Critical (Hard blocker)</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="font-label-bold uppercase text-xs tracking-widest">Affected Page / Route (Optional)</label>
+                <input 
+                  type="text" 
+                  value={affectedPage}
+                  onChange={e => setAffectedPage(e.target.value)}
+                  className="bg-pure-white border-2 border-stark-black p-3 font-code-snippet text-sm focus:outline-none focus:border-electric-blue"
+                  placeholder="e.g. /workspace, /payment, /recruitment"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -165,7 +191,7 @@ function SupportPage() {
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 className="bg-pure-white border-2 border-stark-black p-3 font-code-snippet text-sm min-h-[120px] focus:outline-none"
-                placeholder="Describe your issue in detail..."
+                placeholder="Describe your issue or feedback in detail..."
               ></textarea>
             </div>
             <button 
@@ -222,6 +248,16 @@ function SupportPage() {
                       {currentUser.role === 'admin' && t.userId && (
                         <span className="text-[11px] font-mono text-on-surface-variant bg-surface-container-high px-2 py-0.5 border border-stark-black/20">
                           USER: {t.userId.substring(0, 12)}
+                        </span>
+                      )}
+                      {t.category && (
+                        <span className="bg-surface-container-highest text-on-surface text-[10px] font-label-bold uppercase px-2 py-0.5 border border-stark-black/30">
+                          {t.category.replace('_', ' ')}
+                        </span>
+                      )}
+                      {t.affectedPage && (
+                        <span className="bg-electric-blue/10 text-electric-blue text-[10px] font-code-snippet font-bold px-2 py-0.5 border border-electric-blue/30">
+                          PAGE: {t.affectedPage}
                         </span>
                       )}
                     </div>
