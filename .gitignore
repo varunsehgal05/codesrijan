@@ -55,6 +55,7 @@ server/*.tmp
 !server/test_focused_regression.mjs
 !server/test_admin_health_and_ops.mjs
 !server/test_countdown_and_deadline.mjs
+!server/test_srijanbot_qa.mjs
 *.png
 platform-screenshots/
 test-results/

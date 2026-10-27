@@ -46,8 +46,11 @@ export function ChatBotWidget() {
             // Smart local fallback response engine if API endpoint is unreachable
             let responseText = "";
             try {
-                const url = apiBaseUrl.endsWith('/api') ? apiBaseUrl.replace('/api', '/api/ai/chat') : `${apiBaseUrl}/api/ai/chat`;
-                const res = await axios.post(url, payload);
+                const token = typeof window !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const cleanBase = apiBaseUrl.replace(/\/api\/?$/, '');
+                const url = `${cleanBase}/api/ai/chat`;
+                const res = await axios.post(url, payload, { headers });
                 if (res.data?.reply) responseText = res.data.reply;
             } catch (e) {
                 console.warn("Backend AI endpoint fallback triggered.");
@@ -58,7 +61,7 @@ export function ChatBotWidget() {
                 if (q.includes("submit") || q.includes("workspace") || q.includes("project")) {
                     responseText = "To submit your project, navigate to your Workspace sector, attach your GitHub repository link, and click [Deliver Payload -> /workspace].";
                 } else if (q.includes("deadline") || q.includes("schedule") || q.includes("time") || q.includes("when")) {
-                    responseText = "The submission deadline and live milestones are displayed on the [Hackathons Hub -> /timeline]. All submissions close at 23:59 IST.";
+                    responseText = "Live submission deadlines and event milestones are displayed on the [Hackathons Hub -> /timeline].";
                 } else if (q.includes("team") || q.includes("squad") || q.includes("find") || q.includes("join")) {
                     responseText = "You can recruit squad members or search for open teams in the [Recruitment Sector -> /recruitment].";
                 } else if (q.includes("support") || q.includes("help") || q.includes("ticket") || q.includes("contact")) {

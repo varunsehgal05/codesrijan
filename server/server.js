@@ -154,6 +154,7 @@ import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from '.
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
 import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
+import { handleAIChat, handleAIFallback } from './services/srijanbot.js';
 
 const MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
@@ -3186,116 +3187,8 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
     }
 });
 
-// SRIJANBOT AI CHAT ENGINE (Groq LLM Integration)
-app.post('/api/ai/chat', async (req, res) => {
-    try {
-        const { message, context } = req.body;
-        const groqApiKey = process.env.GROQ_API_KEY;
-
-        if (!groqApiKey) {
-            return handleAIFallback(req, res);
-        }
-
-        const systemPrompt = `You are SrijanBot, the official AI guide and navigator for the CodeSrijan hackathon platform.
-CodeSrijan Site Map:
-🏠 Home (/dashboard): View the current hackathon, deadlines and announcements.
-🧩 Problems (/problems): Browse and select hackathon challenges.
-👥 Team (/recruitment): Create a team, select a problem, and manage members.
-💻 Workspace (/workspace): Build your project, manage tasks and prepare your submission.
-💬 Comms (/chat): Chat with teammates, mentors and support.
-📤 Submission (/workspace): Submit your final project (it is located inside the Kanban Workspace).
-🏆 Leaderboard (/leaderboard): View published results.
-🎓 Certificates (/certificates): View and download your certificates.
-🤝 Recruitment (/recruitment): Find teammates, join squads, and network.
-❓ Help & Support (/support): Get FAQs, SrijanBot help or contact admins.
-
-Current User Context:
-Role: ${context?.role || 'Guest'}
-Name: ${context?.name || 'Operative'}
-Email: ${context?.email || 'N/A'}
-Current Page: ${context?.path || '/'}
-Team ID: ${context?.teamId || 'None'}
-
-Your behavior rules:
-1. EXPLAIN & GUIDE: Act as an interactive guide. Give complete step-by-step instructions.
-2. NAVIGATE: At the VERY END of your response, provide exactly ONE navigation button if applicable, formatted EXACTLY as [Button Text -> /path] (e.g. [Open Workspace -> /workspace], [Create Team -> /recruitment], [Go to Dashboard -> /admin]).
-3. NEVER invent a page, button, or action that doesn't exist on CodeSrijan.
-4. Keep responses concise, structured, and in the "Neo-Brutalist" CodeSrijan tone (professional, direct, slight hacker aesthetic).
-5. If asked to do something you cannot do (like directly creating a team in DB), explain how the user can do it themselves using the UI.
-6. For submission, explicitly tell them to go to the Workspace and fill in the GitHub/Demo links payload.`;
-
-        const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${groqApiKey}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "llama3-8b-8192", 
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: message }
-                ],
-                temperature: 0.2,
-                max_tokens: 500
-            })
-        });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error("Groq API error:", response.status, errText);
-            throw new Error(`Groq API ${response.status}: ${errText}`);
-        }
-
-        const data = await response.json();
-        let reply = data.choices[0]?.message?.content || "I couldn't process that command.";
-
-        res.json({ reply });
-    } catch (e) {
-        console.error("AI Error:", e.message);
-        return handleAIFallback(req, res);
-    }
-});
-
-async function handleAIFallback(req, res) {
-    try {
-        const { message, context } = req.body;
-        const lowerMsg = (message || "").toLowerCase();
-        let reply = "I couldn't process that command completely. [Create Support Ticket -> /support]";
-        
-        if (lowerMsg.includes("submission") || lowerMsg.includes("deadline") || lowerMsg.includes("submit")) {
-            const activeHackathon = await Hackathon.findOne({ status: 'active' });
-            if (activeHackathon && activeHackathon.submissionDeadline) {
-                const date = new Date(activeHackathon.submissionDeadline).toLocaleDateString();
-                const time = new Date(activeHackathon.submissionDeadline).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                reply = `According to the current hackathon configuration, submission closes on ${date} at ${time}. [Open Submission -> /workspace]`;
-            } else {
-                reply = "According to the current hackathon configuration, submission closes on 20 October at 11:59 PM. [Open Submission -> /workspace]";
-            }
-        } else if (lowerMsg.includes("team") || lowerMsg.includes("squad") || lowerMsg.includes("teammate")) {
-            if (context?.teamId) {
-                reply = "You are already assigned to a squad. [View My Team -> /workspace]";
-            } else {
-                reply = "You can recruit operatives or join an open squad in the Recruitment Marketplace. [Find a Squad -> /recruitment]";
-            }
-        } else if (lowerMsg.includes("stats") || lowerMsg.includes("admin")) {
-            if (context?.role === 'admin') {
-                reply = "You can view real-time platform telemetry in the Admin Dashboard. [Open Dashboard -> /admin]";
-            } else {
-                reply = "ACCESS DENIED. You do not have admin privileges. If you need assistance, please open a support ticket. [Open Support -> /support]";
-            }
-        } else if (lowerMsg.includes("judge") || lowerMsg.includes("evaluate")) {
-            if (context?.role === 'admin' || context?.role === 'judge') {
-                reply = "Judges can access the evaluation matrices in the Judge Portal. [Open Evaluations -> /evaluations]";
-            } else {
-                reply = "Only authorized judges can evaluate submissions. If you are a participant, please await your results. [View Leaderboard -> /leaderboard]";
-            }
-        }
-        res.json({ reply });
-    } catch (e) {
-        res.status(500).json({ reply: "SYSTEM FAULT. Neural link severed." });
-    }
-}
+// SRIJANBOT CONTEXT-AWARE AI CHAT ENGINE
+app.post('/api/ai/chat', handleAIChat);
 
 // --- EPIC 4: SQUAD WORKSPACE KANBAN ---
 app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {
