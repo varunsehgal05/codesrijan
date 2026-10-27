@@ -22,9 +22,6 @@ export function Navbar() {
         if (currentUser) {
             return (
                 <>
-                    <Link to="/workspace" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
-                        <span className="material-symbols-outlined text-sm">terminal</span> Workspace
-                    </Link>
                     <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                         <span className="material-symbols-outlined text-sm">trophy</span> Hackathons
                     </Link>
@@ -86,10 +83,12 @@ export function Navbar() {
                                 </Link>
                             )}
                             <NotificationBell />
-                            <Link to="/workspace" className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-3 py-2 lg:px-4 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Operative Workspace">
-                                <span className="material-symbols-outlined text-[18px]">terminal</span>
-                                Workspace
-                            </Link>
+                            {currentUser.role !== 'admin' && (
+                                <Link to="/workspace" className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-3 py-2 lg:px-4 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Operative Workspace">
+                                    <span className="material-symbols-outlined text-[18px]">terminal</span>
+                                    Workspace
+                                </Link>
+                            )}
                             <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
                                 Go to Dashboard
                             </Link>
@@ -127,10 +126,12 @@ export function Navbar() {
                                         Admin Panel
                                     </Link>
                                 )}
-                                <Link to="/workspace" onClick={toggleMobileMenu} className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center flex justify-center items-center gap-2">
-                                    <span className="material-symbols-outlined text-[18px]">terminal</span>
-                                    Workspace HUD
-                                </Link>
+                                {currentUser.role !== 'admin' && (
+                                    <Link to="/workspace" onClick={toggleMobileMenu} className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center flex justify-center items-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">terminal</span>
+                                        Workspace HUD
+                                    </Link>
+                                )}
                                 <Link to="/dashboard" onClick={toggleMobileMenu} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center">
                                     Go to Dashboard
                                 </Link>

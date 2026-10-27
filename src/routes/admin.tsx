@@ -50,9 +50,9 @@ function AdminLayout() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-on-background flex flex-col md:flex-row font-body-md overflow-hidden">
+        <div className="min-h-[calc(100vh-65px)] bg-background text-on-background flex flex-col md:flex-row font-body-md overflow-x-hidden">
             {/* Sidebar Navigation */}
-            <aside className="w-full md:w-64 bg-stark-black text-pure-white border-r-4 border-electric-blue flex flex-col h-screen sticky top-0">
+            <aside className="w-full md:w-64 bg-stark-black text-pure-white border-r-4 border-electric-blue flex flex-col md:h-[calc(100vh-65px)] md:sticky md:top-[65px] shrink-0">
                 <div className="p-6 border-b-2 border-electric-blue shrink-0 flex items-center justify-between">
                     <h1 className="font-headline-md text-headline-md italic tracking-tighter">
                         <span className="text-electric-blue">ADMIN</span> COMMAND
@@ -83,7 +83,7 @@ function AdminLayout() {
             </aside>
 
             {/* Main Content Area */}
-            <main className="flex-grow flex-1 bg-surface-container-lowest overflow-y-auto bg-pattern relative z-0 h-screen">
+            <main className="flex-grow flex-1 bg-surface-container-lowest bg-pattern relative z-0 min-w-0 overflow-x-hidden">
                 <Outlet key={activeRoute} />
             </main>
         </div>

@@ -36,14 +36,15 @@ function AdminHackathons() {
         setLoadingId("saving");
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
+            const payload = { ...editingHackathon };
+            delete payload._id;
             if (editingHackathon.id === "new") {
-                const payload = { ...editingHackathon };
                 delete payload.id;
                 await axios.post(`${API_BASE}/hackathons`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } else {
-                await axios.put(`${API_BASE}/hackathons/${editingHackathon.id}`, editingHackathon, {
+                await axios.put(`${API_BASE}/hackathons/${editingHackathon.id}`, payload, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             }
@@ -213,11 +214,28 @@ function AdminHackathons() {
                                             REVEAL PS
                                         </button>
                                     )}
-                                    {h.status === 'draft' && <button onClick={() => changeState(h.id, 'publish')} className="bg-electric-blue text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">PUBLISH</button>}
-                                    {h.status === 'registration_open' && <button onClick={() => changeState(h.id, 'close-registration')} className="bg-[#FFA500] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">CLOSE REG</button>}
-                                    {h.status === 'registration_closed' && <button onClick={() => changeState(h.id, 'open-submissions')} className="bg-success text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">START HACK</button>}
-                                    {h.status === 'submission_open' && <button onClick={() => changeState(h.id, 'close-submissions')} className="bg-[#FFD700] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all">EVAL PHASE</button>}
-                                    <button onClick={() => handleDelete(h.id)} className="bg-error text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:bg-stark-black transition-all">DEL</button>
+                                    {(h.status === 'draft' || h.status === 'Upcoming' || h.status === 'upcoming') && (
+                                        <button onClick={() => changeState(h.id, 'publish')} className="bg-electric-blue text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">PUBLISH</button>
+                                    )}
+                                    {h.status === 'registration_open' && (
+                                        <button onClick={() => changeState(h.id, 'close-registration')} className="bg-[#FFA500] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">CLOSE REG</button>
+                                    )}
+                                    {h.status === 'registration_closed' && (
+                                        <>
+                                            <button onClick={() => changeState(h.id, 'open-registration')} className="bg-[#FFA500] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">OPEN REG</button>
+                                            <button onClick={() => changeState(h.id, 'open-submissions')} className="bg-success text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">START HACK</button>
+                                        </>
+                                    )}
+                                    {(h.status === 'submission_open' || h.status === 'active' || h.status === 'Active') && (
+                                        <button onClick={() => changeState(h.id, 'close-submissions')} className="bg-[#FFD700] text-stark-black px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">EVAL PHASE</button>
+                                    )}
+                                    {h.status === 'evaluation' && (
+                                        <button onClick={() => changeState(h.id, 'complete')} className="bg-success text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">CONCLUDE</button>
+                                    )}
+                                    {(h.status === 'completed' || h.status === 'Completed') && (
+                                        <button onClick={() => changeState(h.id, 'open-registration')} className="bg-electric-blue text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:-translate-y-1 transition-all font-bold">REOPEN</button>
+                                    )}
+                                    <button onClick={() => handleDelete(h.id)} className="bg-error text-pure-white px-2 py-1 font-label-caps text-xs brutal-border hover:bg-stark-black transition-all font-bold">DEL</button>
                                 </td>
                             </tr>
                         ))}
@@ -246,6 +264,22 @@ function AdminHackathons() {
                             <div className="flex flex-col gap-2">
                                 <label className="font-label-bold uppercase text-xs">Hackathon Designation</label>
                                 <input required type="text" value={editingHackathon.name || ''} onChange={(e) => setEditingHackathon({...editingHackathon, name: e.target.value})} className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none focus:border-electric-blue" placeholder="e.g. CodeSrijan 2026"/>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <label className="font-label-bold uppercase text-xs">Event Lifecycle Status</label>
+                                <select
+                                    value={editingHackathon.status || 'draft'}
+                                    onChange={(e) => setEditingHackathon({...editingHackathon, status: e.target.value})}
+                                    className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none"
+                                >
+                                    <option value="draft">Draft</option>
+                                    <option value="registration_open">Registration Open</option>
+                                    <option value="registration_closed">Registration Closed</option>
+                                    <option value="submission_open">Submissions Open (Hacking)</option>
+                                    <option value="evaluation">Evaluation Phase</option>
+                                    <option value="completed">Completed / Concluded</option>
+                                </select>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

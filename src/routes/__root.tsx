@@ -130,14 +130,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const routerState = useRouterState();
 
+  const isAdminRoute = routerState.location.pathname.startsWith('/admin');
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppStoreProvider>
         <MaintenanceGuard>
-          <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative">
+          <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative overflow-x-hidden">
             <Navbar />
             <Outlet key={routerState.location.pathname} />
-            <Footer />
+            {!isAdminRoute && <Footer />}
           </div>
           <ChatBotWidget />
           <Toaster position="bottom-right" toastOptions={{

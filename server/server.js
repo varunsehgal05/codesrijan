@@ -743,13 +743,9 @@ app.get('/api/hackathons', async (req, res) => {
         // by supplying query parameters such as ?includeArchived=true.
         // The public catalog restriction is ALWAYS enforced unless the caller is an authenticated administrator.
         if (!isAdmin) {
-            filter.status = { $nin: ['archived', 'draft', 'completed', 'Completed'] };
+            filter.status = { $nin: ['archived', 'draft'] };
             filter.isArchived = { $ne: true };
-            if (process.env.NODE_ENV === 'test') {
-                filter.id = { $not: /^(qa[-_]|hack-demo)/i };
-            } else {
-                filter.id = { $in: ['hack-free-1792862581267', 'hack-paid-1792862582632'] };
-            }
+            filter.id = { $not: /^qa[-_]/i };
         }
 
         const hackathons = await Hackathon.find(filter).sort({ createdAt: -1 });
@@ -867,51 +863,62 @@ app.get('/api/hackathons/:id', async (req, res) => {
 });
 
 app.put('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
-    // Admin cannot arbitrarily set status via PUT
-    const dataToUpdate = { ...req.body };
-    delete dataToUpdate.status;
-    const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, dataToUpdate, { new: true });
-    res.json(hackathon);
+    try {
+        const dataToUpdate = { ...req.body };
+        delete dataToUpdate._id;
+        delete dataToUpdate.id;
+        const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, dataToUpdate, { new: true });
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+        res.json(hackathon);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update hackathon: " + e.message });
+    }
 });
 
 app.delete('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, res) => {
-    await Hackathon.findOneAndDelete({ id: req.params.id });
-    res.json({ message: "Hackathon archived successfully." });
+    try {
+        await Hackathon.findOneAndDelete({ id: req.params.id });
+        res.json({ message: "Hackathon deleted successfully." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete: " + e.message });
+    }
 });
 
 // State Machine Handlers
 const changeHackathonState = async (id, userId, newState, validPreviousStates, res) => {
-    const hackathon = await Hackathon.findOne({ id });
-    if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+    try {
+        const hackathon = await Hackathon.findOne({ id });
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
 
-    if (validPreviousStates && !validPreviousStates.includes(hackathon.status)) {
-        return res.status(400).json({ message: `Invalid state transition. Cannot move from ${hackathon.status} to ${newState}.` });
+        hackathon.status = newState;
+        await hackathon.save();
+
+        res.json(hackathon);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to change state: " + e.message });
     }
-
-    hackathon.status = newState;
-    await hackathon.save();
-
-    // We would insert ActivityLog here if ActivityLog model was scaffolded already.
-    res.json(hackathon);
 };
 
 app.post('/api/hackathons/:id/publish', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['draft', 'cancelled', 'upcoming'], res)
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', null, res)
 );
 app.post('/api/hackathons/:id/unpublish', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'draft', ['registration_open', 'registration_closed'], res)
+    changeHackathonState(req.params.id, req.user.id, 'draft', null, res)
 );
 app.post('/api/hackathons/:id/open-registration', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'registration_open', ['registration_closed', 'draft', 'upcoming'], res)
+    changeHackathonState(req.params.id, req.user.id, 'registration_open', null, res)
 );
 app.post('/api/hackathons/:id/close-registration', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'registration_closed', ['registration_open'], res)
+    changeHackathonState(req.params.id, req.user.id, 'registration_closed', null, res)
 );
 app.post('/api/hackathons/:id/open-submissions', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'submission_open', ['active', 'registration_closed'], res)
+    changeHackathonState(req.params.id, req.user.id, 'submission_open', null, res)
 );
 app.post('/api/hackathons/:id/close-submissions', requireAuth, requireRole(['admin']), (req, res) =>
-    changeHackathonState(req.params.id, req.user.id, 'evaluation', ['submission_open'], res)
+    changeHackathonState(req.params.id, req.user.id, 'evaluation', null, res)
+);
+app.post('/api/hackathons/:id/complete', requireAuth, requireRole(['admin']), (req, res) =>
+    changeHackathonState(req.params.id, req.user.id, 'completed', null, res)
 );
 
 // --- PROBLEM STATEMENT REVEAL DIRECTIVES (ADMIN CONTROLS) ---
@@ -3865,6 +3872,20 @@ app.post('/api/support', requireAuth, async (req, res) => {
         conv.lastMessageId = newMsg.id;
         await conv.save();
 
+        // Notify admins about new support ticket
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            await Notification.create({
+                id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+                userId: admin.id,
+                title: `🎫 New Support Ticket: ${subject}`,
+                message: `${req.user.name || 'User'} created ticket [${ticketId}]: ${description}`,
+                type: 'support',
+                relatedId: ticketId,
+                isRead: false
+            }).catch(() => {});
+        }
+
         res.status(201).json(ticket);
     } catch (e) {
         res.status(500).json({ message: "Failed to create support ticket: " + e.message });
@@ -4188,22 +4209,54 @@ app.post('/api/mentor/requests', requireAuth, async (req, res) => {
         });
         await mentorReq.save();
 
-        // Broadcast a notification to all mentors (mocking it by just keeping it pending)
-        // Note: Realistically, you'd create a Notification doc for all users where role='mentor'
-        const mentors = await User.find({ role: 'mentor' });
-        for (const mentor of mentors) {
+        const team = await Team.findOne({ id: req.user.teamId });
+        const squadName = team ? team.name : req.user.teamId;
+
+        // Create high-priority SupportTicket so it appears on /admin/support
+        const ticketId = 'tkt-sos-' + Date.now().toString();
+        const convId = 'conv-sup-' + ticketId;
+
+        await SupportTicket.create({
+            id: ticketId,
+            userId: req.user.id,
+            subject: `🚨 [SOS MENTOR DISPATCH] ${topic}`,
+            category: 'mentor_sos',
+            priority: 'urgent',
+            description: `[SQUAD: ${squadName}] ${description}`,
+            affectedPage: '/workspace',
+            status: 'open',
+            conversationId: convId
+        }).catch(() => {});
+
+        await Conversation.create({
+            id: convId,
+            type: 'support',
+            participantIds: [req.user.id]
+        }).catch(() => {});
+
+        await Message.create({
+            id: 'msg-' + Date.now().toString(),
+            conversationId: convId,
+            senderId: req.user.id,
+            message: `[SOS Broadcast] Squad "${squadName}" requested urgent mentor dispatch for topic: ${topic}.\nDetails: ${description}`
+        }).catch(() => {});
+
+        // Broadcast a notification to all mentors AND admins
+        const staffUsers = await User.find({ role: { $in: ['mentor', 'admin'] } });
+        for (const staff of staffUsers) {
             await Notification.create({
-                id: 'notif-' + Date.now() + Math.random(),
-                userId: mentor.id,
-                title: 'New Mentor Request',
-                message: `Team ${req.user.teamId} requested help regarding: ${topic}`,
-                type: 'mentor',
-                relatedId: mentorReq.id
-            });
+                id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
+                userId: staff.id,
+                title: '🚨 SQUAD SOS: MENTOR DISPATCH',
+                message: `Squad "${squadName}" sent an SOS distress signal: ${topic}`,
+                type: 'support',
+                relatedId: mentorReq.id,
+                isRead: false
+            }).catch(() => {});
         }
 
         res.json(mentorReq);
-    } catch (e) { res.status(500).json({ message: "Failed to request mentor." }); }
+    } catch (e) { res.status(500).json({ message: "Failed to request mentor: " + e.message }); }
 });
 
 app.get('/api/mentor/requests/all', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {

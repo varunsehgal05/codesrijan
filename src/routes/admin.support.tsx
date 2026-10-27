@@ -18,6 +18,8 @@ function AdminSupport() {
 
   useEffect(() => {
     loadTickets();
+    const interval = setInterval(loadTickets, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadTickets = async () => {
@@ -135,7 +137,16 @@ function AdminSupport() {
                       </span>
                     </td>
                     <td className="p-4 border-r-2 border-ink-black font-label-bold text-stark-black">{ticket.subject}</td>
-                    <td className="p-4 border-r-2 border-ink-black uppercase text-xs font-mono font-bold">{ticket.category}</td>
+                    <td className="p-4 border-r-2 border-ink-black uppercase text-xs font-mono font-bold">
+                      {ticket.category === 'mentor_sos' ? (
+                        <span className="bg-error text-white px-2 py-0.5 font-bold border border-stark-black flex items-center gap-1 w-fit animate-pulse">
+                          <span className="material-symbols-outlined text-[13px]">sos</span>
+                          SOS SQUAD
+                        </span>
+                      ) : (
+                        ticket.category
+                      )}
+                    </td>
                     <td className="p-4 border-r-2 border-ink-black">
                       <span className={`px-2 py-1 text-xs font-bold uppercase border border-stark-black ${ticket.priority === 'urgent' ? 'bg-error text-pure-white' : 'bg-surface-container-high text-stark-black'}`}>
                         {ticket.priority}
