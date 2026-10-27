@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
+import { SubmissionCountdown } from "../components/SubmissionCountdown";
 
 export const Route = createFileRoute("/dashboard")({
     component: DashboardPage,
@@ -11,38 +12,24 @@ export const Route = createFileRoute("/dashboard")({
 function DashboardPage() {
     const navigate = useNavigate();
     const { currentUser, teams, hackathons, users, registrations, isLoaded, logout } = useAppStore();
-    const activeEvent = hackathons[0];
 
     const handleLogout = () => {
         logout();
         navigate({ to: '/login' });
     };
 
-    const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0, active: false });
-
-    useEffect(() => {
-        if (!activeEvent?.submissionDeadline) return;
-
-        const computeDifference = () => {
-            const target = new Date(activeEvent.submissionDeadline).getTime();
-            const now = new Date().getTime();
-            const diff = target - now;
-
-            if (diff <= 0) return { h: 0, m: 0, s: 0, active: false };
-            return {
-                h: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
-                m: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
-                s: Math.floor((diff % (1000 * 60)) / 1000),
-                active: true
-            };
-        };
-
-        setTimeLeft(computeDifference());
-        const timer = setInterval(() => setTimeLeft(computeDifference()), 1000);
-        return () => clearInterval(timer);
-    }, [activeEvent]);
-
     const userTeam = teams.find(t => t.id === currentUser?.teamId);
+
+    // Resolve targeted hackathon: Prioritize user's enrolled tournament, then active event
+    const activeEvent = useMemo(() => {
+        const userRegistration = (registrations || []).find((r: any) => r.userId === currentUser?.id);
+        const enrolledHackId = userTeam?.hackathonId || userRegistration?.hackathonId;
+        if (enrolledHackId) {
+            const enrolled = (hackathons || []).find(h => h.id === enrolledHackId);
+            if (enrolled) return enrolled;
+        }
+        return (hackathons || []).find(h => h.status === 'active' || h.status === 'registration_open') || hackathons[0] || null;
+    }, [hackathons, userTeam, registrations, currentUser]);
 
     const [teamRequests, setTeamRequests] = useState<any[]>([]);
 
@@ -166,25 +153,7 @@ function DashboardPage() {
                         </div>
                     </div>
 
-                    <div className="bg-ink-black text-on-primary p-6 brutal-border brutal-shadow flex flex-col items-center">
-                        <p className="font-label-caps text-electric-blue border-b-2 border-surface-variant pb-2 mb-4 w-full text-center">SYSTEM LOCKDOWN IN</p>
-                        <div className="flex gap-4 font-display-lg text-4xl">
-                            <div className="text-center">
-                                <span className="text-surface-bright">{timeLeft.h.toString().padStart(2, '0')}</span>
-                                <span className="block font-label-sm text-surface-variant mt-1">HRS</span>
-                            </div>
-                            <span className="text-surface-variant">:</span>
-                            <div className="text-center">
-                                <span className="text-surface-bright">{timeLeft.m.toString().padStart(2, '0')}</span>
-                                <span className="block font-label-sm text-surface-variant mt-1">MIN</span>
-                            </div>
-                            <span className="text-surface-variant animate-pulse">:</span>
-                            <div className="text-center">
-                                <span className="text-error">{timeLeft.s.toString().padStart(2, '0')}</span>
-                                <span className="block font-label-sm text-surface-variant mt-1 animate-pulse text-error">SEC</span>
-                            </div>
-                        </div>
-                    </div>
+                    <SubmissionCountdown targetEvent={activeEvent} />
                 </section>
 
                 {/* Feature 6: Operative Mission Readiness Checklist */}
@@ -268,11 +237,17 @@ function DashboardPage() {
                                         Complete each progression step to ensure tournament eligibility and submission clearance.
                                     </p>
                                 </div>
-                                <div className="w-full md:w-48 bg-surface-container h-3 brutal-border overflow-hidden">
-                                    <div
-                                        className="bg-electric-blue h-full transition-all duration-500"
-                                        style={{ width: `${Math.round((completedCount / steps.length) * 100)}%` }}
-                                    />
+                                <div className="flex flex-col items-end gap-1 w-full md:w-56">
+                                    <div className="flex justify-between w-full text-[10px] font-mono text-zinc-500 uppercase">
+                                        <span>Checklist Progress</span>
+                                        <span className="font-bold text-ink-black">{Math.round((completedCount / steps.length) * 100)}%</span>
+                                    </div>
+                                    <div className="w-full bg-surface-container h-3 brutal-border overflow-hidden">
+                                        <div
+                                            className="bg-electric-blue h-full transition-all duration-500"
+                                            style={{ width: `${Math.round((completedCount / steps.length) * 100)}%` }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

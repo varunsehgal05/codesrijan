@@ -54,6 +54,7 @@ server/*.tmp
 !server/test_gridfs_lease_lifecycle.mjs
 !server/test_focused_regression.mjs
 !server/test_admin_health_and_ops.mjs
+!server/test_countdown_and_deadline.mjs
 *.png
 platform-screenshots/
 test-results/
