@@ -61,11 +61,12 @@ function HackathonRegistrationPage() {
 
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
+            const hasSquad = !!(currentUser as any)?.teamId;
             const res = await axios.post(`${API_URL}/hackathons/${id}/register`, {
                 college,
                 branch,
                 year,
-                type,
+                type: hasSquad ? 'team' : 'solo',
                 teamId: (currentUser as any)?.teamId
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -88,26 +89,76 @@ function HackathonRegistrationPage() {
 
     if (!currentUser) return <div className="min-h-screen bg-background" />;
 
-    return (
-        <div className="min-h-screen bg-black text-white flex items-center justify-center p-4 font-mono">
-            <div className="w-full max-w-md bg-zinc-950 p-8 border-4 border-electric-blue brute-shadow-blue relative">
-                <div className="mb-6"><Link to="/" className="flex items-center gap-2 font-bold text-zinc-400 hover:text-white transition-colors w-fit"><span className="material-symbols-outlined text-sm">arrow_back</span>ABORT ENROLLMENT</Link></div>
+    const hasSquad = !!(currentUser as any)?.teamId;
 
-                <h1 className="text-3xl font-black uppercase mb-2">Hackathon Enrollment</h1>
-                <p className="text-electric-blue mb-4 font-mono text-sm uppercase tracking-widest border-b-2 border-zinc-800 pb-4">
-                    TARGET TOURNAMENT: {hackathon?.name || id}
+    return (
+        <div className="min-h-screen bg-[#070b14] text-white flex items-center justify-center p-4 sm:p-6 font-mono relative overflow-hidden">
+            {/* Dynamic Cyber Grid & Radial Dots */}
+            <div className="absolute inset-0 bg-[radial-gradient(#38bdf822_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-80" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b12_1px,transparent_1px),linear-gradient(to_bottom,#1e293b12_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
+
+            {/* Atmospheric Glowing Orbs */}
+            <div className="absolute -top-32 -left-32 w-96 h-96 bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-electric-blue/5 rounded-full blur-[150px] pointer-events-none" />
+
+            {/* Main Cyber Neo-Brutalist Card */}
+            <div className="w-full max-w-lg bg-[#0c1220]/95 backdrop-blur-md p-6 sm:p-8 border-4 border-electric-blue shadow-[8px_8px_0px_0px_rgba(0,102,255,1)] relative z-10">
+                {/* Tech HUD Corner Accents */}
+                <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white" />
+                <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white" />
+                <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white" />
+                <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white" />
+
+                {/* HUD Top Bar */}
+                <div className="flex items-center justify-between mb-6 pb-3 border-b border-zinc-800">
+                    <Link to="/hackathons" className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-electric-blue transition-colors uppercase">
+                        <span className="material-symbols-outlined text-sm">arrow_back</span> ABORT ENROLLMENT
+                    </Link>
+                    <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 bg-electric-blue/10 text-electric-blue border border-electric-blue/40">
+                        HUD // ENROLLMENT PROTOCOL
+                    </span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mb-1">
+                    Hackathon Enrollment
+                </h1>
+                <p className="text-electric-blue mb-4 font-mono text-xs uppercase tracking-widest border-b border-zinc-800/80 pb-3 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm">flag</span> TARGET TOURNAMENT: {hackathon?.name || id}
                 </p>
 
+                {/* Squad Roster Notice (Allows 1+ operatives) */}
+                <div className="bg-[#090e1c] border border-electric-blue/30 p-3 mb-5 text-xs flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-electric-blue text-base">groups</span>
+                        <div>
+                            <span className="text-white font-bold uppercase block text-[11px]">
+                                {hasSquad ? "Squad Registration Mode" : "Solo Operative Mode"}
+                            </span>
+                            <span className="text-zinc-400 text-[10px]">
+                                {hasSquad ? "Roster ready (1 to 6 operatives supported)" : "Individual hacker entry verified"}
+                            </span>
+                        </div>
+                    </div>
+                    <span className="px-2 py-0.5 bg-electric-blue/20 text-electric-blue border border-electric-blue/40 font-bold text-[10px] uppercase">
+                        {hasSquad ? "1+ Operatives Valid" : "Solo Valid"}
+                    </span>
+                </div>
+
                 {isPaid && (
-                    <div className="bg-amber-500/10 border-2 border-amber-500 p-3 mb-6 text-xs text-amber-300">
-                        <strong className="uppercase block mb-1">Paid Tournament Notice:</strong>
+                    <div className="bg-amber-500/10 border-2 border-amber-500/80 p-3.5 mb-5 text-xs text-amber-300">
+                        <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-amber-400">
+                            <span className="material-symbols-outlined text-sm">payments</span> Paid Tournament Notice
+                        </div>
                         Entry fee: ₹{hackathon?.fee} ({hackathon?.feeBasis?.replace(/_/g, ' ')}). Registration will lock your squad roster and require payment receipt verification.
                     </div>
                 )}
 
                 {success ? (
                     <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue space-y-4">
-                        <h3 className="text-electric-blue font-bold uppercase mb-2">Enrollment Initiated</h3>
+                        <h3 className="text-electric-blue font-bold uppercase mb-2 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-base">task_alt</span> Enrollment Initiated
+                        </h3>
                         <p className="text-sm text-zinc-300">
                             {isPaid 
                                 ? "Your squad roster is now locked in the mainframe. Complete your payment proof submission to clear your entry." 
@@ -117,14 +168,14 @@ function HackathonRegistrationPage() {
                             {isPaid ? (
                                 <button
                                     onClick={() => navigate({ to: '/payment', search: { hackathonId: id } as any })}
-                                    className="font-mono text-sm uppercase px-4 py-2 bg-electric-blue text-black font-black hover:bg-white transition-colors"
+                                    className="font-mono text-sm uppercase px-5 py-2.5 bg-electric-blue text-black font-black hover:bg-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                 >
                                     Proceed to Payment Clearance →
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => navigate({ to: '/dashboard' })}
-                                    className="font-mono text-sm uppercase px-4 py-2 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors"
+                                    className="font-mono text-sm uppercase px-5 py-2.5 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                                 >
                                     Enter Dashboard
                                 </button>
@@ -132,29 +183,47 @@ function HackathonRegistrationPage() {
                         </div>
                     </div>
                 ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {statusLoading && <div className="text-electric-blue mb-4">Checking event status...</div>}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {statusLoading && <div className="text-electric-blue text-xs animate-pulse">Checking event status...</div>}
                         
                         {isClosed && !statusLoading && (
-                            <div className="bg-red-500/10 border-l-4 border-red-500 p-4 mb-6">
-                                <h3 className="text-red-500 font-bold uppercase mb-1">Registration Closed</h3>
-                                <p className="text-sm text-zinc-300">Registration is currently closed for this event (Status: {hackathonStatus}).</p>
+                            <div className="bg-red-500/10 border-l-4 border-red-500 p-3 mb-4">
+                                <h3 className="text-red-500 font-bold uppercase text-xs mb-1">Registration Closed</h3>
+                                <p className="text-xs text-zinc-300">Registration is currently closed for this event (Status: {hackathonStatus}).</p>
                             </div>
                         )}
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Hackathon ID</label>
-                            <input type="text" disabled className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-zinc-500 cursor-not-allowed" value={id} />
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Hackathon ID</label>
+                            <input type="text" disabled className="w-full bg-[#080d19] border-2 border-zinc-800 p-2.5 text-zinc-500 text-xs cursor-not-allowed font-mono" value={id} />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Academic Institution</label>
-                            <input type="text" disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={college} onChange={(e) => setCollege(e.target.value)} />
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-xs text-electric-blue">school</span> Academic Institution
+                            </label>
+                            <input 
+                                type="text" 
+                                disabled={!!isClosed || statusLoading} 
+                                required 
+                                placeholder="e.g. Stanford University / JUET"
+                                className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                value={college} 
+                                onChange={(e) => setCollege(e.target.value)} 
+                            />
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Branch Specialization</label>
-                            <select disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={branch} onChange={(e) => setBranch(e.target.value)}>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-xs text-electric-blue">code</span> Branch Specialization
+                            </label>
+                            <select 
+                                disabled={!!isClosed || statusLoading} 
+                                required 
+                                className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                value={branch} 
+                                onChange={(e) => setBranch(e.target.value)}
+                            >
                                 <option value="">Select Branch</option>
                                 <option value="CSE">Computer Science & Engineering (CSE)</option>
                                 <option value="IT">Information Technology (IT)</option>
@@ -167,9 +236,17 @@ function HackathonRegistrationPage() {
                             </select>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold uppercase tracking-wider text-zinc-300">Academic Year</label>
-                            <select disabled={!!isClosed || statusLoading} required className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 text-white focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" value={year} onChange={(e) => setYear(e.target.value)}>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-xs text-electric-blue">calendar_today</span> Academic Year
+                            </label>
+                            <select 
+                                disabled={!!isClosed || statusLoading} 
+                                required 
+                                className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                value={year} 
+                                onChange={(e) => setYear(e.target.value)}
+                            >
                                 <option value="">Select Year</option>
                                 <option value="1">1st Year</option>
                                 <option value="2">2nd Year</option>
@@ -180,15 +257,16 @@ function HackathonRegistrationPage() {
                         </div>
 
                         {error && (
-                            <div className="bg-red-500/10 border-l-4 border-red-500 p-3 text-red-500 font-mono text-sm">
-                                [ERROR] {error}
+                            <div className="bg-red-500/10 border-l-4 border-red-500 p-3 text-red-400 font-mono text-xs flex items-center gap-2">
+                                <span className="material-symbols-outlined text-sm text-red-500">error</span>
+                                <span>[ERROR] {error}</span>
                             </div>
                         )}
 
                         <button
                             type="submit"
                             disabled={loading || !college || !branch || !year || !!isClosed || statusLoading}
-                            className="w-full bg-electric-blue text-black font-black uppercase tracking-widest py-4 border-2 border-transparent hover:bg-transparent hover:text-electric-blue hover:border-electric-blue transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                            className="w-full bg-electric-blue text-black font-black uppercase tracking-widest py-3.5 px-4 text-xs border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-white hover:text-black hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
                         >
                             {loading ? 'Transmitting...' : (isClosed ? 'Registration Closed' : 'Confirm Enrollment')}
                         </button>

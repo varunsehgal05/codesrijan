@@ -64,9 +64,14 @@ function Page7() {
             GO BACK
           </button>
           {!isEditing ? (
-            <button onClick={() => setIsEditing(true)} className="border-2 border-ink-black px-4 py-2 font-bold hover:bg-electric-blue hover:text-white transition-colors brutal-shadow">
-                EDIT PROFILE
-            </button>
+            <div className="flex items-center gap-3">
+              <Link to="/workspace" className="border-2 border-ink-black px-4 py-2 font-bold bg-white text-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-shadow flex items-center gap-1.5 text-xs sm:text-sm">
+                <span className="material-symbols-outlined text-sm">terminal</span> WORKSPACE
+              </Link>
+              <button onClick={() => setIsEditing(true)} className="border-2 border-ink-black px-4 py-2 font-bold hover:bg-electric-blue hover:text-white transition-colors brutal-shadow text-xs sm:text-sm">
+                  EDIT PROFILE
+              </button>
+            </div>
           ) : (
             <div className="flex gap-2">
                 <button onClick={() => setIsEditing(false)} className="border-2 border-ink-black px-4 py-2 font-bold hover:bg-gray-200 transition-colors brutal-shadow" disabled={saving}>

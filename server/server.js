@@ -1040,10 +1040,10 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
                 return res.status(403).json({ message: "Only the squad leader is authorized to register the squad for this tournament." });
             }
 
-            // Check min/max team size constraints
+            // Check min/max team size constraints (allow solo operatives / 1-member squads)
             const allMemberIds = [...new Set([targetTeam.leaderId, ...(targetTeam.memberIds || [])])];
             const totalMembers = allMemberIds.length;
-            const minSize = hackathon.teamSizeMin || 1;
+            const minSize = Math.min(hackathon.teamSizeMin ?? 1, 1);
             const maxSize = hackathon.teamSizeMax || 6;
             if (totalMembers < minSize) {
                 return res.status(400).json({ message: `Squad size must be at least ${minSize} operatives (Current: ${totalMembers}).` });

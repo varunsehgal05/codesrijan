@@ -22,7 +22,7 @@ const SEED = async () => {
             startDate: new Date(Date.now() - 86400000 * 2), // started 2 days ago
             endDate: new Date(Date.now() + 86400000 * 5), // ends in 5 days
             status: "active",
-            teamSizeMin: 2,
+            teamSizeMin: 1,
             teamSizeMax: 4,
             eligibilityRules: "Open to all enrolled students.",
             hackathonRules: "No plagiarism. Must use at least one AI API.",

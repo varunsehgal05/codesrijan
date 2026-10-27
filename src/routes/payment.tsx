@@ -236,8 +236,16 @@ function PaymentPage() {
     const isRejected = registration?.paymentStatus === 'rejected';
 
     return (
-        <div className="min-h-screen bg-black text-white flex flex-col font-mono">
-            <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-12 flex flex-col gap-8">
+        <div className="min-h-screen bg-[#070b14] text-white flex flex-col font-mono relative overflow-hidden">
+            {/* Dynamic Cyber Grid & Radial Dots */}
+            <div className="absolute inset-0 bg-[radial-gradient(#38bdf822_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-80" />
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b12_1px,transparent_1px),linear-gradient(to_bottom,#1e293b12_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
+
+            {/* Atmospheric Glowing Orbs */}
+            <div className="absolute -top-32 -left-32 w-96 h-96 bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+            <main className="flex-grow max-w-4xl mx-auto w-full px-4 py-12 flex flex-col gap-8 relative z-10">
                 {/* Global Go Back Navigation */}
                 <div className="w-full">
                     <button

@@ -101,14 +101,27 @@ function WorkspaceHUD() {
 
   if (!userTeam) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="bg-pure-white p-8 border-4 border-ink-black neo-shadow max-w-lg text-center flex flex-col items-center">
-          <span className="material-symbols-outlined text-6xl text-error mb-4">gpp_maybe</span>
-          <h2 className="font-display-lg text-3xl uppercase mb-2">ACCESS RESTRICTED</h2>
-          <p className="font-body-md text-text-muted mb-6">You must establish or enlist in a Squad before accessing visual workspace sectors.</p>
-          <Link to="/dashboard" className="bg-electric-blue text-pure-white px-6 py-3 font-label-bold uppercase border-2 border-transparent brutal-hover hover:-translate-y-1 block max-w-xs mx-auto">
-            RETURN TO DASHBOARD
-          </Link>
+      <div className="min-h-screen bg-[#070b14] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden font-mono">
+        <div className="absolute inset-0 bg-[radial-gradient(#38bdf822_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-80" />
+        <div className="absolute -top-32 -left-32 w-96 h-96 bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="bg-[#0c1220]/95 backdrop-blur-md p-8 border-4 border-electric-blue shadow-[8px_8px_0px_0px_rgba(0,102,255,1)] max-w-lg text-center flex flex-col items-center relative z-10">
+          <div className="w-16 h-16 bg-electric-blue/10 border-2 border-electric-blue text-electric-blue rounded-full flex items-center justify-center mb-4">
+            <span className="material-symbols-outlined text-3xl">terminal</span>
+          </div>
+          <h2 className="text-2xl font-black uppercase mb-2 tracking-tight text-white">OPERATIVE WORKSPACE</h2>
+          <p className="text-zinc-300 text-xs mb-6 font-mono leading-relaxed">
+            The workspace HUD is tied to active squad sectors (supporting solo operatives with 1 member or squads up to 6). Create your squad in the dashboard or enlist with a team to unlock project tracking, live mentor comms, and project submission.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 w-full justify-center">
+            <Link to="/dashboard" className="bg-electric-blue text-black px-5 py-2.5 font-bold uppercase text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-white hover:text-black transition-all">
+              Go To Dashboard (Squad Setup)
+            </Link>
+            <Link to="/recruitment" className="bg-white text-black px-5 py-2.5 font-bold uppercase text-xs border-2 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-electric-blue hover:text-white transition-all">
+              Recruitment Hub
+            </Link>
+          </div>
         </div>
       </div>
     );

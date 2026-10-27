@@ -144,11 +144,18 @@ function DashboardPage() {
                     <div>
                         <p className="font-label-caps text-surface-variant mb-2">Welcome Back,</p>
                         <h1 className="font-display-lg text-headline-lg uppercase text-ink-black">{currentUser.name}</h1>
-                        <div className="flex items-center gap-4 mt-2">
+                        <div className="flex items-center gap-3 sm:gap-4 mt-2 flex-wrap">
                             <p className="font-body-md flex items-center gap-2">
                                 <span className="material-symbols-outlined text-electric-blue text-sm">badge</span>
                                 Role: <span className="uppercase font-label-bold">{currentUser.role}</span>
                             </p>
+                            <Link
+                                to="/workspace"
+                                className="bg-electric-blue text-black px-3.5 py-1 font-label-bold text-xs uppercase brutal-border hover:bg-black hover:text-white hover:-translate-y-0.5 transition-all flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                title="Open Operative Workspace"
+                            >
+                                <span className="material-symbols-outlined text-xs">terminal</span> Workspace HUD
+                            </Link>
                             <button
                                 onClick={handleLogout}
                                 className="bg-error text-white px-3 py-1 font-label-bold text-xs uppercase brutal-border hover:bg-stark-black hover:-translate-y-0.5 transition-all flex items-center gap-1 cursor-pointer"
@@ -446,6 +453,7 @@ function DashboardPage() {
                         <div className="bg-surface-container-highest brutal-border brutal-shadow p-6 flex-grow">
                             <h2 className="font-label-bold uppercase mb-4 text-ink-black">Secure Comm Links</h2>
                             <ul className="space-y-3 font-label-bold uppercase">
+                                <li><Link to="/workspace" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">terminal</span> Operative Workspace (HUD)</Link></li>
                                 <li><a href="/profile" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">person</span> Personal Profile</a></li>
                                 <li><a href="/certificates" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">workspace_premium</span> Diplomas</a></li>
                                 <li><a href="/ai-assistant" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">smart_toy</span> Oracle Support</a></li>
