@@ -120,4 +120,50 @@ export const requireRole = (roles) => {
     };
 };
 
+export const resolveOptionalUser = async (req) => {
+    try {
+        const authHeader = req.headers.authorization;
+        let token = null;
+
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.split(' ')[1]?.trim();
+        }
+
+        if (!token) return null;
+
+        // 1. Try Firebase Admin ID Token Verification
+        if (firebaseAdminApp) {
+            try {
+                const firebaseAuth = getAuth(firebaseAdminApp);
+                const decodedToken = await firebaseAuth.verifyIdToken(token);
+                if (decodedToken && decodedToken.email) {
+                    const user = await User.findOne({ email: decodedToken.email.toLowerCase() });
+                    if (user && user.accountStatus === 'active') {
+                        return user;
+                    }
+                }
+            } catch (fbErr) {
+                // Fallback to session token lookup
+            }
+        }
+
+        // 2. Legacy Session Token lookup
+        const sessionTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+        const session = await Session.findOne({ sessionTokenHash, revokedAt: null });
+
+        if (!session || (session.expiresAt && session.expiresAt < new Date())) {
+            return null;
+        }
+
+        const user = await User.findOne({ id: session.userId });
+        if (!user || user.accountStatus !== 'active') {
+            return null;
+        }
+
+        return user;
+    } catch (e) {
+        return null;
+    }
+};
+
 export { firebaseAdminApp };

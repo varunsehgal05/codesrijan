@@ -16,7 +16,15 @@ function HackathonsHubPage() {
     useEffect(() => {
         axios.get(`${API_URL}/hackathons`)
             .then(res => {
-                const sorted = res.data.sort((a: any, b: any) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+                const rawEvents = Array.isArray(res.data) ? res.data : [];
+                const sorted = rawEvents.sort((a: any, b: any) => {
+                    const timeA = a.startDate ? new Date(a.startDate).getTime() : 0;
+                    const timeB = b.startDate ? new Date(b.startDate).getTime() : 0;
+                    if (timeA && timeB) return timeA - timeB;
+                    if (timeA) return -1;
+                    if (timeB) return 1;
+                    return (a.name || a.title || '').localeCompare(b.name || b.title || '');
+                });
                 setEvents(sorted);
                 setLoading(false);
             })
@@ -28,7 +36,7 @@ function HackathonsHubPage() {
 
     return (
         <div className="min-h-screen bg-background text-on-background flex flex-col">
-            <main className="flex-grow max-w-[1000px] mx-auto px-gutter py-section-gap w-full">
+            <main className="flex-grow max-w-[1100px] mx-auto px-gutter py-section-gap w-full">
                 <div className="mb-6 flex justify-between items-center">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue border-2 border-stark-black px-4 py-2 bg-surface-bright shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all w-fit cursor-pointer">
                         <span className="material-symbols-outlined">arrow_back</span>GO BACK
@@ -41,7 +49,7 @@ function HackathonsHubPage() {
                 <div className="bg-electric-blue text-pure-white p-8 brutal-border brutal-shadow mb-10">
                     <span className="font-code-snippet text-xs font-bold uppercase tracking-widest bg-stark-black text-pure-white px-2 py-1">CodeSrijan 2026</span>
                     <h1 className="font-display-lg text-4xl md:text-5xl uppercase tracking-tight mt-2">HACKATHONS HUB</h1>
-                    <p className="font-body-md mt-2 text-pure-white/90">Explore upcoming competitive hacks, build operational prototypes, and claim victory.</p>
+                    <p className="font-body-md mt-2 text-pure-white/90">Explore all active competitive hacks, build operational prototypes, and claim victory.</p>
                 </div>
 
                 {loading ? (
@@ -54,67 +62,82 @@ function HackathonsHubPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {events.map((evt, idx) => (
-                            <div key={idx} className="bg-pure-white brutal-border brutal-shadow p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
-                                <div>
-                                    <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
-                                        <div className="flex gap-2 items-center">
-                                            <span className="bg-surface-container-high px-2.5 py-1 font-code-snippet text-[11px] uppercase font-bold brutal-border">
-                                                {evt.status ? evt.status.replace('_', ' ') : 'Active'}
-                                            </span>
-                                            <span className={`px-2 py-0.5 font-bold uppercase text-[10px] brutal-border ${
-                                                evt.entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
-                                            }`}>
-                                                {evt.entryType === 'paid' ? `₹${evt.fee} / ${evt.feeBasis === 'per_participant' ? 'MEMBER' : 'SQUAD'}` : 'FREE ENTRY'}
+                        {events.map((evt, idx) => {
+                            const rawStatus = (evt.status || 'active').toLowerCase();
+                            const isPaid = evt.entryType === 'paid';
+                            const hasValidDates = evt.startDate && !isNaN(new Date(evt.startDate).getTime());
+
+                            return (
+                                <div key={evt.id || idx} className="bg-pure-white brutal-border brutal-shadow p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
+                                    <div>
+                                        <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
+                                            <div className="flex gap-2 items-center">
+                                                <span className={`px-2.5 py-1 font-code-snippet text-[11px] uppercase font-bold brutal-border ${
+                                                    rawStatus === 'registration_open' ? 'bg-electric-blue text-pure-white' :
+                                                    rawStatus === 'active' || rawStatus === 'submission_open' ? 'bg-[#FFD700] text-stark-black' :
+                                                    rawStatus === 'completed' ? 'bg-stark-black text-pure-white' :
+                                                    'bg-surface-container-high text-stark-black'
+                                                }`}>
+                                                    {rawStatus.replace('_', ' ')}
+                                                </span>
+                                                <span className={`px-2 py-0.5 font-bold uppercase text-[10px] brutal-border ${
+                                                    isPaid ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
+                                                }`}>
+                                                    {isPaid ? `₹${evt.fee || 0} / ${evt.feeBasis === 'per_participant' ? 'MEMBER' : 'SQUAD'}` : 'FREE ENTRY'}
+                                                </span>
+                                            </div>
+                                            <span className="font-code-snippet text-xs font-bold text-electric-blue">
+                                                {hasValidDates ? new Date(evt.startDate).toLocaleDateString() : 'OPEN SCHEDULE'}
                                             </span>
                                         </div>
-                                        <span className="font-code-snippet text-xs font-bold text-electric-blue">
-                                            {evt.startDate ? new Date(evt.startDate).toLocaleDateString() : 'TBA'}
-                                        </span>
-                                    </div>
 
-                                    <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-1">{evt.name || evt.title}</h3>
-                                    
-                                    <div className="flex items-center gap-2 mb-3">
-                                        <span className="text-[11px] font-bold uppercase tracking-wider bg-stark-black text-white px-2 py-0.5">
-                                            {evt.mode ? evt.mode.toUpperCase() : 'ONLINE ARENA'}
-                                        </span>
-                                        {evt.venue && evt.mode !== 'online' && (
-                                            <span className="text-[11px] text-zinc-600 font-bold truncate">
-                                                📍 {evt.venue}
+                                        <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-1">
+                                            {evt.name || evt.title || evt.id}
+                                        </h3>
+                                        
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-[11px] font-bold uppercase tracking-wider bg-stark-black text-white px-2 py-0.5">
+                                                {evt.mode ? evt.mode.toUpperCase() : 'ONLINE ARENA'}
                                             </span>
-                                        )}
-                                    </div>
-
-                                    <p className="font-body-md text-on-surface-variant text-sm line-clamp-3 mb-4">{evt.description}</p>
-
-                                    {/* Amenities Badges */}
-                                    {evt.amenities && evt.amenities.length > 0 && (
-                                        <div className="flex flex-wrap gap-1.5 mb-4 pt-2 border-t border-zinc-200">
-                                            {evt.amenities.slice(0, 4).map((a: string) => (
-                                                <span key={a} className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-800 px-2 py-0.5 border border-zinc-300">
-                                                    ✓ {a.replace('_', ' ')}
-                                                </span>
-                                            ))}
-                                            {evt.amenities.length > 4 && (
-                                                <span className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 border border-zinc-300">
-                                                    +{evt.amenities.length - 4} more
+                                            {evt.venue && evt.mode !== 'online' && (
+                                                <span className="text-[11px] text-zinc-600 font-bold truncate">
+                                                    📍 {evt.venue}
                                                 </span>
                                             )}
                                         </div>
-                                    )}
-                                </div>
 
-                                <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
-                                    <span className="font-code-snippet text-[11px] font-bold uppercase text-zinc-600">
-                                        {evt.problemStatementsRevealed ? '🟢 Directives Live' : '🔒 Directives Classified'}
-                                    </span>
-                                    <Link to="/hackathons/$id/register" params={{ id: evt.id }} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
-                                        ENTER ARENA
-                                    </Link>
+                                        <p className="font-body-md text-on-surface-variant text-sm line-clamp-3 mb-4">
+                                            {evt.description || evt.theme || 'Competitive hackathon arena. Form or join a squad to prototype solutions and deploy artifacts.'}
+                                        </p>
+
+                                        {/* Amenities Badges */}
+                                        {evt.amenities && evt.amenities.length > 0 && (
+                                            <div className="flex flex-wrap gap-1.5 mb-4 pt-2 border-t border-zinc-200">
+                                                {evt.amenities.slice(0, 4).map((a: string) => (
+                                                    <span key={a} className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-800 px-2 py-0.5 border border-zinc-300">
+                                                        ✓ {a.replace('_', ' ')}
+                                                    </span>
+                                                ))}
+                                                {evt.amenities.length > 4 && (
+                                                    <span className="text-[10px] uppercase font-bold bg-zinc-100 text-zinc-600 px-1.5 py-0.5 border border-zinc-300">
+                                                        +{evt.amenities.length - 4} more
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
+                                        <span className="font-code-snippet text-[11px] font-bold uppercase text-zinc-600">
+                                            {evt.problemStatementsRevealed ? '🟢 Directives Live' : '🔒 Directives Classified'}
+                                        </span>
+                                        <Link to="/hackathons/$id/register" params={{ id: evt.id }} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
+                                            ENTER ARENA
+                                        </Link>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </main>

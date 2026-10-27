@@ -151,7 +151,7 @@ import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Proj
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
-import { requireAuth, requireRole } from './middleware/auth.js';
+import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
 import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
 
@@ -718,37 +718,33 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
 });
 
-// HACKATHONS
+// HACKATHONS (Public Catalog + Authenticated Admin Access)
 app.get('/api/hackathons', async (req, res) => {
     try {
-        const authHeader = req.headers.authorization;
-        let isAdmin = false;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            if (token && token.trim()) {
-                const sessionTokenHash = crypto.createHash('sha256').update(token.trim()).digest('hex');
-                const session = await Session.findOne({ sessionTokenHash, revokedAt: null });
-                if (session && (!session.expiresAt || session.expiresAt >= new Date())) {
-                    const user = await User.findOne({ id: session.userId });
-                    if (user?.role === 'admin' && user?.accountStatus === 'active') {
-                        isAdmin = true;
-                    }
-                }
-            }
-        }
+        const optionalUser = await resolveOptionalUser(req);
+        const isAdmin = optionalUser?.role === 'admin';
 
         const filter = {};
-        // CRITICAL SECURITY ENFORCEMENT (CS-035 regression fix):
-        // Anonymous guests and ordinary students CANNOT expose archived or draft hackathons
-        // by supplying query parameters such as ?includeArchived=true.
-        // The public catalog restriction is ALWAYS enforced unless the caller is an authenticated administrator.
+        // CRITICAL VISIBILITY POLICY:
+        // Authenticated administrators view the complete catalog (including drafts and archived records).
+        // Public guests and participants view all active, upcoming, open-registration, in-progress, and concluded arenas.
+        // Only draft and explicitly archived events are suppressed from public view.
         if (!isAdmin) {
             filter.status = { $nin: ['archived', 'draft'] };
             filter.isArchived = { $ne: true };
-            filter.id = { $not: /^qa[-_]/i };
         }
 
         const hackathons = await Hackathon.find(filter).sort({ createdAt: -1 });
+        res.json(hackathons);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Dedicated Administrator Catalog endpoint (guarantees unfiltered access for console management)
+app.get('/api/admin/hackathons', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const hackathons = await Hackathon.find({}).sort({ createdAt: -1 });
         res.json(hackathons);
     } catch (e) {
         res.status(500).json({ error: e.message });

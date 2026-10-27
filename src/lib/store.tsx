@@ -192,11 +192,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
                 : Promise.resolve({ data: [] });
 
+            const hackathonsPromise = token
+                ? axios.get(`${API_URL}/hackathons`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+                : axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] }));
+
             const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
                 axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
                 axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] })),
+                hackathonsPromise,
                 studentRegPromise,
                 axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] }))
             ]);
