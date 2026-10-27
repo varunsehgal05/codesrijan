@@ -84,7 +84,7 @@ function AdminOperationsDashboard() {
           </h2>
           <p className="font-code-snippet text-on-surface-variant mt-2 font-bold tracking-widest text-xs uppercase flex items-center gap-2">
             <span className="material-symbols-outlined text-electric-blue text-[16px]">tune</span>
-            Tournament Command, Squad Rosters &amp; Audit Exports
+            Hackathon Command, Squad Rosters &amp; Audit Exports
           </p>
         </div>
         <div className="flex items-center gap-3">

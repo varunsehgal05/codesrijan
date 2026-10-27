@@ -522,17 +522,17 @@ test('=== CODESRIJAN SUPPORT REGRESSION SUITE (12 SCENARIOS) & PLATFORM AUDIT ==
     });
 
     // -------------------------------------------------------------------------
-    // Verification: Leaderboard Tournament Selector & Squad Evaluation
+    // Verification: Leaderboard Hackathon Selector & Squad Evaluation
     // -------------------------------------------------------------------------
-    await t.test('Leaderboard: Tournament matrix, hackathon filtering, and un-fabricated scores', () => {
+    await t.test('Leaderboard: Hackathon matrix, hackathon filtering, and un-fabricated scores', () => {
         const leaderboardTsx = fs.readFileSync(path.join(__dirname, '../src/routes/leaderboard.tsx'), 'utf8');
         
-        assert.ok(leaderboardTsx.includes('Select Hosted Tournament / Hackathon:'), 'leaderboard.tsx must include tournament selector header');
-        assert.ok(leaderboardTsx.includes('★ ALL TOURNAMENTS'), 'leaderboard.tsx must support platform-wide all tournaments view');
+        assert.ok(leaderboardTsx.includes('Select Hosted Hackathon / Hackathon:') || leaderboardTsx.includes('Select Hosted Hackathon:'), 'leaderboard.tsx must include hackathon selector header');
+        assert.ok(leaderboardTsx.includes('★ ALL HACKATHONS'), 'leaderboard.tsx must support platform-wide all hackathons view');
         assert.ok(leaderboardTsx.includes('SQUAD ROSTER & OPERATIVES'), 'leaderboard.tsx must render enrolled squad roster');
         assert.ok(leaderboardTsx.includes('UNRANKED / AWAITING EVALUATION'), 'leaderboard.tsx must distinguish unevaluated squads from evaluated squads');
         assert.ok(leaderboardTsx.includes('AWAITING EVAL'), 'leaderboard.tsx must render AWAITING EVAL status for unevaluated squads');
-        console.log('✓ Leaderboard PASSED: Tournament filter and authentic squad evaluation metrics verified');
+        console.log('✓ Leaderboard PASSED: Hackathon filter and authentic squad evaluation metrics verified');
     });
 
     // -------------------------------------------------------------------------

@@ -190,7 +190,7 @@ function CreateHackathonPage() {
                                     className="w-full bg-pure-white py-3 px-4 font-code-snippet brutal-border"
                                 >
                                     <option value="free">Free Entry</option>
-                                    <option value="paid">Paid Tournament</option>
+                                    <option value="paid">Paid Hackathon</option>
                                 </select>
                             </div>
 

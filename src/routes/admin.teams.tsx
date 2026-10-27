@@ -106,7 +106,7 @@ function AdminTeams() {
   };
 
   const handleBanTeam = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`CRITICAL: Enter permanent tournament BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
+    const reason = window.prompt(`CRITICAL: Enter permanent hackathon BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
     if (!reason || !reason.trim()) return;
 
     setLoadingId(teamId);

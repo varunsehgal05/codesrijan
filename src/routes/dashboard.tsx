@@ -20,7 +20,7 @@ function DashboardPage() {
 
     const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
-    // Resolve targeted hackathon: Prioritize user's enrolled tournament, then active event
+    // Resolve targeted hackathon: Prioritize user's enrolled hackathon, then active event
     const activeEvent = useMemo(() => {
         const userRegistration = (registrations || []).find((r: any) => r.userId === currentUser?.id);
         const enrolledHackId = userTeam?.hackathonId || userRegistration?.hackathonId;
@@ -186,9 +186,9 @@ function DashboardPage() {
                         },
                         {
                             id: 'enrollment',
-                            title: '3. Tournament Enrollment',
+                            title: '3. Hackathon Enrollment',
                             done: isEnrolled,
-                            desc: isEnrolled ? 'Successfully registered for tournament.' : 'Register your operative identity for active event.',
+                            desc: isEnrolled ? 'Successfully registered for hackathon.' : 'Register your operative identity for active event.',
                             link: '/hackathons',
                             action: 'Catalog'
                         },
@@ -234,7 +234,7 @@ function DashboardPage() {
                                         </span>
                                     </div>
                                     <p className="font-code-snippet text-xs text-surface-variant mt-1">
-                                        Complete each progression step to ensure tournament eligibility and submission clearance.
+                                        Complete each progression step to ensure hackathon eligibility and submission clearance.
                                     </p>
                                 </div>
                                 <div className="flex flex-col items-end gap-1 w-full md:w-56">

@@ -94,7 +94,7 @@ function PaymentPage() {
             }
 
             if (!targetHackathonId) {
-                // Fallback demo tournament
+                // Fallback demo hackathon
                 targetHackathonId = 'hack-1';
             }
 
@@ -260,10 +260,10 @@ function PaymentPage() {
                 <header className="border-b-4 border-electric-blue pb-6">
                     <h1 className="text-4xl font-black uppercase tracking-tight text-pure-white flex items-center gap-3">
                         <span className="material-symbols-outlined text-electric-blue text-4xl">payments</span>
-                        TOURNAMENT ENROLLMENT CLEARANCE
+                        HACKATHON ENROLLMENT CLEARANCE
                     </h1>
                     <p className="text-zinc-400 text-sm mt-2">
-                        {hackathon?.name || "CodeSrijan Tournament"} — Official Entry Clearance Protocol.
+                        {hackathon?.name || "CodeSrijan Hackathon"} — Official Entry Clearance Protocol.
                     </p>
                 </header>
 
@@ -278,7 +278,7 @@ function PaymentPage() {
                             Your payment proof and UTR (<strong className="text-amber-400">{registration?.transactionReference}</strong>) have been submitted to the CodeSrijan Admin Control Center.
                         </p>
                         <p className="text-xs text-zinc-400">
-                            Submitted at: {new Date(registration?.paymentSubmittedAt || '').toLocaleString()}. Squad roster is locked in the tournament queue.
+                            Submitted at: {new Date(registration?.paymentSubmittedAt || '').toLocaleString()}. Squad roster is locked in the hackathon queue.
                         </p>
                     </div>
                 )}
@@ -290,7 +290,7 @@ function PaymentPage() {
                             ACCESS GRANTED — PAYMENT VERIFIED & SQUAD CLEARED
                         </div>
                         <p className="text-xs text-zinc-300">
-                            Your entry fee has been cleared by the tournament administration. Your squad is fully confirmed for competition.
+                            Your entry fee has been cleared by the hackathon administration. Your squad is fully confirmed for competition.
                         </p>
                         <button
                             onClick={() => navigate({ to: '/workspace' })}

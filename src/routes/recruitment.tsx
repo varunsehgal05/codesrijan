@@ -87,7 +87,7 @@ function RecruitmentMatrix() {
   };
 
   const handleAdminUndoDisqualify = async (teamId: string, teamName: string) => {
-    if (!window.confirm(`Restore squad "${teamName}" to active tournament standing?`)) return;
+    if (!window.confirm(`Restore squad "${teamName}" to active hackathon standing?`)) return;
 
     try {
       setActionLoadingId(teamId);
@@ -105,7 +105,7 @@ function RecruitmentMatrix() {
   };
 
   const handleAdminBanTeam = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`CRITICAL: Enter permanent tournament BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
+    const reason = window.prompt(`CRITICAL: Enter permanent hackathon BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
     if (!reason || !reason.trim()) return;
 
     try {
@@ -257,10 +257,10 @@ function RecruitmentMatrix() {
                 </span>
               </div>
               <h1 className="font-display-lg text-3xl md:text-4xl text-ink-black uppercase tracking-tight">
-                Squad Recruitment & Tournament Governance
+                Squad Recruitment & Hackathon Governance
               </h1>
               <p className="font-body-md text-text-muted mt-1 text-sm">
-                Real-time oversight of all hackathon teams, player rosters, tournament admissions, and disciplinary controls.
+                Real-time oversight of all hackathon teams, player rosters, hackathon admissions, and disciplinary controls.
               </p>
             </div>
 
@@ -292,7 +292,7 @@ function RecruitmentMatrix() {
             {/* Hackathon Filter Dropdown */}
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-label-bold uppercase whitespace-nowrap">Tournament:</span>
+                <span className="text-xs font-label-bold uppercase whitespace-nowrap">Hackathon:</span>
                 <select
                   value={adminHackathonFilter}
                   onChange={e => setAdminHackathonFilter(e.target.value)}
@@ -339,7 +339,7 @@ function RecruitmentMatrix() {
                 <span className="material-symbols-outlined text-5xl text-zinc-300">group_off</span>
                 <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS MATCH CURRENT CRITERIA</h3>
                 <p className="font-code-snippet text-xs text-on-surface-variant max-w-sm mx-auto uppercase">
-                  Try adjusting your search query, tournament selector, or status filter.
+                  Try adjusting your search query, hackathon selector, or status filter.
                 </p>
               </div>
             ) : (

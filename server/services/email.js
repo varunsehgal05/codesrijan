@@ -404,7 +404,7 @@ export const sendPaymentRejectionEmail = async (to, { name, eventName, teamName,
                                     Hello <strong>${name || 'Operative'}</strong>,
                                 </p>
                                 <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
-                                    Your tournament entry payment for <strong>${eventName || 'Tournament'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been reviewed and <strong style="color: #F43F5E;">DECLINED</strong> by the tournament administration.
+                                    Your hackathon entry payment for <strong>${eventName || 'Hackathon'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been reviewed and <strong style="color: #F43F5E;">DECLINED</strong> by the hackathon administration.
                                 </p>
 
                                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #1C1917; border-left: 4px solid #F43F5E; border-radius: 4px; margin: 24px 0;">
@@ -428,7 +428,7 @@ export const sendPaymentRejectionEmail = async (to, { name, eventName, teamName,
 
                                 <p style="margin: 0 0 24px 0; color: #A9B5C5; font-size: 14px; line-height: 1.6;">
                                     <strong>How to resolve:</strong><br/>
-                                    Please verify your transaction receipt, ensure the 12-digit UTR is accurately transcribed, and re-submit your proof of payment via the tournament dashboard.
+                                    Please verify your transaction receipt, ensure the 12-digit UTR is accurately transcribed, and re-submit your proof of payment via the hackathon dashboard.
                                 </p>
 
                                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 28px 0;">
@@ -448,7 +448,7 @@ export const sendPaymentRejectionEmail = async (to, { name, eventName, teamName,
                         </tr>
                         <tr>
                             <td style="background-color: #0B0F14; border-top: 1px solid #223249; padding: 18px; text-align: center;">
-                                <p style="margin: 0; color: #64748B; font-size: 11px; font-family: monospace;">CodeSrijan Automated Tournament Protocol</p>
+                                <p style="margin: 0; color: #64748B; font-size: 11px; font-family: monospace;">CodeSrijan Automated Hackathon Protocol</p>
                             </td>
                         </tr>
                     </table>
@@ -467,7 +467,7 @@ export const sendPaymentRejectionEmail = async (to, { name, eventName, teamName,
         const info = await transporter.sendMail({
             from: getSenderIdentity(),
             to,
-            subject: `CodeSrijan [PAYMENT REVIEW: DECLINED - ${eventName || 'Tournament'}]`,
+            subject: `CodeSrijan [PAYMENT REVIEW: DECLINED - ${eventName || 'Hackathon'}]`,
             html: htmlContent
         });
         console.log('[SECURE COMMS] Payment rejection email dispatched to %s. Message ID: %s', maskEmail(to), info.messageId);
@@ -513,7 +513,7 @@ export const sendPaymentApprovalEmail = async (to, { name, eventName, teamName, 
                                     Hello <strong>${name || 'Operative'}</strong>,
                                 </p>
                                 <p style="margin: 0 0 20px 0; color: #A9B5C5; font-size: 15px; line-height: 1.6;">
-                                    Your payment for <strong>${eventName || 'Hackathon'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been <strong style="color: #10B981;">VERIFIED AND CLEARED</strong> by the tournament administration.
+                                    Your payment for <strong>${eventName || 'Hackathon'}</strong>${teamName ? ` (Squad: <strong>${teamName}</strong>)` : ''} has been <strong style="color: #10B981;">VERIFIED AND CLEARED</strong> by the hackathon administration.
                                 </p>
                                 ${transactionReference ? `
                                 <div style="background-color: #0B0F14; border: 1px solid #059669; padding: 12px 16px; border-radius: 4px; margin: 16px 0; font-family: monospace; font-size: 13px; color: #6EE7B7;">
@@ -538,7 +538,7 @@ export const sendPaymentApprovalEmail = async (to, { name, eventName, teamName, 
         const info = await transporter.sendMail({
             from: getSenderIdentity(),
             to,
-            subject: `CodeSrijan [PAYMENT VERIFIED - ${eventName || 'Tournament'}]`,
+            subject: `CodeSrijan [PAYMENT VERIFIED - ${eventName || 'Hackathon'}]`,
             html: htmlContent
         });
         return { success: true, messageId: info.messageId };

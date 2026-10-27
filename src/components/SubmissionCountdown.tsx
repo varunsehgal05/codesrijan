@@ -93,7 +93,7 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
         badgeClass = "bg-zinc-800 text-zinc-300 border-zinc-600";
         badgeText = "SCHEDULE PENDING";
         headingText = "DEADLINE NOT CONFIGURED";
-        statusSummary = "Awaiting official tournament cutoff broadcast.";
+        statusSummary = "Awaiting official hackathon cutoff broadcast.";
     } else if (countdown.isExpired) {
         borderClass = "border-error";
         badgeClass = "bg-error text-pure-white border-error";

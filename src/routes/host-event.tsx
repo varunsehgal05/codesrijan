@@ -51,7 +51,7 @@ export function HostEventPage() {
         'meals', 'wifi', 'power_backup', 'swag_kits', 'physical_certificates'
     ]);
 
-    // Paid Tournament Configuration
+    // Paid Hackathon Configuration
     const [entryType, setEntryType] = useState<'free' | 'paid'>('free');
     const [fee, setFee] = useState<number>(500);
     const [feeBasis, setFeeBasis] = useState<'per_team' | 'per_participant'>('per_team');
@@ -280,13 +280,13 @@ export function HostEventPage() {
                 <div className="bg-pure-white p-8 brutal-border brutal-shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div className="space-y-3 max-w-2xl">
                         <div className="inline-block bg-electric-blue text-pure-white px-3 py-1 uppercase font-black text-xs transform -skew-x-6 brutal-border">
-                            HOSTING &amp; TOURNAMENT STUDIO
+                            HOSTING &amp; HACKATHON STUDIO
                         </div>
                         <h1 className="text-3xl md:text-5xl font-black uppercase text-stark-black tracking-tight leading-none">
                             HOST A <span className="text-electric-blue underline">HACKATHON</span>
                         </h1>
                         <p className="text-zinc-600 font-semibold text-sm">
-                            Configure physical campus rounds, virtual tournaments, verified amenities, prize structures, and automated challenge reveal protocols on the CodeSrijan neural matrix.
+                            Configure physical campus rounds, virtual hackathons, verified amenities, prize structures, and automated challenge reveal protocols on the CodeSrijan neural matrix.
                         </p>
                     </div>
                     <div className="flex bg-stark-black p-4 brutal-border text-electric-blue">
@@ -551,7 +551,7 @@ export function HostEventPage() {
                         </div>
 
                         <p className="text-xs text-zinc-600">
-                            Select all provisions you are officially supplying to operatives. These badges will appear on the public hackathon card and tournament details page.
+                            Select all provisions you are officially supplying to operatives. These badges will appear on the public hackathon card and hackathon details page.
                         </p>
 
                         {/* Offline Provisions Section */}
@@ -625,19 +625,19 @@ export function HostEventPage() {
                         </div>
                     </div>
 
-                    {/* SECTION 5: TOURNAMENT ENTRY & PAID HACKATHON SETUP */}
+                    {/* SECTION 5: HACKATHON ENTRY & PAID HACKATHON SETUP */}
                     <div className="bg-pure-white brutal-border brutal-shadow-lg p-6 sm:p-8 space-y-6">
                         <div className="border-b-2 border-stark-black pb-3 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-electric-blue text-2xl">payments</span>
                                 <h2 className="font-display-lg text-xl uppercase font-black text-stark-black">
-                                    05. Tournament Entry &amp; Paid Hackathon Model
+                                    05. Hackathon Entry &amp; Paid Hackathon Model
                                 </h2>
                             </div>
                             <span className={`text-[11px] font-bold uppercase px-3 py-1 brutal-border ${
                                 entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
                             }`}>
-                                {entryType === 'paid' ? 'PAID TOURNAMENT' : 'FREE ENTRY'}
+                                {entryType === 'paid' ? 'PAID HACKATHON' : 'FREE ENTRY'}
                             </span>
                         </div>
 
@@ -650,7 +650,7 @@ export function HostEventPage() {
                                 }`}
                             >
                                 <div>
-                                    <h4 className="font-black text-xs uppercase">Free Entry Tournament</h4>
+                                    <h4 className="font-black text-xs uppercase">Free Entry Hackathon</h4>
                                     <p className="text-[11px] opacity-75 mt-1">Zero barrier to entry. Free for all approved student hackers.</p>
                                 </div>
                                 <span className="material-symbols-outlined text-2xl text-emerald-400">check_circle</span>
@@ -663,14 +663,14 @@ export function HostEventPage() {
                                 }`}
                             >
                                 <div>
-                                    <h4 className="font-black text-xs uppercase">Paid Entry Tournament</h4>
+                                    <h4 className="font-black text-xs uppercase">Paid Entry Hackathon</h4>
                                     <p className="text-[11px] opacity-75 mt-1">Collect entry fee via UPI QR. Automated audit &amp; UTR verification.</p>
                                 </div>
                                 <span className="material-symbols-outlined text-2xl text-amber-400">currency_rupee</span>
                             </div>
                         </div>
 
-                        {/* Paid Tournament Fields */}
+                        {/* Paid Hackathon Fields */}
                         {entryType === 'paid' && (
                             <div className="space-y-6 pt-4 border-t-2 border-dashed border-zinc-300">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">

@@ -1044,7 +1044,7 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             if (!targetTeam) return res.status(404).json({ message: "Designated squad not found." });
 
             if (targetTeam.leaderId !== userId) {
-                return res.status(403).json({ message: "Only the squad leader is authorized to register the squad for this tournament." });
+                return res.status(403).json({ message: "Only the squad leader is authorized to register the squad for this hackathon." });
             }
 
             // Check min/max team size constraints (allow solo operatives / 1-member squads)
@@ -1056,7 +1056,7 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
                 return res.status(400).json({ message: `Squad size must be at least ${minSize} operatives (Current: ${totalMembers}).` });
             }
             if (totalMembers > maxSize) {
-                return res.status(400).json({ message: `Squad size exceeds tournament maximum of ${maxSize} operatives (Current: ${totalMembers}).` });
+                return res.status(400).json({ message: `Squad size exceeds hackathon maximum of ${maxSize} operatives (Current: ${totalMembers}).` });
             }
 
             // Verify all squad members are active and verified
@@ -1067,7 +1067,7 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             
             for (const m of memberDocs) {
                 if (m.accountStatus !== 'active' || !m.emailVerified) {
-                    return res.status(403).json({ message: `Squad member ${m.name || m.email} has an unverified identity. All members must verify email before tournament registration.` });
+                    return res.status(403).json({ message: `Squad member ${m.name || m.email} has an unverified identity. All members must verify email before hackathon registration.` });
                 }
                 rosterMembers.push({
                     userId: m.id,
@@ -1224,7 +1224,7 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
         });
 
         if (!registration) {
-            return res.status(404).json({ message: "No registration record found for this tournament. Please enroll first." });
+            return res.status(404).json({ message: "No registration record found for this hackathon. Please enroll first." });
         }
 
         if (registration.paymentStatus === 'verified' || registration.status === 'registered') {
@@ -1342,7 +1342,7 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
     }
 });
 
-// GET CURRENT USER'S TOURNAMENT REGISTRATION (STUDENT)
+// GET CURRENT USER'S HACKATHON REGISTRATION (STUDENT)
 app.get('/api/hackathons/:id/my-registration', requireAuth, async (req, res) => {
     try {
         const registration = await Registration.findOne({
@@ -2037,7 +2037,7 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin'])
         const hackathon = await Hackathon.findOne({ id: team.hackathonId });
         if (hackathon) {
             if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
-                return res.status(403).json({ message: "Submissions for this tournament are officially closed." });
+                return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
             }
             if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
                 return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
@@ -2133,7 +2133,7 @@ app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admi
                 userId: uid,
                 type: 'team_updated',
                 title: 'Squad Reinstated',
-                message: `Your squad "${team.name}" has been restored to active tournament standing.`,
+                message: `Your squad "${team.name}" has been restored to active hackathon standing.`,
                 referenceType: 'team',
                 referenceId: team.id,
                 isRead: false
@@ -2169,7 +2169,7 @@ app.post('/api/admin/teams/:id/ban', requireAuth, requireRole(['admin']), async 
                     id: 'notif-' + Date.now().toString() + '-' + Math.random().toString(36).substring(2, 7),
                     userId: uid,
                     type: 'team_disqualified',
-                    title: 'Squad Banned from Tournament',
+                    title: 'Squad Banned from Hackathon',
                     message: `Your squad "${team.name}" was BANNED by administration. Reason: ${reason.trim()}`,
                     referenceType: 'team',
                     referenceId: team.id,
@@ -2605,7 +2605,7 @@ app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, 
         const hackathon = await Hackathon.findOne({ id: team.hackathonId });
         if (hackathon) {
             if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
-                return res.status(403).json({ message: "Submissions for this tournament are officially closed." });
+                return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
             }
             if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
                 return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });

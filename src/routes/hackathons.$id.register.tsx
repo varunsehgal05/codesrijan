@@ -74,7 +74,7 @@ function HackathonRegistrationPage() {
 
             setSuccess(true);
             if (isPaid) {
-                toast.success("Tournament enrollment recorded. Proceeding to payment clearance...");
+                toast.success("Hackathon enrollment recorded. Proceeding to payment clearance...");
                 setTimeout(() => {
                     navigate({ to: '/payment', search: { hackathonId: id } as any });
                 }, 1500);
@@ -124,7 +124,7 @@ function HackathonRegistrationPage() {
                     Hackathon Enrollment
                 </h1>
                 <p className="text-electric-blue mb-4 font-mono text-xs uppercase tracking-widest border-b border-zinc-800/80 pb-3 flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm">flag</span> TARGET TOURNAMENT: {hackathon?.name || id}
+                    <span className="material-symbols-outlined text-sm">flag</span> TARGET HACKATHON: {hackathon?.name || id}
                 </p>
 
                 {/* Squad Roster Notice (Allows 1+ operatives) */}
@@ -148,7 +148,7 @@ function HackathonRegistrationPage() {
                 {isPaid && (
                     <div className="bg-amber-500/10 border-2 border-amber-500/80 p-3.5 mb-5 text-xs text-amber-300">
                         <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-amber-400">
-                            <span className="material-symbols-outlined text-sm">payments</span> Paid Tournament Notice
+                            <span className="material-symbols-outlined text-sm">payments</span> Paid Hackathon Notice
                         </div>
                         Entry fee: ₹{hackathon?.fee} ({hackathon?.feeBasis?.replace(/_/g, ' ')}). Registration will lock your squad roster and require payment receipt verification.
                     </div>

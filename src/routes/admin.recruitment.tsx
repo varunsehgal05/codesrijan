@@ -63,7 +63,7 @@ function AdminRecruitment() {
   };
 
   const handleUndoDisqualify = async (teamId: string, teamName: string) => {
-    if (!window.confirm(`Restore squad "${teamName}" to active tournament standing?`)) return;
+    if (!window.confirm(`Restore squad "${teamName}" to active hackathon standing?`)) return;
 
     try {
       setActionLoadingId(teamId);
@@ -81,7 +81,7 @@ function AdminRecruitment() {
   };
 
   const handleBanTeam = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`CRITICAL: Enter permanent tournament BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
+    const reason = window.prompt(`CRITICAL: Enter permanent hackathon BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
     if (!reason || !reason.trim()) return;
 
     try {
@@ -118,7 +118,7 @@ function AdminRecruitment() {
             RECRUITMENT & SQUAD GOVERNANCE
           </h2>
           <p className="font-code-snippet text-on-surface-variant mt-2 font-bold tracking-widest text-sm uppercase">
-            Tournament Roster, Hackathon Allotment & Disciplinary Controls
+            Hackathon Roster, Hackathon Allotment & Disciplinary Controls
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -159,7 +159,7 @@ function AdminRecruitment() {
         {/* Hackathon Filter */}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-label-bold uppercase whitespace-nowrap">Tournament:</span>
+            <span className="text-xs font-label-bold uppercase whitespace-nowrap">Hackathon:</span>
             <select
               value={hackathonFilter}
               onChange={e => setHackathonFilter(e.target.value)}
@@ -206,7 +206,7 @@ function AdminRecruitment() {
             <span className="material-symbols-outlined text-5xl text-zinc-300">group_off</span>
             <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS MATCH CRITERIA</h3>
             <p className="font-code-snippet text-xs text-on-surface-variant max-w-sm mx-auto uppercase">
-              No squads found matching your search term or tournament filter.
+              No squads found matching your search term or hackathon filter.
             </p>
           </div>
         ) : (

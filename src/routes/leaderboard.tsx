@@ -8,7 +8,7 @@ export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
   head: () => ({
     meta: [
-      { title: "Live Leaderboard & Tournament Standings | CodeSrijan" },
+      { title: "Live Leaderboard & Hackathon Standings | CodeSrijan" },
     ],
   }),
 });
@@ -127,7 +127,7 @@ function LeaderboardPage() {
                 GLOBAL LEADERBOARD
               </h1>
               <p className="font-code-snippet text-on-surface-variant uppercase tracking-widest text-xs">
-                Tournament Standings & Evaluation Matrix — Scored across judge rubrics, operational bonuses, and penalty infractions.
+                Hackathon Standings & Evaluation Matrix — Scored across judge rubrics, operational bonuses, and penalty infractions.
               </p>
             </div>
             <div className="bg-stark-black text-pure-white px-4 py-2 font-mono text-xs font-bold border-2 border-stark-black flex items-center gap-2">
@@ -141,7 +141,7 @@ function LeaderboardPage() {
         <div className="bg-pure-white p-4 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3">
           <div className="flex items-center gap-2 text-xs font-label-bold uppercase tracking-widest text-on-surface-variant">
             <span className="material-symbols-outlined text-[18px]">trophy</span>
-            <span>Select Hosted Tournament / Hackathon:</span>
+            <span>Select Hosted Hackathon / Hackathon:</span>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -152,7 +152,7 @@ function LeaderboardPage() {
                   : "bg-surface-container text-stark-black border-stark-black hover:bg-zinc-100"
               }`}
             >
-              ★ ALL TOURNAMENTS
+              ★ ALL HACKATHONS
             </button>
             {genuineHackathons.map(h => {
               const isSelected = selectedHackathonId === h.id;
@@ -175,7 +175,7 @@ function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Tournament Info Banner if specific hackathon selected */}
+        {/* Hackathon Info Banner if specific hackathon selected */}
         {activeHackathonObj && (
           <div className="bg-pure-white p-6 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
@@ -213,9 +213,9 @@ function LeaderboardPage() {
         ) : displayedTeams.length === 0 ? (
           <div className="bg-pure-white p-16 border-4 border-stark-black text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4">
             <span className="material-symbols-outlined text-5xl text-zinc-300">group_off</span>
-            <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS ENROLLED IN THIS TOURNAMENT YET</h3>
+            <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS ENROLLED IN THIS HACKATHON YET</h3>
             <p className="font-code-snippet text-xs text-on-surface-variant max-w-md mx-auto uppercase">
-              Registration is active. Form or recruit your squad in the Recruitment Matrix to enter the tournament arena.
+              Registration is active. Form or recruit your squad in the Recruitment Matrix to enter the hackathon arena.
             </p>
             <div className="pt-2">
               <Link

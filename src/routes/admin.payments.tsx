@@ -287,7 +287,7 @@ function AdminPaymentsPage() {
                         PAYMENT REVIEW QUEUE
                     </h1>
                     <p className="text-zinc-600 font-semibold text-sm mt-1">
-                        Cryptographic audit terminal for tournament entry fee verification &amp; UTR tracking.
+                        Cryptographic audit terminal for hackathon entry fee verification &amp; UTR tracking.
                     </p>
                 </div>
                 <button
@@ -409,7 +409,7 @@ function AdminPaymentsPage() {
                 <div className="p-12 text-center border-4 border-dashed border-zinc-800 bg-zinc-950 space-y-3">
                     <span className="material-symbols-outlined text-zinc-500 text-5xl">search_off</span>
                     <p className="text-white uppercase text-sm font-black tracking-wide">No payment records match "{searchQuery}"</p>
-                    <p className="text-zinc-400 text-xs">Search scans across transaction UTRs, squad names, operative IDs, tournaments, and squad members.</p>
+                    <p className="text-zinc-400 text-xs">Search scans across transaction UTRs, squad names, operative IDs, hackathons, and squad members.</p>
                     <button
                         onClick={() => setSearchQuery("")}
                         className="inline-block mt-2 px-4 py-2 bg-electric-blue text-white text-xs font-bold uppercase brutal-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:bg-stark-black transition-all"
@@ -432,7 +432,7 @@ function AdminPaymentsPage() {
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-electric-blue mt-1 uppercase tracking-wider">Tournament: {reg.hackathonName || reg.hackathonId}</p>
+                                    <p className="text-xs text-electric-blue mt-1 uppercase tracking-wider">Hackathon: {reg.hackathonName || reg.hackathonId}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <span className={`px-3 py-1 text-xs font-black uppercase tracking-wider border-2 ${
@@ -855,7 +855,7 @@ function AdminPaymentsPage() {
                                     {/* Voucher Grid */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono">
                                         <div className="bg-zinc-900/80 p-3 border border-zinc-800 space-y-1">
-                                            <span className="text-zinc-500 uppercase text-[10px] block">Tournament Arena</span>
+                                            <span className="text-zinc-500 uppercase text-[10px] block">Hackathon Arena</span>
                                             <span className="text-white font-bold block truncate">{activeReceipt.reg.hackathonName || activeReceipt.reg.hackathonId}</span>
                                         </div>
 

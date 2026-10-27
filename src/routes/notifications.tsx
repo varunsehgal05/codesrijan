@@ -211,7 +211,7 @@ export function NotificationCenterComponent() {
                                 )}
                             </div>
                             <p className="text-zinc-600 text-xs font-bold uppercase">
-                                Real-time dispatch ledger for tournament clearances, squad transmissions &amp; audit decisions.
+                                Real-time dispatch ledger for hackathon clearances, squad transmissions &amp; audit decisions.
                             </p>
                         </div>
 
