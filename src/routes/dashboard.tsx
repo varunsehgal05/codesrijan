@@ -126,10 +126,10 @@ function DashboardPage() {
         <div className="min-h-screen bg-background text-on-background flex flex-col">
             <main className="flex-grow max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 space-y-12 w-full">
 
-                {/* Welcome & Timer Section */}
-                <section className="flex flex-col md:flex-row justify-between gap-8 items-end border-b-4 border-ink-black pb-8">
+                {/* Welcome Header */}
+                <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-ink-black pb-6">
                     <div>
-                        <p className="font-label-caps text-surface-variant mb-2">Welcome Back,</p>
+                        <p className="font-label-caps text-surface-variant mb-1">Welcome Back,</p>
                         <h1 className="font-display-lg text-headline-lg uppercase text-ink-black">{currentUser.name}</h1>
                         <div className="flex items-center gap-3 sm:gap-4 mt-2 flex-wrap">
                             <p className="font-body-md flex items-center gap-2">
@@ -152,9 +152,10 @@ function DashboardPage() {
                             </button>
                         </div>
                     </div>
-
-                    <SubmissionCountdown targetEvent={activeEvent} />
                 </section>
+
+                {/* Horizontal Hackathon Countdown Clock HUD Banner */}
+                <SubmissionCountdown targetEvent={activeEvent} className="w-full" />
 
                 {/* Feature 6: Operative Mission Readiness Checklist */}
                 {currentUser.role === 'student' && (() => {
