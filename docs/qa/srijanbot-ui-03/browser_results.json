@@ -1,0 +1,56 @@
+{
+  "executionId": "SRIJANBOT-UI-03",
+  "timestamp": "2026-10-28T00:34:02.652Z",
+  "steps": [
+    {
+      "name": "Homepage Launcher",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\01_homepage_launcher.png"
+    },
+    {
+      "name": "Floating Chat Opened & Minimized",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\02_floating_chat_opened.png"
+    },
+    {
+      "name": "Floating Chat Response & Button",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\03_floating_chat_response.png"
+    },
+    {
+      "name": "Navigation to /hackathons",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\04_nav_button_clicked_hackathons.png"
+    },
+    {
+      "name": "Mobile Viewport Chat",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\05_mobile_viewport_chat.png"
+    },
+    {
+      "name": "Dedicated AI Assistant Page",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\06_dedicated_ai_assistant_page.png"
+    },
+    {
+      "name": "Dedicated Assistant Conversation",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\07_dedicated_assistant_conversation.png"
+    },
+    {
+      "name": "Navigation to /recruitment",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\08_nav_recruitment_clicked.png"
+    },
+    {
+      "name": "Fallback Schedule Verification",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\09_failure_fallback_state.png"
+    },
+    {
+      "name": "Live Production Chat (Vercel)",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\docs\\qa\\srijanbot-ui-03\\10_live_production_chat.png"
+    }
+  ]
+}
