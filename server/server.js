@@ -3187,7 +3187,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
 });
 
 // SRIJANBOT CONTEXT-AWARE AI CHAT ENGINE
-app.post('/api/ai/chat', handleAIChat);
+app.post('/api/ai/chat', (req, res) => handleAIChat(req, res));
 
 // --- EPIC 4: SQUAD WORKSPACE KANBAN ---
 app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {

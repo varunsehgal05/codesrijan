@@ -383,6 +383,7 @@ export function checkActionLimitations(message = "", ctx) {
  * Intelligent Heuristic Fallback Engine across all 32 categories.
  */
 export async function handleAIFallback(req, res, precomputedCtx = null) {
+    if (res.headersSent) return;
     try {
         const { message } = req.body || {};
         const lowerMsg = (message || "").toLowerCase().trim();
@@ -817,9 +818,11 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
 
     } catch (e) {
         console.error('[SRIJANBOT FALLBACK ERROR]', e);
-        return res.status(200).json({
-            reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
-        });
+        if (!res.headersSent) {
+            return res.status(200).json({
+                reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
+            });
+        }
     }
 }
 
@@ -895,7 +898,8 @@ Using ONLY real routes from the Site Map.
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-        const fetchFn = customFetch || fetch;
+        const isCustomFetch = typeof customFetch === 'function' && customFetch.name !== 'next';
+        const fetchFn = isCustomFetch ? customFetch : fetch;
 
         try {
             const response = await fetchFn("https://api.groq.com/openai/v1/chat/completions", {
@@ -905,7 +909,7 @@ Using ONLY real routes from the Site Map.
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: process.env.GROQ_MODEL || "llama3-8b-8192",
+                    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
                     messages: [
                         { role: "system", content: systemPrompt },
                         { role: "user", content: message }
@@ -918,9 +922,9 @@ Using ONLY real routes from the Site Map.
 
             clearTimeout(timeoutId);
 
-            if (!response.ok) {
-                const errText = await response.text();
-                console.warn(`[SRIJANBOT GROQ FALLBACK] Status ${response.status}: ${errText}`);
+            if (!response || !response.ok) {
+                const errText = response ? await response.text() : 'No response object';
+                console.warn(`[SRIJANBOT GROQ FALLBACK] Status ${response?.status || 'UNKNOWN'}: ${errText}`);
                 return handleAIFallback(req, res, ctx);
             }
 
@@ -930,15 +934,21 @@ Using ONLY real routes from the Site Map.
                 return handleAIFallback(req, res, ctx);
             }
 
-            return res.json({ reply });
+            if (!res.headersSent) {
+                return res.json({ reply });
+            }
         } catch (fetchErr) {
             clearTimeout(timeoutId);
             console.warn(`[SRIJANBOT FETCH FAILURE] ${fetchErr.name || 'Error'}: ${fetchErr.message}. Routing to fallback.`);
-            return handleAIFallback(req, res, ctx);
+            if (!res.headersSent) {
+                return handleAIFallback(req, res, ctx);
+            }
         }
 
     } catch (e) {
         console.error("[SRIJANBOT CHAT ERROR]", e.message);
-        return handleAIFallback(req, res);
+        if (!res.headersSent) {
+            return handleAIFallback(req, res);
+        }
     }
 }
