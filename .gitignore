@@ -56,6 +56,7 @@ server/*.tmp
 !server/test_admin_health_and_ops.mjs
 !server/test_countdown_and_deadline.mjs
 !server/test_srijanbot_qa.mjs
+!server/test_srijanbot_provider_failures.mjs
 *.png
 platform-screenshots/
 test-results/

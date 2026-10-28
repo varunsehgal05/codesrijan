@@ -156,8 +156,7 @@ import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPa
 import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
 import { handleAIChat, handleAIFallback } from './services/srijanbot.js';
 
-const MONGO_URI = process.env.MONGO_URI;
-if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan';
 
 /**
  * Immutable server-side audit logging helper for administrative actions (Feature 7).

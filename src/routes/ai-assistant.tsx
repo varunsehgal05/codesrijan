@@ -1,6 +1,7 @@
 import { createFileRoute, useLocation, Link } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import { parseSrijanBotMessageNodes } from "../lib/srijanbot-nav";
 import axios from "axios";
 
 export const Route = createFileRoute("/ai-assistant")({
@@ -46,12 +47,7 @@ function AIAssistantPage() {
 
         try {
             const contextPayload = {
-                path: location.pathname,
-                role: currentUser?.role || 'guest',
-                email: currentUser?.email,
-                name: currentUser?.name,
-                teamId: currentUser?.teamId,
-                userId: currentUser?.id
+                path: location.pathname
             };
 
             const token = localStorage.getItem("codesrijan_auth_token");
@@ -79,64 +75,7 @@ function AIAssistantPage() {
     };
 
     const parseMessageNodes = (text: string) => {
-        const buttonRegex = /\[(.*?)\]/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-
-        while ((match = buttonRegex.exec(text)) !== null) {
-            if (match.index > lastIndex) {
-                parts.push(
-                    <span key={lastIndex} className="whitespace-pre-wrap">
-                        {text.substring(lastIndex, match.index)}
-                    </span>
-                );
-            }
-
-            const rawText = match[1] || "";
-            let buttonText = rawText;
-            let targetPath = "/dashboard";
-
-            if (rawText.includes("->")) {
-                const split = rawText.split("->");
-                buttonText = (split[0] || "").trim();
-                targetPath = (split[1] || "/dashboard").trim();
-            } else {
-                if (buttonText.includes("Support")) targetPath = "/support";
-                else if (buttonText.includes("Workspace") || buttonText.includes("Submission")) targetPath = "/workspace";
-                else if (buttonText.includes("Recruitment") || buttonText.includes("Squad")) targetPath = "/recruitment";
-                else if (buttonText.includes("Dashboard")) targetPath = "/dashboard";
-                else if (buttonText.includes("Hackathon")) targetPath = "/hackathons";
-                else if (buttonText.includes("Timeline")) targetPath = "/timeline";
-                else if (buttonText.includes("Problems")) targetPath = "/problems";
-                else if (buttonText.includes("Leaderboard")) targetPath = "/leaderboard";
-                else if (buttonText.includes("Certificates")) targetPath = "/certificates";
-                else if (buttonText.includes("Payment")) targetPath = "/payment";
-            }
-
-            parts.push(
-                <div key={match.index} className="mt-3 pt-2 border-t-2 border-ink-black/20">
-                    <Link
-                        to={targetPath}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-electric-blue text-on-primary font-label-bold text-sm uppercase brutal-border brutal-shadow brutal-hover brutal-active transition-all cursor-pointer"
-                    >
-                        <span>{buttonText}</span>
-                        <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                    </Link>
-                </div>
-            );
-            lastIndex = buttonRegex.lastIndex;
-        }
-
-        if (lastIndex < text.length) {
-            parts.push(
-                <span key={lastIndex} className="whitespace-pre-wrap">
-                    {text.substring(lastIndex)}
-                </span>
-            );
-        }
-
-        return parts.length > 0 ? parts : text;
+        return parseSrijanBotMessageNodes(text);
     };
 
     return (

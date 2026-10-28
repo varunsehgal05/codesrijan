@@ -715,6 +715,8 @@ async function runSrijanBotTestSuite() {
 
     for (const tc of testCases) {
         const req = {
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' },
             body: {
                 message: tc.message,
                 context: {

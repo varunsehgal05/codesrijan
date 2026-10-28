@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
+import { parseSrijanBotMessageNodes } from "../lib/srijanbot-nav";
 import axios from "axios";
 
 export function ChatBotWidget() {
@@ -34,12 +35,7 @@ export function ChatBotWidget() {
             const payload = {
                 message: messageText,
                 context: {
-                    path: routerState.location.pathname,
-                    role: currentUser?.role || 'guest',
-                    name: currentUser?.name,
-                    email: currentUser?.email,
-                    teamId: currentUser?.teamId,
-                    userId: currentUser?.id
+                    path: routerState.location.pathname
                 }
             };
 
@@ -95,49 +91,10 @@ export function ChatBotWidget() {
     };
 
     const parseMessageNodes = (text: string) => {
-        // Find things like [Open Submission -> /workspace] and turn them into Action Buttons
-        const buttonRegex = /\[(.*?)\]/g;
-        const parts = [];
-        let lastIndex = 0;
-        let match;
-
-        while ((match = buttonRegex.exec(text)) !== null) {
-            // Push text before the match
-            if (match.index > lastIndex) {
-                parts.push(<span key={lastIndex}>{text.substring(lastIndex, match.index)}</span>);
-            }
-
-            const rawText = match[1] || "";
-            let buttonText = rawText;
-            let targetPath = "/";
-
-            if (rawText.includes("->")) {
-                const split = rawText.split("->");
-                buttonText = (split[0] || "").trim();
-                targetPath = (split[1] || "/").trim();
-            } else {
-                // Fallback Action Router for old static links
-                if (buttonText.includes("Support")) targetPath = "/support";
-                if (buttonText.includes("Submission") || buttonText.includes("My Team") || buttonText.includes("Workspace")) targetPath = "/workspace";
-                if (buttonText.includes("Find a Squad") || buttonText.includes("Create Team")) targetPath = "/recruitment";
-                if (buttonText.includes("Dashboard")) targetPath = "/admin";
-                if (buttonText.includes("Evaluations")) targetPath = "/evaluations";
-                if (buttonText.includes("Schedule")) targetPath = "/about";
-            }
-
-            parts.push(
-                <Link key={match.index} to={targetPath} className="mt-2 block w-full text-center bg-electric-blue text-on-primary py-2 font-button-text text-button-text brutal-hover brutal-border">
-                    {buttonText} {buttonText.includes("Open") && <span className="material-symbols-outlined text-[14px]">arrow_forward</span>}
-                </Link>
-            );
-            lastIndex = buttonRegex.lastIndex;
-        }
-
-        if (lastIndex < text.length) {
-            parts.push(<span key={lastIndex}>{text.substring(lastIndex)}</span>);
-        }
-
-        return parts;
+        return parseSrijanBotMessageNodes(text, {
+            buttonClassName: "mt-2 block w-full text-center bg-electric-blue text-on-primary py-2 font-button-text text-button-text brutal-hover brutal-border flex items-center justify-center gap-1.5 cursor-pointer",
+            containerClassName: "mt-2"
+        });
     };
 
     const generateQuickSuggestions = () => {
