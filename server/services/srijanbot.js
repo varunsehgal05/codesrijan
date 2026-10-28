@@ -379,34 +379,49 @@ export function checkActionLimitations(message = "", ctx) {
     return { isLimited: false };
 }
 
+
+export const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
+export const FALLBACK_GROQ_MODEL = "llama-3.1-8b-instant";
+
+export function getEffectiveGroqModel() {
+    const configured = process.env.GROQ_MODEL?.trim();
+    if (configured) {
+        if (configured === 'llama3-8b-8192' || configured === 'llama3-70b-8192') {
+            console.warn(`[SRIJANBOT MODEL CONFIG] Obsolete/decommissioned model "${configured}" detected in GROQ_MODEL. Automatically overriding to "${DEFAULT_GROQ_MODEL}".`);
+            return DEFAULT_GROQ_MODEL;
+        }
+        return configured;
+    }
+    return DEFAULT_GROQ_MODEL;
+}
+
 /**
- * Intelligent Heuristic Fallback Engine across all 32 categories.
+ * Intelligent Heuristic Fallback Generator (Pure data calculation, decoupled from HTTP transmission).
  */
-export async function handleAIFallback(req, res, precomputedCtx = null) {
-    if (res.headersSent) return;
+export async function computeAIFallback(req, precomputedCtx = null) {
     try {
-        const { message } = req.body || {};
+        const message = (typeof req === 'string') 
+            ? req 
+            : (req?.body?.message || req?.message || "");
         const lowerMsg = (message || "").toLowerCase().trim();
         const ctx = precomputedCtx || await getPlatformContext(req);
 
         // 1. Check Security & Boundaries First
         const sec = checkAdversarialSecurity(lowerMsg, ctx);
         if (sec.isBlocked) {
-            return res.json({ reply: sec.reply });
+            return { reply: sec.reply };
         }
 
         // 2. Check Bot Limitations
         const limit = checkActionLimitations(lowerMsg, ctx);
         if (limit.isLimited) {
-            return res.json({ reply: limit.reply });
+            return { reply: limit.reply };
         }
 
         // 3. Check Database Outage Condition
         if (ctx.dbUnavailable) {
             if (/registration|payment|submission|deadline|when|workspace|team|squad|score/i.test(lowerMsg)) {
-                return res.json({
-                    reply: "SYSTEM NOTICE: Live platform database records are currently unreachable. Your current registration, squad, or deadline status could not be verified from the database. Please try again in a few moments or open a support ticket: [Open Support Desk -> /support]"
-                });
+                return { reply: "SYSTEM NOTICE: Live platform database records are currently unreachable. Your current registration, squad, or deadline status could not be verified from the database. Please try again in a few moments or open a support ticket: [Open Support Desk -> /support]" };
             }
         }
 
@@ -443,7 +458,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
                     reply = "Greetings Administrator. Telemetry is online. You can manage users, squads, and events in the Admin Command Center. [Admin Dashboard -> /admin]";
                 }
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 2: Role Inquiries (Cat 20)
@@ -465,7 +480,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "You are currently exploring CodeSrijan as an unauthenticated GUEST. Please log in or register to join hackathons, form squads, and submit projects. [Log In -> /login]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 3: Judge & Mentor (Cat 22 & 23)
@@ -475,7 +490,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Evaluation scoring is performed against 4 criteria: Innovation (25%), Technical Execution (25%), Design & Usability (25%), and Practical Impact (25%). Final scores are published on the Leaderboard. [View Leaderboard -> /leaderboard]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         if (/mentor (dashboard|requests)|which teams am i assigned|guidance to a team/i.test(lowerMsg)) {
@@ -484,7 +499,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Squads can request mentor guidance inside the team communications sector. [Open Team Chat -> /chat]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 4: Project Submissions & Workspace (Cat 8)
@@ -518,7 +533,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = `Workspace unlocked for squad "${ctx.team.name}". To submit, navigate to Workspace Kanban, fill in your public GitHub repository URL, live demo URL, and click "Deliver Payload". [Open Workspace -> /workspace]`;
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 5: Countdown, Deadlines & Timings (Cat 9 & 28)
@@ -559,13 +574,13 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Official hackathon timeline and submission deadlines are posted on the live schedule. All platform events operate on Indian Standard Time (IST). [View Official Timeline -> /timeline]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 6: Team Chat & Comms (Cat 17) - Before generic team!
         if (/chat/i.test(lowerMsg) || /message/i.test(lowerMsg) || /communication/i.test(lowerMsg)) {
             reply = "Collaborate with squad operatives in the real-time encrypted Team Chat room. [Open Team Chat -> /chat]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 7: Problem Statements & Tracks (Cat 10)
@@ -578,7 +593,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             /judging criteria for a track/i.test(lowerMsg)
         ) {
             reply = "Problem statements across tracks (AI/ML, Web3, FinTech, HealthTech, CyberSecurity) are listed in the Problem Hub. Classified statements reveal automatically at kickoff. [Browse Problem Statements -> /problems]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 8: Payments & Registration Fees (Cat 13)
@@ -613,19 +628,19 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = `Current Hackathon: "${activeH?.name || 'CodeSrijan Hackathon'}". Entry Fee: ${feeText}. For paid events, scan the official QR code, complete payment via UPI, and submit your 12-digit UTR number with screenshot. Free hackathons require no payment. [Open Payment Portal -> /payment]`;
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 9: Certificates (Cat 14)
         if (/certificate/i.test(lowerMsg) || /cerificate/i.test(lowerMsg) || /hash/i.test(lowerMsg) || /achievements/i.test(lowerMsg)) {
             reply = "Official certificates featuring cryptographic verification hashes are awarded to participants upon hackathon completion. You can download and verify them online. [View Certificates -> /certificates]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 10: Leaderboard & Rankings (Cat 15)
         if (/leaderboard/i.test(lowerMsg) || /ranking/i.test(lowerMsg) || /show my rank/i.test(lowerMsg) || /who is leading/i.test(lowerMsg)) {
             reply = "Live leaderboard standings and evaluated project scores are available in the Leaderboard sector. Final rankings publish once all evaluations conclude. [View Leaderboard -> /leaderboard]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 11: Privacy, Security & Trust (Cat 24)
@@ -642,18 +657,18 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             /conduct/i.test(lowerMsg) ||
             /rules/i.test(lowerMsg)
         ) {
-            if (/conduct/i.test(lowerMsg)) {
-                reply = "CodeSrijan enforces a strict Code of Conduct promoting respect, integrity, and anti-harassment. [View Code of Conduct -> /code-of-conduct]";
+            if (/conduct|rules/i.test(lowerMsg)) {
+                reply = "CodeSrijan enforces a strict Code of Conduct and official Hackathon Rules promoting respect, integrity, fairness, and anti-harassment. [View Code of Conduct -> /code-of-conduct]";
             } else {
                 reply = "Participant privacy is strictly protected. User email addresses and unsubmitted project repositories remain private. You can review full terms in our Privacy Policy. [View Privacy Policy -> /privacy-policy]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 12: Notifications & Announcements (Cat 16)
         if (/notification/i.test(lowerMsg) || /announcement/i.test(lowerMsg) || /updates/i.test(lowerMsg)) {
             reply = "Stay tuned with real-time schedule updates, mentor announcements, and event alerts in the Notifications and Announcements stream. [View Announcements -> /announcements]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 13: Support & Troubleshooting (Cat 18)
@@ -668,7 +683,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             /asap/i.test(lowerMsg)
         ) {
             reply = "Need help or experiencing a technical glitch? You can open an official support ticket and our engineering team will assist you. [Create Support Ticket -> /support]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 14: Auth, Login, Password & OTP (Cat 2)
@@ -692,7 +707,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Log in with your verified email and password. If you experience session timeouts, clear browser cache and sign in again. [Log In -> /login]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 15: Dashboard & Profile (Cat 7)
@@ -709,7 +724,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Your Mission Dashboard displays active hackathon status, countdown timers, squad readiness, and action alerts. [Open Dashboard -> /dashboard]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 16: Finding Teammates & Solo Matching (Cat 6)
@@ -722,7 +737,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             /participate alone/i.test(lowerMsg)
         ) {
             reply = "Solo participants and squads can find teammates or browse builder profiles in the Recruitment Marketplace. You can filter candidates by technical skills (React, Python, UI/UX, AI/ML). [Find Teammates -> /recruitment]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 17: Squad Limits & General Squad Information (Cat 5)
@@ -732,7 +747,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             /member limit/i.test(lowerMsg)
         ) {
             reply = `A squad on CodeSrijan can have between 1 and 4 builders. ${ctx.team ? `Your squad "${ctx.team.name}" currently has ${ctx.teamMemberCount}/4 members.` : "You can assemble your squad in the Recruitment Marketplace."} [Open Team Sector -> /team]`;
-            return res.json({ reply });
+            return { reply };
         }
 
         if (
@@ -748,7 +763,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Solo participants can find teammates or create a squad of up to 4 builders in the Recruitment Marketplace. You can filter candidates by skills (React, Python, UI/UX, AI/ML). [Find Teammates -> /recruitment]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 18: Hackathons Catalog & Registration (Cat 3 & 4)
@@ -770,7 +785,7 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             } else {
                 reply = "Explore all available hackathons and register your squad in the Hackathons Catalog. [Explore Hackathons -> /hackathons]";
             }
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 19: Navigation Shortcuts (Cat 19)
@@ -788,13 +803,13 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             else if (/announcement/i.test(lowerMsg)) reply = "Navigating to Announcements. [Open Announcements -> /announcements]";
             else if (/payment/i.test(lowerMsg)) reply = "Navigating to Payment Portal. [Open Payment -> /payment]";
             else reply = "Navigating to Mission Dashboard. [Open Dashboard -> /dashboard]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 20: Ideation & Tech Stack Suggestions (Cat 11)
         if (/project idea|ai project|tech stack|react or|python|architecture|mvp|suggest/i.test(lowerMsg)) {
             reply = "For 24h/48h hackathons, focus on a high-impact MVP: a clean frontend (React + Tailwind), a fast backend (Node.js/Python FastAPI), and 1-2 core killer features rather than sprawling scope. You can coordinate your architecture in your Workspace. [Open Workspace -> /workspace]";
-            return res.json({ reply });
+            return { reply };
         }
 
         // PRIORITY 21: Ambiguous Clarification (Cat 28)
@@ -802,59 +817,99 @@ export async function handleAIFallback(req, res, precomputedCtx = null) {
             if (ctx.hackathons && ctx.hackathons.length > 1 && !ctx.registration) {
                 const names = ctx.hackathons.slice(0, 3).map(h => `"${h.name}"`).join(', ');
                 reply = `Multiple hackathons are currently running on CodeSrijan (${names}). Which event do you mean? You can view all dates in the schedule. [View Official Timeline -> /timeline]`;
-                return res.json({ reply });
+                return { reply };
             }
         }
 
         // PRIORITY 22: Greetings (Cat 1)
         if (/^(hi|hello|hey|greetings|hola)/i.test(lowerMsg)) {
             reply = `Greetings ${ctx.name || 'Operative'}! I am SrijanBot, your official CodeSrijan Hackathon Copilot. I can guide your squad formation, project submissions, live schedules, and platform navigation. What would you like to build? [Explore Hackathons -> /hackathons]`;
-            return res.json({ reply });
+            return { reply };
         }
 
         // General Fallback
         reply = `I am SrijanBot, your CodeSrijan guide. You can explore active events [Explore Hackathons -> /hackathons], assemble your squad [Recruitment -> /recruitment], or submit a support inquiry [Help Desk -> /support].`;
-        return res.json({ reply });
+        return { reply };
 
-    } catch (e) {
-        console.error('[SRIJANBOT FALLBACK ERROR]', e);
-        if (!res.headersSent) {
-            return res.status(200).json({
-                reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
-            });
-        }
+        } catch (e) {
+        console.error('[SRIJANBOT COMPUTE FALLBACK ERROR]', e);
+        return {
+            reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
+        };
     }
 }
 
 /**
- * Main AI Chat Controller: Combines Verified Mongo Data + Groq LLaMA 3 + Heuristic Fallback
+ * Backwards-compatible HTTP Fallback Handler (Ensures single-response guarantee).
+ */
+export async function handleAIFallback(req, res, precomputedCtx = null) {
+    if (res && res.headersSent) return;
+    try {
+        const result = await computeAIFallback(req, precomputedCtx);
+        if (res && typeof res.json === 'function') {
+            if (!res.headersSent) {
+                return res.status(200).json(result);
+            }
+            return;
+        }
+        return result;
+    } catch (e) {
+        console.error('[SRIJANBOT FALLBACK ERROR]', e);
+        const safeFallback = {
+            reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
+        };
+        if (res && typeof res.json === 'function') {
+            if (!res.headersSent) {
+                return res.status(200).json(safeFallback);
+            }
+            return;
+        }
+        return safeFallback;
+    }
+}
+
+/**
+ * Main AI Chat Controller: Combines Verified Mongo Data + Groq LLaMA 3 / GPT-OSS-20B + Heuristic Fallback
+ * Single Response Architecture: Owns the HTTP response lifecycle and guarantees exactly one response.
  * Supports customFetch parameter for isolated dependency injection testing.
  */
 export async function handleAIChat(req, res, customFetch = null) {
+    let responseSent = false;
+    const sendResponse = (statusCode, payload) => {
+        if (responseSent) return;
+        responseSent = true;
+        if (!res || typeof res.status !== 'function') return payload;
+        if (res.headersSent) return;
+        return res.status(statusCode).json(payload);
+    };
+
     try {
-        const { message } = req.body || {};
+        if (res && res.headersSent) return;
+
+        const message = req?.body?.message;
         if (!message || typeof message !== 'string') {
-            return res.status(400).json({ message: "A message string is required." });
+            return sendResponse(400, { message: "A message string is required." });
         }
 
         // Step 1: Precompute live platform context from MongoDB
         const ctx = await getPlatformContext(req);
 
-        // Step 2: Instant Boundary & Security Checks (Guarantees 100% deterministic security before LLM)
+        // Step 2: Instant Boundary & Security Checks
         const sec = checkAdversarialSecurity(message, ctx);
         if (sec.isBlocked) {
-            return res.json({ reply: sec.reply });
+            return sendResponse(200, { reply: sec.reply });
         }
 
         const limit = checkActionLimitations(message, ctx);
         if (limit.isLimited) {
-            return res.json({ reply: limit.reply });
+            return sendResponse(200, { reply: limit.reply });
         }
 
         // Step 3: Check Groq API Key availability
         const groqApiKey = process.env.GROQ_API_KEY;
         if (!groqApiKey) {
-            return handleAIFallback(req, res, ctx);
+            const fallbackResult = await computeAIFallback(req, ctx);
+            return sendResponse(200, fallbackResult);
         }
 
         // Step 4: Build Grounded System Prompt with Verified Live Data
@@ -896,59 +951,118 @@ CRITICAL BEHAVIORAL RULES:
 Using ONLY real routes from the Site Map.
 6. TONE: Neo-Brutalist, direct, technical, cyber-hacker aesthetic, concise, helpful.`;
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
         const isCustomFetch = typeof customFetch === 'function' && customFetch.name !== 'next';
         const fetchFn = isCustomFetch ? customFetch : fetch;
+        const configuredModel = getEffectiveGroqModel();
 
-        try {
-            const response = await fetchFn("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${groqApiKey}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
-                    messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: message }
-                    ],
-                    temperature: 0.1,
-                    max_tokens: 500
-                }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (!response || !response.ok) {
-                const errText = response ? await response.text() : 'No response object';
-                console.warn(`[SRIJANBOT GROQ FALLBACK] Status ${response?.status || 'UNKNOWN'}: ${errText}`);
-                return handleAIFallback(req, res, ctx);
-            }
-
-            const data = await response.json();
-            let reply = data?.choices?.[0]?.message?.content || "";
-            if (!reply) {
-                return handleAIFallback(req, res, ctx);
-            }
-
-            if (!res.headersSent) {
-                return res.json({ reply });
-            }
-        } catch (fetchErr) {
-            clearTimeout(timeoutId);
-            console.warn(`[SRIJANBOT FETCH FAILURE] ${fetchErr.name || 'Error'}: ${fetchErr.message}. Routing to fallback.`);
-            if (!res.headersSent) {
-                return handleAIFallback(req, res, ctx);
+        async function executeGroqRequest(modelId) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+            try {
+                const resObj = await fetchFn("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${groqApiKey}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: modelId,
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: message }
+                        ],
+                        temperature: 0.1,
+                        max_tokens: 500
+                    }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return { response: resObj, error: null };
+            } catch (err) {
+                clearTimeout(timeoutId);
+                return { response: null, error: err };
             }
         }
 
+        // Attempt 1: Call configured/effective model
+        let { response, error } = await executeGroqRequest(configuredModel);
+
+        // Check if primary call produced network/fetch error
+        if (error) {
+            console.warn(`[SRIJANBOT FETCH FAILURE] ${error.name || 'Error'}: ${error.message}. Routing to fallback.`);
+            const fallbackResult = await computeAIFallback(req, ctx);
+            return sendResponse(200, fallbackResult);
+        }
+
+        // Validate response object structure safely before accessing any properties (Fix for TypeError: Cannot read properties of undefined reading 'ok')
+        if (!response || typeof response !== 'object') {
+            console.warn('[SRIJANBOT FETCH FAILURE] Response object is undefined or invalid. Routing to fallback.');
+            const fallbackResult = await computeAIFallback(req, ctx);
+            return sendResponse(200, fallbackResult);
+        }
+
+        // Safe boolean evaluation for .ok
+        const isOk = typeof response.ok === 'boolean' ? response.ok : (response.status >= 200 && response.status < 300);
+
+        // If not OK, check if model error warrants fallback to secondary model
+        if (!isOk) {
+            let errText = '';
+            try {
+                errText = typeof response.text === 'function' ? await response.text() : JSON.stringify(response);
+            } catch (_) {}
+
+            const isModelDecommissioned = response.status === 400 && errText.includes('model_decommissioned');
+            const isModelNotFound = response.status === 404 && errText.includes('model_not_found');
+
+            if ((isModelDecommissioned || isModelNotFound) && configuredModel !== FALLBACK_GROQ_MODEL) {
+                console.warn(`[SRIJANBOT MODEL FAILOVER] Model "${configuredModel}" returned status ${response.status} (${isModelDecommissioned ? 'decommissioned' : 'not found'}). Attempting backup model "${FALLBACK_GROQ_MODEL}"...`);
+                const retry = await executeGroqRequest(FALLBACK_GROQ_MODEL);
+                const retryOk = retry.response && (typeof retry.response.ok === 'boolean' ? retry.response.ok : (retry.response.status >= 200 && retry.response.status < 300));
+                if (!retry.error && retryOk) {
+                    response = retry.response;
+                } else {
+                    console.warn(`[SRIJANBOT GROQ FALLBACK] Backup model "${FALLBACK_GROQ_MODEL}" also failed. Routing to heuristic fallback.`);
+                    const fallbackResult = await computeAIFallback(req, ctx);
+                    return sendResponse(200, fallbackResult);
+                }
+            } else {
+                console.warn(`[SRIJANBOT GROQ FALLBACK] Status ${response.status || 'UNKNOWN'}: ${errText}`);
+                const fallbackResult = await computeAIFallback(req, ctx);
+                return sendResponse(200, fallbackResult);
+            }
+        }
+
+        // Safely parse JSON from response
+        let data = null;
+        try {
+            if (typeof response.json !== 'function') {
+                throw new TypeError('response.json is not a function');
+            }
+            data = await response.json();
+        } catch (jsonErr) {
+            console.warn(`[SRIJANBOT MALFORMED JSON] Failed to parse provider JSON: ${jsonErr.message}. Routing to fallback.`);
+            const fallbackResult = await computeAIFallback(req, ctx);
+            return sendResponse(200, fallbackResult);
+        }
+
+        const reply = data?.choices?.[0]?.message?.content;
+        if (!reply || typeof reply !== 'string' || !reply.trim()) {
+            console.warn('[SRIJANBOT EMPTY CHOICE] Provider returned empty choices or message. Routing to fallback.');
+            const fallbackResult = await computeAIFallback(req, ctx);
+            return sendResponse(200, fallbackResult);
+        }
+
+        return sendResponse(200, { reply: reply.trim() });
+
     } catch (e) {
         console.error("[SRIJANBOT CHAT ERROR]", e.message);
-        if (!res.headersSent) {
-            return handleAIFallback(req, res);
+        try {
+            const fallbackResult = await computeAIFallback(req);
+            return sendResponse(200, fallbackResult);
+        } catch (fallbackErr) {
+            return sendResponse(200, {
+                reply: "SYSTEM FAULT: SrijanBot neural link experienced a momentary disruption. You can open a ticket with the support desk. [Open Support Desk -> /support]"
+            });
         }
     }
 }

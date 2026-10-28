@@ -22,7 +22,7 @@ const update = async () => {
                     endDate: new Date(Date.now() + 86400000 * 5),
                 }
             },
-            { new: true }
+            { returnDocument: 'after' }
         );
         
         if (result) {

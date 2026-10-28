@@ -5,7 +5,7 @@ try {
     // ignore
 }
 import mongoose from 'mongoose';
-import { handleAIChat, handleAIFallback, getPlatformContext, VALID_ROUTES } from './services/srijanbot.js';
+import { handleAIChat, handleAIFallback, computeAIFallback, getPlatformContext, VALID_ROUTES, getEffectiveGroqModel, DEFAULT_GROQ_MODEL, FALLBACK_GROQ_MODEL } from './services/srijanbot.js';
 import { User, Team, Hackathon, Registration, Submission } from './models/index.js';
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan';
@@ -200,6 +200,194 @@ async function runFailureAndPrivacySuite() {
         const hasFallback = reply.includes("[Create Support Ticket -> /support]");
         return { pass: res.statusCode === 200 && hasFallback, details: reply };
     });
+
+    // 8. Provider HTTP 400 model_decommissioned Error
+    await assertTest("FAIL-SIM-08", "Provider HTTP 400 model_decommissioned", async () => {
+        const mockFetch = async () => ({
+            ok: false,
+            status: 400,
+            text: async () => JSON.stringify({
+                error: {
+                    message: "The model `llama3-8b-8192` has been decommissioned and is no longer available.",
+                    type: "invalid_request_error",
+                    code: "model_decommissioned"
+                }
+            })
+        });
+        const req = {
+            body: { message: "What are the rules of the hackathon?" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+        const res = createMockRes();
+        await handleAIChat(req, res, mockFetch);
+        const reply = res.body?.reply || "";
+        const hasFallback = reply.includes("/code-of-conduct") || reply.includes("Code of Conduct");
+        return { pass: res.statusCode === 200 && hasFallback, details: reply };
+    });
+
+    // 9. Undefined Response Object (Cannot read properties of undefined reading 'ok')
+    await assertTest("FAIL-SIM-09", "Undefined Response Object (no .ok dereference)", async () => {
+        const mockFetch = async () => undefined; // Provider returns undefined!
+        const req = {
+            body: { message: "When does the hackathon start?" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+        const res = createMockRes();
+        let threwTypeError = false;
+        try {
+            await handleAIChat(req, res, mockFetch);
+        } catch (err) {
+            if (err instanceof TypeError && err.message.includes("reading 'ok'")) {
+                threwTypeError = true;
+            }
+        }
+        const reply = res.body?.reply || "";
+        const handledSafely = !threwTypeError && res.statusCode === 200 && (reply.includes("/timeline") || reply.includes("/hackathons"));
+        return { pass: handledSafely, details: reply };
+    });
+
+    // 10. Malformed Response Object (Missing boolean ok property)
+    await assertTest("FAIL-SIM-10", "Malformed Response Object (missing boolean ok)", async () => {
+        const mockFetch = async () => ({
+            status: 502,
+            // .ok property completely missing!
+            text: async () => "Bad Gateway"
+        });
+        const req = {
+            body: { message: "Where can I view active hackathons?" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+        const res = createMockRes();
+        await handleAIChat(req, res, mockFetch);
+        const reply = res.body?.reply || "";
+        const hasFallback = reply.includes("[Explore Hackathons -> /hackathons]");
+        return { pass: res.statusCode === 200 && hasFallback, details: reply };
+    });
+
+    // 11. Empty Completion Text Content
+    await assertTest("FAIL-SIM-11", "Empty Completion Text Content", async () => {
+        const mockFetch = async () => ({
+            ok: true,
+            status: 200,
+            json: async () => ({
+                id: "chat-empty",
+                choices: [{ message: { content: "   " } }] // Whitespace only
+            })
+        });
+        const req = {
+            body: { message: "How do I join a team?" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+        const res = createMockRes();
+        await handleAIChat(req, res, mockFetch);
+        const reply = res.body?.reply || "";
+        const hasFallback = reply.includes("/recruitment") || reply.includes("Recruitment");
+        return { pass: res.statusCode === 200 && hasFallback, details: reply };
+    });
+
+    // 12. Single-Response Guarantee (Response Spy: Exactly one res.json call, 0 ERR_HTTP_HEADERS_SENT)
+    await assertTest("FAIL-SIM-12", "Single-Response Guarantee (Response Spy)", async () => {
+        let jsonCalls = 0;
+        let statusCalls = 0;
+        let headersSentAtEnd = false;
+        const spyRes = {
+            headersSent: false,
+            statusCode: 200,
+            body: null,
+            status(code) {
+                if (this.headersSent) throw new Error("ERR_HTTP_HEADERS_SENT: Cannot set headers after they are sent");
+                statusCalls++;
+                this.statusCode = code;
+                return this;
+            },
+            json(payload) {
+                if (this.headersSent) throw new Error("ERR_HTTP_HEADERS_SENT: Cannot set headers after they are sent");
+                jsonCalls++;
+                this.headersSent = true;
+                this.body = payload;
+                return this;
+            }
+        };
+
+        const mockFetch = async () => {
+            // Simulate error that triggers fallback
+            throw new Error("Network timeout simulation");
+        };
+
+        const req = {
+            body: { message: "Where is my dashboard?" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+
+        await handleAIChat(req, spyRes, mockFetch);
+        const isSingleResponse = jsonCalls === 1 && spyRes.headersSent === true && spyRes.statusCode === 200;
+        return { pass: isSingleResponse, details: `jsonCalls: ${jsonCalls}, statusCalls: ${statusCalls}, headersSent: ${spyRes.headersSent}` };
+    });
+
+    // 13. Automatic Model Failover (404/400 triggers backup model before fallback)
+    await assertTest("FAIL-SIM-13", "Model Failover from 404 to Backup Model", async () => {
+        const attemptedModels = [];
+        const mockFetch = async (url, options) => {
+            const body = JSON.parse(options.body);
+            attemptedModels.push(body.model);
+            if (body.model === DEFAULT_GROQ_MODEL) {
+                return {
+                    ok: false,
+                    status: 404,
+                    text: async () => JSON.stringify({ error: { message: "model_not_found" } })
+                };
+            }
+            if (body.model === FALLBACK_GROQ_MODEL) {
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        choices: [{ message: { content: "Greetings! I am answering via the backup model. [Explore Hackathons -> /hackathons]" } }]
+                    })
+                };
+            }
+            return { ok: false, status: 500 };
+        };
+
+        const req = {
+            body: { message: "Hello SrijanBot" },
+            _isTestRunner: true,
+            headers: { 'x-srijanbot-test': 'true' }
+        };
+        const res = createMockRes();
+        await handleAIChat(req, res, mockFetch);
+        const reply = res.body?.reply || "";
+        const attemptedBoth = attemptedModels.includes(DEFAULT_GROQ_MODEL) && attemptedModels.includes(FALLBACK_GROQ_MODEL);
+        const succeededWithBackup = reply.includes("backup model");
+        return { pass: attemptedBoth && succeededWithBackup, details: `Models attempted: ${attemptedModels.join(', ')}` };
+    });
+
+    // 14. Model Configuration & Decommissioned Model Sanitization
+    await assertTest("FAIL-SIM-14", "Model Sanitization overrides decommissioned llama3-8b-8192", async () => {
+        const prevEnv = process.env.GROQ_MODEL;
+        try {
+            // Simulate obsolete configuration in environment
+            process.env.GROQ_MODEL = "llama3-8b-8192";
+            const sanitizedModel = getEffectiveGroqModel();
+            const isSanitized = sanitizedModel === DEFAULT_GROQ_MODEL;
+
+            // Simulate explicit valid model
+            process.env.GROQ_MODEL = "llama-3.1-8b-instant";
+            const validModel = getEffectiveGroqModel();
+            const isKept = validModel === "llama-3.1-8b-instant";
+
+            return { pass: isSanitized && isKept, details: `llama3-8b-8192 -> ${sanitizedModel}, llama-3.1-8b-instant -> ${validModel}` };
+        } finally {
+            if (prevEnv) process.env.GROQ_MODEL = prevEnv;
+            else delete process.env.GROQ_MODEL;
+        }
+    });
+
 
     // -------------------------------------------------------------
     // PART B: DATABASE OUTAGE & RESILIENCE TESTS

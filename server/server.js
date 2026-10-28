@@ -315,7 +315,7 @@ const rotateVerification = async (userId, tokenHash) => {
         tokenHash, expiresAt: new Date(now.getTime() + 15 * 60000), lastResendAt: now,
         resendCount: freshWindow ? 1 : (current.resendCount || 0) + 1, resendWindowStartedAt: freshWindow ? now : windowStart,
         ...(current.lockedUntil && current.lockedUntil <= now ? { attempts: 0, lockedUntil: null } : {})
-    } }, { new: true });
+    } }, { returnDocument: 'after' });
     if (!update) fail();
 };
 
@@ -442,7 +442,7 @@ app.put('/api/users/profile', requireAuth, async (req, res) => {
         const user = await User.findOneAndUpdate(
             { id: req.user.id },
             { bio, techStack },
-            { new: true }
+            { returnDocument: 'after' }
         );
         res.json(user);
     } catch (e) {
@@ -526,21 +526,21 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
         const eligible = { _id: verification._id, tokenHash: verification.tokenHash, usedAt: null, expiresAt: { $gt: new Date() }, attempts: { $lt: verification.maxAttempts }, $or: [{ lockedUntil: null }, { lockedUntil: { $lte: new Date() } }] };
         if (!isValid) {
-            const failed = await EmailVerification.findOneAndUpdate(eligible, { $inc: { attempts: 1 } }, { new: true });
+            const failed = await EmailVerification.findOneAndUpdate(eligible, { $inc: { attempts: 1 } }, { returnDocument: 'after' });
             if (!failed || failed.attempts >= failed.maxAttempts) {
                 await EmailVerification.updateOne({ _id: verification._id, tokenHash: verification.tokenHash, usedAt: null, attempts: { $gte: verification.maxAttempts } }, { $set: { lockedUntil: new Date(Date.now() + 10 * 60000) } });
                 return res.status(429).json({ message: 'Maximum verification attempts exceeded. Request a new code after lockout.', locked: true, retryAfter: 600 });
             }
             return res.status(400).json({ message: 'Invalid verification code.', remainingAttempts: failed.maxAttempts - failed.attempts });
         }
-        const consumed = await EmailVerification.findOneAndUpdate(eligible, { $set: { usedAt: new Date() } }, { new: true });
+        const consumed = await EmailVerification.findOneAndUpdate(eligible, { $set: { usedAt: new Date() } }, { returnDocument: 'after' });
         if (!consumed) return res.status(400).json({ message: 'Verification request was consumed, replaced, or locked. Please request a new code.' });
 
         const updatedUser = await User.findOneAndUpdate({ id: userId, accountStatus: 'pending_verification' }, {
             accountStatus: 'active',
             emailVerified: true,
             emailVerifiedAt: new Date()
-        }, { new: true });
+        }, { returnDocument: 'after' });
 
         if (!updatedUser) {
             return res.status(404).json({ message: "User identity not found." });
@@ -684,7 +684,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
         const newPasswordHash = await bcrypt.hash(String(newPassword), 10);
 
         // Update user in Mongo
-        const user = await User.findOneAndUpdate({ id: userId }, { passwordHash: newPasswordHash }, { new: true });
+        const user = await User.findOneAndUpdate({ id: userId }, { passwordHash: newPasswordHash }, { returnDocument: 'after' });
 
         // Also update in Firebase Auth if available
         if (user?.email) {
@@ -863,7 +863,7 @@ app.put('/api/hackathons/:id', requireAuth, requireRole(['admin']), async (req, 
         const dataToUpdate = { ...req.body };
         delete dataToUpdate._id;
         delete dataToUpdate.id;
-        const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, dataToUpdate, { new: true });
+        const hackathon = await Hackathon.findOneAndUpdate({ id: req.params.id }, dataToUpdate, { returnDocument: 'after' });
         if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
         res.json(hackathon);
     } catch (e) {
@@ -923,7 +923,7 @@ app.patch('/api/admin/hackathons/:id/reveal-problems', requireAuth, requireRole(
         const hackathon = await Hackathon.findOneAndUpdate(
             { id: req.params.id },
             { problemStatementsRevealed: true },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
 
@@ -966,7 +966,7 @@ app.patch('/api/admin/hackathons/:id/hide-problems', requireAuth, requireRole(['
         const hackathon = await Hackathon.findOneAndUpdate(
             { id: req.params.id },
             { problemStatementsRevealed: false },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
 
@@ -1780,7 +1780,7 @@ app.put('/api/admin/problems/:id', requireAuth, requireRole(['admin']), async (r
     delete data.isPublished;
     delete data.isLocked; // Force usage of specific PATCH routes for business critical flags!
 
-    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, data, { new: true });
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, data, { returnDocument: 'after' });
     if (!problem) return res.status(404).json({ message: "Problem matrix not located." });
     res.json(problem);
 });
@@ -1792,13 +1792,13 @@ app.delete('/api/admin/problems/:id', requireAuth, requireRole(['admin']), async
 
 app.patch('/api/admin/problems/:id/publish', requireAuth, requireRole(['admin']), async (req, res) => {
     const { isPublished } = req.body;
-    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isPublished }, { new: true });
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isPublished }, { returnDocument: 'after' });
     res.json(problem);
 });
 
 app.patch('/api/admin/problems/:id/lock', requireAuth, requireRole(['admin']), async (req, res) => {
     const { isLocked } = req.body;
-    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isLocked }, { new: true });
+    const problem = await ProblemStatement.findOneAndUpdate({ id: req.params.id }, { isLocked }, { returnDocument: 'after' });
     res.json(problem);
 });
 
@@ -2069,7 +2069,7 @@ app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (re
 app.patch('/api/admin/submissions/:id/:action', requireAuth, requireRole(['admin']), async (req, res) => {
     const { action } = req.params;
     const isLocked = action === 'lock';
-    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { isLocked }, { new: true });
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { isLocked }, { returnDocument: 'after' });
     if (!submission) return res.status(404).json({ message: "Submission not found." });
     res.json(submission);
 });
@@ -2078,7 +2078,7 @@ app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']),
     const { reason, notify = true } = req.body;
     if (!reason || reason.trim() === '') return res.status(400).json({ message: "Reason is required for disqualification." });
 
-    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'disqualified', adminNote: `Disqualified: ${reason.trim()}` }, { new: true });
+    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'disqualified', adminNote: `Disqualified: ${reason.trim()}` }, { returnDocument: 'after' });
     if (!team) return res.status(404).json({ message: "Squad missing." });
     
     // Log DQ
@@ -2117,7 +2117,7 @@ app.post('/api/admin/teams/:id/disqualify', requireAuth, requireRole(['admin']),
 });
 
 app.post('/api/admin/teams/:id/undo-disqualify', requireAuth, requireRole(['admin']), async (req, res) => {
-    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'active' }, { new: true });
+    const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'active' }, { returnDocument: 'after' });
     if (!team) return res.status(404).json({ message: "Squad missing." });
 
     // Notify members of reinstatement
@@ -2153,7 +2153,7 @@ app.post('/api/admin/teams/:id/ban', requireAuth, requireRole(['admin']), async 
         const team = await Team.findOneAndUpdate(
             { id: req.params.id }, 
             { status: 'disqualified', isLocked: true, adminNote: `BANNED: ${reason.trim()}` }, 
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!team) return res.status(404).json({ message: "Squad missing." });
 
@@ -2190,7 +2190,7 @@ app.post('/api/admin/teams/:id/ban', requireAuth, requireRole(['admin']), async 
 
 app.post('/api/admin/teams/:id/verify', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'verified', isLocked: true }, { new: true });
+        const team = await Team.findOneAndUpdate({ id: req.params.id }, { status: 'verified', isLocked: true }, { returnDocument: 'after' });
         if (!team) return res.status(404).json({ message: "Squad missing." });
 
         // Notify squad members of official verified status
@@ -2258,7 +2258,7 @@ app.post('/api/admin/teams', requireAuth, requireRole(['admin']), async (req, re
 
 app.put('/api/admin/teams/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const team = await Team.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        const team = await Team.findOneAndUpdate({ id: req.params.id }, req.body, { returnDocument: 'after' });
         if (!team) return res.status(404).json({ message: "Squad not found." });
 
         // Dispatch notification to squad members
@@ -2367,7 +2367,7 @@ app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['studen
         return res.status(403).json({ message: `Squad capacity reached (${maxAllowed} members).` });
     }
 
-    await Team.findOneAndUpdate({ id: invite.teamId }, { $push: { memberIds: req.user.id } }, { new: true });
+    await Team.findOneAndUpdate({ id: invite.teamId }, { $push: { memberIds: req.user.id } }, { returnDocument: 'after' });
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: invite.teamId });
     invite.status = 'accepted';
     await invite.save();
@@ -2581,7 +2581,7 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
 // SUBMISSIONS & WORKSPACE
 app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async (req, res) => {
     const { problemId } = req.body;
-    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId }, { new: true });
+    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId }, { returnDocument: 'after' });
     if (!team) return res.status(403).json({ message: "Only team leaders can select a problem statement." });
     res.json(team);
 });
@@ -2718,7 +2718,7 @@ app.post('/api/recruitment', requireAuth, requireRole(['student']), async (req, 
     const profile = await RecruitmentProfile.findOneAndUpdate(
         { userId: req.user.id },
         { ...req.body, userId: req.user.id },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
     );
     res.json(profile);
 });
@@ -2740,7 +2740,7 @@ app.get('/api/users', requireAuth, requireRole(['admin']), async (req, res) => {
     res.json(users);
 });
 app.patch('/api/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
-    const user = await User.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    const user = await User.findOneAndUpdate({ id: req.params.id }, req.body, { returnDocument: 'after' });
     res.json(user);
 });
 
@@ -2884,7 +2884,7 @@ app.put('/api/admin/users/:id', requireAuth, requireRole(['admin']), async (req,
         const updated = await User.findOneAndUpdate(
             { id: req.params.id },
             { name, role, accountStatus: status === 'Active' ? 'active' : 'suspended', teamId },
-            { new: true }
+            { returnDocument: 'after' }
         );
         res.json(updated);
     } catch (e) {
@@ -3177,7 +3177,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
         const result = await SystemSetting.findOneAndUpdate(
             { key },
             { value, description, updatedBy: req.user.id },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         globalSystemSettings[key] = value;
         res.json(result);
@@ -3223,7 +3223,7 @@ app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['studen
     const task = await ProjectTask.findOneAndUpdate(
         { id: req.params.taskId, teamId: team.id },
         { status: req.body.status },
-        { new: true }
+        { returnDocument: 'after' }
     );
     res.json(task);
 });
@@ -3337,7 +3337,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
 });
 
 app.patch('/api/admin/submissions/:id/unlock', requireAuth, requireRole(['admin']), async (req, res) => {
-    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'submitted', lockedAt: null }, { new: true });
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'submitted', lockedAt: null }, { returnDocument: 'after' });
     if (submission) {
         await Team.findOneAndUpdate({ id: submission.teamId }, { isSubmitted: false });
     }
@@ -3345,7 +3345,7 @@ app.patch('/api/admin/submissions/:id/unlock', requireAuth, requireRole(['admin'
 });
 
 app.patch('/api/admin/submissions/:id/lock', requireAuth, requireRole(['admin']), async (req, res) => {
-    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'locked', lockedAt: new Date() }, { new: true });
+    const submission = await Submission.findOneAndUpdate({ id: req.params.id }, { status: 'locked', lockedAt: new Date() }, { returnDocument: 'after' });
     if (submission) {
         await Team.findOneAndUpdate({ id: submission.teamId }, { isSubmitted: true });
     }
@@ -3857,7 +3857,7 @@ app.patch('/api/admin/support/:id/status', requireAuth, requireRole(['admin']), 
         const ticket = await SupportTicket.findOneAndUpdate(
             { id: req.params.id }, 
             updateData,
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!ticket) return res.status(404).json({ message: "Ticket missing." });
 
@@ -3938,7 +3938,7 @@ app.post('/api/admin/settings', requireAuth, requireRole(['admin']), async (req,
         const setting = await Setting.findOneAndUpdate(
             { key },
             { value, description, updatedBy: req.user.id },
-            { new: true, upsert: true }
+            { returnDocument: 'after', upsert: true }
         );
         res.json(setting);
     } catch (e) {
@@ -3982,7 +3982,7 @@ app.post('/api/admin/announcements', requireAuth, requireRole(['admin']), async 
 
 app.put('/api/admin/announcements/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        const announcement = await Announcement.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+        const announcement = await Announcement.findOneAndUpdate({ id: req.params.id }, req.body, { returnDocument: 'after' });
         res.json(announcement);
     } catch (e) {
         res.status(500).json({ message: "Failed to update announcement." });
