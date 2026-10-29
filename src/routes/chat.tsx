@@ -102,26 +102,76 @@ function ChatDashboard() {
       const res = await axios.get(`${BASE}/conversations`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setConversations(res.data);
+      const convList = Array.isArray(res.data) ? res.data : [];
+      setConversations(convList);
       
       const params = new URLSearchParams(window.location.search);
-      const targetConvId = params.get('conv');
+      const targetConvId = params.get('conv') || params.get('ticketId') || params.get('id') || params.get('ticket');
 
       if (targetConvId) {
-        const target = res.data.find((c: any) => c.id === targetConvId);
+        let target = convList.find((c: any) => 
+          c.id === targetConvId || 
+          c.supportTicket?.id === targetConvId || 
+          c.supportTicket?.conversationId === targetConvId ||
+          c.ticketId === targetConvId
+        );
+
+        if (!target) {
+          try {
+            const singleRes = await axios.get(`${BASE}/conversations/${targetConvId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (singleRes.data && singleRes.data.id) {
+              target = singleRes.data;
+              setConversations(prev => [target, ...prev.filter(c => c.id !== target.id)]);
+            }
+          } catch (e1) {
+            try {
+              const tRes = await axios.get(`${BASE}/support/tickets/${targetConvId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (tRes.data?.conversationId) {
+                const cRes = await axios.get(`${BASE}/conversations/${tRes.data.conversationId}`, {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (cRes.data && cRes.data.id) {
+                  target = cRes.data;
+                  setConversations(prev => [target, ...prev.filter(c => c.id !== target.id)]);
+                }
+              }
+            } catch (e2) {}
+          }
+        }
+
         if (target) {
-            setActiveConv(target);
-            return;
+          setActiveConv(target);
+          return;
         }
       }
 
-      if (res.data.length > 0 && !activeConv && !targetConvId) {
-        setActiveConv(res.data[0]);
+      if (convList.length > 0 && !activeConv && !targetConvId) {
+        setActiveConv(convList[0]);
       }
     } catch (e) {
       console.error("Failed to load conversations");
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const targetConvId = params.get('conv') || params.get('ticketId') || params.get('id') || params.get('ticket');
+    if (targetConvId && conversations.length > 0) {
+      const target = conversations.find((c: any) => 
+        c.id === targetConvId || 
+        c.supportTicket?.id === targetConvId || 
+        c.supportTicket?.conversationId === targetConvId ||
+        c.ticketId === targetConvId
+      );
+      if (target && (!activeConv || activeConv.id !== target.id)) {
+        setActiveConv(target);
+      }
+    }
+  }, [conversations]);
 
   const loadMessages = async (convId: string) => {
     try {
@@ -517,12 +567,154 @@ function ChatDashboard() {
               </div>
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center bg-surface-container-low">
-               <div className="w-24 h-24 border-4 border-ink-black bg-pure-white flex items-center justify-center rounded-full mb-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                 <span className="material-symbols-outlined text-5xl text-electric-blue">forum</span>
-               </div>
-               <h2 className="font-display-lg text-3xl text-stark-black uppercase tracking-tight mb-2">Communications</h2>
-               <p className="font-code-snippet text-text-muted">Select a conversation to begin securely transmitting.</p>
+            <div className="flex-1 flex flex-col p-6 sm:p-10 bg-surface-container-low overflow-y-auto">
+              <div className="max-w-3xl w-full mx-auto flex flex-col gap-6">
+                
+                {/* Command Hub Header Card */}
+                <div className="bg-pure-white brutal-border brutal-shadow p-6 sm:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 bg-electric-blue text-white text-[10px] font-mono font-bold uppercase tracking-wider brutal-border">
+                        TERMINAL ACTIVE
+                      </span>
+                      <span className="px-2 py-0.5 bg-emerald-400 text-black text-[10px] font-mono font-bold uppercase brutal-border flex items-center gap-1">
+                        <span className="w-2 h-2 bg-black rounded-full animate-ping" />
+                        SOCKET ONLINE
+                      </span>
+                    </div>
+                    <h2 className="font-display-lg text-3xl sm:text-4xl text-stark-black uppercase tracking-tight">
+                      Comms Command Center
+                    </h2>
+                    <p className="font-body-md text-xs sm:text-sm text-text-muted mt-1">
+                      Mainframe Neural Link • Encrypted Operative Transmissions & Event Directorate
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className="bg-electric-blue hover:bg-stark-black text-white px-5 py-3 font-label-bold text-xs uppercase brutal-border shadow-[4px_4px_0px_0px_#000] transition-colors flex items-center gap-2 shrink-0 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-base">edit_square</span>
+                    NEW TRANSMISSION
+                  </button>
+                </div>
+
+                {/* Telemetry Status Strip */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-mono">
+                  <div className="bg-pure-white p-3 brutal-border flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-electric-blue text-lg">shield</span>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase block font-bold">Transmission Security</span>
+                      <strong className="text-stark-black">AES-256 E2E ENCRYPTED</strong>
+                    </div>
+                  </div>
+                  <div className="bg-pure-white p-3 brutal-border flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-emerald-600 text-lg">speed</span>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase block font-bold">Mainframe Latency</span>
+                      <strong className="text-stark-black">42ms // REAL-TIME SYNC</strong>
+                    </div>
+                  </div>
+                  <div className="bg-pure-white p-3 brutal-border flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-rose-600 text-lg">security</span>
+                    <div>
+                      <span className="text-[10px] text-zinc-500 uppercase block font-bold">Content Guard</span>
+                      <strong className="text-stark-black">18+ MODERATION ARMED</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Launch Direct Channels */}
+                <div className="bg-pure-white brutal-border brutal-shadow p-6">
+                  <h3 className="font-headline-md uppercase text-base text-stark-black mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-electric-blue">rocket_launch</span>
+                    Rapid Dispatch Channels
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Link
+                      to="/ai-assistant"
+                      className="p-4 border-2 border-stark-black bg-surface hover:bg-yellow-200 transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="w-10 h-10 rounded-full border-2 border-stark-black bg-yellow-400 text-black flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">smart_toy</span>
+                      </div>
+                      <div>
+                        <h4 className="font-headline-md uppercase text-sm font-bold text-stark-black group-hover:text-electric-blue">
+                          SrijanBot AI Copilot →
+                        </h4>
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          Instant coding mentorship, API docs assistance, and event FAQ guidance.
+                        </p>
+                      </div>
+                    </Link>
+
+                    <Link
+                      to="/support"
+                      className="p-4 border-2 border-stark-black bg-surface hover:bg-rose-100 transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="w-10 h-10 rounded-full border-2 border-stark-black bg-rose-500 text-white flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">support_agent</span>
+                      </div>
+                      <div>
+                        <h4 className="font-headline-md uppercase text-sm font-bold text-stark-black group-hover:text-rose-600">
+                          Admin Support SOS →
+                        </h4>
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          Urgent payment issues, squad disputes, or infrastructure assistance.
+                        </p>
+                      </div>
+                    </Link>
+
+                    <Link
+                      to="/workspace"
+                      className="p-4 border-2 border-stark-black bg-surface hover:bg-blue-100 transition-colors flex items-start gap-3 group"
+                    >
+                      <div className="w-10 h-10 rounded-full border-2 border-stark-black bg-electric-blue text-white flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">terminal</span>
+                      </div>
+                      <div>
+                        <h4 className="font-headline-md uppercase text-sm font-bold text-stark-black group-hover:text-electric-blue">
+                          Squad Workspace Terminal →
+                        </h4>
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          Inspect repository links, problem statements, and live team milestones.
+                        </p>
+                      </div>
+                    </Link>
+
+                    <button
+                      onClick={() => setIsSearchOpen(true)}
+                      className="p-4 border-2 border-stark-black bg-surface hover:bg-emerald-100 transition-colors flex items-start gap-3 group text-left cursor-pointer"
+                    >
+                      <div className="w-10 h-10 rounded-full border-2 border-stark-black bg-emerald-400 text-black flex items-center justify-center shrink-0">
+                        <span className="material-symbols-outlined text-xl">group_add</span>
+                      </div>
+                      <div>
+                        <h4 className="font-headline-md uppercase text-sm font-bold text-stark-black group-hover:text-emerald-700">
+                          Operative Direct Chat →
+                        </h4>
+                        <p className="text-xs text-zinc-600 mt-0.5">
+                          Search student roster by identity or email to initiate direct encrypted channel.
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 18+ Moderation & Code of Conduct Directive Card */}
+                <div className="bg-rose-50 border-4 border-rose-600 p-5 brutal-shadow text-xs">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-rose-600 text-xl font-black">gavel</span>
+                    <h4 className="font-black uppercase text-rose-700 tracking-wider text-sm">
+                      MANDATORY CONTENT POLICY & REAL-TIME AUDIT
+                    </h4>
+                  </div>
+                  <p className="text-zinc-800 leading-relaxed font-mono text-[11px]">
+                    All transmissions across <strong>Admin Support Lines</strong> and <strong>SrijanBot AI Channels</strong> are subject to active automated keyword and sentiment moderation. Any 18+, explicit, abusive, or defamatory content is intercepted automatically, stored with comprehensive incident telemetry (Sender UID, IP address, timestamp, conversation ID), and forwarded directly to the Administration Directorate for immediate event disqualification.
+                  </p>
+                </div>
+
+              </div>
             </div>
           )}
         </div>

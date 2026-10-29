@@ -64,6 +64,12 @@ function PaymentPage() {
     const [submitting, setSubmitting] = useState(false);
     const [retrying, setRetrying] = useState(false);
 
+    // Refund Modal State
+    const [showRefundModal, setShowRefundModal] = useState(false);
+    const [refundReason, setRefundReason] = useState("");
+    const [refundUpi, setRefundUpi] = useState("");
+    const [submittingRefund, setSubmittingRefund] = useState(false);
+
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
     const loadData = async () => {
@@ -139,20 +145,52 @@ function PaymentPage() {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("Receipt screenshot must be under 5MB.");
-            return;
-        }
-
-        if (!file.type.startsWith('image/')) {
+        const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|bmp)$/i.test(file.name);
+        if (!isImage) {
             toast.error("Only image files (.png, .jpg, .jpeg, .webp) are accepted.");
             return;
         }
 
         setProofFileName(file.name);
         const reader = new FileReader();
-        reader.onload = () => {
-            setProofBase64(reader.result as string);
+        reader.onload = (event) => {
+            const rawDataUrl = event.target?.result as string;
+            // Downscale through offscreen image & canvas for speed and < 1.5MB size
+            const img = new Image();
+            img.onload = () => {
+                const MAX_WIDTH = 1600;
+                const MAX_HEIGHT = 1600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height = Math.round(height * (MAX_WIDTH / width));
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width = Math.round(width * (MAX_HEIGHT / height));
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    setProofBase64(compressedDataUrl);
+                } else {
+                    setProofBase64(rawDataUrl);
+                }
+            };
+            img.onerror = () => {
+                setProofBase64(rawDataUrl);
+            };
+            img.src = rawDataUrl;
         };
         reader.readAsDataURL(file);
     };
@@ -185,9 +223,35 @@ function PaymentPage() {
             toast.success("Payment proof transmitted! Status: Under Review.");
             setRegistration(res.data.registration);
         } catch (err: any) {
-            toast.error(err.response?.data?.message || "Failed to submit payment proof.");
+            const msg = err.response?.data?.message || err.message || "Failed to submit payment proof.";
+            toast.error(msg);
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleRequestRefund = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const targetHackId = registration?.hackathonId || hackathon?.id;
+        if (!targetHackId) return;
+
+        setSubmittingRefund(true);
+        try {
+            const token = localStorage.getItem("codesrijan_auth_token");
+            const res = await axios.post(`${API_URL}/hackathons/${targetHackId}/request-refund`, {
+                reason: refundReason.trim(),
+                refundUpi: refundUpi.trim()
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            toast.success("Refund request transmitted to Hackathon Administration.");
+            setRegistration(res.data.registration);
+            setShowRefundModal(false);
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || "Failed to submit refund request.");
+        } finally {
+            setSubmittingRefund(false);
         }
     };
 
@@ -269,17 +333,37 @@ function PaymentPage() {
 
                 {/* Status Banners */}
                 {isUnderReview && (
-                    <div className="bg-amber-500/10 border-4 border-amber-500 p-6 space-y-2">
-                        <div className="flex items-center gap-3 text-amber-400 font-black uppercase text-base">
-                            <span className="material-symbols-outlined animate-spin text-2xl">autorenew</span>
-                            TRANSMISSION UNDER AUDIT — ADMIN REVIEW PENDING
+                    <div className="bg-amber-500/10 border-4 border-amber-500 p-6 space-y-3 font-mono">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-3 text-amber-400 font-black uppercase text-base">
+                                <span className="material-symbols-outlined animate-spin text-2xl">autorenew</span>
+                                TRANSMISSION UNDER AUDIT — ADMIN REVIEW PENDING
+                            </div>
+                            {(registration as any)?.refundRequested && (
+                                <span className="bg-rose-500 text-white font-black text-xs px-2.5 py-1 uppercase tracking-wider">
+                                    REFUND REQUEST LOGGED
+                                </span>
+                            )}
                         </div>
                         <p className="text-xs text-zinc-300">
-                            Your payment proof and UTR (<strong className="text-amber-400">{registration?.transactionReference}</strong>) have been submitted to the CodeSrijan Admin Control Center.
+                            Your payment proof and UTR (<strong className="text-amber-400 font-mono">{registration?.transactionReference}</strong>) have been submitted to the CodeSrijan Admin Control Center.
                         </p>
                         <p className="text-xs text-zinc-400">
-                            Submitted at: {new Date(registration?.paymentSubmittedAt || '').toLocaleString()}. Squad roster is locked in the hackathon queue.
+                            Submitted at: {new Date(registration?.paymentSubmittedAt || '').toLocaleString()}. Squad roster is cryptographically locked in the clearance queue. Operatives cannot leave tournament while audit review is underway.
                         </p>
+                        
+                        {/* Refund Option */}
+                        <div className="pt-2 border-t border-amber-500/30 flex items-center justify-between flex-wrap gap-3">
+                            <span className="text-[11px] text-zinc-400">Need to cancel enrollment or withdraw funds?</span>
+                            <button
+                                type="button"
+                                onClick={() => setShowRefundModal(true)}
+                                className="bg-rose-500 hover:bg-rose-600 text-white font-black text-xs uppercase px-4 py-2 brutal-border shadow-[2px_2px_0px_0px_#000000] cursor-pointer flex items-center gap-1.5 transition-all"
+                            >
+                                <span className="material-symbols-outlined text-sm">currency_exchange</span>
+                                {(registration as any)?.refundRequested ? 'UPDATE REFUND DETAILS' : 'REQUEST REFUND / CANCEL CLEARANCE'}
+                            </button>
+                        </div>
                     </div>
                 )}
 
@@ -459,6 +543,72 @@ function PaymentPage() {
                     </section>
                 </div>
             </main>
+
+            {/* Refund / Withdrawal Request Modal */}
+            {showRefundModal && (
+                <div 
+                    onClick={(e) => { if (e.target === e.currentTarget && !submittingRefund) setShowRefundModal(false); }}
+                    className="fixed inset-0 bg-stark-black/85 z-[100] flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+                >
+                    <div className="bg-pure-white brutal-border border-4 border-stark-black shadow-[10px_10px_0px_0px_#0055FF] w-full max-w-lg p-6 sm:p-8 flex flex-col gap-4 text-stark-black">
+                        <div className="flex items-center gap-2 border-b-2 border-stark-black pb-3">
+                            <span className="material-symbols-outlined text-electric-blue text-2xl">currency_exchange</span>
+                            <div>
+                                <h3 className="font-headline-md text-base sm:text-lg uppercase font-black">REQUEST REFUND &amp; CANCEL CLEARANCE</h3>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase">Hackathon Fee Reimbursement Protocol</p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-zinc-700 leading-relaxed">
+                            Submitting a refund request notifies the event administrators to review your payment submission and return your entry fee of <strong>₹{feeToDisplay}</strong>.
+                        </p>
+
+                        <form onSubmit={handleRequestRefund} className="space-y-4 pt-1">
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold uppercase tracking-wider block">Refund UPI ID / Account Details *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="e.g. yourname@okhdfcbank"
+                                    value={refundUpi}
+                                    onChange={(e) => setRefundUpi(e.target.value)}
+                                    className="w-full bg-zinc-50 border-2 border-stark-black p-2.5 text-xs font-mono focus:border-electric-blue focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-[11px] font-bold uppercase tracking-wider block">Reason for Withdrawal / Refund *</label>
+                                <textarea
+                                    required
+                                    rows={3}
+                                    placeholder="e.g. Scheduling conflict, accidental registration, team roster adjustment"
+                                    value={refundReason}
+                                    onChange={(e) => setRefundReason(e.target.value)}
+                                    className="w-full bg-zinc-50 border-2 border-stark-black p-2.5 text-xs font-mono focus:border-electric-blue focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-3 border-t-2 border-stark-black">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowRefundModal(false)}
+                                    disabled={submittingRefund}
+                                    className="px-4 py-2 border-2 border-stark-black font-label-bold uppercase bg-zinc-100 hover:bg-zinc-200 text-xs cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submittingRefund}
+                                    className="px-5 py-2 border-2 border-stark-black font-label-bold uppercase bg-electric-blue text-white hover:bg-stark-black text-xs cursor-pointer shadow-[2px_2px_0px_0px_#000000] flex items-center gap-1.5"
+                                >
+                                    {submittingRefund ? 'DISPATCHING...' : 'DISPATCH REFUND REQUEST'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

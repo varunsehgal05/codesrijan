@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
+import { toast } from "react-hot-toast";
 export const Route = createFileRoute("/admin")({
     component: AdminLayout,
 });
@@ -30,10 +31,16 @@ const ADMIN_LINKS = [
 
 function AdminLayout() {
     const activeRoute = useRouterState({ select: (s) => s.location.pathname });
-    const { currentUser, isLoaded } = useAppStore();
+    const { currentUser, isLoaded, logout } = useAppStore();
     const navigate = useNavigate();
     useEffect(() => {
-        if (isLoaded && (!currentUser || currentUser.role !== 'admin')) void navigate({ to: '/dashboard', replace: true });
+        const token = typeof localStorage !== 'undefined' ? localStorage.getItem('codesrijan_auth_token') : null;
+        if (isLoaded) {
+            if (token && !currentUser) return;
+            if (!currentUser || currentUser.role !== 'admin') {
+                void navigate({ to: '/dashboard', replace: true });
+            }
+        }
     }, [isLoaded, currentUser, navigate]);
 
     if (!isLoaded) {
@@ -71,13 +78,25 @@ function AdminLayout() {
                     })}
                 </div>
 
-                <div className="p-4 border-t-2 border-electric-blue shrink-0">
-                    <Link
-                        to="/"
-                        className="flex justify-center items-center gap-2 w-full text-center bg-destructive text-pure-white px-4 py-3 font-label-bold text-label-bold brutal-border brutal-shadow-hover transition-all uppercase hover:-translate-y-1"
+                <div className="p-4 border-t-2 border-electric-blue shrink-0 flex flex-col gap-2">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            logout();
+                            toast.success("Admin session terminated.");
+                            navigate({ to: "/login" });
+                        }}
+                        className="flex justify-center items-center gap-2 w-full text-center bg-destructive text-pure-white px-4 py-3 font-label-bold text-label-bold brutal-border brutal-shadow-hover transition-all uppercase hover:-translate-y-0.5 cursor-pointer"
                     >
                         <span className="material-symbols-outlined font-bold">logout</span>
                         Exit Terminal
+                    </button>
+                    <Link
+                        to="/dashboard"
+                        className="flex justify-center items-center gap-1.5 w-full text-center bg-zinc-900 text-zinc-300 hover:text-white px-3 py-2 text-xs font-label-bold brutal-border hover:bg-zinc-800 transition-all uppercase"
+                    >
+                        <span className="material-symbols-outlined text-sm">home</span>
+                        Return To Platform
                     </Link>
                 </div>
             </aside>

@@ -16,21 +16,109 @@ const NOTIF_META: Record<string, { icon: string; color: string; label: string }>
     chat_message:      { icon: 'chat',          color: 'text-sky-500',     label: 'Squad Chat' },
 };
 
-const getNotificationTag = (type: string) => {
-    const t = (type || '').toLowerCase();
-    if (t.includes('payment') || t.includes('billing')) {
-        return { label: 'PAYMENT', bg: 'bg-emerald-100', text: 'text-emerald-800', border: 'border-emerald-600' };
+export const getNotificationAction = (n: any) => {
+    const type = (n?.type || '').toLowerCase();
+    const title = (n?.title || '').toLowerCase();
+    const message = (n?.message || '').toLowerCase();
+    const text = `${type} ${title} ${message}`;
+
+    if (text.includes('payment') || text.includes('fee') || text.includes('utr') || text.includes('proof') || text.includes('clearance') || text.includes('refund')) {
+        return {
+            url: '/payment',
+            label: 'VIEW PAYMENT STATUS',
+            icon: 'receipt_long',
+            badge: 'PAYMENT',
+            badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-600'
+        };
     }
-    if (t.includes('team') || t.includes('squad') || t.includes('join') || t.includes('invite')) {
-        return { label: 'SQUAD', bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-600' };
+    if (text.includes('problem') || text.includes('statement') || text.includes('track') || text.includes('challenge')) {
+        return {
+            url: '/problems',
+            label: 'EXPLORE PROBLEM STATEMENTS',
+            icon: 'lightbulb',
+            badge: 'PROBLEMS',
+            badgeClass: 'bg-amber-100 text-amber-800 border-amber-600'
+        };
     }
-    if (t.includes('support') || t.includes('ticket')) {
-        return { label: 'SUPPORT', bg: 'bg-rose-100', text: 'text-rose-800', border: 'border-rose-600' };
+    if (text.includes('chat') || text.includes('message') || text.includes('comms') || text.includes('transmission')) {
+        return {
+            url: '/chat',
+            label: 'OPEN SECURE COMMS CHAT',
+            icon: 'chat',
+            badge: 'COMMS',
+            badgeClass: 'bg-sky-100 text-sky-800 border-sky-600'
+        };
     }
-    if (t.includes('admin') || t.includes('system') || t.includes('broadcast')) {
-        return { label: 'SYSTEM', bg: 'bg-amber-100', text: 'text-amber-800', border: 'border-amber-600' };
+    if (text.includes('invite') || text.includes('recruit') || text.includes('marketplace') || text.includes('comrade') || text.includes('friend')) {
+        return {
+            url: '/recruitment',
+            label: 'VIEW RECRUITMENT & INVITES',
+            icon: 'group_add',
+            badge: 'RECRUITMENT',
+            badgeClass: 'bg-blue-100 text-blue-800 border-blue-600'
+        };
     }
-    return { label: 'GENERAL', bg: 'bg-zinc-100', text: 'text-zinc-800', border: 'border-zinc-400' };
+    if (text.includes('team') || text.includes('squad') || text.includes('roster')) {
+        return {
+            url: '/dashboard',
+            label: 'VIEW SQUAD DASHBOARD',
+            icon: 'groups',
+            badge: 'SQUAD',
+            badgeClass: 'bg-indigo-100 text-indigo-800 border-indigo-600'
+        };
+    }
+    if (text.includes('leaderboard') || text.includes('score') || text.includes('rank') || text.includes('standing')) {
+        return {
+            url: '/leaderboard',
+            label: 'VIEW GLOBAL LEADERBOARD',
+            icon: 'leaderboard',
+            badge: 'LEADERBOARD',
+            badgeClass: 'bg-purple-100 text-purple-800 border-purple-600'
+        };
+    }
+    if (text.includes('announcement') || text.includes('broadcast')) {
+        return {
+            url: '/announcements',
+            label: 'VIEW ANNOUNCEMENTS',
+            icon: 'campaign',
+            badge: 'ANNOUNCEMENT',
+            badgeClass: 'bg-yellow-100 text-yellow-800 border-yellow-600'
+        };
+    }
+    if (text.includes('support') || text.includes('ticket') || text.includes('sos')) {
+        return {
+            url: '/support',
+            label: 'OPEN SUPPORT DESK',
+            icon: 'contact_support',
+            badge: 'SUPPORT',
+            badgeClass: 'bg-rose-100 text-rose-800 border-rose-600'
+        };
+    }
+    if (text.includes('hackathon') || text.includes('arena') || text.includes('enroll')) {
+        return {
+            url: '/hackathons',
+            label: 'VIEW HACKATHON ARENAS',
+            icon: 'terminal',
+            badge: 'HACKATHONS',
+            badgeClass: 'bg-cyan-100 text-cyan-800 border-cyan-600'
+        };
+    }
+    return {
+        url: '/dashboard',
+        label: 'VISIT COMMAND CENTER',
+        icon: 'dashboard',
+        badge: 'SYSTEM',
+        badgeClass: 'bg-zinc-100 text-zinc-800 border-zinc-400'
+    };
+};
+
+export const getNotificationTag = (notification: any) => {
+    const t = ((notification?.type || '') + ' ' + (notification?.title || '') + ' ' + (notification?.message || '')).toLowerCase();
+    if (t.includes('payment')) return { label: 'PAYMENT', bg: 'bg-emerald-100 text-emerald-800 border-emerald-600' };
+    if (t.includes('squad')) return { label: 'SQUAD', bg: 'bg-indigo-100 text-indigo-800 border-indigo-600' };
+    if (t.includes('support')) return { label: 'SUPPORT', bg: 'bg-rose-100 text-rose-800 border-rose-600' };
+    if (t.includes('system')) return { label: 'SYSTEM', bg: 'bg-zinc-100 text-zinc-800 border-zinc-400' };
+    return { label: 'GENERAL', bg: 'bg-yellow-100 text-yellow-800 border-yellow-600' };
 };
 
 export function NotificationBell() {
@@ -139,10 +227,11 @@ export function NotificationBell() {
                                                 <div className="min-w-0 flex items-center gap-1.5 flex-wrap">
                                                     <span className="font-label-bold uppercase text-ink-black text-xs block truncate">{n.title || meta.label}</span>
                                                     {(() => {
-                                                        const tag = getNotificationTag(n.type);
+                                                        const action = getNotificationAction(n);
+                                                        const tag = getNotificationTag(n);
                                                         return (
-                                                            <span className={`text-[8px] font-black px-1.5 py-0.2 uppercase border font-mono tracking-wider ${tag.bg} ${tag.text} ${tag.border}`}>
-                                                                {tag.label}
+                                                            <span className={`text-[8px] font-black px-1.5 py-0.2 uppercase border font-mono tracking-wider ${tag.bg || action.badgeClass}`}>
+                                                                {tag.label || action.badge}
                                                             </span>
                                                         );
                                                     })()}
@@ -168,39 +257,30 @@ export function NotificationBell() {
                                             </div>
                                         )}
 
-                                        {/* Contextual Action Links */}
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            {(n.type === 'payment_rejected' || n.type === 'payment_approved') && (
-                                                <Link to="/payment" onClick={() => setIsOpen(false)} className="inline-flex items-center gap-1 text-[10px] font-bold text-electric-blue hover:underline uppercase">
-                                                    <span className="material-symbols-outlined text-xs">receipt_long</span>
-                                                    VIEW PAYMENT STATUS
-                                                </Link>
-                                            )}
-                                            {(n.type === 'team_updated' || n.type === 'team_disqualified' || n.type === 'admin_message') && (
-                                                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="inline-flex items-center gap-1 text-[10px] font-bold text-electric-blue hover:underline uppercase">
-                                                    <span className="material-symbols-outlined text-xs">dashboard</span>
-                                                    GO TO DASHBOARD
-                                                </Link>
-                                            )}
-                                            {n.type === 'join_request' && (
-                                                <Link to="/dashboard" onClick={() => setIsOpen(false)} className="inline-flex items-center gap-1 text-[10px] font-bold text-electric-blue hover:underline uppercase">
-                                                    <span className="material-symbols-outlined text-xs">person_add</span>
-                                                    REVIEW REQUEST
-                                                </Link>
-                                            )}
-                                            {n.type === 'team_invite' && (
-                                                <Link to="/recruitment" onClick={() => setIsOpen(false)} className="inline-flex items-center gap-1 text-[10px] font-bold text-electric-blue hover:underline uppercase">
-                                                    <span className="material-symbols-outlined text-xs">mail</span>
-                                                    VIEW INVITES
-                                                </Link>
-                                            )}
-                                            {n.type === 'chat_message' && (
-                                                <Link to="/workspace" onClick={() => setIsOpen(false)} className="inline-flex items-center gap-1 text-[10px] font-bold text-sky-500 hover:underline uppercase">
-                                                    <span className="material-symbols-outlined text-xs">chat</span>
-                                                    OPEN SQUAD WORKSPACE
-                                                </Link>
-                                            )}
-                                        </div>
+                                        {/* Universal Page Action Link */}
+                                        {(() => {
+                                            const action = getNotificationAction(n);
+                                            return (
+                                                <div className="mt-2.5 pt-2 border-t border-zinc-200 flex items-center justify-between gap-2">
+                                                    <Link
+                                                        to={action.url}
+                                                        onClick={() => setIsOpen(false)}
+                                                        className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase text-pure-white bg-electric-blue hover:bg-stark-black px-2.5 py-1 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[13px]">{action.icon}</span>
+                                                        <span>{action.label} &rarr;</span>
+                                                    </Link>
+                                                    {!n.isRead && (
+                                                        <button
+                                                            onClick={() => handleMarkAsRead(n.id)}
+                                                            className="text-[9px] font-bold text-zinc-500 hover:text-stark-black uppercase underline cursor-pointer"
+                                                        >
+                                                            MARK READ
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
 
                                         {/* Timestamp */}
                                         {n.createdAt && (

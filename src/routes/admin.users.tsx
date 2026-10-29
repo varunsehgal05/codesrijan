@@ -9,7 +9,7 @@ export const Route = createFileRoute("/admin/users")({
 });
 
 function AdminUsers() {
-    const { users, teams } = useAppStore();
+    const { users, teams, refetchData } = useAppStore();
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -72,7 +72,9 @@ function AdminUsers() {
             const token = localStorage.getItem("codesrijan_auth_token");
             await axios.post(`${API_URL}/admin/users`, formData, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("SUCCESS: Operative successfully injected into the matrix.");
-            window.location.reload();
+            setIsAddOpen(false);
+            setFormData({ name: '', email: '', role: 'student', status: 'Active' });
+            await refetchData();
         } catch (e: any) {
             toast.error(`FAIL: ${e.response?.data?.message || e.message}`);
         } finally {
@@ -86,8 +88,12 @@ function AdminUsers() {
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             await axios.put(`${API_URL}/admin/users/${editingUser.id}`, formData, { headers: { Authorization: `Bearer ${token}` } });
-            toast.success(`SUCCESS: Modifications applied to ${editingUser.id}`);
-            window.location.reload();
+            toast.success(`SUCCESS: Modifications applied to ${editingUser.name || editingUser.id}`);
+            setIsEditOpen(false);
+            setIsInfoOpen(false);
+            setEditingUser(null);
+            setInfoUser(null);
+            await refetchData();
         } catch (e: any) {
             toast.error(`FAIL: ${e.response?.data?.message || e.message}`);
         } finally {
@@ -167,8 +173,8 @@ function AdminUsers() {
 
             {/* INJECTION MODAL (FORCE ADD) */}
             {isAddOpen && (
-                <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <form onSubmit={handleForceAdd} className="bg-pure-white w-full max-w-lg brutal-border brutal-shadow-lg p-8 flex flex-col gap-6">
+                <div onClick={(e) => { if (e.target === e.currentTarget) setIsAddOpen(false); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+                    <form onSubmit={handleForceAdd} className="bg-pure-white w-full max-w-lg brutal-border brutal-shadow-lg p-8 flex flex-col gap-6 cursor-default">
                         <div className="flex justify-between items-center border-b-4 border-stark-black pb-4">
                             <h3 className="font-display-lg text-2xl uppercase bg-electric-blue text-pure-white px-2 py-1 transform -skew-x-6 inline-block">Force Inject Node</h3>
                             <button type="button" onClick={() => setIsAddOpen(false)} className="text-3xl hover:text-error hover:rotate-90 transition-all font-bold">&times;</button>
@@ -199,8 +205,8 @@ function AdminUsers() {
 
             {/* EDIT MODAL */}
             {isEditOpen && editingUser && (
-                <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <form onSubmit={handleEditSubmit} className="bg-pure-white w-full max-w-lg brutal-border brutal-shadow-lg p-8 flex flex-col gap-6">
+                <div onClick={(e) => { if (e.target === e.currentTarget) setIsEditOpen(false); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+                    <form onSubmit={handleEditSubmit} className="bg-pure-white w-full max-w-lg brutal-border brutal-shadow-lg p-8 flex flex-col gap-6 cursor-default">
                         <div className="flex justify-between items-center border-b-4 border-stark-black pb-4">
                             <h3 className="font-display-lg text-2xl uppercase bg-[#FFD700] text-stark-black px-2 py-1 transform -skew-x-6 inline-block">Modify Node</h3>
                             <button type="button" onClick={() => setIsEditOpen(false)} className="text-3xl hover:text-error hover:rotate-90 transition-all font-bold">&times;</button>
@@ -237,8 +243,8 @@ function AdminUsers() {
 
             {/* FULL USER INFO MODAL */}
             {isInfoOpen && infoUser && (
-                <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                    <div className="bg-pure-white w-full max-w-xl brutal-border brutal-shadow-lg p-8 flex flex-col gap-6 relative max-h-[90vh] overflow-y-auto">
+                <div onClick={(e) => { if (e.target === e.currentTarget) setIsInfoOpen(false); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+                    <div className="bg-pure-white w-full max-w-xl brutal-border brutal-shadow-lg p-8 flex flex-col gap-6 relative max-h-[90vh] overflow-y-auto cursor-default">
                         <div className="flex justify-between items-center border-b-4 border-stark-black pb-4">
                             <div>
                                 <span className="font-code-snippet text-xs text-electric-blue font-bold uppercase block">OPERATIVE SPECIFICATION</span>

@@ -1,6 +1,7 @@
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission } from '../models/index.js';
 import { Announcement, SupportTicket } from '../models/secondary.js';
 import { resolveOptionalUser } from '../middleware/auth.js';
+import { detectProhibitedContent, handleContentModerationIncident } from './moderation.js';
 
 /**
  * Valid allowed internal route paths for SrijanBot navigation actions.
@@ -380,13 +381,13 @@ export function checkActionLimitations(message = "", ctx) {
 }
 
 
-export const DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b";
-export const FALLBACK_GROQ_MODEL = "llama-3.1-8b-instant";
+export const DEFAULT_GROQ_MODEL = "llama-3.1-8b-instant";
+export const FALLBACK_GROQ_MODEL = "llama-3.3-70b-versatile";
 
 export function getEffectiveGroqModel() {
     const configured = process.env.GROQ_MODEL?.trim();
     if (configured) {
-        if (configured === 'llama3-8b-8192' || configured === 'llama3-70b-8192') {
+        if (configured === 'llama3-8b-8192' || configured === 'llama3-70b-8192' || configured === 'openai/gpt-oss-20b') {
             console.warn(`[SRIJANBOT MODEL CONFIG] Obsolete/decommissioned model "${configured}" detected in GROQ_MODEL. Automatically overriding to "${DEFAULT_GROQ_MODEL}".`);
             return DEFAULT_GROQ_MODEL;
         }
@@ -893,6 +894,20 @@ export async function handleAIChat(req, res, customFetch = null) {
 
         // Step 1: Precompute live platform context from MongoDB
         const ctx = await getPlatformContext(req);
+
+        // Step 1.5: 18+ Content Moderation Guard (dispatches incident to admin ledger)
+        const modCheck = detectProhibitedContent(message);
+        if (modCheck.flagged) {
+            await handleContentModerationIncident({
+                req,
+                channel: 'SrijanBot AI Assistant Channel',
+                message,
+                flaggedTerms: modCheck.matchedTerms
+            });
+            return sendResponse(200, {
+                reply: "⚠️ CODE OF CONDUCT VIOLATION: Your transmission contained prohibited adult or explicit terminology. This incident has been logged with your IP, user identity, and timestamp, and forwarded directly to the CodeSrijan Administrative Security Ledger. [Review Code of Conduct -> /code-of-conduct]"
+            });
+        }
 
         // Step 2: Instant Boundary & Security Checks
         const sec = checkAdversarialSecurity(message, ctx);

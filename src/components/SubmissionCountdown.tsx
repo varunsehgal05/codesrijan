@@ -20,17 +20,21 @@ export interface SubmissionCountdownProps {
     targetEvent?: {
         id?: string;
         name?: string;
-        submissionDeadline?: string;
+        startDate?: string;
         endDate?: string;
+        registrationStart?: string;
+        registrationEnd?: string;
+        registrationDeadline?: string;
+        submissionDeadline?: string;
         status?: string;
         entryType?: 'free' | 'paid';
         fee?: number;
+        problemStatementsRevealed?: boolean;
     } | null;
     className?: string;
 }
 
 export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionCountdownProps) {
-    const rawDeadline = targetEvent?.submissionDeadline || targetEvent?.endDate || null;
     const eventName = targetEvent?.name || "CodeSrijan Hackathon";
 
     let currentUser: any = null;
@@ -40,7 +44,7 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
         currentUser = store.currentUser;
         registrations = store.registrations || [];
     } catch {
-        // Safe fallback if rendered outside provider
+        // Safe fallback outside provider
     }
 
     // Match registration for this specific user & hackathon
@@ -49,7 +53,7 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
         (r.hackathonId === targetEvent?.id || !targetEvent?.id)
     ) || (registrations || []).find((r: any) => (r.userId === currentUser?.id || r.userId === currentUser?._id));
 
-    // Determine payment requirements and clearance status
+    // Payment state
     const isPaidEvent = targetEvent?.entryType === 'paid' ||
                         (targetEvent?.fee && targetEvent.fee > 0) ||
                         (userReg && userReg.entryType === 'paid' && userReg.feeAmount > 0);
@@ -63,13 +67,82 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
     const isPaymentVerified = !isPaidEvent || paymentStatus === 'verified' || paymentStatus === 'not_required' || regStatus === 'registered';
     const isPaymentPending = isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected;
 
+    // Resolve multi-phase lifecycle
+    const resolvePhase = () => {
+        const now = Date.now();
+        const regEnd = targetEvent?.registrationEnd || (targetEvent as any)?.registrationDeadline;
+        const start = targetEvent?.startDate;
+        const subDeadline = targetEvent?.submissionDeadline || targetEvent?.endDate;
+        const status = (targetEvent?.status || '').toLowerCase();
+
+        const regEndTime = regEnd ? new Date(regEnd).getTime() : 0;
+        const startTime = start ? new Date(start).getTime() : 0;
+        const subDeadlineTime = subDeadline ? new Date(subDeadline).getTime() : 0;
+
+        if (status === 'completed' || status === 'evaluation' || (subDeadlineTime > 0 && now >= subDeadlineTime)) {
+            return {
+                phase: 'concluded' as const,
+                target: subDeadline || null,
+                badge: 'HACKATHON CONCLUDED',
+                badgeStyle: 'bg-zinc-800 text-zinc-300 border-zinc-600',
+                heading: 'DEADLINE CONCLUDED',
+                summary: 'Submissions locked. Evaluation matrix processing scores.'
+            };
+        }
+
+        if (status === 'active' || status === 'submission_open' || (startTime > 0 && now >= startTime)) {
+            return {
+                phase: 'hacking' as const,
+                target: subDeadline || targetEvent?.endDate || null,
+                badge: 'HACKATHON LIVE',
+                badgeStyle: 'bg-[#FFD700] text-black border-[#FFD700] font-bold',
+                heading: 'SUBMISSIONS CLOSE IN',
+                summary: 'Hacking matrix live. Transmit team payload before cutoff.'
+            };
+        }
+
+        if (status === 'registration_open' || (regEndTime > 0 && now < regEndTime)) {
+            return {
+                phase: 'registration' as const,
+                target: regEnd || null,
+                badge: 'REGISTRATION OPEN',
+                badgeStyle: 'bg-electric-blue text-white border-electric-blue',
+                heading: 'REGISTRATION CLOSES IN',
+                summary: 'Enrollment window active. Form your squad before timer finishes.'
+            };
+        }
+
+        if (startTime > 0 && now < startTime) {
+            return {
+                phase: 'upcoming' as const,
+                target: start || null,
+                badge: 'STARTING SOON',
+                badgeStyle: 'bg-emerald-400 text-black border-emerald-500 font-bold',
+                heading: 'HACKATHON COMMENCES IN',
+                summary: 'Registration closed. Challenges unlock when countdown hits zero.'
+            };
+        }
+
+        return {
+            phase: 'hacking' as const,
+            target: subDeadline || null,
+            badge: 'HACKATHON ACTIVE',
+            badgeStyle: 'bg-electric-blue/20 text-electric-blue border-electric-blue',
+            heading: 'SUBMISSIONS CLOSE IN',
+            summary: 'Submission portal active.'
+        };
+    };
+
+    const currentPhaseInfo = resolvePhase();
+    const rawDeadline = currentPhaseInfo.target;
+
     const [countdown, setCountdown] = useState<CountdownCalculation>(() => 
         calculateRemainingTime(rawDeadline)
     );
 
     useEffect(() => {
         const update = () => {
-            setCountdown(calculateRemainingTime(rawDeadline));
+            setCountdown(calculateRemainingTime(currentPhaseInfo.target));
         };
 
         update();
@@ -90,7 +163,7 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('focus', handleFocus);
         };
-    }, [rawDeadline]);
+    }, [currentPhaseInfo.target]);
 
     // Format absolute deadline for display with timezone
     let formattedDeadline: string | null = null;
@@ -115,10 +188,10 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
 
     // Dynamic styling tokens based on urgency state
     let borderClass = "border-ink-black";
-    let badgeClass = "bg-electric-blue/20 text-electric-blue border-electric-blue";
-    let badgeText = "HACKATHON ACTIVE";
-    let headingText = "SUBMISSIONS CLOSE IN";
-    let statusSummary = "Payload submission gateway active.";
+    let badgeClass = currentPhaseInfo.badgeStyle;
+    let badgeText = currentPhaseInfo.badge;
+    let headingText = currentPhaseInfo.heading;
+    let statusSummary = currentPhaseInfo.summary;
 
     if (!countdown.isConfigured) {
         borderClass = "border-zinc-700";
@@ -129,24 +202,26 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
     } else if (countdown.isExpired) {
         borderClass = "border-error";
         badgeClass = "bg-error text-pure-white border-error";
-        badgeText = "SUBMISSION WINDOW CLOSED";
+        badgeText = currentPhaseInfo.phase === 'registration' ? "REGISTRATION CLOSED" : "SUBMISSIONS CLOSED";
         headingText = "DEADLINE ELAPSED";
-        statusSummary = "Mainframe submission gateway locked. Evaluation running.";
+        statusSummary = currentPhaseInfo.phase === 'registration' 
+            ? "Registration window has ended. Preparing competition start."
+            : "Mainframe submission gateway locked. Evaluation running.";
     } else if (countdown.urgency === 'critical') {
         borderClass = "border-error animate-pulse";
         badgeClass = "bg-error text-pure-white border-error";
-        badgeText = "CRITICAL: FINAL TRANSMISSION";
-        headingText = "CLOSING IMMINENT";
-        statusSummary = "Less than 1 hour remaining! Finalize links immediately.";
+        badgeText = "CRITICAL: FINAL MINUTES";
+        headingText = `${currentPhaseInfo.heading} (IMMINENT)`;
+        statusSummary = "Less than 1 hour remaining! Finalize immediately.";
     } else if (countdown.urgency === 'warning') {
         borderClass = "border-amber-500";
         badgeClass = "bg-amber-400 text-ink-black border-amber-500";
         badgeText = "CLOSING SOON";
-        headingText = "SUBMISSIONS CLOSE IN";
-        statusSummary = "Approaching submission cutoff. Reconcile code and demo links.";
+        headingText = currentPhaseInfo.heading;
+        statusSummary = "Approaching cutoff. Reconcile details.";
     }
 
-    // Dynamic Payment-Aware Call to Action
+    // Dynamic Phase & Payment-Aware Call to Action
     const renderActionCTA = () => {
         if (isPaymentPending) {
             return (
@@ -208,12 +283,80 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
             );
         }
 
-        // Standard Cleared / Free Flow
+        // Phase-specific actions
+        if (currentPhaseInfo.phase === 'registration') {
+            return (
+                <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">
+                        <span className="material-symbols-outlined text-xs">how_to_reg</span>
+                        <span>{userReg ? "Registration Active" : "Registration Open"}</span>
+                    </div>
+                    {userReg ? (
+                        <Link
+                            to="/team"
+                            className="w-full sm:w-auto text-center bg-electric-blue hover:bg-white text-black font-mono font-bold text-xs uppercase py-2.5 px-6 border-2 border-black hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-sm">groups</span>
+                            Manage Team & Squad →
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/hackathons"
+                            className="w-full sm:w-auto text-center bg-electric-blue hover:bg-white text-black font-mono font-bold text-xs uppercase py-2.5 px-6 border-2 border-black hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                        >
+                            <span className="material-symbols-outlined text-sm">app_registration</span>
+                            Register For Hackathon →
+                        </Link>
+                    )}
+                    <span className="text-[10px] font-mono text-zinc-400">Solo or Team enrollment allowed</span>
+                </div>
+            );
+        }
+
+        if (currentPhaseInfo.phase === 'upcoming') {
+            return (
+                <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold">
+                        <span className="material-symbols-outlined text-xs">hourglass_top</span>
+                        <span>Stand By for Hacking Launch</span>
+                    </div>
+                    <Link
+                        to="/problems"
+                        className="w-full sm:w-auto text-center bg-white hover:bg-electric-blue hover:text-white text-black font-mono font-bold text-xs uppercase py-2.5 px-6 border-2 border-black hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-sm">extension</span>
+                        View Challenge Briefings →
+                    </Link>
+                    <span className="text-[10px] font-mono text-zinc-400">Problem statements unlock at zero</span>
+                </div>
+            );
+        }
+
+        if (currentPhaseInfo.phase === 'concluded') {
+            return (
+                <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-zinc-400 uppercase tracking-widest font-bold">
+                        <span className="material-symbols-outlined text-xs">emoji_events</span>
+                        <span>Evaluation Active</span>
+                    </div>
+                    <Link
+                        to="/leaderboard"
+                        className="w-full sm:w-auto text-center bg-white hover:bg-[#FFD700] text-black font-mono font-bold text-xs uppercase py-2.5 px-6 border-2 border-black hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                    >
+                        <span className="material-symbols-outlined text-sm">leaderboard</span>
+                        View Public Standings →
+                    </Link>
+                    <span className="text-[10px] font-mono text-zinc-400">Live points leaderboard</span>
+                </div>
+            );
+        }
+
+        // Live Hacking Flow
         return (
             <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">
                 <div className="flex items-center gap-1.5 text-[10px] font-mono text-emerald-400 uppercase tracking-widest font-bold">
                     <span className="material-symbols-outlined text-xs">verified</span>
-                    <span>Submission Clearance Granted</span>
+                    <span>Submission Gateway Open</span>
                 </div>
                 <Link
                     to="/workspace"
@@ -229,16 +372,16 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
 
     // Accessibility label
     const accessibleLabel = countdown.isExpired
-        ? "Submission deadline has passed. Submissions are closed."
+        ? `${currentPhaseInfo.heading} has passed.`
         : !countdown.isConfigured
-        ? "Submission deadline is not configured."
-        : `Submission deadline countdown: ${countdown.totalHours} hours, ${countdown.minutes} minutes, ${countdown.seconds} seconds remaining for ${eventName}`;
+        ? "Deadline is not configured."
+        : `Timer: ${countdown.days} days, ${countdown.hours} hours, ${countdown.minutes} minutes, ${countdown.seconds} seconds remaining for ${eventName}`;
 
     return (
         <div
             className={`bg-ink-black text-on-primary p-5 sm:p-6 brutal-border brutal-shadow relative w-full ${borderClass} ${className}`}
             role="region"
-            aria-label="Hackathon Submission Deadline Clock"
+            aria-label="Hackathon Countdown Clock"
         >
             {/* Horizontal Layout Container */}
             <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
@@ -268,7 +411,7 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
                     {formattedDeadline && (
                         <div className="flex items-center gap-1.5 text-[11px] font-mono text-zinc-400 flex-wrap justify-center lg:justify-start">
                             <span className="material-symbols-outlined text-[14px] text-electric-blue">schedule</span>
-                            <span>Cutoff:</span>
+                            <span>Target:</span>
                             {isoString ? (
                                 <time dateTime={isoString} className="text-white font-bold">
                                     {formattedDeadline}
@@ -287,59 +430,62 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
                     </p>
                 </div>
 
-                {/* Center Segment: Horizontal Countdown Digits Row */}
+                {/* Center Segment: 4-Box Countdown Digits Row (DAYS : HOURS : MIN : SEC) */}
                 <div className="flex flex-col items-center justify-center py-1 w-full lg:w-auto">
                     <span className="font-label-bold text-[11px] uppercase tracking-widest text-electric-blue text-center mb-2">
                         {headingText}
                     </span>
 
                     <div
-                        className="flex items-center justify-center gap-2 sm:gap-3 font-mono"
+                        className="flex items-center justify-center gap-1.5 sm:gap-2.5 font-mono"
                         aria-label={accessibleLabel}
                     >
-                        {/* Hours Unit */}
-                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-3 sm:px-4 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[84px]">
-                            <span className="font-display-lg text-2xl sm:text-4xl text-surface-bright tabular-nums leading-none font-bold">
-                                {countdown.isConfigured ? String(countdown.totalHours).padStart(2, '0') : '--'}
+                        {/* Days Unit */}
+                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-2.5 sm:px-3.5 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[62px] sm:min-w-[76px]">
+                            <span className="font-display-lg text-xl sm:text-3xl text-surface-bright tabular-nums leading-none font-bold">
+                                {countdown.isConfigured ? String(countdown.days).padStart(2, '0') : '--'}
                             </span>
-                            <span className="font-label-sm text-[9px] sm:text-[10px] text-surface-variant uppercase mt-1 tracking-wider">
+                            <span className="font-label-sm text-[8px] sm:text-[9px] text-surface-variant uppercase mt-1 tracking-wider font-bold">
+                                DAYS
+                            </span>
+                        </div>
+
+                        <span className="text-lg sm:text-2xl text-zinc-600 font-bold -mt-2 select-none">:</span>
+
+                        {/* Hours Unit */}
+                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-2.5 sm:px-3.5 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[62px] sm:min-w-[76px]">
+                            <span className="font-display-lg text-xl sm:text-3xl text-surface-bright tabular-nums leading-none font-bold">
+                                {countdown.isConfigured ? String(countdown.hours).padStart(2, '0') : '--'}
+                            </span>
+                            <span className="font-label-sm text-[8px] sm:text-[9px] text-surface-variant uppercase mt-1 tracking-wider font-bold">
                                 HOURS
                             </span>
                         </div>
 
-                        <span className="text-xl sm:text-2xl text-zinc-600 font-bold -mt-3 select-none">:</span>
+                        <span className="text-lg sm:text-2xl text-zinc-600 font-bold -mt-2 select-none">:</span>
 
                         {/* Minutes Unit */}
-                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-3 sm:px-4 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[84px]">
-                            <span className="font-display-lg text-2xl sm:text-4xl text-surface-bright tabular-nums leading-none font-bold">
+                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-2.5 sm:px-3.5 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[62px] sm:min-w-[76px]">
+                            <span className="font-display-lg text-xl sm:text-3xl text-surface-bright tabular-nums leading-none font-bold">
                                 {countdown.isConfigured ? String(countdown.minutes).padStart(2, '0') : '--'}
                             </span>
-                            <span className="font-label-sm text-[9px] sm:text-[10px] text-surface-variant uppercase mt-1 tracking-wider">
-                                MINUTES
+                            <span className="font-label-sm text-[8px] sm:text-[9px] text-surface-variant uppercase mt-1 tracking-wider font-bold">
+                                MINS
                             </span>
                         </div>
 
-                        <span className="text-xl sm:text-2xl text-zinc-600 font-bold -mt-3 select-none">:</span>
+                        <span className="text-lg sm:text-2xl text-zinc-600 font-bold -mt-2 select-none">:</span>
 
                         {/* Seconds Unit */}
-                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-3 sm:px-4 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[70px] sm:min-w-[84px]">
-                            <span className={`font-display-lg text-2xl sm:text-4xl tabular-nums leading-none font-bold ${countdown.urgency === 'critical' ? 'text-error animate-pulse' : 'text-surface-bright'}`}>
+                        <div className="bg-[#0b101c] border-2 border-zinc-800 px-2.5 sm:px-3.5 py-2 sm:py-3 flex flex-col items-center justify-center min-w-[62px] sm:min-w-[76px]">
+                            <span className={`font-display-lg text-xl sm:text-3xl tabular-nums leading-none font-bold ${countdown.urgency === 'critical' ? 'text-error animate-pulse' : 'text-surface-bright'}`}>
                                 {countdown.isConfigured ? String(countdown.seconds).padStart(2, '0') : '--'}
                             </span>
-                            <span className="font-label-sm text-[9px] sm:text-[10px] text-surface-variant uppercase mt-1 tracking-wider">
-                                SECONDS
+                            <span className="font-label-sm text-[8px] sm:text-[9px] text-surface-variant uppercase mt-1 tracking-wider font-bold">
+                                SECS
                             </span>
                         </div>
                     </div>
-
-                    {/* Remaining Span Note */}
-                    {countdown.days > 0 && (
-                        <div className="mt-2 text-center">
-                            <span className="inline-block text-[10px] font-mono text-zinc-400 bg-zinc-900 border border-zinc-800 px-2 py-0.5">
-                                Span: {countdown.days} day{countdown.days > 1 ? 's' : ''}, {countdown.hours} hr{countdown.hours !== 1 ? 's' : ''} total remaining
-                            </span>
-                        </div>
-                    )}
                 </div>
 
                 {/* Right Segment: Payment Status & Dynamic Action CTA */}
@@ -351,4 +497,3 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
         </div>
     );
 }
-

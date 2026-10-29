@@ -12,7 +12,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+// Preserve default system DNS on Windows
+try {
+    if (process.env.USE_GOOGLE_DNS === 'true') {
+        dns.setServers(['8.8.8.8', '8.8.4.4']);
+    }
+} catch (e) {}
 
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -144,7 +149,13 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Firebase App Check controlled rollout middleware
+import { verifyAppCheck } from './middleware/appCheck.js';
+import { sendPushNotification } from './services/fcm.js';
+app.use(verifyAppCheck);
 
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask, MentorRequest } from './models/index.js';
@@ -152,11 +163,13 @@ import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conve
 import { FAQ, Gallery } from './models/tertiary.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
-import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail, sendTeammateJoinedEmail, sendTeamLeaderNewMemberEmail } from './services/email.js';
 import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
 import { handleAIChat, handleAIFallback } from './services/srijanbot.js';
+import { detectProhibitedContent, handleContentModerationIncident } from './services/moderation.js';
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan';
+const DIRECT_REPLICA_MONGO_URI = 'mongodb://codesrijan_db_user:mbSBS100Zj9kE5pX@ac-bav0jva-shard-00-00.mrckx43.mongodb.net:27017,ac-bav0jva-shard-00-01.mrckx43.mongodb.net:27017,ac-bav0jva-shard-00-02.mrckx43.mongodb.net:27017/codesrijan?ssl=true&replicaSet=atlas-yuufg0-shard-0&authSource=admin';
+const MONGO_URI = (process.env.MONGO_URI && !process.env.MONGO_URI.includes('undefined')) ? process.env.MONGO_URI : DIRECT_REPLICA_MONGO_URI;
 
 /**
  * Immutable server-side audit logging helper for administrative actions (Feature 7).
@@ -185,10 +198,27 @@ export async function logAdminActivity(req, { action, entityType, entityId, desc
     }
 }
 
-// Connect to MongoDB
-mongoose.connect(MONGO_URI, {
-    dbName: process.env.MONGO_DB_NAME || 'codesrijan'
-}).then(async () => {
+// Connect to MongoDB with bounded connection pool and resilient timeouts (Zero-Budget M0 Policy)
+const connectMongo = async () => {
+    const opts = {
+        dbName: process.env.MONGO_DB_NAME || 'codesrijan',
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 6000,
+        socketTimeoutMS: 45000
+    };
+    try {
+        await mongoose.connect(MONGO_URI, opts);
+    } catch (err) {
+        if (MONGO_URI !== DIRECT_REPLICA_MONGO_URI) {
+            console.warn('[MONGO SRV FALLBACK] SRV lookup failed, falling back to direct replica set hosts...');
+            await mongoose.connect(DIRECT_REPLICA_MONGO_URI, opts);
+        } else {
+            throw err;
+        }
+    }
+};
+
+connectMongo().then(async () => {
     console.log('MongoDB Connected to keyspace codesrijan');
     // Seed only absent accounts with explicitly configured credentials.
     for (const account of [
@@ -208,11 +238,11 @@ mongoose.connect(MONGO_URI, {
     if (existingDefaults < 5) {
         await Sponsor.deleteMany({ id: { $in: defaultSponsorIds } }); // clear partials
         const defaultSponsors = [
-            { id: "sp-1", name: "Google Cloud", tier: "Title Sponsor", logo: "https://www.gstatic.com/images/branding/product/1x/avatar_square_cloud_512dp.png", description: "Providing AI & Cloud Computing infrastructure for hackathon projects.", website: "https://cloud.google.com", isPublished: true, order: 1 },
-            { id: "sp-2", name: "Vercel", tier: "Platinum", logo: "https://assets.vercel.com/image/upload/v1588805858/repositories/vercel/logo.png", description: "Empowering developers to build and deploy web applications instantly.", website: "https://vercel.com", isPublished: true, order: 2 },
-            { id: "sp-3", name: "Firebase", tier: "Gold", logo: "https://www.gstatic.com/devrel-devsite/prod/v3e29f3aa13ca48efdfbd3ff31c03bfeb02db66619dfd700e12fd97779d71bc20/firebase/images/touchicon-180.png", description: "Realtime backend identity & database infrastructure.", website: "https://firebase.google.com", isPublished: true, order: 3 },
-            { id: "sp-4", name: "GitHub", tier: "Gold", logo: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png", description: "The premier developer platform for version control & collaboration.", website: "https://github.com", isPublished: true, order: 4 },
-            { id: "sp-5", name: "Intel", tier: "Hardware Partner", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Intel_logo_%282020%29.svg/1024px-Intel_logo_%282020%29.svg.png", description: "Sponsoring high-performance computing hardware prizes.", website: "https://intel.com", isPublished: true, order: 5 }
+            { id: "sp-1", name: "Google Cloud", tier: "Title Sponsor", logo: "/logos/google-cloud.svg", description: "Providing AI & Cloud Computing infrastructure for hackathon projects.", website: "https://cloud.google.com", isPublished: true, order: 1 },
+            { id: "sp-2", name: "Vercel", tier: "Platinum", logo: "/logos/vercel.svg", description: "Empowering developers to build and deploy web applications instantly.", website: "https://vercel.com", isPublished: true, order: 2 },
+            { id: "sp-3", name: "Firebase", tier: "Gold", logo: "/logos/firebase.svg", description: "Realtime backend identity & database infrastructure.", website: "https://firebase.google.com", isPublished: true, order: 3 },
+            { id: "sp-4", name: "GitHub", tier: "Gold", logo: "/logos/github.svg", description: "The premier developer platform for version control & collaboration.", website: "https://github.com", isPublished: true, order: 4 },
+            { id: "sp-5", name: "Intel", tier: "Hardware Partner", logo: "/logos/intel.svg", description: "Sponsoring high-performance computing hardware prizes.", website: "https://intel.com", isPublished: true, order: 5 }
         ];
         await Sponsor.insertMany(defaultSponsors);
         console.log("[SYSTEM] Missing Default Corporate Sponsors seeded.");
@@ -251,7 +281,9 @@ app.use(async (req, res, next) => {
             path.startsWith('/api/admin') ||
             path.startsWith('/api/auth') ||
             path === '/api/system/status' ||
-            path === '/api/settings/public'
+            path === '/api/settings/public' ||
+            path === '/health' ||
+            path === '/api/health'
         ) {
             return next();
         }
@@ -295,6 +327,81 @@ app.get('/api/settings/public', (req, res) => {
         maintenanceMode: globalSystemSettings.maintenanceMode === true,
         settings: globalSystemSettings
     });
+});
+
+// Public Unauthenticated Health Probes for Render & Vercel
+app.get(['/health', '/api/health'], (req, res) => {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    const uptimeSec = Math.floor(process.uptime());
+    
+    res.status(isDbConnected ? 200 : 503).json({
+        status: isDbConnected ? 'healthy' : 'degraded',
+        service: 'codesrijan-api',
+        timestamp: new Date().toISOString(),
+        uptime: uptimeSec,
+        database: {
+            connected: isDbConnected,
+            readyState: mongoose.connection.readyState,
+            name: mongoose.connection.name || 'codesrijan'
+        },
+        version: '1.0.0'
+    });
+});
+
+// Push Notification (FCM) Endpoints
+app.post('/api/notifications/fcm-token', requireAuth, async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token || typeof token !== 'string') {
+            return res.status(400).json({ success: false, message: 'Valid FCM token string is required.' });
+        }
+        await User.updateOne(
+            { id: req.user.id },
+            { $addToSet: { fcmTokens: token.trim() } }
+        );
+        res.json({ success: true, message: 'FCM token registered successfully.' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to register push token.' });
+    }
+});
+
+app.delete('/api/notifications/fcm-token', requireAuth, async (req, res) => {
+    try {
+        const { token } = req.body;
+        if (!token || typeof token !== 'string') {
+            return res.status(400).json({ success: false, message: 'Valid FCM token string is required.' });
+        }
+        await User.updateOne(
+            { id: req.user.id },
+            { $pull: { fcmTokens: token.trim() } }
+        );
+        res.json({ success: true, message: 'FCM token deregistered successfully.' });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to deregister push token.' });
+    }
+});
+
+app.post('/api/notifications/test-self-push', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findOne({ id: req.user.id }).lean();
+        if (!user || !user.fcmTokens || user.fcmTokens.length === 0) {
+            return res.status(400).json({ success: false, message: 'No registered push tokens found for current user.' });
+        }
+        const result = await sendPushNotification(user.fcmTokens, {
+            title: 'CodeSrijan Test Notification',
+            body: 'Push notifications are successfully linked to your account.',
+            data: { url: '/dashboard', type: 'test' }
+        });
+        if (result.staleTokens && result.staleTokens.length > 0) {
+            await User.updateOne(
+                { id: req.user.id },
+                { $pull: { fcmTokens: { $in: result.staleTokens } } }
+            );
+        }
+        res.json({ success: true, result });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 });
 
 // --- Routes ---
@@ -1215,7 +1322,8 @@ app.post('/api/hackathons/:id/payment-proof', requireAuth, requireRole(['student
             hackathonId,
             $or: [
                 { userId },
-                { 'rosterMembers.userId': userId }
+                { 'rosterMembers.userId': userId },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
             ]
         });
 
@@ -1345,11 +1453,206 @@ app.get('/api/hackathons/:id/my-registration', requireAuth, async (req, res) => 
             hackathonId: req.params.id,
             $or: [
                 { userId: req.user.id },
-                { 'rosterMembers.userId': req.user.id }
+                { 'rosterMembers.userId': req.user.id },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
             ]
         });
         if (!registration) return res.status(404).json({ message: "Registration not found." });
         res.json(registration);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// REQUEST PAYMENT REFUND / CANCEL CLEARANCE
+app.post('/api/hackathons/:id/request-refund', requireAuth, requireRole(['student']), async (req, res) => {
+    try {
+        const { reason, refundUpi } = req.body;
+        const hackathonId = req.params.id;
+
+        const reg = await Registration.findOne({
+            hackathonId,
+            $or: [
+                { userId: req.user.id },
+                { 'rosterMembers.userId': req.user.id },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
+            ]
+        });
+
+        if (!reg) {
+            return res.status(404).json({ message: "Registration clearance record not located." });
+        }
+
+        const hackathon = await Hackathon.findOne({ id: hackathonId });
+        if (hackathon && (hackathon.status === 'live' || hackathon.status === 'active' || hackathon.status === 'completed')) {
+            return res.status(400).json({ message: "Hackathon is active or concluded. Refunds cannot be requested after arena commencement." });
+        }
+
+        reg.refundRequested = true;
+        reg.refundReason = reason || 'Participant requested registration refund';
+        reg.refundUpi = refundUpi || '';
+        reg.refundRequestedAt = new Date();
+        await reg.save();
+
+        // Audit Log
+        const ipAddress = req.headers?.['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || req.ip || '127.0.0.1';
+        await ActivityLog.create({
+            id: `log-ref-${Date.now()}`,
+            userId: req.user.email,
+            role: 'student',
+            action: 'REFUND_REQUESTED',
+            entityType: 'PAYMENT',
+            entityId: reg.id,
+            description: `Refund requested by ${req.user.name} (${req.user.email}) for Hackathon ${hackathonId}. Reason: "${reason || 'None provided'}". UPI: ${refundUpi || 'None'}`,
+            ipAddress,
+            userAgent: req.headers?.['user-agent'] || 'unknown'
+        });
+
+        // Notify Admins
+        const admins = await User.find({ role: 'admin' }).lean();
+        for (const admin of admins) {
+            await Notification.create({
+                id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                userId: admin.id,
+                type: 'admin_message',
+                title: '💸 Refund Request Submitted',
+                message: `${req.user.name} (${req.user.email}) requested a fee refund for hackathon "${hackathon?.name || hackathonId}". Reason: ${reason || 'N/A'}.`,
+                referenceType: 'registration',
+                referenceId: reg.id,
+                isRead: false
+            }).catch(() => {});
+        }
+
+        res.json({ message: "Refund request logged for administrator review.", registration: reg });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// LEAVE / WITHDRAW FROM HACKATHON
+app.post('/api/hackathons/:id/leave', requireAuth, requireRole(['student']), async (req, res) => {
+    try {
+        const hackathonId = req.params.id;
+        const hackathon = await Hackathon.findOne({ id: hackathonId });
+
+        if (hackathon) {
+            const hasStarted = (hackathon.status === 'live' || hackathon.status === 'active' || hackathon.status === 'ongoing' || hackathon.status === 'submission_open' || hackathon.status === 'completed') || 
+                               (hackathon.startDate && new Date() >= new Date(hackathon.startDate));
+            if (hasStarted) {
+                return res.status(403).json({ message: "Tournament has already commenced. Operatives cannot abandon an active hackathon arena." });
+            }
+        }
+
+        const reg = await Registration.findOne({
+            hackathonId,
+            $or: [
+                { userId: req.user.id },
+                { 'rosterMembers.userId': req.user.id },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
+            ]
+        });
+
+        if (!reg) {
+            return res.status(404).json({ message: "No active enrollment found for this event." });
+        }
+
+        // Check if payment is under review
+        if (reg.paymentStatus === 'payment_under_review') {
+            return res.status(400).json({ message: "Payment proof is currently undergoing audit review. You cannot leave directly. Please submit a refund request if you wish to withdraw." });
+        }
+
+        // Delete or mark registration as withdrawn
+        await Registration.deleteOne({ id: reg.id });
+
+        // If user was in a squad locked to this hackathon, unlock squad if no other hackathon binding
+        if (req.user.teamId) {
+            const team = await Team.findOne({ id: req.user.teamId });
+            if (team && team.hackathonId === hackathonId) {
+                team.isLocked = false;
+                await team.save();
+            }
+        }
+
+        res.json({ message: "Successfully withdrawn from hackathon arena." });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// FRIEND SYSTEM: TOGGLE FRIEND STATUS
+app.post('/api/users/:id/friend', requireAuth, async (req, res) => {
+    try {
+        const targetUserId = req.params.id;
+        if (targetUserId === req.user.id) {
+            return res.status(400).json({ message: "You cannot add yourself as a comrade." });
+        }
+        const targetUser = await User.findOne({ id: targetUserId });
+        if (!targetUser) return res.status(404).json({ message: "Operative not found." });
+
+        const currentUser = await User.findOne({ id: req.user.id });
+        const currentFriends = Array.isArray(currentUser.friends) ? currentUser.friends : [];
+        const isFriend = currentFriends.includes(targetUserId);
+
+        if (isFriend) {
+            await User.updateOne({ id: req.user.id }, { $pull: { friends: targetUserId } });
+            await User.updateOne({ id: targetUserId }, { $pull: { friends: req.user.id } });
+            const updatedTarget = await User.findOne({ id: targetUserId });
+            res.json({ message: "Removed from network comrades.", isFriend: false, friendCount: (updatedTarget.friends || []).length });
+        } else {
+            await User.updateOne({ id: req.user.id }, { $addToSet: { friends: targetUserId } });
+            await User.updateOne({ id: targetUserId }, { $addToSet: { friends: req.user.id } });
+            
+            await Notification.create({
+                id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                userId: targetUserId,
+                type: 'team_invite',
+                title: 'New Network Comrade',
+                message: `${currentUser.name || 'An operative'} added you to their hackathon network comrades.`,
+                referenceType: 'user',
+                referenceId: currentUser.id,
+                isRead: false
+            }).catch(() => {});
+
+            const updatedTarget = await User.findOne({ id: targetUserId });
+            res.json({ message: "Added to network comrades!", isFriend: true, friendCount: (updatedTarget.friends || []).length });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// OPERATIVE PUBLIC PROFILE / DOSSIER
+app.get('/api/users/:id/profile', requireAuth, async (req, res) => {
+    try {
+        const user = await User.findOne({ id: req.params.id }).lean();
+        if (!user) return res.status(404).json({ message: "Operative dossier not found." });
+
+        let squad = null;
+        if (user.teamId) {
+            squad = await Team.findOne({ id: user.teamId }).lean();
+        }
+
+        const friendCount = Array.isArray(user.friends) ? user.friends.length : 0;
+        const isFriend = Array.isArray(user.friends) && user.friends.includes(req.user.id);
+
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            college: user.college || 'Academic Institution Unspecified',
+            branch: user.branch || 'Engineering / Technology',
+            year: user.year || 'Undergraduate',
+            specialization: user.specialization || 'Fullstack',
+            skills: (user.skills && user.skills.length > 0) ? user.skills : ['Fullstack Development', 'Problem Solving', 'React', 'Git'],
+            bio: user.bio || 'Operative geared for competitive rapid prototyping and software engineering challenges.',
+            avatarUrl: user.profileImage || user.avatarUrl,
+            githubUrl: user.github || user.githubUrl || '',
+            portfolioUrl: user.portfolio || user.portfolioUrl || '',
+            friendCount,
+            isFriend,
+            team: squad ? { id: squad.id, name: squad.name, memberCount: squad.memberIds?.length || 0 } : null
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -2371,6 +2674,35 @@ app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['studen
     await User.findOneAndUpdate({ id: req.user.id }, { teamId: invite.teamId });
     invite.status = 'accepted';
     await invite.save();
+
+    // Dispatches: Teammate receives email AND in-app notification; Leader receives email only
+    try {
+        const leaderUser = await User.findOne({ id: team.leaderId }).lean();
+        const teammateUser = await User.findOne({ id: req.user.id }).lean();
+
+        // 1. Teammate Email & Notification
+        if (teammateUser?.email) {
+            sendTeammateJoinedEmail(teammateUser.email, teammateUser.name || 'Operative', team.name, leaderUser?.name || 'Squad Leader').catch(() => {});
+        }
+        await Notification.create({
+            id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            userId: req.user.id,
+            title: `Joined Squad: ${team.name}`,
+            message: `You have successfully joined squad ${team.name} led by ${leaderUser?.name || 'Squad Leader'}.`,
+            type: 'team_updated',
+            referenceType: 'team',
+            referenceId: team.id,
+            isRead: false
+        }).catch(() => {});
+
+        // 2. Squad Leader Email ONLY
+        if (leaderUser?.email) {
+            sendTeamLeaderNewMemberEmail(leaderUser.email, leaderUser.name || 'Squad Leader', team.name, teammateUser?.name || 'Operative', teammateUser?.email || '').catch(() => {});
+        }
+    } catch (notifErr) {
+        console.error('[TEAM JOIN NOTIF ERROR]', notifErr.message);
+    }
+
     res.json(team);
 });
 app.get('/api/teams/invitations/me', requireAuth, requireRole(['student']), async (req, res) => {
@@ -2466,15 +2798,29 @@ app.post('/api/teams/requests/:id/:action', requireAuth, requireRole(['student',
 
             request.status = 'approved';
             
-            const notification = new Notification({
-                id: `notif-${Date.now()}`,
-                userId: request.userId,
-                title: 'Join Request Accepted',
-                message: `You have been accepted into the squad (${team.name}).`,
-                type: 'system',
-                relatedId: team.id
-            });
-            await notification.save();
+            // Dispatches: Teammate receives email AND in-app notification; Leader receives email only
+            try {
+                const leaderUser = req.user;
+                if (student?.email) {
+                    sendTeammateJoinedEmail(student.email, student.name || 'Operative', team.name, leaderUser?.name || 'Squad Leader').catch(() => {});
+                }
+                const notification = new Notification({
+                    id: `notif-${Date.now()}`,
+                    userId: request.userId,
+                    title: `Join Request Accepted: ${team.name}`,
+                    message: `You have been accepted into the squad (${team.name}) led by ${leaderUser?.name || 'Squad Leader'}.`,
+                    type: 'team_updated',
+                    referenceType: 'team',
+                    referenceId: team.id
+                });
+                await notification.save().catch(() => {});
+
+                if (leaderUser?.email) {
+                    sendTeamLeaderNewMemberEmail(leaderUser.email, leaderUser.name || 'Squad Leader', team.name, student.name || 'Operative', student.email || '').catch(() => {});
+                }
+            } catch (notifErr) {
+                console.error('[REQUEST ACCEPT NOTIF ERROR]', notifErr.message);
+            }
         } else {
             request.status = 'rejected';
 
@@ -2629,6 +2975,57 @@ app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, 
     await team.save();
 
     res.json(submission);
+});
+
+// ADMIN TEST CASE: SEED / RUN TEST SUBMISSION FLOW
+app.post('/api/admin/submissions/test-submission', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const testSquadId = req.body.teamId || `team-test-${Date.now().toString(36)}`;
+        let team = await Team.findOne({ id: testSquadId });
+        if (!team) {
+            team = await Team.create({
+                id: testSquadId,
+                name: req.body.teamName || `Quantum Codex [Test Squad]`,
+                leaderId: req.user.id,
+                memberIds: [req.user.id],
+                hackathonId: req.body.hackathonId || 'hack-default',
+                status: 'submitted',
+                isSubmitted: true,
+                repositoryUrl: req.body.githubUrl || "https://github.com/codesrijan/quantum-codex-test",
+                demoUrl: req.body.liveDemoUrl || "https://quantum-codex.vercel.app",
+                isTest: true
+            });
+        }
+
+        const submissionId = `sub-test-${Date.now().toString(36)}`;
+        const testSub = await Submission.create({
+            id: submissionId,
+            hackathonId: team.hackathonId || 'hack-default',
+            teamId: team.id,
+            submittedBy: req.user.id,
+            version: 1,
+            projectTitle: req.body.projectTitle || "Project Vanguard: Resilient Mesh Operating Network",
+            description: req.body.description || "Zero-trust peer-to-peer communication framework operating over mesh topologies with offline payload validation.",
+            solution: "Autonomous packet routing with local cryptographic ledger synchronization.",
+            technologies: ["TypeScript", "Rust", "WebRTC", "TanStack", "Node.js"],
+            githubUrl: req.body.githubUrl || "https://github.com/codesrijan/project-vanguard-mesh",
+            liveDemoUrl: req.body.liveDemoUrl || "https://vanguard-mesh-demo.vercel.app",
+            figmaUrl: "https://figma.com/@codesrijan/vanguard-spec",
+            demoVideoUrl: "https://youtu.be/vanguard-test-demo",
+            status: 'submitted',
+            isTest: true
+        });
+
+        res.json({
+            success: true,
+            message: `Test submission [${submissionId}] successfully generated for squad "${team.name}".`,
+            submission: testSub,
+            team
+        });
+    } catch (e) {
+        console.error("Test submission generator error:", e);
+        res.status(500).json({ message: "Failed to generate test submission: " + e.message });
+    }
 });
 
 // EVALUATIONS (JUDGE/ADMIN)
@@ -3628,6 +4025,21 @@ app.post('/api/conversations/:id/messages', requireAuth, async (req, res) => {
             }
         }
 
+        // 18+ Content Moderation Guard for Admin/Support Transmissions
+        const modCheck = detectProhibitedContent(message);
+        if (modCheck.flagged) {
+            const isAdminOrSupportChat = conv.type === 'support' || conv.type === 'admin' || conv.id.includes('sup-') || conv.id.includes('admin') || (conv.participantIds && conv.participantIds.some(pid => pid.includes('admin')));
+            if (isAdminOrSupportChat || req.user.role !== 'admin') {
+                handleContentModerationIncident({
+                    req,
+                    channel: `Admin / Support Channel (${conv.id})`,
+                    message,
+                    conversationId: conv.id,
+                    flaggedTerms: modCheck.matchedTerms
+                }).catch(() => {});
+            }
+        }
+
         const newMsg = await Message.create({
             id: 'msg-' + Date.now().toString(),
             conversationId: convId,
@@ -4032,9 +4444,88 @@ app.get('/api/admin/certificates', requireAuth, requireRole(['admin']), async (r
         res.json(certs);
     } catch (e) { res.status(500).json({ message: "Error" }); }
 });
+
+app.post('/api/admin/certificates/issue', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { hackathonId, templateUrl, target, teamId, type } = req.body;
+        if (!hackathonId) return res.status(400).json({ message: "Hackathon ID is required." });
+
+        const hackathon = await Hackathon.findOne({ id: hackathonId });
+        if (!hackathon) return res.status(404).json({ message: "Hackathon not found." });
+
+        // Update template on hackathon if provided
+        if (templateUrl) {
+            hackathon.certificateTemplateUrl = templateUrl;
+            await hackathon.save();
+        }
+
+        let targetTeams = [];
+        if (target === 'team' && teamId) {
+            const team = await Team.findOne({ id: teamId });
+            if (team) targetTeams = [team];
+        } else {
+            targetTeams = await Team.find({ hackathonId, status: { $ne: 'disqualified' } });
+            if (targetTeams.length === 0) {
+                targetTeams = await Team.find({ hackathonId });
+            }
+        }
+
+        const issuedCertificates = [];
+        for (const team of targetTeams) {
+            const memberIds = Array.isArray(team.memberIds) ? team.memberIds : [];
+            for (const uid of memberIds) {
+                const user = await User.findOne({ id: uid });
+                const certId = `cert-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+                const verificationCode = `CS-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+                const cert = await Certificate.create({
+                    id: certId,
+                    userId: uid,
+                    userName: user?.name || 'Operative',
+                    teamId: team.id,
+                    hackathonId: hackathon.id,
+                    type: type || 'participation',
+                    issuedBy: req.user.name || 'Administrator',
+                    issueDate: new Date(),
+                    metadata: {
+                        verificationCode,
+                        certificateTemplateUrl: templateUrl || hackathon.certificateTemplateUrl || '',
+                        eventName: hackathon.name,
+                        teamName: team.name,
+                        recipientEmail: user?.email || ''
+                    }
+                });
+
+                issuedCertificates.push(cert);
+
+                // Dispatch in-app notification
+                await Notification.create({
+                    id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                    userId: uid,
+                    type: 'system',
+                    title: '📜 CERTIFICATE OF ACHIEVEMENT ISSUED!',
+                    message: `Official ${type?.toUpperCase() || 'PARTICIPATION'} certificate awarded for "${hackathon.name}". Verification Hash: ${verificationCode}`,
+                    referenceType: 'certificate',
+                    referenceId: certId,
+                    isRead: false
+                }).catch(() => {});
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Successfully generated and issued ${issuedCertificates.length} certificate(s) across ${targetTeams.length} squad(s).`,
+            count: issuedCertificates.length,
+            certificates: issuedCertificates
+        });
+    } catch (e) {
+        console.error("Certificate generation error:", e);
+        res.status(500).json({ message: "Failed to issue certificates: " + e.message });
+    }
+});
+
 app.post('/api/admin/certificates/batch', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
-        // mock generation
         res.json({ message: "Batch generation initiated." });
     } catch (e) { res.status(500).json({ message: "Error" }); }
 });

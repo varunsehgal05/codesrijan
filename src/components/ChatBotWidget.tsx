@@ -113,7 +113,7 @@ export function ChatBotWidget() {
     };
 
     return (
-        <div className={`${isOpen ? "fixed bottom-4 right-4" : "relative mx-4 mb-4"} sm:fixed sm:bottom-6 sm:right-6 z-[100] flex flex-col items-end`}>
+        <div className="fixed bottom-8 right-5 sm:bottom-12 sm:right-8 z-[100] flex flex-col items-end">
             {isOpen && (
                 <div className="bg-surface brutal-border brutal-shadow-lg w-[min(380px,calc(100vw-2rem))] h-[min(550px,calc(100dvh-2rem))] mb-4 flex flex-col overflow-hidden">
                     {/* Header */}

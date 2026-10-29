@@ -32,6 +32,8 @@ function DashboardPage() {
     }, [hackathons, userTeam, registrations, currentUser]);
 
     const [teamRequests, setTeamRequests] = useState<any[]>([]);
+    const [showDissolveModal, setShowDissolveModal] = useState(false);
+    const [dissolving, setDissolving] = useState(false);
 
     useEffect(() => {
         if (userTeam?.leaderId === currentUser?.id) {
@@ -71,7 +73,7 @@ function DashboardPage() {
     };
 
     const handleDissolveTeam = async () => {
-        if (!confirm("CRITICAL WARNING: Are you certain you want to completely DISSOLVE this squad? All assignment tracking for this team will evaporate permanently.")) return;
+        setDissolving(true);
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
@@ -79,8 +81,14 @@ function DashboardPage() {
             await axios.delete(`${BASE}/teams/${userTeam?.id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            toast.success("Squad dissolved entirely. Roster reset.");
+            setShowDissolveModal(false);
             window.location.reload();
-        } catch (e: any) { toast.error(e.response?.data?.message || "Dissolve sequence interrupted."); }
+        } catch (e: any) {
+            toast.error(e.response?.data?.message || "Dissolve sequence interrupted.");
+        } finally {
+            setDissolving(false);
+        }
     };
 
     const handleActionRequest = async (reqId: string, action: 'accept' | 'reject') => {
@@ -353,7 +361,9 @@ function DashboardPage() {
                                 <div className="space-y-4">
                                     <div className="bg-error/20 p-4 border-2 border-error">
                                         <h3 className="font-label-bold uppercase text-error mb-2 border-b-2 border-error pb-1">Extreme Measures</h3>
-                                        <button onClick={handleDissolveTeam} className="bg-error text-white font-label-bold px-4 py-3 text-xs brutal-hover w-full uppercase transition-transform hover:-translate-y-1 block max-w-sm">DISSOLVE SQUAD ENTIRELY</button>
+                                        <button onClick={() => setShowDissolveModal(true)} className="bg-error text-white font-label-bold px-4 py-3 text-xs brutal-hover w-full uppercase transition-transform hover:-translate-y-1 block max-w-sm cursor-pointer shadow-[3px_3px_0px_0px_#000000]">
+                                            DISSOLVE SQUAD ENTIRELY
+                                        </button>
                                     </div>
 
                                     {/* Members roster */}
@@ -444,11 +454,81 @@ function DashboardPage() {
                             </ul>
                         </div>
                     </div>
-
                 </section>
+
             </main>
 
-            {/* Footer */}
+            {/* Hazardous Dissolve Squad Confirmation Modal */}
+            {showDissolveModal && (
+                <div 
+                    onClick={(e) => { if (e.target === e.currentTarget && !dissolving) setShowDissolveModal(false); }}
+                    className="fixed inset-0 bg-stark-black/85 z-[100] flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+                >
+                    <div className="bg-pure-white brutal-border border-4 border-error shadow-[12px_12px_0px_0px_#FF0033] w-full max-w-lg p-6 sm:p-8 flex flex-col gap-5 relative">
+                        {/* Hazard Banner */}
+                        <div className="bg-error text-white p-3 brutal-border flex items-center gap-3">
+                            <span className="material-symbols-outlined text-2xl animate-pulse">warning</span>
+                            <div>
+                                <h3 className="font-headline-md text-base sm:text-lg uppercase font-black tracking-tight">CRITICAL HAZARD: IRREVOCABLE DISSOLUTION</h3>
+                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Squad Destruct Protocol</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 text-xs leading-relaxed text-stark-black">
+                            <p className="font-bold text-sm">
+                                You are about to completely and permanently dissolve squad:
+                            </p>
+                            <div className="bg-zinc-100 border-2 border-stark-black p-3 font-black text-sm uppercase text-error tracking-wider flex items-center justify-between">
+                                <span>{userTeam?.name || 'ACTIVE SQUAD'}</span>
+                                <span className="bg-stark-black text-white text-[10px] px-2 py-0.5">ID: {userTeam?.id}</span>
+                            </div>
+                            <div className="bg-rose-50 border-2 border-error p-3.5 space-y-1.5 text-rose-900 font-bold text-[11px]">
+                                <div className="flex items-start gap-1.5">
+                                    <span className="text-error font-black">✕</span>
+                                    <span>All {(userTeam?.memberIds || []).length || 1} operatives will be immediately ejected into free agent standing.</span>
+                                </div>
+                                <div className="flex items-start gap-1.5">
+                                    <span className="text-error font-black">✕</span>
+                                    <span>All task assignments, Kanban boards, and squad comms will be permanently erased.</span>
+                                </div>
+                                <div className="flex items-start gap-1.5">
+                                    <span className="text-error font-black">✕</span>
+                                    <span>Any hackathon tournament clearance tied exclusively to this squad code will evaporate.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-3 border-t-2 border-stark-black">
+                            <button
+                                type="button"
+                                onClick={() => setShowDissolveModal(false)}
+                                disabled={dissolving}
+                                className="px-5 py-3 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 text-xs cursor-pointer transition-all shadow-[2px_2px_0px_0px_#000000]"
+                            >
+                                ABORT / KEEP SQUAD
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDissolveTeam}
+                                disabled={dissolving}
+                                className="px-6 py-3 border-2 border-stark-black font-label-bold uppercase bg-error text-white hover:bg-black text-xs cursor-pointer transition-all shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center gap-2"
+                            >
+                                {dissolving ? (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                                        DISSOLVING...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm">delete_forever</span>
+                                        CONFIRM DISSOLUTION
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

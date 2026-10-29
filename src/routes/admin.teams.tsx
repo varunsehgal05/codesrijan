@@ -40,8 +40,9 @@ const STATUS_META: Record<TeamStatus, { label: string; color: string; bg: string
 };
 
 function AdminTeams() {
-  const { teams, users, refetchData } = useAppStore();
+  const { teams, users, hackathons, refetchData } = useAppStore();
   const safeTeams = Array.isArray(teams) ? teams : [];
+  const safeHackathons = Array.isArray(hackathons) ? hackathons : [];
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,6 +52,10 @@ function AdminTeams() {
   const [dqTeam, setDqTeam] = useState<any | null>(null);
   const [dqReason, setDqReason] = useState("");
   const [notifyDq, setNotifyDq] = useState(true);
+  const [banModalTeam, setBanModalTeam] = useState<any | null>(null);
+  const [banReason, setBanReason] = useState("Severe code of conduct violation / platform integrity breach");
+  const [notifyBan, setNotifyBan] = useState(true);
+  const [banLoading, setBanLoading] = useState(false);
   const [viewTeam, setViewTeam] = useState<any | null>(null);
   const [notifyTarget, setNotifyTarget] = useState<any | null>(null);
   const [notifyMsg, setNotifyMsg] = useState("");
@@ -105,24 +110,35 @@ function AdminTeams() {
     } finally { setLoadingId(null); }
   };
 
-  const handleBanTeam = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`CRITICAL: Enter permanent hackathon BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
-    if (!reason || !reason.trim()) return;
+  const openBanModal = (t: any) => {
+    setBanModalTeam(t);
+    setBanReason("Severe code of conduct violation / platform integrity breach");
+    setNotifyBan(true);
+  };
 
-    setLoadingId(teamId);
+  const executeBanTeam = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!banModalTeam || !banReason.trim()) return;
+
+    setBanLoading(true);
+    setLoadingId(banModalTeam.id);
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_BASE}/admin/teams/${teamId}/ban`, 
-        { reason: reason.trim() },
+      await axios.post(`${API_BASE}/admin/teams/${banModalTeam.id}/ban`, 
+        { reason: banReason.trim(), notify: notifyBan },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Squad "${teamName}" BANNED permanently.`);
-      setStatusMsg({ type: "success", text: `Squad "${teamName}" BANNED permanently.` });
+      toast.success(`Squad "${banModalTeam.name}" has been permanently BANNED.`);
+      setStatusMsg({ type: "success", text: `Squad "${banModalTeam.name}" BANNED permanently.` });
+      setBanModalTeam(null);
       await refetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to ban squad.");
       setStatusMsg({ type: "error", text: err.response?.data?.message || "Failed to ban squad." });
-    } finally { setLoadingId(null); }
+    } finally {
+      setBanLoading(false);
+      setLoadingId(null);
+    }
   };
 
   const handleVerifyTeam = async (teamId: string, teamName: string) => {
@@ -323,7 +339,7 @@ function AdminTeams() {
                   </button>
                 )}
 
-                <button onClick={() => handleBanTeam(t.id, t.name)} disabled={loadingId === t.id}
+                <button onClick={() => openBanModal(t)} disabled={loadingId === t.id}
                   className="bg-stark-black hover:bg-error text-pure-white py-2 font-label-caps text-[10px] border-2 border-stark-black hover:-translate-y-0.5 transition-all font-black uppercase disabled:opacity-50 flex items-center justify-center gap-1 cursor-pointer">
                   <span className="material-symbols-outlined text-sm">block</span>BAN TEAM
                 </button>
@@ -334,8 +350,8 @@ function AdminTeams() {
       </div>
 
       {viewTeam && (
-        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-pure-white max-w-xl w-full border-4 border-stark-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-h-[90vh] overflow-y-auto flex flex-col">
+        <div onClick={(e) => { if (e.target === e.currentTarget) setViewTeam(null); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+          <div className="bg-pure-white max-w-xl w-full border-4 border-stark-black shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] max-h-[90vh] overflow-y-auto flex flex-col cursor-default">
             <div className="bg-stark-black p-4 border-b-4 border-electric-blue flex justify-between items-center sticky top-0">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-electric-blue">groups</span>
@@ -387,9 +403,10 @@ function AdminTeams() {
         </div>
       )}
 
+      {/* DISQUALIFY SQUAD MODAL */}
       {dqTeam && (
-        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-pure-white max-w-xl w-full border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+        <div onClick={(e) => { if (e.target === e.currentTarget) setDqTeam(null); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+          <div className="bg-pure-white max-w-xl w-full border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] cursor-default">
             <div className="bg-error p-4 border-b-4 border-stark-black flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-white">gavel</span>
@@ -429,9 +446,99 @@ function AdminTeams() {
         </div>
       )}
 
+      {/* DEDICATED BAN SQUAD MODAL */}
+      {banModalTeam && (
+        <div onClick={(e) => { if (e.target === e.currentTarget) setBanModalTeam(null); }} className="fixed inset-0 bg-stark-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+          <div className="bg-pure-white max-w-xl w-full border-4 border-error shadow-[12px_12px_0px_0px_rgba(239,68,68,1)] cursor-default">
+            <div className="bg-error text-pure-white p-4 border-b-4 border-stark-black flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-2xl">block</span>
+                <h3 className="font-display-lg text-2xl uppercase tracking-widest">PERMANENT SQUAD BAN</h3>
+              </div>
+              <button onClick={() => setBanModalTeam(null)} className="text-pure-white hover:text-black font-bold text-2xl">&times;</button>
+            </div>
+            <form onSubmit={executeBanTeam} className="p-6 md:p-8 flex flex-col gap-5">
+              <div className="bg-red-50 border-2 border-red-300 p-4">
+                <div className="flex items-center gap-2 text-error font-bold uppercase text-xs">
+                  <span className="material-symbols-outlined text-sm">warning</span>
+                  Irreversible Exclusion Warning
+                </div>
+                <h4 className="font-headline-md text-xl text-stark-black mt-1 uppercase">{banModalTeam.name}</h4>
+                <p className="text-xs text-zinc-600 mt-1 font-mono">
+                  Squad ID: {banModalTeam.id} • {banModalTeam.memberIds?.length || 0} enrolled member(s) will be locked out of competition operations.
+                </p>
+              </div>
+
+              <div>
+                <label className="font-label-bold uppercase text-xs block mb-1 text-zinc-700">Quick Reason Presets</label>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {[
+                    "Severe Code of Conduct breach",
+                    "Plagiarism & Unoriginal Submissions",
+                    "Multiple Enrolled Accounts (Ringing)",
+                    "Unauthorized Staff/Mentor Collaboration",
+                    "Harassment & Platform Abuse"
+                  ].map((preset, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setBanReason(preset)}
+                      className="text-[11px] bg-zinc-100 hover:bg-error hover:text-white border border-zinc-400 px-2.5 py-1 font-mono transition-colors cursor-pointer"
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+
+                <label className="font-label-bold uppercase text-xs block mb-1 text-zinc-700">Authoritative Ban Reason *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  className="w-full bg-surface-bright border-2 border-stark-black p-3 font-mono text-xs focus:outline-none focus:border-error resize-none"
+                  placeholder="State the permanent disqualification and ban grounds..."
+                />
+              </div>
+
+              <label className="flex items-center gap-3 cursor-pointer bg-zinc-100 border-2 border-zinc-300 p-3">
+                <input
+                  type="checkbox"
+                  checked={notifyBan}
+                  onChange={(e) => setNotifyBan(e.target.checked)}
+                  className="w-4 h-4 accent-error"
+                />
+                <div>
+                  <span className="font-bold text-zinc-800 text-xs uppercase block">Dispatch Ban Notice</span>
+                  <span className="text-[11px] text-zinc-500">Transmits an immediate system notification to all squad members.</span>
+                </div>
+              </label>
+
+              <div className="flex gap-4 pt-2 border-t-2 border-stark-black">
+                <button
+                  type="button"
+                  onClick={() => setBanModalTeam(null)}
+                  className="flex-1 bg-surface-container font-label-bold uppercase py-3 border-2 border-stark-black hover:bg-zinc-200"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={banLoading || !banReason.trim()}
+                  className="flex-1 bg-error hover:bg-red-700 text-white font-label-bold uppercase py-3 border-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                >
+                  {banLoading ? "EXECUTING BAN..." : "CONFIRM BAN"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFY SQUAD MODAL */}
       {notifyTarget && (
-        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
-          <form onSubmit={handleSendNotification} className="bg-pure-white max-w-lg w-full border-4 border-violet-600 shadow-[8px_8px_0px_0px_rgba(109,40,217,1)]">
+        <div onClick={(e) => { if (e.target === e.currentTarget) setNotifyTarget(null); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+          <form onSubmit={handleSendNotification} className="bg-pure-white max-w-lg w-full border-4 border-violet-600 shadow-[8px_8px_0px_0px_rgba(109,40,217,1)] cursor-default">
             <div className="bg-violet-600 p-4 border-b-4 border-stark-black flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-white">campaign</span>
@@ -481,9 +588,10 @@ function AdminTeams() {
         </div>
       )}
 
+      {/* EDIT / PROVISION SQUAD MODAL */}
       {isModalOpen && editingTeam && (
-        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col">
+        <div onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col cursor-default">
             <div className="bg-electric-blue text-pure-white p-4 border-b-4 border-stark-black flex justify-between items-center sticky top-0 z-10">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined">{editingTeam.id.startsWith("new-") ? "add_circle" : "edit"}</span>
@@ -517,15 +625,25 @@ function AdminTeams() {
                     className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none focus:border-electric-blue" />
                 </div>
               </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-label-bold uppercase text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">star</span>Leader User ID</label>
-                <input type="text" value={editingTeam.leaderId} onChange={e => setEditingTeam({ ...editingTeam, leaderId: e.target.value })}
-                  className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none focus:border-electric-blue" placeholder="user-xxxxxxxxxxxxxxxx" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="font-label-bold uppercase text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">event</span>Hackathon ID</label>
-                <input type="text" value={editingTeam.hackathonId} onChange={e => setEditingTeam({ ...editingTeam, hackathonId: e.target.value })}
-                  className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none focus:border-electric-blue" placeholder="hack-xxxxxxxxxxxxxxxx" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-bold uppercase text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">star</span>Leader User ID</label>
+                  <input type="text" value={editingTeam.leaderId} onChange={e => setEditingTeam({ ...editingTeam, leaderId: e.target.value })}
+                    className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet focus:outline-none focus:border-electric-blue" placeholder="user-xxxxxxxxxxxxxxxx" />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="font-label-bold uppercase text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">event</span>Target Hackathon</label>
+                  <select
+                    value={editingTeam.hackathonId}
+                    onChange={e => setEditingTeam({ ...editingTeam, hackathonId: e.target.value })}
+                    className="bg-surface-bright border-2 border-stark-black p-3 font-code-snippet text-xs focus:outline-none focus:border-electric-blue"
+                  >
+                    <option value="">-- No Hackathon Assigned --</option>
+                    {safeHackathons.map(h => (
+                      <option key={h.id} value={h.id}>{h.name} [{h.id}]</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <label className="font-label-bold uppercase text-xs flex items-center gap-2"><span className="material-symbols-outlined text-sm">group</span>Member IDs (comma separated)</label>

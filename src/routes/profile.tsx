@@ -103,6 +103,15 @@ function Page7() {
                 <span className="material-symbols-outlined" data-icon="location_on" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                 <span>{currentUser?.college || "San Francisco, CA"}</span>
               </div>
+              <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
+                <span className="material-symbols-outlined text-electric-blue">diversity_3</span>
+                <span>Network: <strong className="text-electric-blue">{(currentUser as any)?.friends?.length || 0}</strong> Comrades / Friends</span>
+                {(currentUser as any)?.specialization && (
+                  <span className="ml-2 px-2 py-0.5 bg-black text-white font-bold text-[10px] uppercase border border-ink-black">
+                    {(currentUser as any)?.specialization}
+                  </span>
+                )}
+              </div>
               {currentTeam && (
                 <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
                   <span className="material-symbols-outlined" data-icon="group" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>

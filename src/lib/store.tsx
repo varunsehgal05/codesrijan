@@ -29,12 +29,20 @@ export interface User {
     year?: string;
     handle?: string;
     profileImage?: string;
+    phone?: string;
+    mobile?: string;
+    github?: string;
+    linkedin?: string;
+    portfolio?: string;
     bio?: string;
     skills?: string[];
     techStack?: string[];
     assignedHackathons?: string[];
     assignedCategories?: string[];
     assignedTeams?: string[];
+    accountStatus?: string;
+    emailVerified?: boolean;
+    _id?: string;
 }
 
 interface EmailVerificationResult {
@@ -47,7 +55,9 @@ export interface Team {
     id: string;
     name: string;
     leaderId: string;
+    hackathonId?: string;
     problemId?: string;
+    problemStatementId?: string;
     repositoryUrl?: string;
     demoUrl?: string;
     githubLink?: string;
@@ -57,28 +67,71 @@ export interface Team {
     members?: string[]; // Legacy compatibility 
     memberIds: string[]; // Native MongoDB property
     description?: string;
-    status?: 'forming' | 'active' | 'submitted' | 'disqualified' | 'completed';
+    status?: 'forming' | 'active' | 'verified' | 'submitted' | 'disqualified' | 'completed';
     maxMembers?: number;
+    points?: number;
+    bonusPoints?: number;
+    penaltyPoints?: number;
+    adminNote?: string;
+    conversationId?: string;
+    isTest?: boolean;
 }
 
 export interface Problem {
     id: string;
     title: string;
-    category: string;
-    difficulty: string;
-    sponsor: string;
+    slug?: string;
+    category?: string;
+    difficulty?: string;
+    sponsor?: string;
     description: string;
-    prizePool: number;
+    fullDescription?: string;
+    domain?: string;
+    hackathonId?: string;
+    requirements?: string[];
+    constraints?: string[];
+    resources?: string[];
+    prizePool?: number;
+    pdfUrl?: string;
+    isPublished?: boolean;
+    isLocked?: boolean;
 }
 
 export interface Hackathon {
     id: string;
     name: string;
+    title?: string;
+    slug?: string;
     description: string;
+    theme?: string;
+    banner?: string;
+    logo?: string;
+    venue?: string;
+    mode?: string;
     startDate: string;
     endDate: string;
+    registrationStart?: string;
+    registrationEnd?: string;
     submissionDeadline: string;
+    evaluationDeadline?: string;
+    resultDate?: string;
     status: string;
+    entryType?: 'free' | 'paid';
+    fee?: number;
+    feeBasis?: string;
+    currency?: string;
+    upiId?: string;
+    payeeName?: string;
+    qrImageUrl?: string;
+    paymentInstructions?: string;
+    capacity?: number;
+    teamSizeMin?: number;
+    teamSizeMax?: number;
+    problemRevealMode?: string;
+    problemStatementsRevealed?: boolean;
+    tagline?: string;
+    isTest?: boolean;
+    certificateTemplateUrl?: string;
 }
 
 export interface ChatMessage {
@@ -158,6 +211,37 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         };
     }, [state.currentUser?.teamId]);
 
+    const CACHE_KEY = "codesrijan_platform_cache_v2";
+
+    const getCachedState = (): Partial<StoreState> => {
+        try {
+            const raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return {};
+            const parsed = JSON.parse(raw);
+            if (Date.now() - (parsed._cachedAt || 0) < 1000 * 60 * 30) { // 30 min cache
+                return parsed;
+            }
+        } catch {
+            // Ignore cache read errors
+        }
+        return {};
+    };
+
+    const persistCache = (data: Partial<StoreState>) => {
+        try {
+            const toSave = {
+                users: data.users || [],
+                teams: data.teams || [],
+                problems: data.problems || [],
+                hackathons: data.hackathons || [],
+                _cachedAt: Date.now()
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
+        } catch {
+            // Ignore storage quotas
+        }
+    };
+
     const refetchData = async () => {
         try {
             const rawToken = localStorage.getItem("codesrijan_auth_token");
@@ -205,15 +289,22 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] }))
             ]);
 
-            setState(prev => ({
-                ...prev,
+            persistCache({
                 users: usersRes.data,
                 teams: teamsRes.data,
                 problems: problemsRes.data,
-                hackathons: hackathonsRes.data,
-                registrations: regRes.data,
+                hackathons: hackathonsRes.data
+            });
+
+            setState(prev => ({
+                ...prev,
+                users: usersRes.data || prev.users,
+                teams: teamsRes.data || prev.teams,
+                problems: problemsRes.data || prev.problems,
+                hackathons: hackathonsRes.data || prev.hackathons,
+                registrations: regRes.data || prev.registrations,
                 tasks: teamTasks,
-                evaluations: evalRes.data,
+                evaluations: evalRes.data || prev.evaluations,
                 ...(nextUser ? { currentUser: nextUser } : (token ? {} : { currentUser: null })),
                 isLoaded: true
             }));
@@ -225,8 +316,18 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     // Initialize state mapping
     useEffect(() => {
-        const rawToken = localStorage.getItem("codesrijan_auth_token");
+        const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
         const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
+
+        // First instantly load from local cache if present
+        const cached = getCachedState();
+        if (cached.hackathons && cached.hackathons.length > 0) {
+            setState(prev => ({
+                ...prev,
+                ...cached,
+                isLoaded: !storedToken
+            }));
+        }
 
         if (storedToken) {
             const loadWithToken = async () => {
@@ -444,3 +545,6 @@ export function useAppStore() {
     if (!ctx) throw new Error("useAppStore must be within AppStoreProvider");
     return ctx;
 }
+
+export const useStore = useAppStore;
+

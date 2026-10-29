@@ -1,19 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+import { toast } from "react-hot-toast";
 import { API_BASE } from "../lib/utils";
 
 export const Route = createFileRoute("/admin/operations")({
   component: AdminOperationsDashboard,
 });
 
-function AdminOperationsDashboard() {
+export function AdminOperationsDashboard() {
   const [operations, setOperations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [phaseFilter, setPhaseFilter] = useState("all");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
 
   const fetchOperations = useCallback(async () => {
     try {
@@ -50,10 +53,30 @@ function AdminOperationsDashboard() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+      toast.success(`Exported CSV roster for "${eventName}"`);
     } catch (err: any) {
-      alert("Failed to export CSV: " + (err.response?.data?.message || err.message));
+      toast.error("Failed to export CSV: " + (err.response?.data?.message || err.message));
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const handleTriggerAction = async (hackathonId: string, actionUrl: string, method: 'post' | 'patch', label: string) => {
+    if (!window.confirm(`Execute authoritative command: [${label}]?`)) return;
+    try {
+      setActionLoadingId(hackathonId);
+      const token = localStorage.getItem("codesrijan_auth_token");
+      if (method === 'patch') {
+        await axios.patch(actionUrl, {}, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.post(actionUrl, {}, { headers: { Authorization: `Bearer ${token}` } });
+      }
+      toast.success(`Success: [${label}] executed.`);
+      await fetchOperations();
+    } catch (err: any) {
+      toast.error(`Action failed: ${err.response?.data?.message || err.message}`);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -75,7 +98,7 @@ function AdminOperationsDashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto p-6 pb-20">
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto p-4 md:p-6 pb-20">
       {/* Header Banner */}
       <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
@@ -84,13 +107,19 @@ function AdminOperationsDashboard() {
           </h2>
           <p className="font-code-snippet text-on-surface-variant mt-2 font-bold tracking-widest text-xs uppercase flex items-center gap-2">
             <span className="material-symbols-outlined text-electric-blue text-[16px]">tune</span>
-            Hackathon Command, Squad Rosters &amp; Audit Exports
+            Real-Time Command Center • Squad Rosters, Phase Transitions &amp; Exports
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => setInfoModalOpen(true)}
+            className="bg-yellow-400 hover:bg-yellow-300 text-stark-black px-4 py-2 font-label-bold brutal-border uppercase text-xs transition-colors flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+          >
+            <span className="material-symbols-outlined text-sm">help</span> How This Page Works
+          </button>
           <Link
             to="/admin/hackathons"
-            className="bg-stark-black text-pure-white px-4 py-2 font-label-bold brutal-border uppercase text-xs hover:bg-surface-variant transition-colors flex items-center gap-1"
+            className="bg-stark-black text-pure-white px-4 py-2 font-label-bold brutal-border uppercase text-xs hover:bg-surface-variant transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
           >
             <span className="material-symbols-outlined text-xs">settings</span> Event Catalog
           </Link>
@@ -100,6 +129,19 @@ function AdminOperationsDashboard() {
           >
             <span className="material-symbols-outlined text-xs">refresh</span> Refresh
           </button>
+        </div>
+      </div>
+
+      {/* Guide Card: What does Operations Hub do? */}
+      <div className="bg-blue-50 border-2 border-electric-blue p-5 brutal-border shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+        <div className="flex items-start gap-3">
+          <span className="material-symbols-outlined text-electric-blue text-2xl mt-0.5">info</span>
+          <div>
+            <h4 className="font-label-bold uppercase text-xs text-electric-blue tracking-wider">Purpose of Operations Hub</h4>
+            <p className="text-xs text-zinc-800 mt-1 font-body-md leading-relaxed">
+              This is the Administrator's mission control for live and upcoming events. Monitor participant numbers, verify team squad counts, clear payment backlogs, export certified participant CSV rosters, and advance event lifecycles (open registrations, release problem statements, start hacking, and complete events).
+            </p>
+          </div>
         </div>
       </div>
 
@@ -169,7 +211,7 @@ function AdminOperationsDashboard() {
               {/* Event Header */}
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-2 border-stark-black pb-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`px-2 py-0.5 font-label-bold text-[10px] uppercase ${getPhaseColor(h.phase)}`}>
                       {h.phase?.replace('_', ' ')}
                     </span>
@@ -191,22 +233,25 @@ function AdminOperationsDashboard() {
                   </h3>
                 </div>
 
-                <div className="flex items-center gap-3 self-end md:self-auto">
+                <div className="flex items-center gap-2 flex-wrap self-end md:self-auto">
                   <button
                     onClick={() => handleExportCsv(h.id, h.name)}
                     disabled={downloadingId === h.id}
-                    className="bg-stark-black text-pure-white px-4 py-2 font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-0.5 transition-all text-xs uppercase flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="bg-stark-black text-pure-white px-3.5 py-2 font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-0.5 transition-all text-xs uppercase flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    title="Download complete registered squad/participant roster in CSV format"
                   >
                     <span className="material-symbols-outlined text-xs">
                       {downloadingId === h.id ? 'sync' : 'download'}
                     </span>
                     {downloadingId === h.id ? 'Exporting...' : 'Export CSV'}
                   </button>
+
                   <Link
                     to="/admin/hackathons"
-                    className="bg-electric-blue text-pure-white px-4 py-2 font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-0.5 transition-all text-xs uppercase flex items-center gap-1"
+                    className="bg-electric-blue text-pure-white px-3.5 py-2 font-label-bold brutal-border brutal-shadow-hover hover:-translate-y-0.5 transition-all text-xs uppercase flex items-center gap-1"
+                    title="Open Hackathon Editor"
                   >
-                    <span className="material-symbols-outlined text-xs">visibility</span> Details
+                    <span className="material-symbols-outlined text-xs">edit</span> Manage Event
                   </Link>
                 </div>
               </div>
@@ -246,7 +291,9 @@ function AdminOperationsDashboard() {
                 <div className="bg-surface-container-lowest p-4 brutal-border">
                   <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Submissions</span>
                   <span className="font-display-lg text-2xl text-stark-black">{h.metrics?.submissionsCount || 0}</span>
-                  <span className="font-code-snippet text-[10px] text-surface-variant block mt-1">Project payloads</span>
+                  <Link to="/admin/submissions" className="font-code-snippet text-[10px] text-electric-blue font-bold uppercase underline block mt-1">
+                    View payloads →
+                  </Link>
                 </div>
 
                 <div className="bg-surface-container-lowest p-4 brutal-border">
@@ -255,6 +302,56 @@ function AdminOperationsDashboard() {
                     {h.problemStatementsRevealed ? 'Revealed' : 'Locked'}
                   </span>
                   <span className="font-code-snippet text-[10px] text-surface-variant block mt-1">Track visibility</span>
+                </div>
+              </div>
+
+              {/* Quick Operation Directives */}
+              <div className="bg-zinc-50 border-2 border-zinc-300 p-3.5 flex flex-wrap items-center justify-between gap-3">
+                <span className="font-label-bold text-xs uppercase tracking-wider text-zinc-700 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">bolt</span>
+                  Direct Operational Triggers:
+                </span>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {!h.problemStatementsRevealed && (
+                    <button
+                      onClick={() => handleTriggerAction(h.id, `${API_BASE}/admin/hackathons/${h.id}/reveal-problems`, 'patch', 'Unlock Problem Statements')}
+                      disabled={actionLoadingId === h.id}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-label-bold text-[11px] uppercase px-3 py-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                    >
+                      🔓 Reveal Problems
+                    </button>
+                  )}
+
+                  {h.phase !== 'hacking' && (
+                    <button
+                      onClick={() => handleTriggerAction(h.id, `${API_BASE}/hackathons/${h.id}/open-submissions`, 'post', 'Start Hackathon (Hacking Live)')}
+                      disabled={actionLoadingId === h.id}
+                      className="bg-yellow-400 hover:bg-yellow-300 text-black font-label-bold text-[11px] uppercase px-3 py-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                    >
+                      ⚡ Start Hackathon Live
+                    </button>
+                  )}
+
+                  {h.phase === 'hacking' && (
+                    <button
+                      onClick={() => handleTriggerAction(h.id, `${API_BASE}/hackathons/${h.id}/close-submissions`, 'post', 'Close Submissions (Evaluating)')}
+                      disabled={actionLoadingId === h.id}
+                      className="bg-violet-600 hover:bg-violet-500 text-white font-label-bold text-[11px] uppercase px-3 py-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                    >
+                      📊 Close Submissions &amp; Grade
+                    </button>
+                  )}
+
+                  {h.phase !== 'concluded' && (
+                    <button
+                      onClick={() => handleTriggerAction(h.id, `${API_BASE}/hackathons/${h.id}/complete`, 'post', 'Mark Hackathon Concluded')}
+                      disabled={actionLoadingId === h.id}
+                      className="bg-zinc-800 hover:bg-zinc-700 text-white font-label-bold text-[11px] uppercase px-3 py-1.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+                    >
+                      🏁 Conclude Hackathon
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -275,6 +372,56 @@ function AdminOperationsDashboard() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Info Modal */}
+      {infoModalOpen && (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setInfoModalOpen(false); }}
+          className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer"
+        >
+          <div className="bg-pure-white w-full max-w-2xl brutal-border brutal-shadow-lg p-6 md:p-8 flex flex-col gap-6 cursor-default">
+            <div className="flex justify-between items-center border-b-4 border-stark-black pb-4">
+              <h3 className="font-display-lg text-2xl uppercase bg-yellow-400 text-stark-black px-2 py-0.5 transform -skew-x-6 inline-block">
+                Operations Hub Guide &amp; Purpose
+              </h3>
+              <button
+                type="button"
+                onClick={() => setInfoModalOpen(false)}
+                className="text-3xl hover:text-error hover:rotate-90 transition-all font-bold"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4 font-body-md text-sm text-zinc-800">
+              <div className="bg-zinc-100 p-4 brutal-border">
+                <h4 className="font-bold text-sm uppercase text-black mb-1">What does this page do?</h4>
+                <p>
+                  The Operations Hub is an active command dashboard for hackathon administrators. While the "Hackathon Catalog" allows editing event settings, the Operations Hub aggregates live competition telemetry: registration numbers, payment verification backlogs, formed squads, and submission payloads.
+                </p>
+              </div>
+
+              <div className="bg-zinc-100 p-4 brutal-border">
+                <h4 className="font-bold text-sm uppercase text-black mb-1">How do the buttons work?</h4>
+                <ul className="list-disc pl-5 space-y-1.5 text-xs font-mono">
+                  <li><strong>Export CSV:</strong> Downloads the authoritative participant/team roster with emails, colleges, and payment statuses for check-in and attendance.</li>
+                  <li><strong>Reveal Problems:</strong> Instantly unlocks problem statements for all participants and dispatches a broadcast notification.</li>
+                  <li><strong>Start Hackathon Live:</strong> Transitions the hackathon into live hacking mode, opening the payload submission gateway and starting the countdown clock!</li>
+                  <li><strong>Close Submissions &amp; Grade:</strong> Locks payloads and assigns submissions to the judging queue.</li>
+                  <li><strong>Conclude Hackathon:</strong> Finalizes standings and enables certificate generation.</li>
+                </ul>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setInfoModalOpen(false)}
+              className="bg-stark-black text-white py-3 font-label-bold uppercase brutal-border hover:bg-electric-blue transition-colors"
+            >
+              Close Guide
+            </button>
+          </div>
         </div>
       )}
     </div>

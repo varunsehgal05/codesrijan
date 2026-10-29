@@ -17,6 +17,15 @@ function AdminRecruitment() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+  // Modal States (replacing window.prompt and window.confirm)
+  const [disqualifyTarget, setDisqualifyTarget] = useState<{ id: string; name: string } | null>(null);
+  const [disqualifyReason, setDisqualifyReason] = useState("Rule infraction / unauthorized assistance");
+  
+  const [reinstateTarget, setReinstateTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const [banTarget, setBanTarget] = useState<{ id: string; name: string } | null>(null);
+  const [banReason, setBanReason] = useState("Severe integrity violation / Code of conduct breach");
+
   const genuineHackathons = useMemo(() => {
     const list = Array.isArray(hackathons) ? hackathons : [];
     return list.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
@@ -42,18 +51,18 @@ function AdminRecruitment() {
     });
   }, [teams, users, searchQuery, hackathonFilter, statusFilter]);
 
-  const handleDisqualify = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`Enter authoritative disqualification reason for squad "${teamName}":`, "Rule infraction / unauthorized assistance");
-    if (!reason || !reason.trim()) return;
+  const confirmDisqualify = async () => {
+    if (!disqualifyTarget || !disqualifyReason.trim()) return;
 
     try {
-      setActionLoadingId(teamId);
+      setActionLoadingId(disqualifyTarget.id);
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_BASE}/admin/teams/${teamId}/disqualify`, 
-        { reason: reason.trim(), notify: true },
+      await axios.post(`${API_BASE}/admin/teams/${disqualifyTarget.id}/disqualify`, 
+        { reason: disqualifyReason.trim(), notify: true },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Squad "${teamName}" DISQUALIFIED. Members notified.`);
+      toast.success(`Squad "${disqualifyTarget.name}" DISQUALIFIED. Members notified.`);
+      setDisqualifyTarget(null);
       await refetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to disqualify squad.");
@@ -62,16 +71,17 @@ function AdminRecruitment() {
     }
   };
 
-  const handleUndoDisqualify = async (teamId: string, teamName: string) => {
-    if (!window.confirm(`Restore squad "${teamName}" to active hackathon standing?`)) return;
+  const confirmUndoDisqualify = async () => {
+    if (!reinstateTarget) return;
 
     try {
-      setActionLoadingId(teamId);
+      setActionLoadingId(reinstateTarget.id);
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_BASE}/admin/teams/${teamId}/undo-disqualify`, {}, {
+      await axios.post(`${API_BASE}/admin/teams/${reinstateTarget.id}/undo-disqualify`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Squad "${teamName}" reinstated to active.`);
+      toast.success(`Squad "${reinstateTarget.name}" reinstated to active.`);
+      setReinstateTarget(null);
       await refetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to restore squad.");
@@ -80,18 +90,18 @@ function AdminRecruitment() {
     }
   };
 
-  const handleBanTeam = async (teamId: string, teamName: string) => {
-    const reason = window.prompt(`CRITICAL: Enter permanent hackathon BAN reason for squad "${teamName}":`, "Severe integrity violation / Code of conduct breach");
-    if (!reason || !reason.trim()) return;
+  const confirmBanTeam = async () => {
+    if (!banTarget || !banReason.trim()) return;
 
     try {
-      setActionLoadingId(teamId);
+      setActionLoadingId(banTarget.id);
       const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${API_BASE}/admin/teams/${teamId}/ban`, 
-        { reason: reason.trim() },
+      await axios.post(`${API_BASE}/admin/teams/${banTarget.id}/ban`, 
+        { reason: banReason.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(`Squad "${teamName}" BANNED permanently.`);
+      toast.success(`Squad "${banTarget.name}" BANNED permanently.`);
+      setBanTarget(null);
       await refetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to ban squad.");
@@ -261,7 +271,7 @@ function AdminRecruitment() {
                   <div className="flex items-center gap-2 flex-wrap self-end md:self-auto">
                     {isDq ? (
                       <button
-                        onClick={() => handleUndoDisqualify(team.id, team.name)}
+                        onClick={() => setReinstateTarget({ id: team.id, name: team.name })}
                         disabled={isActionBusy}
                         className="bg-emerald-600 hover:bg-emerald-700 text-pure-white font-label-bold text-xs uppercase px-4 py-2 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       >
@@ -270,7 +280,10 @@ function AdminRecruitment() {
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleAdminDisqualify(team.id, team.name)}
+                        onClick={() => {
+                          setDisqualifyTarget({ id: team.id, name: team.name });
+                          setDisqualifyReason("Rule infraction / unauthorized assistance");
+                        }}
                         disabled={isActionBusy}
                         className="bg-rose-600 hover:bg-stark-black text-pure-white font-label-bold text-xs uppercase px-4 py-2 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                       >
@@ -280,7 +293,10 @@ function AdminRecruitment() {
                     )}
 
                     <button
-                      onClick={() => handleBanTeam(team.id, team.name)}
+                      onClick={() => {
+                        setBanTarget({ id: team.id, name: team.name });
+                        setBanReason("Severe integrity violation / Code of conduct breach");
+                      }}
                       disabled={isActionBusy}
                       className="bg-stark-black hover:bg-error text-pure-white font-label-bold text-xs uppercase px-4 py-2 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
@@ -361,6 +377,120 @@ function AdminRecruitment() {
           })
         )}
       </div>
+
+      {/* Disqualify Modal (Neo-Brutalist, replaces window.prompt) */}
+      {disqualifyTarget && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setDisqualifyTarget(null); }}
+          className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+        >
+          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-md p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-2 border-b-2 border-stark-black pb-3">
+              <span className="material-symbols-outlined text-rose-600 text-2xl">gavel</span>
+              <h3 className="font-headline-md text-lg uppercase text-stark-black">DISQUALIFY SQUAD</h3>
+            </div>
+            <p className="font-code-snippet text-xs text-stark-black">
+              Enter official disqualification reason for squad <strong className="bg-[#FEF08A] px-1">{disqualifyTarget.name}</strong>. Members will be notified.
+            </p>
+            <textarea
+              rows={3}
+              value={disqualifyReason}
+              onChange={e => setDisqualifyReason(e.target.value)}
+              className="w-full bg-surface-bright border-2 border-stark-black p-3 font-mono text-xs focus:outline-none focus:border-rose-600"
+              placeholder="e.g. Code plagiarism / Rule 4.2 infraction"
+            />
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setDisqualifyTarget(null)}
+                className="px-4 py-2 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDisqualify}
+                disabled={actionLoadingId === disqualifyTarget.id || !disqualifyReason.trim()}
+                className="px-5 py-2 border-2 border-stark-black font-label-bold uppercase bg-rose-600 text-white hover:bg-black text-xs cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{actionLoadingId === disqualifyTarget.id ? 'PROCESSING...' : 'CONFIRM DISQUALIFY'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reinstate Modal */}
+      {reinstateTarget && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setReinstateTarget(null); }}
+          className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+        >
+          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-md p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-2 border-b-2 border-stark-black pb-3">
+              <span className="material-symbols-outlined text-emerald-600 text-2xl">restore</span>
+              <h3 className="font-headline-md text-lg uppercase text-stark-black">REINSTATE SQUAD</h3>
+            </div>
+            <p className="font-code-snippet text-xs text-stark-black">
+              Are you sure you want to restore squad <strong className="bg-[#FEF08A] px-1">{reinstateTarget.name}</strong> to active hackathon standing?
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setReinstateTarget(null)}
+                className="px-4 py-2 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUndoDisqualify}
+                disabled={actionLoadingId === reinstateTarget.id}
+                className="px-5 py-2 border-2 border-stark-black font-label-bold uppercase bg-emerald-600 text-white hover:bg-black text-xs cursor-pointer"
+              >
+                {actionLoadingId === reinstateTarget.id ? 'REINSTATING...' : 'CONFIRM REINSTATE'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ban Team Modal */}
+      {banTarget && (
+        <div 
+          onClick={(e) => { if (e.target === e.currentTarget) setBanTarget(null); }}
+          className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+        >
+          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-md p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-2 border-b-2 border-stark-black pb-3">
+              <span className="material-symbols-outlined text-error text-2xl">block</span>
+              <h3 className="font-headline-md text-lg uppercase text-stark-black">PERMANENT SQUAD BAN</h3>
+            </div>
+            <p className="font-code-snippet text-xs text-stark-black">
+              CRITICAL: Enter permanent hackathon BAN reason for squad <strong className="bg-[#FEF08A] px-1">{banTarget.name}</strong>:
+            </p>
+            <textarea
+              rows={3}
+              value={banReason}
+              onChange={e => setBanReason(e.target.value)}
+              className="w-full bg-surface-bright border-2 border-stark-black p-3 font-mono text-xs focus:outline-none focus:border-error"
+              placeholder="e.g. Severe harassment / Unethical breach"
+            />
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setBanTarget(null)}
+                className="px-4 py-2 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmBanTeam}
+                disabled={actionLoadingId === banTarget.id || !banReason.trim()}
+                className="px-5 py-2 border-2 border-stark-black font-label-bold uppercase bg-error text-white hover:bg-black text-xs cursor-pointer"
+              >
+                {actionLoadingId === banTarget.id ? 'BANNING...' : 'CONFIRM BAN'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

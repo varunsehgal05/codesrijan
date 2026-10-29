@@ -2,12 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "@tanstack/react-router";
+import { useAppStore } from "../lib/store";
 
 export const Route = createFileRoute("/hackathons/")({
     component: HackathonsHubPage,
 });
 
 function HackathonsHubPage() {
+    const { registrations, currentUser } = useAppStore();
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ function HackathonsHubPage() {
     }, [API_URL]);
 
     return (
-        <div className="min-h-screen bg-background text-on-background flex flex-col">
+        <div className="min-h-screen bg-background text-on-background flex flex-col font-mono">
             <main className="flex-grow max-w-[1100px] mx-auto px-gutter py-section-gap w-full">
                 <div className="mb-6 flex justify-between items-center">
                     <button onClick={() => window.history.back()} className="flex items-center gap-2 font-label-bold text-ink-black hover:text-electric-blue border-2 border-stark-black px-4 py-2 bg-surface-bright shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all w-fit cursor-pointer">
@@ -48,7 +50,7 @@ function HackathonsHubPage() {
 
                 <div className="bg-electric-blue text-pure-white p-8 brutal-border brutal-shadow mb-10">
                     <span className="font-code-snippet text-xs font-bold uppercase tracking-widest bg-stark-black text-pure-white px-2 py-1">CodeSrijan 2026</span>
-                    <h1 className="font-display-lg text-4xl md:text-5xl uppercase tracking-tight mt-2">HACKATHONS HUB</h1>
+                    <h1 className="font-display-lg text-4xl md:text-5xl uppercase tracking-tight mt-2 font-black">HACKATHONS HUB</h1>
                     <p className="font-body-md mt-2 text-pure-white/90">Explore all active competitive hacks, build operational prototypes, and claim victory.</p>
                 </div>
 
@@ -66,12 +68,15 @@ function HackathonsHubPage() {
                             const rawStatus = (evt.status || 'active').toLowerCase();
                             const isPaid = evt.entryType === 'paid';
                             const hasValidDates = evt.startDate && !isNaN(new Date(evt.startDate).getTime());
+                            const isJoined = (registrations || []).some((r: any) => r.hackathonId === evt.id || (currentUser?.teamId && r.teamId === currentUser?.teamId && r.hackathonId === evt.id));
 
                             return (
-                                <div key={evt.id || idx} className="bg-pure-white brutal-border brutal-shadow p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
+                                <div key={evt.id || idx} className={`bg-pure-white brutal-border brutal-shadow p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform relative ${
+                                    isJoined ? 'border-4 border-electric-blue shadow-[6px_6px_0px_0px_#0055FF]' : ''
+                                }`}>
                                     <div>
                                         <div className="flex justify-between items-start mb-3 flex-wrap gap-2">
-                                            <div className="flex gap-2 items-center">
+                                            <div className="flex gap-2 items-center flex-wrap">
                                                 <span className={`px-2.5 py-1 font-code-snippet text-[11px] uppercase font-bold brutal-border ${
                                                     rawStatus === 'registration_open' ? 'bg-electric-blue text-pure-white' :
                                                     rawStatus === 'active' || rawStatus === 'submission_open' ? 'bg-[#FFD700] text-stark-black' :
@@ -85,13 +90,19 @@ function HackathonsHubPage() {
                                                 }`}>
                                                     {isPaid ? `₹${evt.fee || 0} / ${evt.feeBasis === 'per_participant' ? 'MEMBER' : 'SQUAD'}` : 'FREE ENTRY'}
                                                 </span>
+                                                {isJoined && (
+                                                    <span className="px-2 py-0.5 bg-emerald-500 text-black font-black uppercase text-[10px] brutal-border flex items-center gap-1 animate-pulse">
+                                                        <span className="material-symbols-outlined text-[12px]">verified</span>
+                                                        YOU HAVE JOINED
+                                                    </span>
+                                                )}
                                             </div>
                                             <span className="font-code-snippet text-xs font-bold text-electric-blue">
                                                 {hasValidDates ? new Date(evt.startDate).toLocaleDateString() : 'OPEN SCHEDULE'}
                                             </span>
                                         </div>
 
-                                        <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-1">
+                                        <h3 className="font-display-lg text-2xl uppercase text-stark-black mb-1 font-black">
                                             {evt.name || evt.title || evt.id}
                                         </h3>
                                         
@@ -131,8 +142,16 @@ function HackathonsHubPage() {
                                         <span className="font-code-snippet text-[11px] font-bold uppercase text-zinc-600">
                                             {evt.problemStatementsRevealed ? '🟢 Directives Live' : '🔒 Directives Classified'}
                                         </span>
-                                        <Link to="/hackathons/$id/register" params={{ id: evt.id }} className="bg-stark-black text-pure-white px-4 py-2 font-label-bold text-xs uppercase brutal-border hover:bg-electric-blue transition-colors">
-                                            ENTER ARENA
+                                        <Link 
+                                            to="/hackathons/$id/register" 
+                                            params={{ id: evt.id }} 
+                                            className={`px-4 py-2 font-label-bold text-xs uppercase brutal-border transition-colors ${
+                                                isJoined 
+                                                    ? 'bg-electric-blue text-white hover:bg-stark-black shadow-[2px_2px_0px_0px_#000000]' 
+                                                    : 'bg-stark-black text-pure-white hover:bg-electric-blue'
+                                            }`}
+                                        >
+                                            {isJoined ? 'MANAGE ENROLLMENT →' : 'ENTER ARENA'}
                                         </Link>
                                     </div>
                                 </div>

@@ -29,7 +29,14 @@ const userSchema = new mongoose.Schema({
     // Admin / Staff Assignments (Judges & Mentors)
     assignedHackathons: [String],
     assignedCategories: [String],
-    assignedTeams: [String]
+    assignedTeams: [String],
+
+    // Firebase Cloud Messaging Push Tokens
+    fcmTokens: { type: [String], default: [] },
+
+    // Social & Specialization Attributes
+    specialization: { type: String, default: 'Fullstack' },
+    friends: { type: [String], default: [] }
 }, { timestamps: true, toJSON: { transform: (_doc, ret) => { delete ret.passwordHash; return ret; } } });
 
 // 2. Hackathons Collection
@@ -143,9 +150,13 @@ const registrationSchema = new mongoose.Schema({
 
     status: {
         type: String,
-        enum: ['draft', 'roster_locked', 'awaiting_payment_proof', 'payment_under_review', 'registered', 'rejected'],
+        enum: ['draft', 'roster_locked', 'awaiting_payment_proof', 'payment_under_review', 'registered', 'rejected', 'withdrawn'],
         default: 'registered'
     },
+    refundRequested: { type: Boolean, default: false },
+    refundReason: String,
+    refundUpi: String,
+    refundRequestedAt: Date,
     verifiedAt: Date,
     isTest: { type: Boolean, default: false, index: true }
 }, { timestamps: true });

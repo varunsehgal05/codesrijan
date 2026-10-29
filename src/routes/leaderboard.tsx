@@ -33,6 +33,7 @@ function LeaderboardPage() {
   const { hackathons, teams: storeTeams, users, isLoaded } = useAppStore();
   const [leaderboardItems, setLeaderboardItems] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedHackathonId, setSelectedHackathonId] = useState<string>("ALL");
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
@@ -113,6 +114,19 @@ function LeaderboardPage() {
     return merged;
   }, [storeTeams, leaderboardItems, selectedHackathonId]);
 
+  const filteredTeams = useMemo(() => {
+    if (!searchQuery.trim()) return displayedTeams;
+    const q = searchQuery.toLowerCase().trim();
+    return displayedTeams.filter(t => 
+      t.name?.toLowerCase().includes(q) || 
+      t.id?.toLowerCase().includes(q) ||
+      (t.memberIds || []).some(mid => {
+        const u = users.find(user => user.id === mid);
+        return u?.name?.toLowerCase().includes(q) || u?.email?.toLowerCase().includes(q);
+      })
+    );
+  }, [displayedTeams, searchQuery, users]);
+
   const activeHackathonObj = genuineHackathons.find(h => h.id === selectedHackathonId);
 
   return (
@@ -137,16 +151,33 @@ function LeaderboardPage() {
           </div>
         </section>
 
-        {/* Hackathon Selector Tabs */}
-        <div className="bg-pure-white p-4 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-xs font-label-bold uppercase tracking-widest text-on-surface-variant">
-            <span className="material-symbols-outlined text-[18px]">trophy</span>
-            <span>Select Hosted Hackathon / Hackathon:</span>
+        {/* Hackathon Selector Tabs & Instant Search */}
+        <div className="bg-pure-white p-5 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="flex items-center gap-2 text-xs font-label-bold uppercase tracking-widest text-on-surface-variant">
+              <span className="material-symbols-outlined text-[18px] text-electric-blue">trophy</span>
+              <span>Select Hosted Hackathon / Hackathon:</span>
+            </div>
+            
+            {/* Squad Search Input */}
+            <div className="w-full md:w-72 relative">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search squad name, ID, member..."
+                className="w-full pl-9 pr-3 py-1.5 bg-surface-container border-2 border-stark-black font-mono text-xs focus:outline-none focus:border-electric-blue uppercase"
+              />
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-200">
             <button
               onClick={() => setSelectedHackathonId("ALL")}
-              className={`px-4 py-2 font-label-bold text-xs uppercase border-2 transition-all cursor-pointer ${
+              className={`px-3.5 py-1.5 font-label-bold text-xs uppercase border-2 transition-all cursor-pointer ${
                 selectedHackathonId === "ALL"
                   ? "bg-electric-blue text-pure-white border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                   : "bg-surface-container text-stark-black border-stark-black hover:bg-zinc-100"
@@ -161,7 +192,7 @@ function LeaderboardPage() {
                 <button
                   key={h.id}
                   onClick={() => setSelectedHackathonId(h.id)}
-                  className={`px-4 py-2 font-label-bold text-xs uppercase border-2 transition-all cursor-pointer flex items-center gap-2 ${
+                  className={`px-3.5 py-1.5 font-label-bold text-xs uppercase border-2 transition-all cursor-pointer flex items-center gap-2 ${
                     isSelected
                       ? "bg-electric-blue text-pure-white border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                       : "bg-surface-container text-stark-black border-stark-black hover:bg-zinc-100"
@@ -177,16 +208,16 @@ function LeaderboardPage() {
 
         {/* Hackathon Info Banner if specific hackathon selected */}
         {activeHackathonObj && (
-          <div className="bg-pure-white p-6 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="bg-pure-white p-5 border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <span className="bg-stark-black text-pure-white px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase mb-2 inline-block">
+              <span className="bg-stark-black text-pure-white px-2 py-0.5 text-[10px] font-mono font-bold uppercase mb-1.5 inline-block">
                 ACTIVE ARENA
               </span>
-              <h2 className="font-display-sm text-2xl uppercase font-bold text-stark-black">{activeHackathonObj.name}</h2>
-              <p className="font-code-snippet text-xs text-on-surface-variant mt-1 line-clamp-1">{activeHackathonObj.tagline || activeHackathonObj.description || "Official CodeSrijan Hackathon Arena"}</p>
+              <h2 className="font-display-sm text-xl uppercase font-bold text-stark-black">{activeHackathonObj.name}</h2>
+              <p className="font-code-snippet text-xs text-on-surface-variant mt-0.5 line-clamp-1">{activeHackathonObj.tagline || activeHackathonObj.description || "Official CodeSrijan Hackathon Arena"}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 text-xs font-bold uppercase border-2 ${
+              <span className={`px-2.5 py-1 text-xs font-bold uppercase border-2 ${
                 activeHackathonObj.status === 'live' || activeHackathonObj.status === 'active'
                   ? 'border-success text-success bg-success/10'
                   : 'border-zinc-400 text-zinc-600 bg-zinc-100'
@@ -195,10 +226,10 @@ function LeaderboardPage() {
               </span>
               <Link
                 to="/recruitment"
-                className="bg-stark-black text-pure-white font-label-bold text-xs uppercase px-4 py-2 border-2 border-stark-black hover:bg-electric-blue transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                className="bg-stark-black text-pure-white font-label-bold text-xs uppercase px-3.5 py-1.5 border-2 border-stark-black hover:bg-electric-blue transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
               >
                 <span className="material-symbols-outlined text-[14px]">group_add</span>
-                Join / Recruit Squad
+                Squad Directorate
               </Link>
             </div>
           </div>
@@ -210,12 +241,12 @@ function LeaderboardPage() {
             <span className="material-symbols-outlined text-4xl mb-3 animate-spin block text-electric-blue">sync</span>
             SYNCHRONIZING SQUAD STANDINGS & EVALUATION METRICS...
           </div>
-        ) : displayedTeams.length === 0 ? (
-          <div className="bg-pure-white p-16 border-4 border-stark-black text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4">
+        ) : filteredTeams.length === 0 ? (
+          <div className="bg-pure-white p-12 border-4 border-stark-black text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4">
             <span className="material-symbols-outlined text-5xl text-zinc-300">group_off</span>
-            <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS ENROLLED IN THIS HACKATHON YET</h3>
+            <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black">NO SQUADS FOUND</h3>
             <p className="font-code-snippet text-xs text-on-surface-variant max-w-md mx-auto uppercase">
-              Registration is active. Form or recruit your squad in the Recruitment Matrix to enter the hackathon arena.
+              {searchQuery ? "No squads match your search criteria. Try a different query." : "Registration is active. Form or recruit your squad in the Recruitment Matrix."}
             </p>
             <div className="pt-2">
               <Link
@@ -228,157 +259,246 @@ function LeaderboardPage() {
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {displayedTeams.map((t, idx) => {
-              const hackathonMatch = genuineHackathons.find(h => h.id === t.hackathonId);
-              const members = (t.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+          <div className="space-y-8">
+            
+            {/* TOP 3 PODIUM SHOWCASE GRID */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-headline-md uppercase text-lg text-stark-black flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-500">military_tech</span>
+                  CHAMPIONSHIP PODIUM // TOP OPERATIVES
+                </h3>
+                <span className="text-xs font-mono text-zinc-500 font-bold uppercase">
+                  Showing Top 3 Contenders
+                </span>
+              </div>
 
-              return (
-                <div key={t.id} className="bg-pure-white border-4 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all">
-                  {/* Main Row */}
-                  <div 
-                    className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between cursor-pointer group gap-4"
-                    onClick={() => setExpandedTeam(expandedTeam === t.id ? null : t.id)}
-                  >
-                    <div className="flex items-center gap-5">
-                      <div className="font-display-lg text-3xl md:text-4xl text-stark-black w-10 text-center shrink-0">
-                        {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
-                      </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {filteredTeams.slice(0, 3).map((team, pIdx) => {
+                  const medal = pIdx === 0 ? '🥇' : pIdx === 1 ? '🥈' : '🥉';
+                  const medalTitle = pIdx === 0 ? '1ST PLACE' : pIdx === 1 ? '2ND PLACE' : '3RD PLACE';
+                  const borderClass = pIdx === 0 
+                    ? 'border-yellow-400 bg-gradient-to-b from-yellow-50/60 to-pure-white shadow-[6px_6px_0px_0px_#EAB308]' 
+                    : pIdx === 1 
+                      ? 'border-zinc-400 bg-gradient-to-b from-zinc-50/60 to-pure-white shadow-[6px_6px_0px_0px_#71717A]' 
+                      : 'border-amber-600 bg-gradient-to-b from-amber-50/60 to-pure-white shadow-[6px_6px_0px_0px_#D97706]';
+                  const hackathonMatch = genuineHackathons.find(h => h.id === team.hackathonId);
+                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+
+                  return (
+                    <div
+                      key={team.id}
+                      onClick={() => setExpandedTeam(expandedTeam === team.id ? null : team.id)}
+                      className={`border-4 p-5 flex flex-col justify-between gap-4 cursor-pointer hover:-translate-y-1 transition-all ${borderClass}`}
+                    >
                       <div>
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="bg-stark-black text-pure-white px-2 py-0.5 text-[10px] font-mono font-bold uppercase">
-                            #{t.id.substring(0, 10)}
+                        {/* Podium Rank Header */}
+                        <div className="flex justify-between items-center pb-3 border-b-2 border-stark-black">
+                          <span className="text-2xl">{medal}</span>
+                          <span className="font-mono text-xs font-black uppercase px-2 py-0.5 bg-stark-black text-white">
+                            {medalTitle}
                           </span>
+                        </div>
+
+                        {/* Squad Identity */}
+                        <div className="mt-3">
+                          <span className="text-[10px] font-mono text-zinc-500 block uppercase font-bold">
+                            #{team.id.substring(0, 10)}
+                          </span>
+                          <h4 className="font-headline-md uppercase text-xl font-black text-stark-black truncate mt-0.5">
+                            {team.name}
+                          </h4>
                           {hackathonMatch && (
-                            <span className="bg-surface-container-high text-stark-black border border-stark-black/30 px-2 py-0.5 text-[10px] font-mono font-bold uppercase">
+                            <span className="inline-block mt-1 text-[10px] font-mono bg-zinc-200 text-zinc-800 px-2 py-0.5 border border-zinc-400 font-bold truncate max-w-full">
                               🏆 {hackathonMatch.name}
                             </span>
                           )}
-                          <span className={`px-2 py-0.5 text-[10px] font-mono font-bold uppercase border ${
-                            t.status === 'disqualified'
-                              ? 'bg-rose-100 text-rose-800 border-rose-500'
-                              : t.status === 'verified'
-                              ? 'bg-emerald-100 text-emerald-800 border-emerald-500'
-                              : 'bg-blue-100 text-blue-800 border-blue-500'
-                          }`}>
-                            {t.status ? t.status.toUpperCase() : 'ACTIVE'}
-                          </span>
                         </div>
 
-                        <h2 className="font-label-bold uppercase text-xl md:text-2xl text-stark-black group-hover:text-electric-blue transition-colors line-clamp-1">
-                          {t.name}
-                        </h2>
-
-                        <div className="font-code-snippet text-xs text-on-surface-variant uppercase tracking-widest flex items-center gap-3 mt-1.5 flex-wrap">
-                          <span className="flex items-center gap-1 font-bold">
-                            <span className="material-symbols-outlined text-[14px]">groups</span>
-                            {t.memberCount || 0} / 4 HACKERS
+                        {/* Operatives Avatars Row */}
+                        <div className="mt-4 pt-3 border-t border-zinc-300">
+                          <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1.5">
+                            Squad Roster ({team.memberCount || 0} / 4)
                           </span>
-                          {t.isScored ? (
-                            <>
-                              <span>Base: {t.evalScore}</span>
-                              {t.bonusPoints > 0 && <span className="text-success font-bold">+{t.bonusPoints} BNS</span>}
-                              {t.penaltyPoints > 0 && <span className="text-error font-bold">-{t.penaltyPoints} PNL</span>}
-                            </>
-                          ) : (
-                            <span className="text-amber-700 bg-amber-100 px-2 py-0.5 border border-amber-400 font-bold text-[10px]">
-                              ⚡ ENROLLED / AWAITING EVALUATION
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {members.length === 0 ? (
+                              <span className="text-xs text-zinc-400 font-mono">1 Leader</span>
+                            ) : (
+                              members.map(m => (
+                                <div
+                                  key={m.id}
+                                  title={`${m.name} (${m.email})`}
+                                  className="w-7 h-7 rounded-full bg-electric-blue text-white text-[11px] font-bold border border-black flex items-center justify-center uppercase shadow-[1px_1px_0px_0px_#000]"
+                                >
+                                  {(m.name || "?").charAt(0)}
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-5 self-end md:self-auto shrink-0">
-                      <div className="text-right">
-                        <div className="font-label-bold uppercase text-[10px] text-on-surface-variant tracking-widest mb-1">
-                          {t.isScored ? 'NET SCORE' : 'STATUS'}
-                        </div>
-                        <div className={`font-display-lg text-2xl md:text-3xl px-3 py-1 border-2 border-stark-black ${
-                          t.isScored ? 'text-electric-blue bg-surface-container-lowest' : 'text-zinc-600 bg-zinc-100 text-xs font-mono font-bold'
+                      {/* Score / Status Footer */}
+                      <div className="pt-3 border-t-2 border-stark-black flex justify-between items-center">
+                        <span className="text-[10px] uppercase font-bold text-zinc-600">Standings Score:</span>
+                        <span className={`px-2.5 py-1 text-xs font-mono font-black border-2 border-black ${
+                          team.isScored ? 'bg-electric-blue text-white' : 'bg-zinc-200 text-zinc-700'
                         }`}>
-                          {t.isScored ? t.totalScore : 'AWAITING EVAL'}
+                          {team.isScored ? `${team.totalScore} PTS` : 'AWAITING EVAL'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* DENSE STANDINGS MATRIX TABLE */}
+            <div className="bg-pure-white border-4 border-stark-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] overflow-hidden">
+              <div className="p-4 bg-stark-black text-white flex justify-between items-center">
+                <h4 className="font-headline-md uppercase text-sm font-bold flex items-center gap-2">
+                  <span className="material-symbols-outlined text-electric-blue text-lg">format_list_numbered</span>
+                  GLOBAL STANDINGS MATRIX ({filteredTeams.length} SQUADS)
+                </h4>
+                <span className="text-[10px] font-mono text-zinc-400 uppercase">
+                  Click any row to inspect operatives and scoring breakdown
+                </span>
+              </div>
+
+              {/* Table Header */}
+              <div className="hidden md:grid grid-cols-12 gap-3 p-3 bg-zinc-100 border-b-2 border-stark-black text-[11px] font-mono font-bold uppercase text-zinc-600">
+                <div className="col-span-1 text-center">RANK</div>
+                <div className="col-span-4">SQUAD IDENTITY</div>
+                <div className="col-span-3">ARENA</div>
+                <div className="col-span-2 text-center">ROSTER</div>
+                <div className="col-span-2 text-right">EVALUATION / SCORE</div>
+              </div>
+
+              {/* Matrix Rows */}
+              <div className="divide-y-2 divide-stark-black">
+                {filteredTeams.map((team, idx) => {
+                  const hackathonMatch = genuineHackathons.find(h => h.id === team.hackathonId);
+                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+                  const isExpanded = expandedTeam === team.id;
+
+                  return (
+                    <div key={team.id} className="transition-colors hover:bg-yellow-50/50">
+                      <div
+                        onClick={() => setExpandedTeam(isExpanded ? null : team.id)}
+                        className="p-3 md:p-3.5 flex flex-col md:grid md:grid-cols-12 gap-2 md:gap-3 items-start md:items-center cursor-pointer text-xs"
+                      >
+                        {/* Rank */}
+                        <div className="md:col-span-1 flex md:justify-center items-center gap-2 font-display-sm text-base md:text-lg font-bold text-stark-black shrink-0">
+                          {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `#${idx + 1}`}
+                        </div>
+
+                        {/* Squad Identity */}
+                        <div className="md:col-span-4 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-sm uppercase text-stark-black truncate hover:text-electric-blue transition-colors">
+                              {team.name}
+                            </span>
+                            <span className={`px-1.5 py-0.2 text-[9px] font-mono font-bold uppercase border ${
+                              team.status === 'disqualified'
+                                ? 'bg-rose-100 text-rose-800 border-rose-400'
+                                : team.status === 'verified'
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-400'
+                                : 'bg-zinc-100 text-zinc-700 border-zinc-400'
+                            }`}>
+                              {team.status || 'ACTIVE'}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-mono text-zinc-400 block truncate">
+                            ID: {team.id}
+                          </span>
+                        </div>
+
+                        {/* Arena */}
+                        <div className="md:col-span-3 min-w-0">
+                          <span className="font-mono text-[11px] text-zinc-700 truncate block">
+                            {hackathonMatch ? hackathonMatch.name : 'CodeSrijan Arena'}
+                          </span>
+                        </div>
+
+                        {/* Roster */}
+                        <div className="md:col-span-2 md:text-center">
+                          <span className="inline-flex items-center gap-1 font-mono font-bold text-[11px] bg-zinc-100 px-2 py-0.5 border border-zinc-300">
+                            <span className="material-symbols-outlined text-[13px]">groups</span>
+                            {team.memberCount || 0} / 4 Hackers
+                          </span>
+                        </div>
+
+                        {/* Evaluation Score */}
+                        <div className="md:col-span-2 flex items-center justify-between md:justify-end gap-2 w-full md:w-auto">
+                          <span className={`px-2 py-0.5 font-mono text-xs font-bold border ${
+                            team.isScored
+                              ? 'bg-electric-blue text-white border-black'
+                              : 'bg-zinc-100 text-zinc-600 border-zinc-300'
+                          }`}>
+                            {team.isScored ? `${team.totalScore} PTS` : 'AWAITING EVAL'}
+                          </span>
+                          <span className="material-symbols-outlined text-sm text-zinc-500 transition-transform" style={{ transform: isExpanded ? 'rotate(180deg)' : 'none' }}>
+                            expand_more
+                          </span>
                         </div>
                       </div>
-                      <span className="material-symbols-outlined text-stark-black transition-transform duration-300" style={{ transform: expandedTeam === t.id ? 'rotate(180deg)' : 'none' }}>
-                        expand_more
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Expandable Breakdown Matrix & Squad Members */}
-                  {expandedTeam === t.id && (
-                    <div className="border-t-4 border-stark-black bg-surface-container-lowest p-6 animate-fade-in space-y-4">
-                      
-                      {/* Squad Members List */}
-                      <div>
-                        <h4 className="font-label-bold uppercase text-xs text-stark-black mb-2 tracking-widest flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[16px]">badge</span>
-                          SQUAD ROSTER & OPERATIVES
-                        </h4>
-                        {members.length === 0 ? (
-                          <p className="font-code-snippet text-xs text-on-surface-variant">Member records loading...</p>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-                            {members.map(m => (
-                              <div key={m.id} className="bg-pure-white border-2 border-stark-black p-2.5 flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-electric-blue text-pure-white font-bold flex items-center justify-center text-xs border border-stark-black">
-                                  {(m.name || "?").charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                  <p className="font-label-bold text-xs truncate uppercase text-stark-black">{m.name}</p>
-                                  <p className="font-mono text-[10px] text-zinc-500 truncate">{m.email}</p>
-                                </div>
+                      {/* Expandable Breakdown Details */}
+                      {isExpanded && (
+                        <div className="bg-surface-container-lowest p-5 border-t-2 border-stark-black border-dashed animate-fade-in space-y-4">
+                          {/* Operative Roster */}
+                          <div>
+                            <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block mb-2 flex items-center gap-1">
+                              <span className="material-symbols-outlined text-xs">badge</span> SQUAD ROSTER & OPERATIVES
+                            </span>
+                            {members.length === 0 ? (
+                              <p className="text-xs text-zinc-500 font-mono">1 Team Leader assigned.</p>
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
+                                {members.map(m => (
+                                  <div key={m.id} className="bg-pure-white border-2 border-stark-black p-2 flex items-center gap-2">
+                                    <div className="w-6 h-6 rounded-full bg-electric-blue text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                      {(m.name || "?").charAt(0)}
+                                    </div>
+                                    <div className="overflow-hidden">
+                                      <p className="font-bold text-xs truncate uppercase">{m.name}</p>
+                                      <p className="font-mono text-[9px] text-zinc-500 truncate">{m.email}</p>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* Score Breakdown if scored */}
-                      {t.isScored ? (
-                        <div>
-                          <h4 className="font-label-bold uppercase text-xs text-stark-black mb-2 tracking-widest flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px]">rubric</span>
-                            SCORING BREAKDOWN MATRIX
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                            {t.scores.map((sc: any, sIdx: number) => (
-                              <div key={sIdx} className="bg-pure-white border-2 border-stark-black p-3 text-center">
-                                <div className="font-label-bold uppercase text-[10px] text-on-surface-variant line-clamp-1">{sc.criteriaId}</div>
-                                <div className="font-display-sm text-2xl text-stark-black mt-1">{sc.score}</div>
+                          {/* Scoring Rubric Breakdown */}
+                          {team.isScored ? (
+                            <div>
+                              <span className="text-[10px] font-mono font-bold uppercase text-zinc-500 block mb-2 flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">rubric</span> SCORING RUBRIC MATRIX
+                              </span>
+                              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                {(team.scores || []).map((sc: any, sIdx: number) => (
+                                  <div key={sIdx} className="bg-pure-white border-2 border-stark-black p-2 text-center">
+                                    <span className="text-[9px] uppercase font-bold text-zinc-500 block truncate">{sc.criteriaId}</span>
+                                    <span className="font-display-sm text-lg font-bold">{sc.score}</span>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                          
-                          {(t.bonusPoints > 0 || t.penaltyPoints > 0) && (
-                            <div className="mt-3 flex gap-3">
-                              {t.bonusPoints > 0 && (
-                                <div className="flex-1 bg-pure-white border-2 border-success p-2.5 text-center text-success">
-                                  <div className="font-label-bold uppercase text-[10px]">Operational Bonus</div>
-                                  <div className="font-display-sm text-xl font-bold">+{t.bonusPoints}</div>
-                                </div>
-                              )}
-                              {t.penaltyPoints > 0 && (
-                                <div className="flex-1 bg-pure-white border-2 border-error p-2.5 text-center text-error">
-                                  <div className="font-label-bold uppercase text-[10px]">Infraction Penalty</div>
-                                  <div className="font-display-sm text-xl font-bold">-{t.penaltyPoints}</div>
-                                </div>
-                              )}
+                            </div>
+                          ) : (
+                            <div className="bg-amber-50 border border-amber-300 p-2.5 text-xs text-amber-800 font-mono flex items-center gap-2">
+                              <span className="material-symbols-outlined text-sm text-amber-600">hourglass_empty</span>
+                              OFFICIALLY ENROLLED SQUAD // UNRANKED / AWAITING EVALUATION
                             </div>
                           )}
                         </div>
-                      ) : (
-                        <div className="bg-surface-container p-4 border-2 border-stark-black text-center font-code-snippet text-xs text-on-surface-variant uppercase flex items-center justify-center gap-2">
-                          <span className="material-symbols-outlined text-[16px] text-amber-600">hourglass_top</span>
-                          UNRANKED / AWAITING EVALUATION — OFFICIALLY ENROLLED SQUAD (NO FABRICATED SCORES)
-                        </div>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
         )}
       </main>

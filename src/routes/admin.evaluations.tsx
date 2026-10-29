@@ -98,9 +98,12 @@ function AdminEvaluations() {
                 </div>
             )}
 
-            {/* Eval Modal */}
+            {/* Eval Modal with Backdrop Click-Outside */}
             {selectedEval && (
-                <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
+                <div 
+                    onClick={(e) => { if (e.target === e.currentTarget) setSelectedEval(null); }}
+                    className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+                >
                     <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[90vh] flex flex-col">
                         <div className="bg-stark-black text-pure-white p-6 border-b-4 border-stark-black flex justify-between items-center shrink-0">
                             <div>

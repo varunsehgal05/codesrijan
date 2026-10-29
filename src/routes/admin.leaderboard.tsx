@@ -194,8 +194,28 @@ function AdminLeaderboard() {
               teams.map((t, idx) => {
                 return (
                   <tr key={t.id} className={`border-b-2 border-stark-black hover:bg-surface-container transition-colors ${!t.isScored ? 'bg-surface-container-lowest opacity-75' : ''}`}>
-                    <td className="p-4 font-display-lg text-2xl text-center border-r-2 border-stark-black">
-                      {t.isScored ? (idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1) : '-'}
+                    <td className="p-4 text-center border-r-2 border-stark-black">
+                      {t.isScored ? (
+                        idx === 0 ? (
+                          <span className="bg-[#FFD700] text-black font-black px-3 py-1 text-sm brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] inline-flex items-center gap-1">
+                            🥇 #1
+                          </span>
+                        ) : idx === 1 ? (
+                          <span className="bg-[#E2E8F0] text-black font-black px-3 py-1 text-sm brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] inline-flex items-center gap-1">
+                            🥈 #2
+                          </span>
+                        ) : idx === 2 ? (
+                          <span className="bg-[#FED7AA] text-black font-black px-3 py-1 text-sm brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] inline-flex items-center gap-1">
+                            🥉 #3
+                          </span>
+                        ) : (
+                          <span className="bg-white text-black font-bold px-2.5 py-1 text-xs brutal-border inline-block">
+                            #{idx + 1}
+                          </span>
+                        )
+                      ) : (
+                        <span className="text-zinc-400 font-mono text-sm">-</span>
+                      )}
                     </td>
                     <td className="p-4 border-r-2 border-stark-black">
                       <div className="font-label-bold text-lg text-stark-black uppercase truncate max-w-[200px]">{t.name}</div>
@@ -204,17 +224,25 @@ function AdminLeaderboard() {
                     <td className="p-4 text-center font-display-sm text-2xl border-r-2 border-stark-black text-stark-black">
                       {t.isScored ? t.evalScore : '-'}
                     </td>
-                    <td className="p-4 text-center font-display-sm text-2xl border-r-2 border-stark-black text-success">
-                      +{t.bonusPoints}
+                    <td className="p-4 text-center border-r-2 border-stark-black">
+                      <span className="font-display-sm text-lg font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 border border-emerald-400 inline-block">
+                        +{t.bonusPoints}
+                      </span>
                     </td>
-                    <td className="p-4 text-center font-display-sm text-2xl border-r-2 border-stark-black text-error">
-                      -{t.penaltyPoints}
+                    <td className="p-4 text-center border-r-2 border-stark-black">
+                      <span className="font-display-sm text-lg font-bold text-rose-800 bg-rose-100 px-2.5 py-1 border border-rose-400 inline-block">
+                        -{t.penaltyPoints}
+                      </span>
                     </td>
-                    <td className="p-4 text-center font-display-lg text-3xl font-bold text-electric-blue border-r-2 border-stark-black">
+                    <td className="p-4 text-center border-r-2 border-stark-black">
                       {t.isScored ? (
-                        t.totalScore
+                        <span className="inline-block bg-stark-black text-[#00E5FF] px-4 py-1.5 font-black text-2xl brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] tracking-tight">
+                          {t.totalScore} PTS
+                        </span>
                       ) : (
-                        <span className="text-surface-variant text-[10px] font-label-bold uppercase tracking-wider">AWAITING EVAL</span>
+                        <span className="bg-zinc-200 text-zinc-700 text-[10px] font-label-bold uppercase px-2 py-1 tracking-wider brutal-border inline-block">
+                          AWAITING EVAL
+                        </span>
                       )}
                     </td>
                     <td className="p-4 text-center">
@@ -239,8 +267,8 @@ function AdminLeaderboard() {
 
       {/* Editor Modal */}
       {editingTeam && (
-        <div className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-md flex flex-col">
+        <div onClick={(e) => { if (e.target === e.currentTarget) setEditingTeam(null); }} className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm cursor-pointer">
+            <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-md flex flex-col cursor-default">
                 <div className="bg-stark-black text-pure-white p-4 border-b-4 border-stark-black flex justify-between items-center">
                     <h3 className="font-headline-md uppercase tracking-widest">ADJUST MODIFIERS</h3>
                     <button onClick={() => setEditingTeam(null)} className="text-pure-white hover:text-error transition-colors">

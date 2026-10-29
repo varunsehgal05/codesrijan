@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 import toast from "react-hot-toast";
+import { getNotificationAction } from "../components/NotificationBell";
 
 const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
@@ -22,21 +23,13 @@ const NOTIF_ICONS: Record<string, { icon: string; color: string; label: string }
     default:           { icon: 'notifications',    color: 'text-zinc-400',    label: 'System Notification' }
 };
 
-export const getNotificationTag = (type: string) => {
-    const t = (type || '').toLowerCase();
-    if (t.includes('payment') || t.includes('billing')) {
-        return { label: 'PAYMENT', bg: 'bg-emerald-100 dark:bg-emerald-950', text: 'text-emerald-800 dark:text-emerald-300', border: 'border-emerald-600' };
-    }
-    if (t.includes('team') || t.includes('squad') || t.includes('join') || t.includes('invite')) {
-        return { label: 'SQUAD', bg: 'bg-blue-100 dark:bg-blue-950', text: 'text-blue-800 dark:text-blue-300', border: 'border-blue-600' };
-    }
-    if (t.includes('support') || t.includes('ticket')) {
-        return { label: 'SUPPORT', bg: 'bg-rose-100 dark:bg-rose-950', text: 'text-rose-800 dark:text-rose-300', border: 'border-rose-600' };
-    }
-    if (t.includes('admin') || t.includes('system') || t.includes('broadcast')) {
-        return { label: 'SYSTEM', bg: 'bg-amber-100 dark:bg-amber-950', text: 'text-amber-800 dark:text-amber-300', border: 'border-amber-600' };
-    }
-    return { label: 'GENERAL', bg: 'bg-zinc-100 dark:bg-zinc-800', text: 'text-zinc-800 dark:text-zinc-300', border: 'border-zinc-400' };
+export const getNotificationTag = (notification: any) => {
+    const t = ((notification?.type || '') + ' ' + (notification?.title || '') + ' ' + (notification?.message || '')).toLowerCase();
+    if (t.includes('payment')) return { label: 'PAYMENT', bg: 'bg-emerald-100 text-emerald-800 border-emerald-600' };
+    if (t.includes('squad')) return { label: 'SQUAD', bg: 'bg-indigo-100 text-indigo-800 border-indigo-600' };
+    if (t.includes('support')) return { label: 'SUPPORT', bg: 'bg-rose-100 text-rose-800 border-rose-600' };
+    if (t.includes('system')) return { label: 'SYSTEM', bg: 'bg-zinc-100 text-zinc-800 border-zinc-400' };
+    return { label: 'GENERAL', bg: 'bg-yellow-100 text-yellow-800 border-yellow-600' };
 };
 
 export function NotificationCenterComponent() {
@@ -45,7 +38,7 @@ export function NotificationCenterComponent() {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [filter, setFilter] = useState<'all' | 'unread' | 'payments' | 'squads'>('all');
+    const [filter, setFilter] = useState<'all' | 'unread' | 'payments' | 'squads' | 'comms' | 'problems'>('all');
     const [processingAction, setProcessingAction] = useState(false);
 
     const fetchNotifications = async () => {
@@ -168,8 +161,11 @@ export function NotificationCenterComponent() {
     // Filter logic
     const filteredNotifications = notifications.filter(n => {
         if (filter === 'unread') return !n.isRead;
-        if (filter === 'payments') return n.type === 'payment_approved' || n.type === 'payment_rejected';
-        if (filter === 'squads') return n.type === 'team_updated' || n.type === 'team_invite' || n.type === 'join_request' || n.type === 'chat_message';
+        const act = getNotificationAction(n);
+        if (filter === 'payments') return act.badge === 'PAYMENT';
+        if (filter === 'squads') return act.badge === 'SQUAD' || act.badge === 'RECRUITMENT';
+        if (filter === 'comms') return act.badge === 'COMMS';
+        if (filter === 'problems') return act.badge === 'PROBLEMS' || act.badge === 'HACKATHONS' || act.badge === 'SYSTEM';
         return true;
     });
 
@@ -248,6 +244,8 @@ export function NotificationCenterComponent() {
                                 { id: 'unread', label: `UNREAD (${unreadCount})` },
                                 { id: 'payments', label: 'PAYMENTS' },
                                 { id: 'squads', label: 'SQUADS' },
+                                { id: 'comms', label: 'COMMS' },
+                                { id: 'problems', label: 'PROBLEMS / SYSTEM' },
                             ].map(tab => (
                                 <button
                                     key={tab.id}
@@ -334,11 +332,12 @@ export function NotificationCenterComponent() {
                                                         NEW
                                                     </span>
                                                 )}
-                                                {n.type && (() => {
-                                                    const tag = getNotificationTag(n.type);
+                                                {(() => {
+                                                    const action = getNotificationAction(n);
+                                                    const tag = getNotificationTag(n);
                                                     return (
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 uppercase border font-mono tracking-wider shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${tag.bg} ${tag.text} ${tag.border}`}>
-                                                            {tag.label}
+                                                        <span className={`text-[10px] font-black px-2 py-0.5 uppercase border font-mono tracking-wider shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${tag.bg || action.badgeClass}`}>
+                                                            {tag.label || action.badge}
                                                         </span>
                                                     );
                                                 })()}
@@ -359,53 +358,29 @@ export function NotificationCenterComponent() {
                                                 </div>
                                             )}
 
-                                            {/* Action Links */}
-                                            <div className="pt-2 flex flex-wrap items-center gap-3" onClick={e => e.stopPropagation()}>
-                                                {(n.type === 'payment_rejected' || n.type === 'payment_approved') && (
-                                                    <Link
-                                                        to="/payment"
-                                                        className="inline-flex items-center gap-1 text-[11px] font-black text-electric-blue hover:underline uppercase"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xs">receipt_long</span>
-                                                        View Payment Status &rarr;
-                                                    </Link>
-                                                )}
-                                                {(n.type === 'team_updated' || n.type === 'team_disqualified' || n.type === 'admin_message') && (
-                                                    <Link
-                                                        to="/dashboard"
-                                                        className="inline-flex items-center gap-1 text-[11px] font-black text-electric-blue hover:underline uppercase"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xs">dashboard</span>
-                                                        Go to Dashboard &rarr;
-                                                    </Link>
-                                                )}
-                                                {n.type === 'team_invite' && (
-                                                    <Link
-                                                        to="/recruitment"
-                                                        className="inline-flex items-center gap-1 text-[11px] font-black text-electric-blue hover:underline uppercase"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xs">mail</span>
-                                                        View Team Invites &rarr;
-                                                    </Link>
-                                                )}
-                                                {n.type === 'chat_message' && (
-                                                    <Link
-                                                        to="/workspace"
-                                                        className="inline-flex items-center gap-1 text-[11px] font-black text-sky-600 hover:underline uppercase"
-                                                    >
-                                                        <span className="material-symbols-outlined text-xs">chat</span>
-                                                        Open Squad Workspace &rarr;
-                                                    </Link>
-                                                )}
-                                                {!n.isRead && (
-                                                    <button
-                                                        onClick={() => handleMarkAsRead(n.id)}
-                                                        className="text-[10px] font-bold text-zinc-500 hover:text-stark-black uppercase underline"
-                                                    >
-                                                        Mark as Read
-                                                    </button>
-                                                )}
-                                            </div>
+                                            {/* Universal Destination Action Button */}
+                                            {(() => {
+                                                const action = getNotificationAction(n);
+                                                return (
+                                                    <div className="pt-2 flex flex-wrap items-center gap-3" onClick={e => e.stopPropagation()}>
+                                                        <Link
+                                                            to={action.url}
+                                                            className="inline-flex items-center gap-1.5 text-xs font-black uppercase text-pure-white bg-electric-blue hover:bg-stark-black px-3.5 py-1.5 brutal-border shadow-[2px_2px_0px_0px_#000000] hover:-translate-y-0.5 transition-all cursor-pointer"
+                                                        >
+                                                            <span className="material-symbols-outlined text-sm">{action.icon}</span>
+                                                            <span>{action.label} &rarr;</span>
+                                                        </Link>
+                                                        {!n.isRead && (
+                                                            <button
+                                                                onClick={() => handleMarkAsRead(n.id)}
+                                                                className="text-[11px] font-bold text-zinc-500 hover:text-stark-black uppercase underline cursor-pointer"
+                                                            >
+                                                                Mark as Read
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
 
                                         {/* Right Controls: Timestamp & Single Delete Button */}

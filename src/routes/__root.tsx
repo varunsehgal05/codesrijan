@@ -17,6 +17,7 @@ import { AppStoreProvider, useAppStore } from "../lib/store";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
 import { Toaster } from "react-hot-toast";
+import { AutoLogoutManager } from "../components/AutoLogoutManager";
 
 function NotFoundComponent() {
   return (
@@ -135,6 +136,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AppStoreProvider>
+        <AutoLogoutManager />
         <MaintenanceGuard>
           <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative overflow-x-hidden">
             <Navbar />

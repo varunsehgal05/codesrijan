@@ -30,6 +30,16 @@ export function Navbar() {
                     <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Sponsors</Link>
                     <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Announcements</Link>
                     <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Leaderboard</Link>
+                    {currentUser.role === 'judge' && (
+                        <Link to="/evaluations" className="text-stark-black bg-[#FFD700] px-2 py-0.5 brutal-border font-black text-xs uppercase" activeProps={{ className: "border-b-2 border-black" }} onClick={() => isMobile && toggleMobileMenu()}>
+                            ⚖️ Judge Arena
+                        </Link>
+                    )}
+                    {currentUser.role === 'mentor' && (
+                        <Link to="/mentor" className="text-stark-black bg-emerald-400 px-2 py-0.5 brutal-border font-black text-xs uppercase" activeProps={{ className: "border-b-2 border-black" }} onClick={() => isMobile && toggleMobileMenu()}>
+                            💡 Mentor Hub
+                        </Link>
+                    )}
                     <Link to="/chat" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Comms</Link>
                     <Link to="/support" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Help & Support</Link>
                 </>
@@ -80,6 +90,18 @@ export function Navbar() {
                                 <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
                                     <span className="material-symbols-outlined text-[18px]">shield_person</span>
                                     Admin Panel
+                                </Link>
+                            )}
+                            {currentUser.role === 'judge' && (
+                                <Link to="/evaluations" className="bg-[#FFD700] text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-3 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
+                                    <span className="material-symbols-outlined text-[18px]">gavel</span>
+                                    Judge Portal
+                                </Link>
+                            )}
+                            {currentUser.role === 'mentor' && (
+                                <Link to="/mentor" className="bg-emerald-400 text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-3 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
+                                    <span className="material-symbols-outlined text-[18px]">psychology</span>
+                                    Mentor Hub
                                 </Link>
                             )}
                             <NotificationBell />

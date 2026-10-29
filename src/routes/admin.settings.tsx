@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 import { API_BASE } from "../lib/utils";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/admin/settings")({
   component: AdminSettingsPage,
@@ -66,10 +67,12 @@ function AdminSettingsPage() {
         { key, value: newValue, description },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      toast.success(`Parameter [${key}] set to ${String(newValue).toUpperCase()}`);
       setStatusMsg(`SYS_UPDATE: Parameter [${key}] successfully updated to [${String(newValue).toUpperCase()}].`);
     } catch (e: any) {
       // Revert on error
       setSettings(prev => ({ ...prev, [key]: currentValue }));
+      toast.error(`Failed to update parameter [${key}]`);
       setStatusMsg(`ERR: Core parameter write failed for [${key}]. ${e.response?.data?.message || ''}`);
     } finally {
       setTogglingKey(null);

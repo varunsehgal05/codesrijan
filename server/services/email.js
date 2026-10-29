@@ -547,3 +547,91 @@ export const sendPaymentApprovalEmail = async (to, { name, eventName, teamName, 
     }
 };
 
+/**
+ * Dispatches confirmation email to newly joined teammate
+ */
+export const sendTeammateJoinedEmail = async (to, teammateName, teamName, leaderName) => {
+    if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' };
+
+    const htmlContent = `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: monospace;">
+            <tr>
+                <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #0055FF; border-radius: 8px;">
+                        <tr>
+                            <td style="background-color: #0055FF; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0; color: #FFFFFF; font-size: 22px; font-weight: 900;">CODESRIJAN SQUAD INDUCTION</h1>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 30px; color: #F4F7FB;">
+                                <p style="font-size: 16px;">Hello <strong>${teammateName || 'Operative'}</strong>,</p>
+                                <p style="font-size: 14px; color: #A9B5C5;">You have officially joined squad <strong>${teamName}</strong> led by <strong>${leaderName}</strong>.</p>
+                                <p style="font-size: 13px; color: #64748B;">You can now collaborate in the squad workspace, view shared problem statements, and build together.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    const transporter = getTransporter();
+    if (!transporter) return { success: false, error: 'Email service unconfigured' };
+    try {
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
+            subject: `CodeSrijan [SQUAD INDUCTION: ${teamName}]`,
+            html: htmlContent
+        });
+        return { success: true, messageId: info.messageId };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+};
+
+/**
+ * Dispatches notification email to squad leader when a member joins
+ */
+export const sendTeamLeaderNewMemberEmail = async (to, leaderName, teamName, memberName, memberEmail) => {
+    if (!to || !to.includes('@')) return { success: false, error: 'Invalid email' };
+
+    const htmlContent = `
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #0B0F14; padding: 40px 20px; font-family: monospace;">
+            <tr>
+                <td align="center">
+                    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #121A26; border: 2px solid #0055FF; border-radius: 8px;">
+                        <tr>
+                            <td style="background-color: #0055FF; padding: 20px; text-align: center;">
+                                <h1 style="margin: 0; color: #FFFFFF; font-size: 22px; font-weight: 900;">NEW OPERATIVE INDUCTED</h1>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 30px; color: #F4F7FB;">
+                                <p style="font-size: 16px;">Squad Leader <strong>${leaderName}</strong>,</p>
+                                <p style="font-size: 14px; color: #A9B5C5;"><strong>${memberName}</strong> (<span style="color: #00D4FF;">${memberEmail}</span>) has officially joined your squad <strong>${teamName}</strong>.</p>
+                                <p style="font-size: 13px; color: #64748B;">Your team roster has been updated across the CodeSrijan network.</p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    const transporter = getTransporter();
+    if (!transporter) return { success: false, error: 'Email service unconfigured' };
+    try {
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
+            subject: `CodeSrijan [NEW OPERATIVE JOINED: ${teamName}]`,
+            html: htmlContent
+        });
+        return { success: true, messageId: info.messageId };
+    } catch (e) {
+        return { success: false, error: e.message };
+    }
+};
+

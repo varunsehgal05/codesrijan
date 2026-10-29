@@ -60,6 +60,29 @@ export function HostEventPage() {
     const [qrImageUrl, setQrImageUrl] = useState("");
     const [paymentInstructions, setPaymentInstructions] = useState("Pay authoritative fee via UPI, save payment screenshot & submit the 12-digit UTR reference.");
 
+    const handleQrFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            toast.error("Please select a valid image file (PNG, JPG, WEBP)");
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            toast.error("Image file size must be less than 5MB");
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64 = event.target?.result as string;
+            setQrImageUrl(base64);
+            toast.success("Real UPI QR code uploaded successfully!");
+        };
+        reader.onerror = () => {
+            toast.error("Failed to read image file.");
+        };
+        reader.readAsDataURL(file);
+    };
+
     // Problem Statements & Reveal Control
     const [problemRevealMode, setProblemRevealMode] = useState<'manual' | 'immediate' | 'at_start'>('manual');
     const [problems, setProblems] = useState<ProblemDraft[]>([
@@ -721,15 +744,58 @@ export function HostEventPage() {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-stark-black">Official Payment QR Code Image URL (Optional)</label>
-                                    <input
-                                        type="url"
-                                        value={qrImageUrl}
-                                        onChange={(e) => setQrImageUrl(e.target.value)}
-                                        placeholder="https://example.com/upi-qr-code.png (or leave blank for auto-generated UPI intent)"
-                                        className="w-full bg-surface-container border-2 border-stark-black p-3 text-xs font-bold focus:border-electric-blue outline-none"
-                                    />
+                                <div className="space-y-3 bg-surface-container p-4 border-2 border-stark-black">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-black uppercase text-stark-black flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-sm text-electric-blue">qr_code_scanner</span>
+                                            Upload Real Official UPI QR Code Image
+                                        </label>
+                                        <span className="text-[10px] font-mono text-zinc-500 uppercase font-bold">REAL QR UPLOAD</span>
+                                    </div>
+                                    <p className="font-mono text-xs text-zinc-600">
+                                        Upload your genuine UPI QR graphic or screenshot (PhonePe, Google Pay, Paytm, BHIM, or Banking QR). Do not use fake or generated codes.
+                                    </p>
+
+                                    <div className="flex flex-col sm:flex-row gap-3 items-start">
+                                        <label className="bg-pure-white border-2 border-stark-black px-4 py-2 font-mono text-xs font-bold uppercase cursor-pointer hover:bg-zinc-100 flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                            <span className="material-symbols-outlined text-sm">upload_file</span>
+                                            {qrImageUrl ? "REPLACE QR IMAGE" : "UPLOAD REAL UPI QR"}
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleQrFileUpload}
+                                                className="hidden"
+                                            />
+                                        </label>
+
+                                        {qrImageUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setQrImageUrl("")}
+                                                className="bg-rose-50 text-rose-700 border-2 border-rose-600 px-3 py-2 font-mono text-xs font-bold uppercase hover:bg-rose-100 cursor-pointer flex items-center gap-1"
+                                            >
+                                                <span className="material-symbols-outlined text-xs">delete</span>
+                                                REMOVE QR
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {qrImageUrl && (
+                                        <div className="mt-2 p-3 bg-pure-white border-2 border-stark-black inline-flex flex-col items-center gap-2">
+                                            <span className="text-[10px] font-mono uppercase font-bold text-zinc-500">
+                                                AUTHENTIC PARTICIPANT QR PREVIEW
+                                            </span>
+                                            <img
+                                                src={qrImageUrl}
+                                                alt="Uploaded UPI QR Code"
+                                                className="w-40 h-40 object-contain border border-stark-black p-1 bg-white"
+                                            />
+                                            <span className="text-[10px] font-mono font-bold text-emerald-600 flex items-center gap-1">
+                                                <span className="material-symbols-outlined text-xs">verified</span>
+                                                REAL UPI QR ACTIVE
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">

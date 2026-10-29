@@ -40,6 +40,17 @@ export function validatePaymentProofFile(dataUriOrBuffer, fallbackMime = null) {
         return { valid: false, statusCode: 400, error: 'Invalid input: expected base64 data URI string or Buffer.' };
     }
 
+    // Auto-sniff MIME type from binary magic bytes if generic or unassigned (e.g. mobile picker application/octet-stream)
+    if ((!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) && buffer && buffer.length >= 12) {
+        if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+            mimeType = 'image/jpeg';
+        } else if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+            mimeType = 'image/png';
+        } else if (buffer.toString('ascii', 0, 4) === 'RIFF' && buffer.toString('ascii', 8, 12) === 'WEBP') {
+            mimeType = 'image/webp';
+        }
+    }
+
     if (!mimeType || !ALLOWED_MIME_TYPES.has(mimeType)) {
         return {
             valid: false,
