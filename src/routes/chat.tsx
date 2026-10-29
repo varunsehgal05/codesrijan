@@ -145,6 +145,7 @@ function ChatDashboard() {
 
         if (target) {
           setActiveConv(target);
+          if (target.type === 'support') setFilterMode('all');
           return;
         }
       }
@@ -160,18 +161,34 @@ function ChatDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const targetConvId = params.get('conv') || params.get('ticketId') || params.get('id') || params.get('ticket');
-    if (targetConvId && conversations.length > 0) {
+    if (targetConvId) {
       const target = conversations.find((c: any) => 
         c.id === targetConvId || 
         c.supportTicket?.id === targetConvId || 
         c.supportTicket?.conversationId === targetConvId ||
         c.ticketId === targetConvId
       );
-      if (target && (!activeConv || activeConv.id !== target.id)) {
-        setActiveConv(target);
+      if (target) {
+        if (!activeConv || activeConv.id !== target.id) {
+          setActiveConv(target);
+          if (target.type === 'support') setFilterMode('all');
+        }
+      } else {
+        const token = localStorage.getItem("codesrijan_auth_token");
+        if (token) {
+          axios.get(`${BASE}/conversations/${targetConvId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }).then(res => {
+            if (res.data && res.data.id) {
+              setConversations(prev => [res.data, ...prev.filter(c => c.id !== res.data.id)]);
+              setActiveConv(res.data);
+              if (res.data.type === 'support') setFilterMode('all');
+            }
+          }).catch(() => {});
+        }
       }
     }
-  }, [conversations]);
+  }, [conversations.length]);
 
   const loadMessages = async (convId: string) => {
     try {

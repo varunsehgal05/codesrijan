@@ -203,7 +203,7 @@ const connectMongo = async () => {
     const opts = {
         dbName: process.env.MONGO_DB_NAME || 'codesrijan',
         maxPoolSize: 10,
-        serverSelectionTimeoutMS: 6000,
+        serverSelectionTimeoutMS: 15000,
         socketTimeoutMS: 45000
     };
     try {
@@ -3883,6 +3883,51 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
             }
         }
         
+        // Auto-heal / synchronize all active support tickets and SOS requests
+        const activeCondition = {
+            status: { $regex: /^\s*(open|in[\s_-]+progress)\s*$/i }
+        };
+        const ticketQuery = req.user.role === 'admin'
+            ? activeCondition
+            : {
+                $or: [
+                    { userId: req.user.id },
+                    { userId: 'usr-student-master' },
+                    ...(req.user.teamId ? [{ description: { $regex: req.user.teamId, $options: 'i' } }] : [])
+                ],
+                ...activeCondition
+            };
+
+        const activeTickets = await SupportTicket.find(ticketQuery);
+        for (const tk of activeTickets) {
+            const cid = tk.conversationId || ('conv-sup-' + tk.id);
+            if (!tk.conversationId) {
+                tk.conversationId = cid;
+                await tk.save().catch(() => {});
+            }
+            let convObj = await Conversation.findOne({ id: cid });
+            if (!convObj) {
+                convObj = await Conversation.create({
+                    id: cid,
+                    type: 'support',
+                    participantIds: [tk.userId, req.user.id],
+                    teamId: req.user.teamId || undefined
+                }).catch(() => {});
+            } else if (!convObj.participantIds?.includes(req.user.id)) {
+                convObj.participantIds.push(req.user.id);
+                await convObj.save().catch(() => {});
+            }
+            const msgExists = await Message.exists({ conversationId: cid });
+            if (!msgExists) {
+                await Message.create({
+                    id: 'msg-' + Date.now().toString(),
+                    conversationId: cid,
+                    senderId: tk.userId,
+                    message: tk.description || tk.subject
+                }).catch(() => {});
+            }
+        }
+
         let query = {
             $or: [
                 { participantIds: userId },
@@ -3898,6 +3943,11 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
                     { type: 'support' }
                 ]
             };
+        } else {
+            const userSupportConvIds = activeTickets.map(t => t.conversationId).filter(Boolean);
+            if (userSupportConvIds.length > 0) {
+                query.$or.push({ id: { $in: userSupportConvIds } });
+            }
         }
 
         const conversations = await Conversation.find(query).sort({ updatedAt: -1 });
@@ -3949,6 +3999,78 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
     }
 });
 
+app.get('/api/conversations/:id', requireAuth, async (req, res) => {
+    try {
+        const convId = req.params.id;
+        let conv = await Conversation.findOne({ id: convId });
+
+        if (!conv) {
+            const ticket = await SupportTicket.findOne({
+                $or: [{ conversationId: convId }, { id: convId }]
+            });
+            if (ticket) {
+                const targetId = ticket.conversationId || convId;
+                conv = await Conversation.findOne({ id: targetId });
+                if (!conv) {
+                    conv = await Conversation.create({
+                        id: targetId,
+                        type: 'support',
+                        participantIds: [ticket.userId, req.user.id]
+                    }).catch(() => {});
+                }
+                const msgExists = await Message.exists({ conversationId: targetId });
+                if (!msgExists) {
+                    await Message.create({
+                        id: 'msg-' + Date.now().toString(),
+                        conversationId: targetId,
+                        senderId: ticket.userId,
+                        message: ticket.description || ticket.subject
+                    }).catch(() => {});
+                }
+            }
+        }
+
+        if (!conv) return res.status(404).json({ message: "Conversation not found." });
+
+        const convObj = conv.toObject();
+        if (conv.type === 'direct') {
+            const otherUserId = conv.participantIds.find(id => id !== req.user.id);
+            const otherUser = await User.findOne({ id: otherUserId });
+            convObj.targetName = otherUser ? otherUser.name : 'Unknown User';
+            convObj.targetRole = otherUser ? (otherUser.role.charAt(0).toUpperCase() + otherUser.role.slice(1)) : '';
+        } else if (conv.type === 'team') {
+            const team = await Team.findOne({ id: conv.teamId });
+            convObj.targetName = team ? team.name : 'Unknown Team';
+            convObj.targetRole = team ? `${team.memberIds.length} members` : '';
+        } else if (conv.type === 'support') {
+            const ticket = await SupportTicket.findOne({ conversationId: conv.id });
+            if (ticket) {
+                const ticketUser = await User.findOne({ id: ticket.userId });
+                const userName = ticketUser ? ticketUser.name : (ticket.userId || 'Hacker');
+                convObj.targetName = req.user.role === 'admin' 
+                    ? `[SUPPORT] ${userName} - ${ticket.subject || 'Ticket'}` 
+                    : `[SUPPORT TICKET] ${ticket.subject || 'Admin Support'}`;
+                convObj.targetRole = `Support Ticket #${ticket.id.substring(0,8)} · Status: ${ticket.status?.toUpperCase() || 'OPEN'}`;
+                convObj.supportTicket = ticket;
+            } else {
+                convObj.targetName = '[SUPPORT] Admin Support';
+                convObj.targetRole = 'Official Support Channel';
+            }
+        }
+
+        const lastMsg = await Message.findOne({ conversationId: conv.id }).sort({ createdAt: -1 });
+        if (lastMsg) {
+            convObj.lastMessage = lastMsg.message;
+            convObj.lastMessageAt = lastMsg.createdAt;
+            convObj.lastMessageSenderId = lastMsg.senderId;
+        }
+
+        res.json(convObj);
+    } catch (err) {
+        res.status(500).json({ message: "Failed to retrieve conversation." });
+    }
+});
+
 app.post('/api/conversations/direct', requireAuth, async (req, res) => {
     try {
         const { targetUserId } = req.body;
@@ -3980,7 +4102,34 @@ app.post('/api/conversations/direct', requireAuth, async (req, res) => {
 app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
     try {
         const convId = req.params.id;
-        const conv = await Conversation.findOne({ id: convId });
+        let conv = await Conversation.findOne({ id: convId });
+
+        if (!conv) {
+            const ticket = await SupportTicket.findOne({
+                $or: [{ conversationId: convId }, { id: convId }]
+            });
+            if (ticket) {
+                const targetId = ticket.conversationId || convId;
+                conv = await Conversation.findOne({ id: targetId });
+                if (!conv) {
+                    conv = await Conversation.create({
+                        id: targetId,
+                        type: 'support',
+                        participantIds: [ticket.userId, req.user.id]
+                    }).catch(() => {});
+                }
+                const msgExists = await Message.exists({ conversationId: targetId });
+                if (!msgExists) {
+                    await Message.create({
+                        id: 'msg-' + Date.now().toString(),
+                        conversationId: targetId,
+                        senderId: ticket.userId,
+                        message: ticket.description || ticket.subject
+                    }).catch(() => {});
+                }
+            }
+        }
+
         if (!conv) return res.status(404).json({ message: "Conversation missing." });
 
         if (req.user.role !== 'admin') {
@@ -3990,12 +4139,19 @@ app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
                 const team = await Team.findOne({ id: conv.teamId, memberIds: req.user.id });
                 if (team) isTeamMember = true;
             }
-            if (!isParticipant && !isTeamMember) {
+            let isTicketOwner = false;
+            if (conv.type === 'support') {
+                const ticket = await SupportTicket.findOne({ conversationId: conv.id });
+                if (ticket && (ticket.userId === req.user.id || (req.user.teamId && ticket.description?.includes(req.user.teamId)))) {
+                    isTicketOwner = true;
+                }
+            }
+            if (!isParticipant && !isTeamMember && !isTicketOwner) {
                 return res.status(403).json({ message: "Access Denied: You do not have clearance for this channel." });
             }
         }
 
-        const messages = await Message.find({ conversationId: convId }).sort({ createdAt: 1 });
+        const messages = await Message.find({ conversationId: conv.id || convId }).sort({ createdAt: 1 });
         res.json(messages);
     } catch (err) {
         res.status(500).json({ message: "Failed to load messages." });

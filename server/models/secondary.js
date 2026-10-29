@@ -28,7 +28,7 @@ const recruitmentInvitationSchema = new mongoose.Schema({
 // 15. Conversations (Chat Framework)
 const conversationSchema = new mongoose.Schema({
     id: { type: String, unique: true },
-    type: { type: String, enum: ['direct', 'team', 'mentor', 'judge'] },
+    type: { type: String, enum: ['direct', 'team', 'mentor', 'judge', 'support'], default: 'direct' },
     participantIds: [String],
     teamId: String,
     projectId: String,

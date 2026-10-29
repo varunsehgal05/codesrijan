@@ -12,15 +12,15 @@ export const Route = createFileRoute("/notifications")({
 });
 
 const NOTIF_ICONS: Record<string, { icon: string; color: string; label: string }> = {
-    payment_approved:  { icon: 'verified',         color: 'text-emerald-500', label: 'Payment Approved' },
-    payment_rejected:  { icon: 'cancel',           color: 'text-rose-500',    label: 'Payment Declined' },
-    team_updated:      { icon: 'groups',           color: 'text-electric-blue', label: 'Squad Update' },
-    team_disqualified: { icon: 'gavel',            color: 'text-rose-600',    label: 'Disqualification' },
-    admin_message:     { icon: 'campaign',         color: 'text-amber-500',   label: 'Command Broadcast' },
-    join_request:      { icon: 'person_add',       color: 'text-electric-blue', label: 'Recruitment Request' },
-    team_invite:       { icon: 'forward_to_inbox', color: 'text-electric-blue', label: 'Squad Invite' },
-    chat_message:      { icon: 'chat',             color: 'text-sky-500',     label: 'Squad Comms' },
-    default:           { icon: 'notifications',    color: 'text-zinc-400',    label: 'System Notification' }
+    payment_approved: { icon: 'verified', color: 'text-emerald-500', label: 'Payment Approved' },
+    payment_rejected: { icon: 'cancel', color: 'text-rose-500', label: 'Payment Declined' },
+    team_updated: { icon: 'groups', color: 'text-electric-blue', label: 'Squad Update' },
+    team_disqualified: { icon: 'gavel', color: 'text-rose-600', label: 'Disqualification' },
+    admin_message: { icon: 'campaign', color: 'text-amber-500', label: 'Command Broadcast' },
+    join_request: { icon: 'person_add', color: 'text-electric-blue', label: 'Recruitment Request' },
+    team_invite: { icon: 'forward_to_inbox', color: 'text-electric-blue', label: 'Squad Invite' },
+    chat_message: { icon: 'chat', color: 'text-sky-500', label: 'Squad Comms' },
+    default: { icon: 'notifications', color: 'text-zinc-400', label: 'System Notification' }
 };
 
 export const getNotificationTag = (notification: any) => {
@@ -89,7 +89,7 @@ export function NotificationCenterComponent() {
 
     // Handle toggle single select
     const handleToggleSelect = (id: string) => {
-        setSelectedIds(prev => 
+        setSelectedIds(prev =>
             prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
         );
     };
@@ -136,7 +136,7 @@ export function NotificationCenterComponent() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
-        } catch (err) {}
+        } catch (err) { }
     };
 
     // Mark all as read
@@ -174,14 +174,14 @@ export function NotificationCenterComponent() {
     return (
         <div className="min-h-screen bg-surface-container py-10 px-4 sm:px-6 lg:px-8 font-mono">
             <div className="max-w-5xl mx-auto space-y-6">
-                
+
                 {/* Breadcrumb / Back Link */}
                 <div className="flex items-center justify-between">
                     <Link to="/dashboard" className="inline-flex items-center gap-2 text-xs font-bold uppercase text-zinc-600 hover:text-electric-blue transition-colors">
                         <span className="material-symbols-outlined text-sm">arrow_back</span>
                         Back to Command Center
                     </Link>
-                    <button 
+                    <button
                         onClick={fetchNotifications}
                         disabled={loading}
                         className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-zinc-600 hover:text-stark-black"
@@ -250,11 +250,10 @@ export function NotificationCenterComponent() {
                                 <button
                                     key={tab.id}
                                     onClick={() => setFilter(tab.id as any)}
-                                    className={`px-3 py-1 text-xs font-bold uppercase brutal-border transition-all ${
-                                        filter === tab.id 
-                                            ? 'bg-stark-black text-white shadow-[2px_2px_0px_0px_#0055FF]' 
-                                            : 'bg-pure-white text-stark-black hover:bg-zinc-100'
-                                    }`}
+                                    className={`px-3 py-1 text-xs font-bold uppercase brutal-border transition-all ${filter === tab.id
+                                        ? 'bg-stark-black text-white shadow-[2px_2px_0px_0px_#0055FF]'
+                                        : 'bg-pure-white text-stark-black hover:bg-zinc-100'
+                                        }`}
                                 >
                                     {tab.label}
                                 </button>
@@ -301,12 +300,11 @@ export function NotificationCenterComponent() {
                                 <div
                                     key={n.id}
                                     onClick={() => handleToggleSelect(n.id)}
-                                    className={`bg-pure-white brutal-border p-4 transition-all cursor-pointer relative ${
-                                        !n.isRead ? 'border-l-8 border-l-electric-blue bg-white shadow-[4px_4px_0px_0px_#0055FF]' : 'opacity-85 shadow-[3px_3px_0px_0px_#000000] hover:opacity-100'
-                                    } ${isSelected ? 'ring-2 ring-electric-blue bg-blue-50/30' : ''}`}
+                                    className={`bg-pure-white brutal-border p-4 transition-all cursor-pointer relative ${!n.isRead ? 'border-l-8 border-l-electric-blue bg-white shadow-[4px_4px_0px_0px_#0055FF]' : 'opacity-85 shadow-[3px_3px_0px_0px_#000000] hover:opacity-100'
+                                        } ${isSelected ? 'ring-2 ring-electric-blue bg-blue-50/30' : ''}`}
                                 >
                                     <div className="flex items-start justify-between gap-3">
-                                        
+
                                         {/* Selection Checkbox & Type Icon */}
                                         <div className="flex items-center gap-3 pt-0.5">
                                             <input
@@ -392,7 +390,7 @@ export function NotificationCenterComponent() {
                                             >
                                                 <span className="material-symbols-outlined text-base">close</span>
                                             </button>
-                                            
+
                                             {n.createdAt && (
                                                 <span className="text-[10px] text-zinc-400 font-mono mt-auto">
                                                     {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
