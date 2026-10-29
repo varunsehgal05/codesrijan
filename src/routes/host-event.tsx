@@ -446,11 +446,10 @@ export function HostEventPage() {
                                     <div
                                         key={m.id}
                                         onClick={() => setMode(m.id as any)}
-                                        className={`p-4 brutal-border cursor-pointer transition-all flex flex-col justify-between ${
-                                            mode === m.id
-                                                ? 'bg-stark-black text-white shadow-[4px_4px_0px_0px_rgba(0,53,213,1)]'
-                                                : 'bg-surface-container text-stark-black hover:bg-surface-variant'
-                                        }`}
+                                        className={`p-4 brutal-border cursor-pointer transition-all flex flex-col justify-between ${mode === m.id
+                                            ? 'bg-stark-black text-white shadow-[4px_4px_0px_0px_rgba(0,53,213,1)]'
+                                            : 'bg-surface-container text-stark-black hover:bg-surface-variant'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className={`material-symbols-outlined ${mode === m.id ? 'text-electric-blue' : 'text-zinc-600'}`}>
@@ -590,13 +589,11 @@ export function HostEventPage() {
                                         <div
                                             key={a.id}
                                             onClick={() => toggleAmenity(a.id)}
-                                            className={`p-3 brutal-border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                                                isChecked ? 'bg-zinc-950 text-white' : 'bg-surface-container hover:bg-surface-variant text-stark-black'
-                                            }`}
+                                            className={`p-3 brutal-border cursor-pointer transition-all flex items-start gap-3 select-none ${isChecked ? 'bg-zinc-950 text-white' : 'bg-surface-container hover:bg-surface-variant text-stark-black'
+                                                }`}
                                         >
-                                            <div className={`w-5 h-5 mt-0.5 border-2 flex items-center justify-center ${
-                                                isChecked ? 'bg-electric-blue border-white text-black' : 'border-stark-black bg-white'
-                                            }`}>
+                                            <div className={`w-5 h-5 mt-0.5 border-2 flex items-center justify-center ${isChecked ? 'bg-electric-blue border-white text-black' : 'border-stark-black bg-white'
+                                                }`}>
                                                 {isChecked && <span className="material-symbols-outlined text-xs font-black">check</span>}
                                             </div>
                                             <div className="flex-1">
@@ -625,13 +622,11 @@ export function HostEventPage() {
                                         <div
                                             key={a.id}
                                             onClick={() => toggleAmenity(a.id)}
-                                            className={`p-3 brutal-border cursor-pointer transition-all flex items-start gap-3 select-none ${
-                                                isChecked ? 'bg-zinc-950 text-white' : 'bg-surface-container hover:bg-surface-variant text-stark-black'
-                                            }`}
+                                            className={`p-3 brutal-border cursor-pointer transition-all flex items-start gap-3 select-none ${isChecked ? 'bg-zinc-950 text-white' : 'bg-surface-container hover:bg-surface-variant text-stark-black'
+                                                }`}
                                         >
-                                            <div className={`w-5 h-5 mt-0.5 border-2 flex items-center justify-center ${
-                                                isChecked ? 'bg-electric-blue border-white text-black' : 'border-stark-black bg-white'
-                                            }`}>
+                                            <div className={`w-5 h-5 mt-0.5 border-2 flex items-center justify-center ${isChecked ? 'bg-electric-blue border-white text-black' : 'border-stark-black bg-white'
+                                                }`}>
                                                 {isChecked && <span className="material-symbols-outlined text-xs font-black">check</span>}
                                             </div>
                                             <div className="flex-1">
@@ -657,9 +652,8 @@ export function HostEventPage() {
                                     05. Hackathon Entry &amp; Paid Hackathon Model
                                 </h2>
                             </div>
-                            <span className={`text-[11px] font-bold uppercase px-3 py-1 brutal-border ${
-                                entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
-                            }`}>
+                            <span className={`text-[11px] font-bold uppercase px-3 py-1 brutal-border ${entryType === 'paid' ? 'bg-amber-400 text-black' : 'bg-emerald-400 text-black'
+                                }`}>
                                 {entryType === 'paid' ? 'PAID HACKATHON' : 'FREE ENTRY'}
                             </span>
                         </div>
@@ -668,9 +662,8 @@ export function HostEventPage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div
                                 onClick={() => setEntryType('free')}
-                                className={`p-4 brutal-border cursor-pointer transition-all flex items-center justify-between ${
-                                    entryType === 'free' ? 'bg-stark-black text-white' : 'bg-surface-container text-stark-black hover:bg-surface-variant'
-                                }`}
+                                className={`p-4 brutal-border cursor-pointer transition-all flex items-center justify-between ${entryType === 'free' ? 'bg-stark-black text-white' : 'bg-surface-container text-stark-black hover:bg-surface-variant'
+                                    }`}
                             >
                                 <div>
                                     <h4 className="font-black text-xs uppercase">Free Entry Hackathon</h4>
@@ -681,9 +674,8 @@ export function HostEventPage() {
 
                             <div
                                 onClick={() => setEntryType('paid')}
-                                className={`p-4 brutal-border cursor-pointer transition-all flex items-center justify-between ${
-                                    entryType === 'paid' ? 'bg-stark-black text-white' : 'bg-surface-container text-stark-black hover:bg-surface-variant'
-                                }`}
+                                className={`p-4 brutal-border cursor-pointer transition-all flex items-center justify-between ${entryType === 'paid' ? 'bg-stark-black text-white' : 'bg-surface-container text-stark-black hover:bg-surface-variant'
+                                    }`}
                             >
                                 <div>
                                     <h4 className="font-black text-xs uppercase">Paid Entry Hackathon</h4>
@@ -845,9 +837,8 @@ export function HostEventPage() {
                                     <div
                                         key={r.id}
                                         onClick={() => setProblemRevealMode(r.id as any)}
-                                        className={`p-3 brutal-border cursor-pointer transition-all ${
-                                            problemRevealMode === r.id ? 'bg-stark-black text-white' : 'bg-white text-stark-black hover:bg-zinc-100'
-                                        }`}
+                                        className={`p-3 brutal-border cursor-pointer transition-all ${problemRevealMode === r.id ? 'bg-stark-black text-white' : 'bg-white text-stark-black hover:bg-zinc-100'
+                                            }`}
                                     >
                                         <p className="font-bold text-xs uppercase">{r.label}</p>
                                         <p className="text-[10px] opacity-75 mt-1">{r.desc}</p>

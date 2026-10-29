@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 import { API_BASE } from "../lib/utils";
+import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/leaderboard")({
   component: LeaderboardPage,
@@ -30,12 +31,52 @@ interface LeaderboardItem {
 }
 
 function LeaderboardPage() {
-  const { hackathons, teams: storeTeams, users, isLoaded } = useAppStore();
+  const { currentUser, hackathons, teams: storeTeams, users, isLoaded } = useAppStore();
   const [leaderboardItems, setLeaderboardItems] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedHackathonId, setSelectedHackathonId] = useState<string>("ALL");
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
+
+  const [selectedOperativeId, setSelectedOperativeId] = useState<string | null>(null);
+  const [operativeDossier, setOperativeDossier] = useState<any | null>(null);
+  const [dossierLoading, setDossierLoading] = useState(false);
+  const [friendActionLoading, setFriendActionLoading] = useState<string | null>(null);
+
+  const handleOpenDossier = async (userId: string) => {
+    setSelectedOperativeId(userId);
+    setDossierLoading(true);
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.get(`${API_BASE}/users/${userId}/profile`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOperativeDossier(res.data);
+    } catch (err: any) {
+      toast.error("Failed to load operative profile.");
+      setOperativeDossier(null);
+    } finally {
+      setDossierLoading(false);
+    }
+  };
+
+  const handleToggleFriend = async (userId: string) => {
+    try {
+      setFriendActionLoading(userId);
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.post(`${API_BASE}/users/${userId}/friend`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.isFriend ? "Added to comrades network!" : "Removed from comrades.");
+      if (selectedOperativeId === userId) {
+        handleOpenDossier(userId);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to toggle friend status.");
+    } finally {
+      setFriendActionLoading(null);
+    }
+  };
 
   // Filter out genuine non-test hackathons
   const genuineHackathons = useMemo(() => {
@@ -325,13 +366,15 @@ function LeaderboardPage() {
                               <span className="text-xs text-zinc-400 font-mono">1 Leader</span>
                             ) : (
                               members.map(m => (
-                                <div
+                                <button
                                   key={m.id}
-                                  title={`${m.name} (${m.email})`}
-                                  className="w-7 h-7 rounded-full bg-electric-blue text-white text-[11px] font-bold border border-black flex items-center justify-center uppercase shadow-[1px_1px_0px_0px_#000]"
+                                  type="button"
+                                  onClick={() => handleOpenDossier(m.id)}
+                                  title={`View Profile: ${m.name} (${m.email})`}
+                                  className="w-7 h-7 rounded-full bg-electric-blue hover:bg-black text-white text-[11px] font-bold border border-black flex items-center justify-center uppercase shadow-[1px_1px_0px_0px_#000] cursor-pointer transition-colors"
                                 >
                                   {(m.name || "?").charAt(0)}
-                                </div>
+                                </button>
                               ))
                             )}
                           </div>
@@ -456,14 +499,23 @@ function LeaderboardPage() {
                             ) : (
                               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
                                 {members.map(m => (
-                                  <div key={m.id} className="bg-pure-white border-2 border-stark-black p-2 flex items-center gap-2">
-                                    <div className="w-6 h-6 rounded-full bg-electric-blue text-white font-bold text-[10px] flex items-center justify-center shrink-0">
-                                      {(m.name || "?").charAt(0)}
+                                  <div 
+                                    key={m.id} 
+                                    onClick={() => handleOpenDossier(m.id)}
+                                    className="bg-pure-white border-2 border-stark-black p-2 flex items-center justify-between gap-2 hover:border-electric-blue hover:shadow-[2px_2px_0px_0px_#000] cursor-pointer transition-all"
+                                  >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                      <div className="w-6 h-6 rounded-full bg-electric-blue text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                                        {(m.name || "?").charAt(0)}
+                                      </div>
+                                      <div className="overflow-hidden">
+                                        <p className="font-bold text-xs truncate uppercase">{m.name}</p>
+                                        <p className="font-mono text-[9px] text-zinc-500 truncate">{m.email}</p>
+                                      </div>
                                     </div>
-                                    <div className="overflow-hidden">
-                                      <p className="font-bold text-xs truncate uppercase">{m.name}</p>
-                                      <p className="font-mono text-[9px] text-zinc-500 truncate">{m.email}</p>
-                                    </div>
+                                    <span className="text-[9px] font-bold text-electric-blue uppercase shrink-0">
+                                      Profile ↗
+                                    </span>
                                   </div>
                                 ))}
                               </div>
@@ -499,6 +551,209 @@ function LeaderboardPage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* Neo-Brutalist Operative Dossier Modal */}
+        {selectedOperativeId && (
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setSelectedOperativeId(null);
+                setOperativeDossier(null);
+              }
+            }}
+            className="fixed inset-0 bg-stark-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+          >
+            <div className="bg-pure-white brutal-border border-4 border-stark-black shadow-[12px_12px_0px_0px_#00E5FF] w-full max-w-lg p-6 flex flex-col gap-4 relative max-h-[90vh] overflow-y-auto">
+              {/* Modal Header */}
+              <div className="flex justify-between items-start border-b-2 border-stark-black pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-electric-blue text-2xl">badge</span>
+                  <div>
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest bg-electric-blue text-white px-2 py-0.5">
+                      CLASSIFIED DOSSIER
+                    </span>
+                    <h3 className="font-headline-md text-lg uppercase text-stark-black mt-1 font-bold">
+                      Operative Technical Record
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedOperativeId(null);
+                    setOperativeDossier(null);
+                  }}
+                  className="w-8 h-8 flex items-center justify-center border-2 border-stark-black bg-surface hover:bg-rose-600 hover:text-white font-black text-sm transition-colors cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {dossierLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2">
+                  <div className="w-8 h-8 border-4 border-stark-black border-t-electric-blue rounded-full animate-spin" />
+                  <p className="font-mono text-xs uppercase font-bold text-zinc-600">Retrieving Operative Dossier...</p>
+                </div>
+              ) : operativeDossier ? (
+                <div className="flex flex-col gap-4 text-xs">
+                  {/* Top Profile Summary */}
+                  <div className="flex items-center gap-4 bg-surface-container p-3.5 border-2 border-stark-black">
+                    <div className="w-14 h-14 rounded-full border-2 border-stark-black bg-electric-blue text-white flex items-center justify-center font-black text-xl uppercase shrink-0">
+                      {(operativeDossier.name || "?").charAt(0)}
+                    </div>
+                    <div className="overflow-hidden">
+                      <h4 className="font-headline-md uppercase text-lg font-bold truncate text-stark-black">
+                        {operativeDossier.name}
+                      </h4>
+                      <p className="font-mono text-xs text-zinc-600 truncate">{operativeDossier.email}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="px-2 py-0.5 bg-stark-black text-white text-[10px] font-mono font-bold uppercase">
+                          {operativeDossier.specialization || 'FULLSTACK DEVELOPER'}
+                        </span>
+                        <span className="px-2 py-0.5 bg-amber-400 text-black text-[10px] font-mono font-black uppercase">
+                          👥 {operativeDossier.friendCount || 0} FRIENDS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Institution & Standing */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-surface p-2.5 border-2 border-stark-black">
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 block">Institution</span>
+                      <strong className="text-stark-black truncate block">{operativeDossier.college || 'Verified University'}</strong>
+                    </div>
+                    <div className="bg-surface p-2.5 border-2 border-stark-black">
+                      <span className="text-[10px] uppercase font-bold text-zinc-500 block">Branch & Year</span>
+                      <strong className="text-stark-black truncate block">{operativeDossier.branch || 'CSE'} • Year {operativeDossier.year || '4'}</strong>
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="bg-surface p-3 border-2 border-stark-black">
+                    <span className="text-[10px] uppercase font-bold text-zinc-500 block mb-1">Operative Directive / Bio</span>
+                    <p className="font-mono text-xs text-zinc-800 leading-relaxed italic">
+                      "{operativeDossier.bio || 'Tactical developer specialized in building robust software solutions for competitive hackathon operations.'}"
+                    </p>
+                  </div>
+
+                  {/* Skills Arsenal */}
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-zinc-600 block mb-1.5 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">terminal</span> VERIFIED SKILLS ARSENAL
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(operativeDossier.skills && operativeDossier.skills.length > 0
+                        ? operativeDossier.skills
+                        : ['React', 'TypeScript', 'Tailwind', 'Node.js', 'MongoDB Atlas']
+                      ).map((tech: string) => (
+                        <span
+                          key={tech}
+                          className="px-2 py-0.5 bg-[#FFD700] text-black text-[10px] font-mono uppercase font-bold border border-black"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Squad Status */}
+                  <div className="p-2.5 bg-zinc-100 border-2 border-zinc-400 flex justify-between items-center">
+                    <span className="text-zinc-600 font-bold uppercase text-[10px]">Squad Status:</span>
+                    <span className="font-black uppercase text-stark-black text-[11px]">
+                      {operativeDossier.team ? `Enrolled in "${operativeDossier.team.name}"` : '🟢 FREE AGENT // OPEN FOR RECRUITMENT'}
+                    </span>
+                  </div>
+
+                  {/* ADMIN EXCLUSIVE INTELLIGENCE & GOVERNANCE DOSSIER */}
+                  {currentUser?.role === 'admin' && (
+                    <div className="bg-amber-50 p-3.5 border-2 border-amber-500 font-mono space-y-2">
+                      <div className="flex justify-between items-center border-b border-amber-300 pb-1.5">
+                        <span className="font-bold uppercase text-[10px] text-amber-900 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">admin_panel_settings</span>
+                          ADMIN CONFIDENTIAL DOSSIER
+                        </span>
+                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase ${
+                          operativeDossier.adminTelemetry?.isBanned ? 'bg-error text-white' : 'bg-emerald-600 text-white'
+                        }`}>
+                          {operativeDossier.adminTelemetry?.isBanned ? 'STATUS: BANNED' : 'STATUS: ACTIVE'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">PERMANENT USER ID:</span>
+                          <strong className="text-black select-all">{operativeDossier.id}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">PHONE / CONTACT:</span>
+                          <strong className="text-black">{operativeDossier.adminTelemetry?.phone || 'Not Specified'}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">SYSTEM ROLE:</span>
+                          <strong className="text-black uppercase">{operativeDossier.role}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">REGISTERED EVENTS:</span>
+                          <strong className="text-black">
+                            {operativeDossier.adminTelemetry?.registrations?.length || 0} Hackathons
+                          </strong>
+                        </div>
+                      </div>
+                      {operativeDossier.adminTelemetry?.registrations?.length > 0 && (
+                        <div className="pt-1 border-t border-amber-200">
+                          <span className="text-zinc-500 text-[10px] block mb-1">EVENT PAYMENT STATUS:</span>
+                          {operativeDossier.adminTelemetry.registrations.map((r: any, idx: number) => (
+                            <span key={idx} className="inline-block bg-white border border-amber-300 px-1.5 py-0.5 text-[10px] mr-1 mb-1 font-bold">
+                              {r.hackathonId}: {r.paymentStatus?.toUpperCase() || 'FREE'} (₹{r.feeAmount || 0})
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2 border-t-2 border-stark-black flex-wrap">
+                    <button
+                      onClick={() => handleToggleFriend(operativeDossier.id)}
+                      disabled={friendActionLoading === operativeDossier.id}
+                      className="flex-1 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px]"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'check_circle' : 'person_add'}
+                      </span>
+                      {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'Friends ✓' : 'Add Friend +'}
+                    </button>
+
+                    {currentUser?.role === 'admin' && (
+                      <Link
+                        to="/admin/users"
+                        onClick={() => setSelectedOperativeId(null)}
+                        className="flex-1 py-2.5 px-3 bg-stark-black hover:bg-electric-blue text-white text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px] text-center"
+                      >
+                        <span className="material-symbols-outlined text-sm">manage_accounts</span>
+                        Manage User
+                      </Link>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setSelectedOperativeId(null);
+                        setOperativeDossier(null);
+                      }}
+                      className="py-2.5 px-4 bg-surface hover:bg-zinc-200 text-stark-black text-xs font-bold uppercase border-2 border-stark-black transition-colors cursor-pointer"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-xs text-zinc-500 font-mono">
+                  Dossier records could not be retrieved from mainframe.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

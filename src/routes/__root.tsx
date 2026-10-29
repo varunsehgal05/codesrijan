@@ -131,6 +131,10 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const routerState = useRouterState();
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [routerState.location.pathname]);
+
   const isAdminRoute = routerState.location.pathname.startsWith('/admin');
 
   return (

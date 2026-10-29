@@ -935,16 +935,52 @@ export default function AdminHackathons() {
                                     </div>
 
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="font-label-bold uppercase text-xs text-stark-black font-black">
-                                            Cover Banner Image URL
-                                        </label>
-                                        <input
-                                            type="url"
-                                            value={wizardData.bannerUrl}
-                                            onChange={(e) => setWizardData({ ...wizardData, bannerUrl: e.target.value })}
-                                            className="bg-surface-container-lowest border-2 border-stark-black p-2.5 font-mono text-xs focus:outline-none focus:bg-pure-white"
-                                            placeholder="https://images.unsplash.com/photo-..."
-                                        />
+                                        <div className="flex justify-between items-center">
+                                            <label className="font-label-bold uppercase text-xs text-stark-black font-black">
+                                                Cover Banner Image Upload
+                                            </label>
+                                            <span className="text-[10px] font-mono text-zinc-500 uppercase">
+                                                Recommended: 1200 × 630 px (16:9 ratio) • Max 5MB
+                                            </span>
+                                        </div>
+                                        <div className="border-2 border-stark-black p-3 bg-surface-container-lowest flex flex-col sm:flex-row items-center gap-3">
+                                            <input
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (!file) return;
+                                                    if (file.size > 5 * 1024 * 1024) {
+                                                        toast.error("Cover banner exceeds 5MB limit.");
+                                                        return;
+                                                    }
+                                                    const reader = new FileReader();
+                                                    reader.onload = () => {
+                                                        setWizardData({ ...wizardData, bannerUrl: reader.result as string });
+                                                        toast.success("Cover banner loaded successfully.");
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }}
+                                                className="w-full text-xs font-mono file:mr-3 file:py-1.5 file:px-3 file:border-2 file:border-black file:text-xs file:font-bold file:bg-white file:text-black hover:file:bg-[#00E5FF] cursor-pointer"
+                                            />
+                                            {wizardData.bannerUrl && (
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <img
+                                                        src={wizardData.bannerUrl}
+                                                        alt="Banner preview"
+                                                        className="w-20 h-12 object-cover border-2 border-black"
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setWizardData({ ...wizardData, bannerUrl: "" })}
+                                                        className="p-1 bg-rose-600 text-white border border-black hover:bg-black text-[10px] font-bold uppercase cursor-pointer"
+                                                        title="Remove image"
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     <div className="flex flex-col gap-1.5">
@@ -1161,14 +1197,41 @@ export default function AdminHackathons() {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                 <div>
-                                                    <label className="font-bold uppercase text-[10px] block mb-1">Specification Document / PDF URL</label>
-                                                    <input
-                                                        type="url"
-                                                        value={currentProblemDraft.attachmentUrl}
-                                                        onChange={(e) => setCurrentProblemDraft({ ...currentProblemDraft, attachmentUrl: e.target.value })}
-                                                        placeholder="https://storage.googleapis.com/.../spec.pdf"
-                                                        className="w-full p-2 bg-pure-white brutal-border font-mono text-xs"
-                                                    />
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <label className="font-bold uppercase text-[10px] block">Specification Document / PDF Upload</label>
+                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Max 15MB • PDF, DOC</span>
+                                                    </div>
+                                                    <div className="border-2 border-stark-black p-2 bg-pure-white flex items-center justify-between gap-2">
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,.doc,.docx,application/pdf"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                if (file.size > 15 * 1024 * 1024) {
+                                                                    toast.error("Spec document exceeds 15MB limit.");
+                                                                    return;
+                                                                }
+                                                                const reader = new FileReader();
+                                                                reader.onload = () => {
+                                                                    setCurrentProblemDraft({ ...currentProblemDraft, attachmentUrl: reader.result as string });
+                                                                    toast.success(`Attached ${file.name}`);
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }}
+                                                            className="text-[11px] font-mono file:mr-2 file:py-1 file:px-2 file:border file:border-black file:text-[10px] file:font-bold file:bg-zinc-100 hover:file:bg-[#00E5FF] cursor-pointer"
+                                                        />
+                                                        {currentProblemDraft.attachmentUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setCurrentProblemDraft({ ...currentProblemDraft, attachmentUrl: "" })}
+                                                                className="px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold uppercase border border-black cursor-pointer"
+                                                                title="Remove attachment"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="flex items-end">
                                                     <button
@@ -1313,14 +1376,41 @@ export default function AdminHackathons() {
                                                 </div>
 
                                                 <div>
-                                                    <label className="font-bold uppercase text-[10px] block mb-1">Custom Official QR Image URL (Optional)</label>
-                                                    <input
-                                                        type="url"
-                                                        value={wizardData.qrImageUrl}
-                                                        onChange={(e) => setWizardData({ ...wizardData, qrImageUrl: e.target.value })}
-                                                        placeholder="https://.../upi-qr.png"
-                                                        className="w-full p-2 bg-pure-white brutal-border font-mono text-xs"
-                                                    />
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <label className="font-bold uppercase text-[10px] block">Upload Official Payment QR Image</label>
+                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">Recommended: 500 × 500 px (1:1 square) • Max 2MB</span>
+                                                    </div>
+                                                    <div className="border-2 border-stark-black p-2 bg-pure-white flex items-center justify-between gap-2">
+                                                        <input
+                                                            type="file"
+                                                            accept="image/png,image/jpeg,image/webp"
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0];
+                                                                if (!file) return;
+                                                                if (file.size > 2 * 1024 * 1024) {
+                                                                    toast.error("QR image exceeds 2MB limit.");
+                                                                    return;
+                                                                }
+                                                                const reader = new FileReader();
+                                                                reader.onload = () => {
+                                                                    setWizardData({ ...wizardData, qrImageUrl: reader.result as string });
+                                                                    toast.success("UPI QR code image uploaded successfully.");
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }}
+                                                            className="text-[11px] font-mono file:mr-2 file:py-1 file:px-2 file:border file:border-black file:text-[10px] file:font-bold file:bg-zinc-100 hover:file:bg-[#00E5FF] cursor-pointer"
+                                                        />
+                                                        {wizardData.qrImageUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setWizardData({ ...wizardData, qrImageUrl: "" })}
+                                                                className="px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold uppercase border border-black cursor-pointer"
+                                                                title="Clear QR image"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </div>
 
                                                 <button

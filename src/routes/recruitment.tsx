@@ -260,6 +260,26 @@ function RecruitmentMatrix() {
     }
   };
 
+  const handleOpenTeamComms = async (teamId: string) => {
+    try {
+      setActionLoadingId(teamId);
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.post(`${API_URL}/conversations/admin-team/${teamId}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.id) {
+        navigate({ to: "/chat", search: { conv: res.data.id } });
+      } else {
+        navigate({ to: "/chat" });
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.message || "Failed to initialize squad comms.");
+      navigate({ to: "/chat" });
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
   const getOperativeSlotting = (user: any) => {
     if (user.specialization) return user.specialization;
     const email = (user.email || '').toLowerCase();
@@ -506,14 +526,16 @@ function RecruitmentMatrix() {
                           BAN TEAM
                         </button>
 
-                        <Link
-                          to="/chat"
-                          search={{ conv: team.conversationId }}
-                          className="bg-surface-container text-stark-black font-label-bold text-xs uppercase px-3 py-2 border-2 border-stark-black hover:bg-electric-blue hover:text-pure-white transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                        <button
+                          type="button"
+                          onClick={() => handleOpenTeamComms(team.id)}
+                          disabled={actionLoadingId === team.id}
+                          className="bg-surface-container text-stark-black font-label-bold text-xs uppercase px-3 py-2 border-2 border-stark-black hover:bg-electric-blue hover:text-pure-white transition-colors flex items-center gap-1 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] cursor-pointer disabled:opacity-50"
+                          title="Open official admin-to-team dispatch chat"
                         >
                           <span className="material-symbols-outlined text-[14px]">forum</span>
-                          Comms
-                        </Link>
+                          {actionLoadingId === team.id ? 'Connecting...' : 'Comms'}
+                        </button>
                       </div>
                     </div>
 
@@ -543,31 +565,49 @@ function RecruitmentMatrix() {
                             return (
                               <div 
                                 key={member.id} 
-                                className="bg-surface-container border-2 border-stark-black p-3 flex items-start gap-2.5 relative group hover:border-electric-blue transition-colors"
+                                onClick={() => handleOpenDossier(member.id)}
+                                className="bg-surface-container border-2 border-stark-black p-3 flex flex-col justify-between relative group hover:border-electric-blue transition-colors cursor-pointer hover:shadow-[3px_3px_0px_0px_#000]"
                               >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border border-stark-black ${
-                                  isLeader ? 'bg-[#FFD700] text-stark-black' : 'bg-electric-blue text-pure-white'
-                                }`}>
-                                  {(member.name || "?").charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="flex items-center gap-1">
-                                    <p className="font-label-bold text-xs uppercase text-stark-black truncate">
-                                      {member.name}
-                                    </p>
-                                    {isLeader && (
-                                      <span className="bg-[#FFD700] text-stark-black font-mono font-bold text-[8px] px-1 border border-stark-black shrink-0">
-                                        LEAD
-                                      </span>
-                                    )}
+                                <div className="flex items-start gap-2.5">
+                                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 border border-stark-black ${
+                                    isLeader ? 'bg-[#FFD700] text-stark-black' : 'bg-electric-blue text-pure-white'
+                                  }`}>
+                                    {(member.name || "?").charAt(0).toUpperCase()}
                                   </div>
-                                  <p className="font-mono text-[10px] text-zinc-500 truncate mt-0.5">
-                                    {member.email}
-                                  </p>
-                                  <span className="font-mono text-[9px] text-zinc-400 block truncate mt-1">
-                                    ID: {member.id.substring(0, 10)}
-                                  </span>
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1">
+                                      <p className="font-label-bold text-xs uppercase text-stark-black truncate">
+                                        {member.name}
+                                      </p>
+                                      {isLeader && (
+                                        <span className="bg-[#FFD700] text-stark-black font-mono font-bold text-[8px] px-1 border border-stark-black shrink-0">
+                                          LEAD
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="font-mono text-[10px] text-zinc-500 truncate mt-0.5">
+                                      {member.email}
+                                    </p>
+                                    <span className="font-mono text-[9px] text-zinc-400 block truncate mt-1">
+                                      ID: {member.id.substring(0, 10)}
+                                    </span>
+                                  </div>
                                 </div>
+
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenDossier(member.id);
+                                  }}
+                                  className="mt-2.5 pt-2 border-t border-zinc-300 text-[10px] font-bold text-electric-blue hover:text-stark-black uppercase flex items-center justify-between w-full"
+                                >
+                                  <span className="flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[13px]">visibility</span>
+                                    View Profile
+                                  </span>
+                                  <span>→</span>
+                                </button>
                               </div>
                             );
                           })}
@@ -1166,26 +1206,82 @@ function RecruitmentMatrix() {
                     </span>
                   </div>
 
+                  {/* ADMIN EXCLUSIVE INTELLIGENCE & GOVERNANCE DOSSIER */}
+                  {currentUser?.role === 'admin' && (
+                    <div className="bg-amber-50 p-3.5 border-2 border-amber-500 text-xs font-mono space-y-2">
+                      <div className="flex justify-between items-center border-b border-amber-300 pb-1.5">
+                        <span className="font-bold uppercase text-[10px] text-amber-900 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">admin_panel_settings</span>
+                          ADMIN CONFIDENTIAL DOSSIER
+                        </span>
+                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase ${
+                          operativeDossier.adminTelemetry?.isBanned ? 'bg-error text-white' : 'bg-emerald-600 text-white'
+                        }`}>
+                          {operativeDossier.adminTelemetry?.isBanned ? 'STATUS: BANNED' : 'STATUS: ACTIVE'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">PERMANENT USER ID:</span>
+                          <strong className="text-black select-all">{operativeDossier.id}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">PHONE / CONTACT:</span>
+                          <strong className="text-black">{operativeDossier.adminTelemetry?.phone || 'Not Specified'}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">SYSTEM ROLE:</span>
+                          <strong className="text-black uppercase">{operativeDossier.role}</strong>
+                        </div>
+                        <div>
+                          <span className="text-zinc-500 text-[10px] block">REGISTERED EVENTS:</span>
+                          <strong className="text-black">
+                            {operativeDossier.adminTelemetry?.registrations?.length || 0} Hackathons
+                          </strong>
+                        </div>
+                      </div>
+                      {operativeDossier.adminTelemetry?.registrations?.length > 0 && (
+                        <div className="pt-1 border-t border-amber-200">
+                          <span className="text-zinc-500 text-[10px] block mb-1">EVENT PAYMENT STATUS:</span>
+                          {operativeDossier.adminTelemetry.registrations.map((r: any, idx: number) => (
+                            <span key={idx} className="inline-block bg-white border border-amber-300 px-1.5 py-0.5 text-[10px] mr-1 mb-1 font-bold">
+                              {r.hackathonId}: {r.paymentStatus?.toUpperCase() || 'FREE'} (₹{r.feeAmount || 0})
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Action Buttons */}
-                  <div className="flex gap-2 pt-2 border-t-2 border-stark-black">
+                  <div className="flex gap-2 pt-2 border-t-2 border-stark-black flex-wrap">
                     <button
                       onClick={() => handleToggleFriend(operativeDossier.id)}
                       disabled={friendActionLoading === operativeDossier.id}
-                      className="flex-1 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="flex-1 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px]"
                     >
                       <span className="material-symbols-outlined text-sm">
                         {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'check_circle' : 'person_add'}
                       </span>
-                      {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'Comrades' : 'Add Friend'}
+                      {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'Friends ✓' : 'Add Friend +'}
                     </button>
 
-                    {isTeamLeader && !operativeDossier.teamId && (
+                    {currentUser?.role === 'admin' ? (
+                      <Link
+                        to="/admin/users"
+                        onClick={() => setSelectedOperativeId(null)}
+                        className="flex-1 py-2.5 px-3 bg-stark-black hover:bg-electric-blue text-white text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px] text-center"
+                      >
+                        <span className="material-symbols-outlined text-sm">manage_accounts</span>
+                        Manage User
+                      </Link>
+                    ) : isTeamLeader && !operativeDossier.teamId && (
                       <button
                         onClick={() => {
                           handleInvite(operativeDossier.id);
                           setSelectedOperativeId(null);
                         }}
-                        className="flex-1 py-2.5 px-3 bg-electric-blue hover:bg-stark-black text-white text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="flex-1 py-2.5 px-3 bg-electric-blue hover:bg-stark-black text-white text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px]"
                       >
                         <span className="material-symbols-outlined text-sm">send</span> Invite to Squad
                       </button>

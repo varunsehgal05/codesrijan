@@ -305,11 +305,95 @@ function DashboardPage() {
                         )}
                         <div>
                             <h2 className="font-headline-md uppercase mb-6 border-l-4 border-ink-black pl-3 flex items-center justify-between">
-                                Mission Status
+                                {currentUser.role === 'admin' ? 'Admin Governance Directorate' : 'Mission Status'}
                                 {userTeam && <span className="text-xs bg-success text-on-primary px-2 py-1 font-label-bold">ACTIVE ALLIANCE</span>}
                             </h2>
 
-                            {!userTeam ? (
+                            {currentUser.role === 'admin' ? (
+                                <div className="bg-surface-container-highest border-4 border-stark-black p-6 shadow-[6px_6px_0px_0px_#000000] space-y-6">
+                                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b-2 border-stark-black pb-4">
+                                        <div>
+                                            <span className="text-[10px] font-mono font-bold uppercase bg-electric-blue text-white px-2 py-0.5">
+                                                EXECUTIVE OVERSIGHT
+                                            </span>
+                                            <h3 className="font-display-md text-xl uppercase mt-1">
+                                                Hackathon Roster & Governance Center
+                                            </h3>
+                                        </div>
+                                        <span className="text-xs font-mono font-bold bg-[#FFD700] text-black px-2 py-1 border border-black uppercase">
+                                            ADMIN ACCESS // ZERO PARTICIPATION OVERHEAD
+                                        </span>
+                                    </div>
+
+                                    {/* WHO AND HOW MUCH: Telemetry Grid */}
+                                    <div>
+                                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-600 mb-2">
+                                            1. Registrations & Financial Overview (Who & How Much)
+                                        </h4>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                                            <div className="bg-pure-white p-3 border-2 border-black">
+                                                <span className="text-[10px] text-zinc-500 uppercase block font-bold">Total Hackers</span>
+                                                <strong className="text-xl text-stark-black">{(users || []).filter(u => u.role === 'student').length}</strong>
+                                            </div>
+                                            <div className="bg-pure-white p-3 border-2 border-black">
+                                                <span className="text-[10px] text-zinc-500 uppercase block font-bold">Active Squads</span>
+                                                <strong className="text-xl text-stark-black">{(teams || []).length}</strong>
+                                            </div>
+                                            <div className="bg-pure-white p-3 border-2 border-black">
+                                                <span className="text-[10px] text-zinc-500 uppercase block font-bold">Revenue Settled</span>
+                                                <strong className="text-xl text-emerald-600">
+                                                    ₹{(registrations || []).reduce((acc: number, r: any) => (r.paymentStatus === 'verified' || r.status === 'registered') ? acc + (Number(r.feeAmount) || 0) : acc, 0)}
+                                                </strong>
+                                            </div>
+                                            <div className="bg-pure-white p-3 border-2 border-black">
+                                                <span className="text-[10px] text-zinc-500 uppercase block font-bold">Payment Audits</span>
+                                                <strong className="text-xl text-amber-600">
+                                                    {(registrations || []).filter((r: any) => r.paymentStatus === 'payment_under_review' || r.paymentStatus === 'under_review').length} Pending
+                                                </strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* WHO TO BAN & DISQUALIFY: Enforcement Shortcuts */}
+                                    <div>
+                                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-600 mb-2">
+                                            2. Disciplinary & Governance Directives (Who to Ban & Disqualify)
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <Link
+                                                to="/recruitment"
+                                                className="p-3 bg-pure-white hover:bg-rose-600 hover:text-white border-2 border-black font-label-bold text-xs uppercase flex items-center justify-between transition-colors shadow-[2px_2px_0px_0px_#000]"
+                                            >
+                                                <span className="flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-sm">gavel</span>
+                                                    Disqualify Squads (DIQ)
+                                                </span>
+                                                <span>→</span>
+                                            </Link>
+                                            <Link
+                                                to="/admin/users"
+                                                className="p-3 bg-pure-white hover:bg-stark-black hover:text-white border-2 border-black font-label-bold text-xs uppercase flex items-center justify-between transition-colors shadow-[2px_2px_0px_0px_#000]"
+                                            >
+                                                <span className="flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-sm">block</span>
+                                                    Ban Operatives / Users
+                                                </span>
+                                                <span>→</span>
+                                            </Link>
+                                            <Link
+                                                to="/admin/payments"
+                                                className="p-3 bg-pure-white hover:bg-electric-blue hover:text-white border-2 border-black font-label-bold text-xs uppercase flex items-center justify-between transition-colors shadow-[2px_2px_0px_0px_#000]"
+                                            >
+                                                <span className="flex items-center gap-1.5">
+                                                    <span className="material-symbols-outlined text-sm">payments</span>
+                                                    Review Payment Proofs
+                                                </span>
+                                                <span>→</span>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : !userTeam ? (
                                 <div className="bg-error text-on-primary p-6 brutal-border">
                                     <span className="material-symbols-outlined text-4xl mb-2">warning</span>
                                     <h3 className="font-label-bold text-xl uppercase mb-2">LONE WOLF DETECTED</h3>
@@ -441,7 +525,7 @@ function DashboardPage() {
                             <ul className="space-y-3 font-label-bold uppercase">
                                 <li><Link to="/workspace" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">terminal</span> Operative Workspace (HUD)</Link></li>
                                 <li><a href="/profile" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">person</span> Personal Profile</a></li>
-                                <li><a href="/certificates" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">workspace_premium</span> Diplomas</a></li>
+                                <li><a href="/certificates" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">workspace_premium</span> Certificates</a></li>
                                 <li><a href="/ai-assistant" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">smart_toy</span> Oracle Support</a></li>
                                 <li>
                                     <button

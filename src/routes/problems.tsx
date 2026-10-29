@@ -38,6 +38,7 @@ function ProblemsPage() {
   const [selectedTrack, setSelectedTrack] = useState<string>("ALL");
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [inspectingProblem, setInspectingProblem] = useState<any | null>(null);
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
@@ -107,6 +108,11 @@ function ProblemsPage() {
   const selectProblem = async (problemId: string) => {
     if (!currentUser) {
       navigate({ to: '/login' });
+      return;
+    }
+    const targetProb = problems.find(p => p.id === problemId);
+    if (currentUser.role === 'admin') {
+      setInspectingProblem(targetProb || null);
       return;
     }
     if (!userTeam) {
@@ -529,7 +535,15 @@ function ProblemsPage() {
                               </span>
                             </div>
 
-                            {isLocked ? (
+                            {currentUser?.role === 'admin' ? (
+                              <button
+                                onClick={() => selectProblem(prob.id)}
+                                className="bg-cyan-400 hover:bg-white text-black font-mono text-xs font-black px-4 py-2.5 border-2 border-stark-black uppercase flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none cursor-pointer transition-colors"
+                              >
+                                INSPECT DIRECTIVE
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                              </button>
+                            ) : isLocked ? (
                               <button
                                 disabled
                                 className="bg-emerald-600 text-white font-mono text-xs font-black px-4 py-2.5 border-2 border-stark-black uppercase flex items-center gap-1.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
@@ -555,6 +569,114 @@ function ProblemsPage() {
               </div>
             )}
           </section>
+        )}
+
+        {/* ADMIN DIRECTIVE INSPECTION MODAL */}
+        {inspectingProblem && (
+          <div
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setInspectingProblem(null);
+            }}
+            className="fixed inset-0 bg-stark-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+          >
+            <div className="bg-pure-white brutal-border border-4 border-stark-black shadow-[12px_12px_0px_0px_#000] w-full max-w-2xl p-6 sm:p-8 flex flex-col gap-5 relative max-h-[90vh] overflow-y-auto">
+              {/* Header */}
+              <div className="flex justify-between items-start border-b-2 border-stark-black pb-4">
+                <div>
+                  <span className="bg-cyan-400 text-black px-2 py-0.5 text-[10px] font-bold uppercase border border-black">
+                    ADMIN DIRECTIVE INSPECTION
+                  </span>
+                  <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black mt-1">
+                    {inspectingProblem.title}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 text-xs text-zinc-600">
+                    <span>TRACK: <strong className="text-black uppercase">{inspectingProblem.domain || inspectingProblem.category}</strong></span>
+                    <span>•</span>
+                    <span>DIFFICULTY: <strong className="text-black uppercase">{inspectingProblem.difficulty || 'ADVANCED'}</strong></span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setInspectingProblem(null)}
+                  className="w-8 h-8 flex items-center justify-center border-2 border-black bg-surface hover:bg-rose-600 hover:text-white font-black text-sm cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Description & Technical Directives */}
+              <div className="space-y-4 text-xs">
+                <div>
+                  <h4 className="font-bold uppercase text-[11px] text-zinc-500 mb-1">Directive Description:</h4>
+                  <p className="p-3 bg-surface-container border border-black leading-relaxed whitespace-pre-wrap">
+                    {inspectingProblem.description}
+                  </p>
+                </div>
+
+                {/* Tech Stack */}
+                {inspectingProblem.techStack && inspectingProblem.techStack.length > 0 && (
+                  <div>
+                    <h4 className="font-bold uppercase text-[11px] text-zinc-500 mb-1.5">Recommended Tech Stack:</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {inspectingProblem.techStack.map((tech: string, i: number) => (
+                        <span key={i} className="px-2 py-0.5 bg-black text-white text-[10px] font-bold uppercase">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Attached Specification Document */}
+                {inspectingProblem.attachmentUrl && (
+                  <div className="p-3 bg-cyan-50 border border-cyan-400 flex justify-between items-center">
+                    <div>
+                      <span className="font-bold uppercase text-[10px] text-cyan-900 block">Specification Document</span>
+                      <span className="text-zinc-600 text-[11px]">Technical rubric & design document attached</span>
+                    </div>
+                    <a
+                      href={inspectingProblem.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-black text-white hover:bg-cyan-500 hover:text-black font-bold uppercase text-[10px] border border-black"
+                    >
+                      View / Download ↗
+                    </a>
+                  </div>
+                )}
+
+                {/* Locked Squads Count */}
+                <div>
+                  <h4 className="font-bold uppercase text-[11px] text-zinc-500 mb-1.5">
+                    Locked Squad Allocations ({(teams || []).filter(t => t.problemId === inspectingProblem.id).length}):
+                  </h4>
+                  {(teams || []).filter(t => t.problemId === inspectingProblem.id).length === 0 ? (
+                    <p className="text-zinc-500 italic">No squads currently locked into this directive.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {(teams || []).filter(t => t.problemId === inspectingProblem.id).map(t => (
+                        <div key={t.id} className="p-2 bg-white border border-black flex justify-between items-center">
+                          <span className="font-bold uppercase">{t.name}</span>
+                          <span className="text-zinc-500 text-[10px]">{(t.memberIds || []).length} / 4 Members</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold">Admin Clearance Confirmed</span>
+                <Link
+                  to="/admin/problems"
+                  className="px-4 py-2 bg-black hover:bg-electric-blue text-white font-bold text-xs uppercase border border-black flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-sm">settings</span>
+                  Manage in Admin Problems Console ↗
+                </Link>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>

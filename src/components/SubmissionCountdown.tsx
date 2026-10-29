@@ -54,18 +54,19 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
     ) || (registrations || []).find((r: any) => (r.userId === currentUser?.id || r.userId === currentUser?._id));
 
     // Payment state
-    const isPaidEvent = targetEvent?.entryType === 'paid' ||
+    const isAdmin = currentUser?.role === 'admin';
+    const isPaidEvent = !isAdmin && (targetEvent?.entryType === 'paid' ||
                         (targetEvent?.fee && targetEvent.fee > 0) ||
-                        (userReg && userReg.entryType === 'paid' && userReg.feeAmount > 0);
+                        (userReg && userReg.entryType === 'paid' && userReg.feeAmount > 0));
 
     const feeAmount = userReg?.feeAmount ?? targetEvent?.fee ?? 1500;
     const paymentStatus = userReg?.paymentStatus;
     const regStatus = userReg?.status;
 
-    const isPaymentUnderReview = paymentStatus === 'payment_under_review' || regStatus === 'payment_under_review';
-    const isPaymentRejected = paymentStatus === 'rejected' || regStatus === 'rejected';
-    const isPaymentVerified = !isPaidEvent || paymentStatus === 'verified' || paymentStatus === 'not_required' || regStatus === 'registered';
-    const isPaymentPending = isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected;
+    const isPaymentUnderReview = !isAdmin && (paymentStatus === 'payment_under_review' || regStatus === 'payment_under_review');
+    const isPaymentRejected = !isAdmin && (paymentStatus === 'rejected' || regStatus === 'rejected');
+    const isPaymentVerified = isAdmin || !isPaidEvent || paymentStatus === 'verified' || paymentStatus === 'not_required' || regStatus === 'registered';
+    const isPaymentPending = !isAdmin && isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected;
 
     // Resolve multi-phase lifecycle
     const resolvePhase = () => {
@@ -223,6 +224,26 @@ export function SubmissionCountdown({ targetEvent, className = "" }: SubmissionC
 
     // Dynamic Phase & Payment-Aware Call to Action
     const renderActionCTA = () => {
+        if (currentUser?.role === 'admin') {
+            return (
+                <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-cyan-400 uppercase tracking-widest font-bold">
+                        <span className="material-symbols-outlined text-xs">admin_panel_settings</span>
+                        <span>Admin Oversight Directorate</span>
+                    </div>
+                    <Link
+                        to="/admin/hackathons"
+                        className="w-full sm:w-auto text-center bg-cyan-400 hover:bg-white text-black font-mono font-bold text-xs uppercase py-2.5 px-5 border-2 border-black hover:-translate-y-0.5 transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2"
+                        title="Manage Hackathons, Rosters & Registrations"
+                    >
+                        <span className="material-symbols-outlined text-sm">tune</span>
+                        Manage Event Roster & Governance →
+                    </Link>
+                    <span className="text-[10px] font-mono text-zinc-400">Review participants, fees & governance</span>
+                </div>
+            );
+        }
+
         if (isPaymentPending) {
             return (
                 <div className="flex flex-col items-center lg:items-end gap-1.5 w-full">

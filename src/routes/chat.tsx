@@ -69,7 +69,7 @@ function ChatDashboard() {
           return [...prev, newMsg];
         });
         setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }, 100);
       }
       
@@ -201,7 +201,7 @@ function ChatDashboard() {
       });
       setMessages(res.data);
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
     } catch (e) {
       console.error("Failed to load messages");

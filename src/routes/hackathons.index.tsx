@@ -142,17 +142,26 @@ function HackathonsHubPage() {
                                         <span className="font-code-snippet text-[11px] font-bold uppercase text-zinc-600">
                                             {evt.problemStatementsRevealed ? '🟢 Directives Live' : '🔒 Directives Classified'}
                                         </span>
-                                        <Link 
-                                            to="/hackathons/$id/register" 
-                                            params={{ id: evt.id }} 
-                                            className={`px-4 py-2 font-label-bold text-xs uppercase brutal-border transition-colors ${
-                                                isJoined 
-                                                    ? 'bg-electric-blue text-white hover:bg-stark-black shadow-[2px_2px_0px_0px_#000000]' 
-                                                    : 'bg-stark-black text-pure-white hover:bg-electric-blue'
-                                            }`}
-                                        >
-                                            {isJoined ? 'MANAGE ENROLLMENT →' : 'ENTER ARENA'}
-                                        </Link>
+                                        {currentUser?.role === 'admin' ? (
+                                            <Link 
+                                                to="/admin/hackathons"
+                                                className="px-4 py-2 font-label-bold text-xs uppercase brutal-border bg-cyan-400 text-black hover:bg-white transition-colors shadow-[2px_2px_0px_0px_#000000]"
+                                            >
+                                                MANAGE HACKATHON →
+                                            </Link>
+                                        ) : (
+                                            <Link 
+                                                to="/hackathons/$id/register" 
+                                                params={{ id: evt.id }} 
+                                                className={`px-4 py-2 font-label-bold text-xs uppercase brutal-border transition-colors ${
+                                                    isJoined 
+                                                        ? 'bg-electric-blue text-white hover:bg-stark-black shadow-[2px_2px_0px_0px_#000000]' 
+                                                        : 'bg-stark-black text-pure-white hover:bg-electric-blue'
+                                                }`}
+                                            >
+                                                {isJoined ? 'MANAGE ENROLLMENT →' : 'ENTER ARENA'}
+                                            </Link>
+                                        )}
                                     </div>
                                 </div>
                             );

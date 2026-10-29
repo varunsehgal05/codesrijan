@@ -1635,6 +1635,24 @@ app.get('/api/users/:id/profile', requireAuth, async (req, res) => {
         const friendCount = Array.isArray(user.friends) ? user.friends.length : 0;
         const isFriend = Array.isArray(user.friends) && user.friends.includes(req.user.id);
 
+        const isAdmin = req.user.role === 'admin';
+        let adminTelemetry = null;
+        if (isAdmin) {
+            const regs = await Registration.find({ userId: user.id }).lean();
+            adminTelemetry = {
+                phone: user.phone || 'N/A',
+                isBanned: !!user.isBanned,
+                status: user.status || (user.isBanned ? 'banned' : 'active'),
+                createdAt: user.createdAt,
+                registrations: regs.map(r => ({
+                    hackathonId: r.hackathonId,
+                    status: r.status,
+                    paymentStatus: r.paymentStatus,
+                    feeAmount: r.feeAmount
+                }))
+            };
+        }
+
         res.json({
             id: user.id,
             name: user.name,
@@ -1651,7 +1669,8 @@ app.get('/api/users/:id/profile', requireAuth, async (req, res) => {
             portfolioUrl: user.portfolio || user.portfolioUrl || '',
             friendCount,
             isFriend,
-            team: squad ? { id: squad.id, name: squad.name, memberCount: squad.memberIds?.length || 0 } : null
+            team: squad ? { id: squad.id, name: squad.name, memberCount: squad.memberIds?.length || 0 } : null,
+            adminTelemetry
         });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -3082,6 +3101,128 @@ app.get('/api/certificates/verify/:id', async (req, res) => {
     const cert = await Certificate.findOne({ id: req.params.id });
     if (!cert) return res.status(404).json({ message: "Invalid cryptographic certificate payload." });
     res.json(cert);
+});
+
+// Retrieve authenticated user's certificates
+app.get('/api/certificates/my', requireAuth, async (req, res) => {
+    try {
+        const certs = await Certificate.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        res.json(certs);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to retrieve certificates." });
+    }
+});
+
+// Admin upload and issue certificate
+app.post('/api/admin/certificates/upload', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { recipientType, userId, teamId, hackathonId, title, type, fileData, notes } = req.body;
+        if (!fileData) {
+            return res.status(400).json({ message: "Certificate file upload (PDF or Image) is required." });
+        }
+
+        let targetUsers = [];
+        if (recipientType === 'user' && userId) {
+            const u = await User.findOne({ id: userId });
+            if (u) targetUsers.push(u);
+        } else if (recipientType === 'team' && teamId) {
+            const t = await Team.findOne({ id: teamId });
+            if (t && Array.isArray(t.memberIds)) {
+                targetUsers = await User.find({ id: { $in: t.memberIds } });
+            }
+        } else if (hackathonId) {
+            const regs = await Registration.find({ hackathonId });
+            const uids = regs.map(r => r.userId);
+            targetUsers = await User.find({ id: { $in: uids } });
+        } else if (userId) {
+            const u = await User.findOne({ id: userId });
+            if (u) targetUsers.push(u);
+        }
+
+        if (targetUsers.length === 0) {
+            return res.status(400).json({ message: "No valid recipient users found for certificate dispatch." });
+        }
+
+        const issued = [];
+        for (const u of targetUsers) {
+            const certId = `CS-CERT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+            const cert = await Certificate.create({
+                id: certId,
+                userId: u.id,
+                userName: u.name,
+                teamId: u.teamId || teamId || '',
+                hackathonId: hackathonId || 'hack-1',
+                type: type || 'participation',
+                issuedBy: req.user.name || 'Administrator',
+                issueDate: new Date(),
+                metadata: {
+                    title: title || 'Official Certificate of Recognition',
+                    verificationCode: certId,
+                    fileUrl: fileData,
+                    notes: notes || '',
+                    recipientEmail: u.email
+                }
+            });
+            issued.push(cert);
+
+            // Notify user
+            await Notification.create({
+                id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                userId: u.id,
+                type: 'system',
+                title: '📜 CERTIFICATE RECEIVED!',
+                message: `An official certificate "${title || 'Certificate of Recognition'}" has been uploaded and awarded to you by administration.`,
+                referenceType: 'certificate',
+                referenceId: certId,
+                isRead: false
+            }).catch(() => {});
+        }
+
+        res.json({ success: true, count: issued.length, issued });
+    } catch (e) {
+        res.status(500).json({ message: e.message || "Failed to upload certificate." });
+    }
+});
+
+// Admin to Team Group Chat channel creation & lookup
+app.post('/api/conversations/admin-team/:teamId', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const team = await Team.findOne({ id: req.params.teamId });
+        if (!team) return res.status(404).json({ message: "Squad not found." });
+
+        const convId = `conv-adm-team-${team.id}`;
+        let conv = await Conversation.findOne({ id: convId });
+
+        const allParticipants = Array.from(new Set([req.user.id, ...(team.memberIds || [])]));
+
+        if (!conv) {
+            conv = await Conversation.create({
+                id: convId,
+                type: 'team',
+                title: `[ADMIN DISPATCH] Squad: ${team.name}`,
+                teamId: team.id,
+                participantIds: allParticipants,
+                lastMessage: `Official admin communication channel opened with squad "${team.name}".`,
+                lastMessageAt: new Date(),
+                lastMessageSenderId: req.user.id
+            });
+
+            await Message.create({
+                id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                conversationId: convId,
+                senderId: req.user.id,
+                message: `[ADMIN DISPATCH] Official communication link established between CodeSrijan Administration and squad "${team.name}". Team operatives may transmit inquiries directly in this channel.`,
+                createdAt: new Date()
+            });
+        } else {
+            conv.participantIds = allParticipants;
+            await conv.save();
+        }
+
+        res.json(conv);
+    } catch (e) {
+        res.status(500).json({ message: e.message || "Failed to establish team comms." });
+    }
 });
 app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
     const { hackathonId, projectId, assignmentId, scores, totalScore, comments, strengths, improvements } = req.body;

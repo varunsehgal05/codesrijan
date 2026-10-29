@@ -19,10 +19,11 @@ export function ChatBotWidget() {
         { role: "bot", text: `SYSTEM WAKE. Greetings, ${currentUser?.name || 'Operative'}. I am SrijanBot. How can I assist your navigation today?` }
     ]);
 
-    // Auto-scroll to bottom of chat
+    // Auto-scroll to bottom of chat only when open
     useEffect(() => {
-        endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages, isTyping]);
+        if (!isOpen) return;
+        endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, [messages, isTyping, isOpen]);
 
     const handleSend = async (messageText: string) => {
         if (!messageText.trim()) return;
