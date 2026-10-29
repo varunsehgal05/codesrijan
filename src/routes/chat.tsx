@@ -19,7 +19,7 @@ const formatTime = (isoString?: string) => {
 };
 
 function ChatDashboard() {
-  const { currentUser, users } = useAppStore();
+  const { currentUser, users, isLoaded } = useAppStore();
   const navigate = useNavigate();
 
   const [conversations, setConversations] = useState<any[]>([]);
@@ -40,8 +40,11 @@ function ChatDashboard() {
   const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
   useEffect(() => {
-    if (!currentUser) navigate({ to: "/login" });
-  }, [currentUser, navigate]);
+    const hasToken = typeof window !== 'undefined' && !!localStorage.getItem("codesrijan_auth_token");
+    if (isLoaded && !currentUser && !hasToken) {
+      navigate({ to: "/login" });
+    }
+  }, [currentUser, isLoaded, navigate]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -298,7 +301,19 @@ function ChatDashboard() {
     return true;
   });
 
-  if (!currentUser) return <div className="min-h-screen bg-background" />;
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="bg-pure-white p-8 brutal-border brutal-shadow-lg flex flex-col items-center gap-4 text-center max-w-md">
+          <div className="w-8 h-8 border-4 border-electric-blue border-t-transparent rounded-full animate-spin"></div>
+          <div>
+            <h3 className="font-display-lg uppercase text-lg text-stark-black">Connecting Secure Comms</h3>
+            <p className="font-code-snippet text-xs text-on-surface-variant mt-1 uppercase">Synchronizing encrypted dispatch channel...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">

@@ -1,0 +1,122 @@
+{
+  "commits": {},
+  "api": {
+    "hackathons": {
+      "status": 200,
+      "count": 2
+    },
+    "announcements": {
+      "status": 200,
+      "count": 2
+    },
+    "sponsors": {
+      "status": 200,
+      "count": 5
+    },
+    "auth": {
+      "status": 200,
+      "hasToken": true
+    },
+    "support": {
+      "status": 200,
+      "count": 2
+    },
+    "conversations": {
+      "status": 200,
+      "count": 5
+    },
+    "messages": {
+      "status": 200,
+      "count": 1
+    }
+  },
+  "database": {
+    "userCount": 8,
+    "users": [
+      {
+        "email": "admin@codesrijan.com",
+        "role": "admin",
+        "id": "usr-admin-master"
+      },
+      {
+        "email": "student@codesrijan.com",
+        "role": "student",
+        "id": "usr-student-master"
+      },
+      {
+        "email": "hacker1@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245675645-476"
+      },
+      {
+        "email": "hacker2@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245675909-487"
+      },
+      {
+        "email": "hacker3@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245676178-519"
+      },
+      {
+        "email": "hacker4@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245676440-183"
+      },
+      {
+        "email": "hacker5@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245676717-360"
+      },
+      {
+        "email": "hacker6@codesrijan.com",
+        "role": "student",
+        "id": "usr-dummy-1791245677019-834"
+      }
+    ],
+    "hackathonsCount": 2,
+    "hackathons": [
+      {
+        "id": "hack-free-1792862581267",
+        "name": "CodeSrijan Impact Challenge — Free Edition",
+        "entryType": "free",
+        "fee": 0
+      },
+      {
+        "id": "hack-paid-1792862582632",
+        "name": "CodeSrijan 24-Hour Innovation Hackathon",
+        "entryType": "paid",
+        "fee": 100
+      }
+    ],
+    "sosTicket": {
+      "_id": "6ae07452b602fca13ce869e0",
+      "id": "tkt-sos-mr-1793090405980",
+      "userId": "usr-student-master",
+      "subject": "🚨 [SOS MENTOR DISPATCH] help",
+      "category": "mentor_sos",
+      "priority": "urgent",
+      "description": "[SQUAD: t-1791540495510] need med on table 20",
+      "affectedPage": "/workspace",
+      "status": "open",
+      "conversationId": "conv-sup-tkt-sos-mr-1793090405980",
+      "createdAt": "2026-10-27T08:40:05.981Z"
+    }
+  },
+  "browser": {
+    "landing": true,
+    "login": true,
+    "hasSosTicket": false,
+    "openCommsLinks": [
+      "/chat"
+    ],
+    "sosChatLoaded": true,
+    "chatTicketIdDeepLink": true,
+    "problems": true,
+    "announcements": true,
+    "sponsorLogosCount": 0,
+    "hostEvent": true,
+    "adminSupport": false
+  },
+  "sosTicket": {}
+}
