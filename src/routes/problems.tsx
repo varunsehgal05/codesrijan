@@ -110,9 +110,9 @@ function ProblemsPage() {
       navigate({ to: '/login' });
       return;
     }
-    const targetProb = problems.find(p => p.id === problemId);
+    const targetProb = problems.find(p => (p.id && p.id === problemId) || (p._id && p._id === problemId));
     if (currentUser.role === 'admin') {
-      setInspectingProblem(targetProb || null);
+      setInspectingProblem(targetProb || { id: problemId, title: "Directive Dossier", description: "Operational directive inspection payload." });
       return;
     }
     if (!userTeam) {
@@ -537,7 +537,7 @@ function ProblemsPage() {
 
                             {currentUser?.role === 'admin' ? (
                               <button
-                                onClick={() => selectProblem(prob.id)}
+                                onClick={() => selectProblem(prob.id || prob._id)}
                                 className="bg-cyan-400 hover:bg-white text-black font-mono text-xs font-black px-4 py-2.5 border-2 border-stark-black uppercase flex items-center gap-1.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none cursor-pointer transition-colors"
                               >
                                 INSPECT DIRECTIVE
@@ -647,13 +647,13 @@ function ProblemsPage() {
                 {/* Locked Squads Count */}
                 <div>
                   <h4 className="font-bold uppercase text-[11px] text-zinc-500 mb-1.5">
-                    Locked Squad Allocations ({(teams || []).filter(t => t.problemId === inspectingProblem.id).length}):
+                    Locked Squad Allocations ({(teams || []).filter(t => t.problemId === inspectingProblem.id || t.problemId === inspectingProblem._id).length}):
                   </h4>
-                  {(teams || []).filter(t => t.problemId === inspectingProblem.id).length === 0 ? (
+                  {(teams || []).filter(t => t.problemId === inspectingProblem.id || t.problemId === inspectingProblem._id).length === 0 ? (
                     <p className="text-zinc-500 italic">No squads currently locked into this directive.</p>
                   ) : (
                     <div className="space-y-1.5">
-                      {(teams || []).filter(t => t.problemId === inspectingProblem.id).map(t => (
+                      {(teams || []).filter(t => t.problemId === inspectingProblem.id || t.problemId === inspectingProblem._id).map(t => (
                         <div key={t.id} className="p-2 bg-white border border-black flex justify-between items-center">
                           <span className="font-bold uppercase">{t.name}</span>
                           <span className="text-zinc-500 text-[10px]">{(t.memberIds || []).length} / 4 Members</span>
