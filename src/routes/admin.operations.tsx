@@ -155,10 +155,10 @@ export function AdminOperationsDashboard() {
             placeholder="Search hackathons by name or ID..."
             className="w-full bg-surface-container-lowest p-3 pr-10 font-code-snippet text-xs brutal-border focus:outline-none focus:ring-2 focus:ring-electric-blue"
           />
-          <span className="material-symbols-outlined absolute right-3 top-3 text-surface-variant text-sm">search</span>
+          <span className="material-symbols-outlined absolute right-3 top-3 text-zinc-600 font-bold text-sm">search</span>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <span className="font-label-bold text-xs uppercase text-surface-variant">Phase:</span>
+          <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Phase:</span>
           <select
             value={phaseFilter}
             onChange={(e) => setPhaseFilter(e.target.value)}
@@ -195,9 +195,9 @@ export function AdminOperationsDashboard() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-pure-white p-12 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col items-center justify-center text-center">
-          <span className="material-symbols-outlined text-6xl mb-4 text-surface-variant">event_busy</span>
+          <span className="material-symbols-outlined text-6xl mb-4 text-zinc-600 font-bold">event_busy</span>
           <h3 className="font-headline-md uppercase text-xl">No Matching Hackathons</h3>
-          <p className="font-code-snippet uppercase tracking-widest text-xs mt-2 text-surface-variant">
+          <p className="font-code-snippet uppercase tracking-widest text-xs mt-2 text-zinc-600 font-bold">
             No events match the current search or phase filter.
           </p>
         </div>
@@ -259,15 +259,15 @@ export function AdminOperationsDashboard() {
               {/* Metrics Grid */}
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="bg-surface-container-lowest p-4 brutal-border">
-                  <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Total Registrations</span>
+                  <span className="font-label-bold text-[10px] uppercase text-zinc-600 font-bold block">Total Registrations</span>
                   <span className="font-display-lg text-2xl text-stark-black">{h.metrics?.totalRegistrations || 0}</span>
-                  <span className="font-code-snippet text-[10px] text-surface-variant block mt-1">
+                  <span className="font-code-snippet text-[10px] text-zinc-600 font-bold block mt-1">
                     {h.metrics?.verifiedRegistrations || 0} verified
                   </span>
                 </div>
 
                 <div className="bg-surface-container-lowest p-4 brutal-border">
-                  <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Payment Backlog</span>
+                  <span className="font-label-bold text-[10px] uppercase text-zinc-600 font-bold block">Payment Backlog</span>
                   <span className={`font-display-lg text-2xl ${(h.metrics?.pendingPaymentBacklog || 0) > 0 ? 'text-error' : 'text-success'}`}>
                     {h.metrics?.pendingPaymentBacklog || 0}
                   </span>
@@ -281,15 +281,15 @@ export function AdminOperationsDashboard() {
                 </div>
 
                 <div className="bg-surface-container-lowest p-4 brutal-border">
-                  <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Active Squads</span>
+                  <span className="font-label-bold text-[10px] uppercase text-zinc-600 font-bold block">Active Squads</span>
                   <span className="font-display-lg text-2xl text-electric-blue">{h.metrics?.activeSquads || 0}</span>
-                  <span className="font-code-snippet text-[10px] text-surface-variant block mt-1">
+                  <span className="font-code-snippet text-[10px] text-zinc-600 font-bold block mt-1">
                     {h.metrics?.disqualifiedSquads || 0} disqualified
                   </span>
                 </div>
 
                 <div className="bg-surface-container-lowest p-4 brutal-border">
-                  <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Submissions</span>
+                  <span className="font-label-bold text-[10px] uppercase text-zinc-600 font-bold block">Submissions</span>
                   <span className="font-display-lg text-2xl text-stark-black">{h.metrics?.submissionsCount || 0}</span>
                   <Link to="/admin/submissions" className="font-code-snippet text-[10px] text-electric-blue font-bold uppercase underline block mt-1">
                     View payloads →
@@ -297,11 +297,11 @@ export function AdminOperationsDashboard() {
                 </div>
 
                 <div className="bg-surface-container-lowest p-4 brutal-border">
-                  <span className="font-label-bold text-[10px] uppercase text-surface-variant block">Problem Reveal</span>
+                  <span className="font-label-bold text-[10px] uppercase text-zinc-600 font-bold block">Problem Reveal</span>
                   <span className={`font-label-bold text-sm block mt-1 uppercase ${h.problemStatementsRevealed ? 'text-success' : 'text-error'}`}>
                     {h.problemStatementsRevealed ? 'Revealed' : 'Locked'}
                   </span>
-                  <span className="font-code-snippet text-[10px] text-surface-variant block mt-1">Track visibility</span>
+                  <span className="font-code-snippet text-[10px] text-zinc-600 font-bold block mt-1">Track visibility</span>
                 </div>
               </div>
 
@@ -358,15 +358,15 @@ export function AdminOperationsDashboard() {
               {/* Deadlines Footer */}
               <div className="bg-surface-container-lowest p-3 brutal-border flex flex-wrap gap-6 text-xs font-code-snippet">
                 <div>
-                  <span className="text-surface-variant uppercase mr-2">Start:</span>
+                  <span className="text-zinc-600 font-bold uppercase mr-2">Start:</span>
                   <span className="font-bold">{h.startDate ? new Date(h.startDate).toLocaleDateString() : 'TBD'}</span>
                 </div>
                 <div>
-                  <span className="text-surface-variant uppercase mr-2">Registration Deadline:</span>
+                  <span className="text-zinc-600 font-bold uppercase mr-2">Registration Deadline:</span>
                   <span className="font-bold">{h.registrationDeadline ? new Date(h.registrationDeadline).toLocaleString() : 'TBD'}</span>
                 </div>
                 <div>
-                  <span className="text-surface-variant uppercase mr-2">Submission Deadline:</span>
+                  <span className="text-zinc-600 font-bold uppercase mr-2">Submission Deadline:</span>
                   <span className="font-bold">{h.submissionDeadline ? new Date(h.submissionDeadline).toLocaleString() : 'TBD'}</span>
                 </div>
               </div>

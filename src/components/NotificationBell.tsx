@@ -211,7 +211,7 @@ export function NotificationBell() {
                     {/* Notifications List */}
                     <div className="flex flex-col overflow-y-auto flex-1">
                         {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-surface-variant font-mono text-sm flex flex-col items-center gap-2">
+                            <div className="p-8 text-center text-zinc-500 font-mono text-sm flex flex-col items-center gap-2 font-bold">
                                 <span className="material-symbols-outlined text-3xl text-zinc-300">inbox</span>
                                 No active transmissions.
                             </div>

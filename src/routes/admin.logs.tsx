@@ -141,7 +141,7 @@ export function AdminLogs() {
               ✕
             </button>
           ) : (
-            <span className="material-symbols-outlined absolute right-3 top-3 text-surface-variant text-sm">search</span>
+            <span className="material-symbols-outlined absolute right-3 top-3 text-zinc-600 font-bold text-sm">search</span>
           )}
         </div>
 
@@ -149,7 +149,7 @@ export function AdminLogs() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Role Filter */}
           <div className="flex items-center gap-1.5">
-            <span className="font-label-bold text-xs uppercase text-surface-variant">Role:</span>
+            <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Role:</span>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
@@ -167,7 +167,7 @@ export function AdminLogs() {
           {/* Action Filter */}
           {uniqueActions.length > 0 && (
             <div className="flex items-center gap-1.5">
-              <span className="font-label-bold text-xs uppercase text-surface-variant">Action:</span>
+              <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Action:</span>
               <select
                 value={actionFilter}
                 onChange={(e) => setActionFilter(e.target.value)}
@@ -183,7 +183,7 @@ export function AdminLogs() {
 
           {/* Sort By */}
           <div className="flex items-center gap-1.5">
-            <span className="font-label-bold text-xs uppercase text-surface-variant">Sort:</span>
+            <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}

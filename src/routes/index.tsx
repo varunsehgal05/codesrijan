@@ -188,14 +188,14 @@ function Page14() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {problems.map(prob => (
-                <div key={prob.id} className="bg-surface-container-lowest border-4 border-surface-variant p-6 hover:border-electric-blue transition-colors flex flex-col justify-between">
+                <div key={prob.id} className="bg-pure-white border-4 border-stark-black p-6 hover:border-electric-blue hover:-translate-y-1 transition-all duration-200 brutal-shadow flex flex-col justify-between group">
                   <div>
-                    <span className="inline-block bg-electric-blue text-pure-white px-2 py-1 text-xs font-bold uppercase mb-4">{prob.domain || prob.category}</span>
-                    <h3 className="font-headline-sm uppercase text-pure-white mb-2 line-clamp-2">{prob.title}</h3>
-                    <p className="font-mono text-sm text-surface-variant line-clamp-3 mb-6">{prob.description}</p>
+                    <span className="inline-block bg-electric-blue text-pure-white px-2.5 py-1 text-xs font-mono font-bold uppercase mb-4 tracking-wider">{prob.domain || prob.category}</span>
+                    <h3 className="font-headline-sm uppercase text-stark-black font-black mb-3 line-clamp-2 leading-tight tracking-tight text-xl">{prob.title}</h3>
+                    <p className="font-mono text-xs sm:text-sm text-zinc-800 font-medium line-clamp-3 mb-6 leading-relaxed">{prob.description}</p>
                   </div>
-                  <Link to="/problems" className="font-label-bold text-electric-blue hover:text-pure-white uppercase text-sm flex items-center gap-2 group w-fit">
-                    EXPLORE PARAMETERS <span className="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                  <Link to="/problems" className="font-label-bold text-electric-blue hover:text-stark-black uppercase text-sm flex items-center gap-2 group/link w-fit font-bold tracking-wider">
+                    EXPLORE PARAMETERS <span className="material-symbols-outlined transition-transform group-hover/link:translate-x-1">arrow_forward</span>
                   </Link>
                 </div>
               ))}

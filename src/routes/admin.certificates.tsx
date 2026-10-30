@@ -370,7 +370,7 @@ export function AdminCertificates() {
           {searchQuery ? (
             <button onClick={() => setSearchQuery("")} className="absolute right-3 top-2.5 text-zinc-500 font-bold">✕</button>
           ) : (
-            <span className="material-symbols-outlined absolute right-3 top-3 text-surface-variant text-sm">search</span>
+            <span className="material-symbols-outlined absolute right-3 top-3 text-zinc-500 text-sm">search</span>
           )}
         </div>
         <div className="text-xs font-mono text-zinc-600">

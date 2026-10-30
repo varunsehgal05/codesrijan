@@ -454,3 +454,17 @@ body {
 
 .neo-checkbox:checked + div { background-color: var(--color-electric-blue); }
 .neo-checkbox:checked + div svg { display: block; }
+
+/* Accessible High-Contrast Overrides for Legibility */
+.text-surface-variant {
+  color: #4b5563 !important;
+}
+
+.dark .text-surface-variant,
+[class*="bg-black"] .text-surface-variant,
+[class*="bg-stark-black"] .text-surface-variant,
+[class*="bg-deep-navy"] .text-surface-variant,
+[class*="bg-ink-black"] .text-surface-variant,
+[class*="bg-[#0b101c]"] .text-surface-variant {
+  color: #9ca3af !important;
+}

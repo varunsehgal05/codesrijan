@@ -115,24 +115,24 @@ function AdminHealthDashboard() {
                 </div>
                 <div className="space-y-2 font-code-snippet text-xs">
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Uptime:</span>
+                    <span className="text-zinc-600 font-bold">Uptime:</span>
                     <span className="font-bold">{formatUptime(data?.services?.backend?.uptimeSeconds || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Node Engine:</span>
+                    <span className="text-zinc-600 font-bold">Node Engine:</span>
                     <span className="font-bold">{data?.services?.backend?.nodeVersion}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Heap Memory:</span>
+                    <span className="text-zinc-600 font-bold">Heap Memory:</span>
                     <span className="font-bold">{formatBytes(data?.services?.backend?.memoryUsage?.heapUsed || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">RSS Memory:</span>
+                    <span className="text-zinc-600 font-bold">RSS Memory:</span>
                     <span className="font-bold">{formatBytes(data?.services?.backend?.memoryUsage?.rss || 0)}</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-surface-variant uppercase font-code-snippet">
+              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-zinc-600 font-bold uppercase font-code-snippet">
                 Provider: Render Free Web Service
               </div>
             </div>
@@ -148,24 +148,24 @@ function AdminHealthDashboard() {
                 </div>
                 <div className="space-y-2 font-code-snippet text-xs">
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Keyspace:</span>
+                    <span className="text-zinc-600 font-bold">Keyspace:</span>
                     <span className="font-bold">{data?.services?.database?.databaseName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Ready State:</span>
+                    <span className="text-zinc-600 font-bold">Ready State:</span>
                     <span className="font-bold text-success">{data?.services?.database?.readyState === 1 ? '1 (Connected)' : '0'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Cluster Tier:</span>
+                    <span className="text-zinc-600 font-bold">Cluster Tier:</span>
                     <span className="font-bold">Atlas M0 Free</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Cost Budget:</span>
+                    <span className="text-zinc-600 font-bold">Cost Budget:</span>
                     <span className="font-bold text-success">$0.00 / mo</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-surface-variant uppercase font-code-snippet">
+              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-zinc-600 font-bold uppercase font-code-snippet">
                 Storage: Isolated &amp; Credentials Secret
               </div>
             </div>
@@ -181,19 +181,19 @@ function AdminHealthDashboard() {
                 </div>
                 <div className="space-y-2 font-code-snippet text-xs">
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Engine:</span>
+                    <span className="text-zinc-600 font-bold">Engine:</span>
                     <span className="font-bold uppercase">{data?.services?.storage?.provider || 'GridFS'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Committed:</span>
+                    <span className="text-zinc-600 font-bold">Committed:</span>
                     <span className="font-bold">{formatBytes(data?.services?.storage?.committedBytes || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Vault Budget:</span>
+                    <span className="text-zinc-600 font-bold">Vault Budget:</span>
                     <span className="font-bold">{formatBytes(data?.services?.storage?.budgetBytes || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Headroom:</span>
+                    <span className="text-zinc-600 font-bold">Headroom:</span>
                     <span className="font-bold text-success">{formatBytes(data?.services?.storage?.remainingBudgetBytes || 0)}</span>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ function AdminHealthDashboard() {
                     style={{ width: `${Math.min(100, data?.services?.storage?.usagePercent || 0)}%` }}
                   />
                 </div>
-                <span className="font-code-snippet text-[10px] text-surface-variant mt-1 block text-right">
+                <span className="font-code-snippet text-[10px] text-zinc-600 font-bold mt-1 block text-right">
                   {data?.services?.storage?.usagePercent || 0}% Allocated
                 </span>
               </div>
@@ -222,24 +222,24 @@ function AdminHealthDashboard() {
                 </div>
                 <div className="space-y-2 font-code-snippet text-xs">
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Provider:</span>
+                    <span className="text-zinc-600 font-bold">Provider:</span>
                     <span className="font-bold">Google Apps Script</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Quota Limit:</span>
+                    <span className="text-zinc-600 font-bold">Quota Limit:</span>
                     <span className="font-bold">100 / day (Free)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Delivery Cost:</span>
+                    <span className="text-zinc-600 font-bold">Delivery Cost:</span>
                     <span className="font-bold text-success">$0.00 / mo</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-surface-variant">Templates:</span>
+                    <span className="text-zinc-600 font-bold">Templates:</span>
                     <span className="font-bold text-success">Auth &amp; Receipts</span>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-surface-variant uppercase font-code-snippet">
+              <div className="mt-4 pt-2 border-t border-surface-variant/20 text-[10px] text-zinc-600 font-bold uppercase font-code-snippet">
                 Relay URL Secured Server-Side
               </div>
             </div>
@@ -249,7 +249,7 @@ function AdminHealthDashboard() {
           <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <h3 className="font-headline-md uppercase text-xl mb-4 border-b-2 border-stark-black pb-2 flex items-center justify-between">
               <span>Platform Operational Queues</span>
-              <span className="font-code-snippet text-xs font-normal text-surface-variant">Live DB Aggregation</span>
+              <span className="font-code-snippet text-xs font-normal text-zinc-600 font-bold">Live DB Aggregation</span>
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link
@@ -257,13 +257,13 @@ function AdminHealthDashboard() {
                 className="bg-surface-container-lowest p-4 brutal-border hover:bg-surface-bright hover:-translate-y-0.5 transition-all block"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-label-bold text-xs uppercase text-surface-variant">Payment Reviews</span>
+                  <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Payment Reviews</span>
                   <span className="material-symbols-outlined text-sm text-electric-blue">receipt_long</span>
                 </div>
                 <div className={`font-display-lg text-3xl mt-2 ${(data?.operationalMetrics?.pendingPaymentReviews || 0) > 0 ? 'text-error' : 'text-success'}`}>
                   {data?.operationalMetrics?.pendingPaymentReviews ?? 0}
                 </div>
-                <span className="font-code-snippet text-[10px] text-surface-variant uppercase">Awaiting admin review</span>
+                <span className="font-code-snippet text-[10px] text-zinc-600 font-bold uppercase">Awaiting admin review</span>
               </Link>
 
               <Link
@@ -271,13 +271,13 @@ function AdminHealthDashboard() {
                 className="bg-surface-container-lowest p-4 brutal-border hover:bg-surface-bright hover:-translate-y-0.5 transition-all block"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-label-bold text-xs uppercase text-surface-variant">Active Tickets</span>
+                  <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Active Tickets</span>
                   <span className="material-symbols-outlined text-sm text-electric-blue">support_agent</span>
                 </div>
                 <div className="font-display-lg text-3xl mt-2 text-stark-black">
                   {data?.operationalMetrics?.activeSupportTickets ?? 0}
                 </div>
-                <span className="font-code-snippet text-[10px] text-surface-variant uppercase">
+                <span className="font-code-snippet text-[10px] text-zinc-600 font-bold uppercase">
                   {data?.operationalMetrics?.resolvedSupportTickets ?? 0} Resolved / Closed
                 </span>
               </Link>
@@ -287,13 +287,13 @@ function AdminHealthDashboard() {
                 className="bg-surface-container-lowest p-4 brutal-border hover:bg-surface-bright hover:-translate-y-0.5 transition-all block"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-label-bold text-xs uppercase text-surface-variant">Hackathons</span>
+                  <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Hackathons</span>
                   <span className="material-symbols-outlined text-sm text-electric-blue">event</span>
                 </div>
                 <div className="font-display-lg text-3xl mt-2 text-electric-blue">
                   {data?.operationalMetrics?.activeHackathons ?? 0}
                 </div>
-                <span className="font-code-snippet text-[10px] text-surface-variant uppercase">Active / Published Events</span>
+                <span className="font-code-snippet text-[10px] text-zinc-600 font-bold uppercase">Active / Published Events</span>
               </Link>
 
               <Link
@@ -301,13 +301,13 @@ function AdminHealthDashboard() {
                 className="bg-surface-container-lowest p-4 brutal-border hover:bg-surface-bright hover:-translate-y-0.5 transition-all block"
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-label-bold text-xs uppercase text-surface-variant">Squads &amp; Operatives</span>
+                  <span className="font-label-bold text-xs uppercase text-zinc-600 font-bold">Squads &amp; Operatives</span>
                   <span className="material-symbols-outlined text-sm text-electric-blue">groups</span>
                 </div>
                 <div className="font-display-lg text-3xl mt-2 text-stark-black">
                   {data?.operationalMetrics?.totalSquads ?? 0}
                 </div>
-                <span className="font-code-snippet text-[10px] text-surface-variant uppercase">
+                <span className="font-code-snippet text-[10px] text-zinc-600 font-bold uppercase">
                   {data?.operationalMetrics?.totalUsers ?? 0} Registered Users
                 </span>
               </Link>

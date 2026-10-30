@@ -124,7 +124,7 @@ function DashboardPage() {
         return (
             <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
                 <h1 className="font-display-lg text-4xl mb-4">ACCESS DENIED</h1>
-                <p className="font-body-lg mb-8 text-surface-variant">Authentication protocol bypassed. Please authenticate your identity.</p>
+                <p className="font-body-lg mb-8 text-zinc-600 font-medium">Authentication protocol bypassed. Please authenticate your identity.</p>
                 <a href="/login" className="bg-electric-blue text-on-primary py-4 px-8 font-label-bold brutal-border brutal-shadow brutal-hover">LOGIN SYSTEM</a>
             </div>
         );
@@ -137,7 +137,7 @@ function DashboardPage() {
                 {/* Welcome Header */}
                 <section className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-ink-black pb-6">
                     <div>
-                        <p className="font-label-caps text-surface-variant mb-1">Welcome Back,</p>
+                        <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-1 tracking-wider">Welcome Back,</p>
                         <h1 className="font-display-lg text-headline-lg uppercase text-ink-black">{currentUser.name}</h1>
                         <div className="flex items-center gap-3 sm:gap-4 mt-2 flex-wrap">
                             <p className="font-body-md flex items-center gap-2">
@@ -242,7 +242,7 @@ function DashboardPage() {
                                             {allDone ? 'FULL CLEARANCE' : `${completedCount} / ${steps.length} COMPLETED`}
                                         </span>
                                     </div>
-                                    <p className="font-code-snippet text-xs text-surface-variant mt-1">
+                                    <p className="font-code-snippet text-xs text-zinc-600 mt-1 font-bold">
                                         Complete each progression step to ensure hackathon eligibility and submission clearance.
                                     </p>
                                 </div>
@@ -269,11 +269,11 @@ function DashboardPage() {
                                         <div>
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="font-label-bold text-xs uppercase text-stark-black">{step.title}</span>
-                                                <span className={`material-symbols-outlined text-sm ${step.done ? 'text-success' : 'text-surface-variant'}`}>
+                                                <span className={`material-symbols-outlined text-sm ${step.done ? 'text-success' : 'text-zinc-400'}`}>
                                                     {step.done ? 'check_circle' : 'radio_button_unchecked'}
                                                 </span>
                                             </div>
-                                            <p className="font-code-snippet text-[11px] text-surface-variant mb-3">{step.desc}</p>
+                                            <p className="font-code-snippet text-[11px] text-zinc-700 mb-3 font-medium">{step.desc}</p>
                                         </div>
                                         <Link
                                             to={step.link}
@@ -403,7 +403,7 @@ function DashboardPage() {
                             ) : (
                                 <div className="space-y-6">
                                     <div className="bg-surface p-4 border-2 border-electric-blue">
-                                        <p className="font-label-caps text-surface-variant mb-1">Squad Designation</p>
+                                        <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-1 tracking-wider">Squad Designation</p>
                                         <h3 className="font-headline-sm uppercase text-electric-blue">{userTeam.name}</h3>
                                         <p className="font-body-sm mt-2"><span className="font-bold">{(userTeam.memberIds || userTeam.members || []).length}/4</span> Operatives connected.</p>
                                         {userTeam.leaderId !== currentUser.id && (
@@ -412,7 +412,7 @@ function DashboardPage() {
                                     </div>
 
                                     <div className="bg-surface-container p-4 border-2 border-ink-black">
-                                        <p className="font-label-caps text-surface-variant mb-1">Project Trajectory</p>
+                                        <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-1 tracking-wider">Project Trajectory</p>
                                         {userTeam.problemId ? (
                                             <p className="font-label-bold">{userTeam.problemId} — <span className="text-success uppercase">Locked</span></p>
                                         ) : (
@@ -422,7 +422,7 @@ function DashboardPage() {
 
                                     <div className="bg-surface-container p-4 border-2 border-ink-black flex items-center justify-between">
                                         <div>
-                                            <p className="font-label-caps text-surface-variant mb-1">Submission Status</p>
+                                            <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-1 tracking-wider">Submission Status</p>
                                             <p className={`font-label-bold uppercase ${userTeam.isSubmitted ? 'text-success' : 'text-error animate-pulse'}`}>
                                                 {userTeam.isSubmitted ? 'FINAL PAYLOAD DELIVERED' : 'AWAITING UPLOAD'}
                                             </p>
@@ -452,7 +452,7 @@ function DashboardPage() {
 
                                     {/* Members roster */}
                                     <div className="bg-surface p-4 border-2 border-ink-black">
-                                        <h3 className="font-label-bold uppercase text-surface-variant mb-2 border-b-2 border-ink-black pb-1">Operative Roster</h3>
+                                        <h3 className="font-label-bold uppercase text-stark-black mb-2 border-b-2 border-ink-black pb-1">Operative Roster</h3>
                                         <div className="flex flex-col gap-2">
                                             {(userTeam.memberIds || userTeam.members || []).map((mId: string) => {
                                                 const u = users.find(u => u.id === mId);
@@ -477,7 +477,7 @@ function DashboardPage() {
                                                     const u = users.find(u => u.id === r.userId);
                                                     return (
                                                         <div key={r.id} className="flex justify-between items-center bg-white p-2 border border-ink-black">
-                                                            <span className="font-label-bold uppercase">{u ? u.name : r.userId} <span className="text-surface-variant text-xs ml-2">Wants to join</span></span>
+                                                            <span className="font-label-bold uppercase">{u ? u.name : r.userId} <span className="text-zinc-600 text-xs ml-2 font-mono font-bold">Wants to join</span></span>
                                                             <div className="flex gap-2">
                                                                 <button onClick={() => handleActionRequest(r.id, 'accept')} className="bg-success text-white font-label-bold px-3 py-1 text-xs brutal-hover">ACCEPT</button>
                                                                 <button onClick={() => handleActionRequest(r.id, 'reject')} className="bg-ink-black text-white font-label-bold px-3 py-1 text-xs brutal-hover">REJECT</button>
@@ -506,7 +506,7 @@ function DashboardPage() {
 
                         {/* Global Rank */}
                         <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
-                            <p className="font-label-caps text-surface-variant mb-4">GLOBAL RANKING (LIVE)</p>
+                            <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-4 tracking-wider">GLOBAL RANKING (LIVE)</p>
                             {userTeam ? (
                                 <>
                                     <div className="w-24 h-24 rounded-full border-4 border-ink-black bg-electric-blue text-on-primary flex items-center justify-center font-display-lg text-4xl mb-4 brutal-shadow animate-ping-slow">
@@ -515,7 +515,7 @@ function DashboardPage() {
                                     <a href="/leaderboard" className="font-label-bold text-electric-blue hover:underline">VIEW LEADERBOARD &rarr;</a>
                                 </>
                             ) : (
-                                <div className="text-surface-variant font-label-bold mb-4">N/A</div>
+                                <div className="text-zinc-500 font-label-bold mb-4 font-mono text-xl">N/A</div>
                             )}
                         </div>
 

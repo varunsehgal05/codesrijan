@@ -313,7 +313,7 @@ function WorkspaceHUD() {
             <h1 className="font-display-lg text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-ink-black">
               SQUAD WORKSPACE
             </h1>
-            <p className="font-mono text-xs sm:text-sm text-surface-variant flex gap-3 sm:gap-4 mt-2 font-bold flex-wrap items-center">
+            <p className="font-mono text-xs sm:text-sm text-zinc-700 flex gap-3 sm:gap-4 mt-2 font-bold flex-wrap items-center">
               <span className="uppercase text-electric-blue">DESIGNATION: {userTeam.name}</span>
               <span className="text-zinc-400">|</span>
               <span>EVENT: {activeEvent?.name || activeEvent?.id?.toUpperCase()}</span>
@@ -329,7 +329,7 @@ function WorkspaceHUD() {
           </div>
 
           <div className="flex flex-col items-start md:items-end gap-2 mt-6 md:mt-0">
-            <span className="font-label-bold uppercase text-surface-variant text-xs">Framework Status</span>
+            <span className="font-label-bold uppercase text-zinc-600 text-xs">Framework Status</span>
             <div className="flex gap-3 items-center flex-wrap">
               {userTeam.isSubmitted ? (
                 <span className="bg-success text-pure-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-success brutal-shadow-sm">
@@ -350,7 +350,7 @@ function WorkspaceHUD() {
             
             {activeMentorRequests.length > 0 && (
               <div className="mt-2 text-right">
-                <span className="font-label-bold uppercase text-[10px] text-surface-variant block mb-1">Active SOS Tickets ({activeMentorRequests.length})</span>
+                <span className="font-label-bold uppercase text-[10px] text-zinc-600 block mb-1">Active SOS Tickets ({activeMentorRequests.length})</span>
                 {activeMentorRequests.map(req => (
                   <div key={req.id} className="bg-surface p-2 border-2 border-ink-black flex flex-col items-end gap-1 mb-1">
                     <span className="font-label-bold text-xs uppercase">{req.topic} - <span className={req.status === 'accepted' ? 'text-success' : 'text-warning'}>{req.status}</span></span>
@@ -412,7 +412,7 @@ function WorkspaceHUD() {
           <div className="border-2 border-ink-black p-4 bg-surface-container-lowest flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-surface-variant">LOCKED TRACK</span>
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">LOCKED TRACK</span>
                 {hasTrack ? (
                   <span className="bg-success text-white text-[9px] font-mono font-bold px-2 py-0.5 uppercase">LOCKED</span>
                 ) : (
@@ -444,7 +444,7 @@ function WorkspaceHUD() {
           <div className="border-2 border-ink-black p-4 bg-surface-container-lowest flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-surface-variant">OPERATIVE ROSTER</span>
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">OPERATIVE ROSTER</span>
                 <span className="text-[10px] font-mono font-bold bg-black text-white px-2 py-0.5">
                   {teamMembers.length} / 4 CONNECTED
                 </span>
@@ -479,7 +479,7 @@ function WorkspaceHUD() {
           <div className="border-2 border-ink-black p-4 bg-surface-container-lowest flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-surface-variant">MISSION READINESS</span>
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">MISSION READINESS</span>
                 <span className="font-display-sm text-sm font-bold text-electric-blue">{readinessScore}%</span>
               </div>
               <div className="w-full bg-surface-container h-3 brutal-border overflow-hidden mb-3">
@@ -527,7 +527,7 @@ function WorkspaceHUD() {
               <h3 className="font-display-lg text-2xl uppercase mb-4 text-error flex items-center gap-2">
                 <span className="material-symbols-outlined text-3xl">sos</span> SOS MENTOR DISPATCH
               </h3>
-              <p className="font-body-md text-surface-variant mb-4 font-bold">Stuck on a technical blocker? Broadcast a distress signal to all active mentors.</p>
+              <p className="font-body-md text-zinc-700 mb-4 font-bold">Stuck on a technical blocker? Broadcast a distress signal to all active mentors.</p>
               <form onSubmit={handleMentorRequest} className="flex flex-col gap-4">
                 <input required placeholder="Topic (e.g., MongoDB Connection Error)" value={mentorRequestForm.topic} onChange={e => setMentorRequestForm({...mentorRequestForm, topic: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet" />
                 <textarea required placeholder="Describe what you tried..." value={mentorRequestForm.description} onChange={e => setMentorRequestForm({...mentorRequestForm, description: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet min-h-[100px]"></textarea>
@@ -545,7 +545,7 @@ function WorkspaceHUD() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-4 border-ink-black pb-4 mb-6">
             <div>
               <h2 className="font-headline-lg uppercase text-electric-blue">Active Operations Vectors</h2>
-              <p className="font-mono text-xs text-surface-variant mt-1">
+              <p className="font-mono text-xs text-zinc-600 mt-1 font-bold">
                 Manage squad objectives across the pipeline ({completedTasks}/{totalTasks} executed).
               </p>
             </div>
@@ -661,7 +661,7 @@ function WorkspaceHUD() {
                       tasksInCol.map(task => (
                         <div key={task.id} className="bg-white border-2 border-ink-black p-3.5 brutal-shadow-sm group transition-all hover:-translate-y-0.5 hover:brutal-shadow relative">
                           <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-[9px] font-mono font-bold text-surface-variant uppercase">{task.id}</span>
+                            <span className="text-[9px] font-mono font-bold text-zinc-500 uppercase">{task.id}</span>
                             <div className="flex items-center gap-1">
                               {task.priority && (
                                 <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 border uppercase ${

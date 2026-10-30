@@ -102,7 +102,7 @@ function AIAssistantPage() {
                     <h1 className="font-display-lg text-headline-md md:text-headline-lg uppercase text-ink-black border-l-8 border-electric-blue pl-4">
                         SrijanBot AI Copilot
                     </h1>
-                    <p className="text-surface-variant font-mono text-xs uppercase pl-4 mt-1">
+                    <p className="text-zinc-600 font-mono text-xs uppercase pl-4 mt-1 font-bold">
                         Context-Aware Platform Navigator • Grounded in Verified Live MongoDB Data
                     </p>
                 </section>
@@ -152,7 +152,7 @@ function AIAssistantPage() {
                                     <span className="w-2.5 h-2.5 bg-electric-blue animate-bounce"></span>
                                     <span className="w-2.5 h-2.5 bg-electric-blue animate-bounce" style={{ animationDelay: '150ms' }}></span>
                                     <span className="w-2.5 h-2.5 bg-electric-blue animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                                    <span className="font-mono text-xs uppercase text-surface-variant ml-2">Consulting Data Matrix...</span>
+                                    <span className="font-mono text-xs uppercase text-zinc-600 font-bold ml-2">Consulting Data Matrix...</span>
                                 </div>
                             </div>
                         )}

@@ -1,0 +1,314 @@
+[
+  {
+    "category": "PUBLIC",
+    "route": "/",
+    "title": "Page Loaded: Home | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now The Ultimate Developer Hackathon BUILD. BREAK. INNOVATE. Join CodeSrijan for 48 hours of intense coding, networking, and building the future. Ready to make your mark? Start Building arrow_forward View Schedule ",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_01_homepage.png",
+    "timestamp": "2026-10-30T03:38:35.746Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/about",
+    "title": "Page Loaded: About | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now UNLEASHYOUR POTENTIAL CodeSrijan is not just a hackathon; it's a crucible for innovation. We bring together the brightest minds to forge solutions for tomorrow's challenges in a high-octane, neo-brutalist environ",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_02_about.png",
+    "timestamp": "2026-10-30T03:38:40.424Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/announcements",
+    "title": "Page Loaded: Broadcasts & Bulletins | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back RETURN TO PREVIOUS SECTOR LIVE BROADCAST FREQUENCY: ACTIVE COMMAND DISPATCH // OFFICIAL TRANSMISSION LOG campaign SYSTEM BROADCASTS Official tournament directives, deadline updates, rubric calibrations",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_03_announcements.png",
+    "timestamp": "2026-10-30T03:38:43.316Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/sponsors",
+    "title": "Page Loaded: Sponsors & Industry Partners | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back GO BACK INDUSTRY ECOSYSTEM PLATFORM PARTNERS & BACKERS Meet the visionary technology leaders, venture foundations, and developer tooling organizations empowering student engineers across the CodeSrijan",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_04_sponsors.png",
+    "timestamp": "2026-10-30T03:38:46.344Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/timeline",
+    "title": "Page Loaded: CodeSrijan — Student-Run Hackathon Platform",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back GO BACK EVENT TIMELINE [SYNCHRONIZING CHRONOLOGY...] CODESRIJAN The student-driven competitive hackathon matrix. Form squads, build payloads, and deploy artifacts under zero-cost infrastructure. MAINF",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_05_timeline.png",
+    "timestamp": "2026-10-30T03:38:49.333Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/faq",
+    "title": "Page Loaded: CodeSrijan — Student-Run Hackathon Platform",
+    "details": "CodeSrijan arrow_back GO BACK FREQUENTLY ASKED QUESTIONS [LOADING INTELLIGENCE NODE...] CODESRIJAN The student-driven competitive hackathon matrix. Form squads, build payloads, and deploy artifacts under zero-cost infrastructure. MAINFRAME LIVE // 99.98% UPTIME terminal ARENA & MISSIONS Hackathons",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_06_faq.png",
+    "timestamp": "2026-10-30T03:38:52.942Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/gallery",
+    "title": "Page Loaded: Gallery | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back GO BACK EVENT HIGHLIGHTS Relive the energy, the late nights, and the incredible projects built during CodeSrijan. play_circle Demo Reel play_arrow photo_library Gallery [LOADING GALLERY METRICS...] ro",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_07_gallery.png",
+    "timestamp": "2026-10-30T03:38:55.540Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/code-of-conduct",
+    "title": "Page Loaded: Code of Conduct | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back GO BACK CODE OF CONDUCT Zero Tolerance Policy: Harassment in any form, direct or systematic, will result in immediate disqualification and campus expulsion. RESPECT THE BUILD Hackers must respect the v",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_08_code_of_conduct.png",
+    "timestamp": "2026-10-30T03:38:58.751Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/privacy-policy",
+    "title": "Page Loaded: Privacy Policy | CodeSrijan",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back GO BACK PRIVACY POLICY 1. INFORMATION COLLECTION We collect essential identifier details including your legal name, university, and contact email purely for hackathon registration authentication. 2. D",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_09_privacy_policy.png",
+    "timestamp": "2026-10-30T03:39:01.527Z"
+  },
+  {
+    "category": "PUBLIC",
+    "route": "/host-event",
+    "title": "Page Loaded: CodeSrijan — Student-Run Hackathon Platform",
+    "details": "CodeSrijan trophy Hackathons Hub Sponsors Host Event About Platform Login Register Now arrow_back BACK OFFICIAL CODESRIJAN HOSTING MATRIX HOSTING & HACKATHON STUDIO HOST A HACKATHON Configure physical campus rounds, virtual hackathons, verified amenities, prize structures, and automated challenge r",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\public_10_host_event.png",
+    "timestamp": "2026-10-30T03:39:03.962Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/dashboard",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan VERIFYING IDENTITY... CODESRIJAN The student-driven competitive hackathon matrix. Form squads, build payloads, and deploy artifacts under zero-cost infrastructure. MAINFRAME LIVE // 99.98% UPTIME terminal ARENA & MISSIONS Hackathons Directory Problem Statements Squad Directorate Global ",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_01_student_dashboard.png",
+    "timestamp": "2026-10-30T03:39:06.766Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/problems",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan arrow_back RETURN TO PREVIOUS SECTOR OPERATIONAL SPECS // DECLASSIFIED REPOSITORY PROBLEM DIRECTIVES & ARENAS Interrogate tournament challenge vectors across verified tracks. Review problem statements, technical constraints, rubric weightings, and lock directives for your squad. AVAILAB",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_02_student_problems.png",
+    "timestamp": "2026-10-30T03:39:09.385Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/recruitment",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support notifications terminal Workspace Go to Dashboard arrow_back GO BACK SQUAD BUILDER Deploy a highly-specialized team of 4 hackers. Link up directly to enter the arena. FIND JOIN CREATE ⚠ WARNING",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_03_student_recruitment.png",
+    "timestamp": "2026-10-30T03:39:12.914Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/certificates",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support notifications terminal Workspace Go to Dashboard arrow_back RETURN TO HUB OFFICIAL CERTIFICATE MATRIX 📜 CERTIFICATE VERIFICATION & ISSUANCE CENTER CRYPTOGRAPHICALLY AUTHENTICATED RECORDS • PAR",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_04_student_certificates.png",
+    "timestamp": "2026-10-30T03:39:14.960Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/support",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support notifications terminal Workspace Go to Dashboard # DISCORD TICKET BOT BOT VERIFIED REAL-TIME HELPDESK & ISSUE CHANNELS add_circle TALK TO ADMIN search ACTIVE RESOLVED ALL SUPPORT CHANNELS (0) ",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_05_student_support.png",
+    "timestamp": "2026-10-30T03:39:16.949Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/leaderboard",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan GLOBAL LEADERBOARD HACKATHON STANDINGS & EVALUATION MATRIX — SCORED ACROSS JUDGE RUBRICS, OPERATIONAL BONUSES, AND PENALTY INFRACTIONS. social_leaderboard 0 SQUADS ENROLLED trophy SELECT HOSTED HACKATHON / HACKATHON: search ★ ALL HACKATHONS CODESRIJAN 24-HOUR INNOVATION HACKATHON CODESR",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_06_student_leaderboard.png",
+    "timestamp": "2026-10-30T03:39:19.234Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/profile",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan arrow_back GO BACK terminal WORKSPACE EDIT PROFILE Alex Chen Full-stack wizard building the future. Focused on decentralized web technologies and high-performance computing. location_on San Francisco, CA diversity_3 Network: 0 Comrades / Friends REACT RUST WEBASSEMBLY TAILWIND Achieveme",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_07_student_profile.png",
+    "timestamp": "2026-10-30T03:39:21.418Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/workspace",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan arrow_back CODESRIJAN AUTH login arrow_back GO BACK WELCOME BACK ACCESS YOUR HACKER WORKSPACE EMAIL ADDRESS / HACKER HANDLE OPERATION PASSWORD FORGOT? INITIALIZE SESSION power_settings_new DON'T HAVE A SQUAD YET?REGISTER NOW CODESRIJAN The student-driven competitive hackathon matrix.",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_08_student_workspace.png",
+    "timestamp": "2026-10-30T03:39:24.111Z"
+  },
+  {
+    "category": "STUDENT",
+    "route": "/payment",
+    "title": "Student Surface Loaded",
+    "details": "CodeSrijan sync RETRIEVING SECURE PAYMENT MANIFEST... CODESRIJAN The student-driven competitive hackathon matrix. Form squads, build payloads, and deploy artifacts under zero-cost infrastructure. MAINFRAME LIVE // 99.98% UPTIME terminal ARENA & MISSIONS Hackathons Directory Problem Statements Squa",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\student_09_student_payment.png",
+    "timestamp": "2026-10-30T03:39:26.872Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/dashboard",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan VERIFYING IDENTITY... CODESRIJAN The student-driven competitive hackathon matrix. Form squads, build payloads, and deploy artifacts under zero-cost infrastructure. MAINFRAME LIVE // 99.98% UPTIME terminal ARENA & MISSIONS Hackathons Directory Problem Statements Squad Directorate Global ",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_01_admin_dashboard.png",
+    "timestamp": "2026-10-30T03:39:31.247Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/hackathons",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan VERIFYING ADMIN CLEARANCE... HELP smart_toy",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_02_admin_hackathons.png",
+    "timestamp": "2026-10-30T03:39:35.028Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/users",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan VERIFYING ADMIN CLEARANCE... HELP smart_toy",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_03_admin_users.png",
+    "timestamp": "2026-10-30T03:39:38.949Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/teams",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_04_admin_teams.png",
+    "timestamp": "2026-10-30T03:39:41.366Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/problems",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_05_admin_problems.png",
+    "timestamp": "2026-10-30T03:39:43.399Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/submissions",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_06_admin_submissions.png",
+    "timestamp": "2026-10-30T03:39:45.529Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/evaluations",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_07_admin_evaluations.png",
+    "timestamp": "2026-10-30T03:39:47.566Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/payments",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_08_admin_payments.png",
+    "timestamp": "2026-10-30T03:39:49.666Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/support",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_09_admin_support.png",
+    "timestamp": "2026-10-30T03:39:51.722Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/announcements",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_10_admin_announcements.png",
+    "timestamp": "2026-10-30T03:39:53.859Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/certificates",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_11_admin_certificates.png",
+    "timestamp": "2026-10-30T03:39:55.847Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/judges",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_12_admin_judges.png",
+    "timestamp": "2026-10-30T03:39:57.953Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/mentors",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan VERIFYING ADMIN CLEARANCE... HELP smart_toy",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_13_admin_mentors.png",
+    "timestamp": "2026-10-30T03:40:00.114Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/analytics",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_14_admin_analytics.png",
+    "timestamp": "2026-10-30T03:40:02.098Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/settings",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_15_admin_settings.png",
+    "timestamp": "2026-10-30T03:40:04.118Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/logs",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_16_admin_logs.png",
+    "timestamp": "2026-10-30T03:40:06.196Z"
+  },
+  {
+    "category": "ADMIN",
+    "route": "/admin/operations",
+    "title": "Admin Portal Loaded",
+    "details": "CodeSrijan trophy Hackathons Problems Recruitment Sponsors Announcements Leaderboard Comms Help & Support shield_person Admin Panel notifications Go to Dashboard ADMIN COMMAND dashboard Dashboard health_and_safety Platform Health tune Operations Hub receipt_long Payment Review event Hackathons perso",
+    "screenshot": "docs\\qa\\product-discovery\\chrome\\admin_17_admin_operations.png",
+    "timestamp": "2026-10-30T03:40:08.430Z"
+  },
+  {
+    "category": "ROLE_ERROR",
+    "route": "/mentor",
+    "title": "Failed to load role surface",
+    "details": "Page.captureScreenshot timed out. Increase the 'protocolTimeout' setting in launch/connect calls for a higher timeout if needed.",
+    "screenshot": null,
+    "timestamp": "2026-10-30T03:43:10.021Z"
+  },
+  {
+    "category": "ROLE_ERROR",
+    "route": "/mentor-command-center",
+    "title": "Failed to load role surface",
+    "details": "Navigation timeout of 30000 ms exceeded",
+    "screenshot": null,
+    "timestamp": "2026-10-30T03:43:40.037Z"
+  },
+  {
+    "category": "ROLE_ERROR",
+    "route": "/evaluations",
+    "title": "Failed to load role surface",
+    "details": "Navigation timeout of 30000 ms exceeded",
+    "screenshot": null,
+    "timestamp": "2026-10-30T03:44:10.040Z"
+  }
+]

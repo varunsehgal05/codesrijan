@@ -127,24 +127,24 @@ function AdminProblemDetail() {
 
                         <div className="space-y-4">
                             <div>
-                                <span className="block text-xs uppercase font-label-bold text-surface-variant">Publish State</span>
+                                <span className="block text-xs uppercase font-label-bold text-zinc-600">Publish State</span>
                                 <span className={`inline-block px-2 py-1 text-xs font-bold uppercase mt-1 ${problem.isPublished ? 'bg-success/20 text-success' : 'bg-surface-variant text-ink-black'}`}>
                                     {problem.isPublished ? 'VISIBLE NATIONWIDE' : 'HIDDEN DRAFT'}
                                 </span>
                             </div>
 
                             <div>
-                                <span className="block text-xs uppercase font-label-bold text-surface-variant">Domain</span>
+                                <span className="block text-xs uppercase font-label-bold text-zinc-600">Domain</span>
                                 <span className="font-mono font-bold">{problem.domain}</span>
                             </div>
 
                             <div>
-                                <span className="block text-xs uppercase font-label-bold text-surface-variant">Difficulty</span>
+                                <span className="block text-xs uppercase font-label-bold text-zinc-600">Difficulty</span>
                                 <span className="font-mono font-bold uppercase text-electric-blue">{problem.difficulty}</span>
                             </div>
 
                             <div>
-                                <span className="block text-xs uppercase font-label-bold text-surface-variant">Timestamps</span>
+                                <span className="block text-xs uppercase font-label-bold text-zinc-600">Timestamps</span>
                                 <div className="font-mono text-sm mt-1">
                                     <div>Cr: {new Date(problem.createdAt).toLocaleString()}</div>
                                     <div>Up: {new Date(problem.updatedAt).toLocaleString()}</div>

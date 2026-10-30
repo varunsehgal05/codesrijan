@@ -178,10 +178,10 @@ export function AdminAnnouncements() {
                         placeholder="Search broadcasts by title, content, or target ID..."
                         className="w-full bg-surface-container-lowest p-3 pr-10 font-code-snippet text-xs brutal-border focus:outline-none focus:ring-2 focus:ring-electric-blue"
                     />
-                    <span className="material-symbols-outlined absolute right-3 top-3 text-surface-variant text-sm">search</span>
+                    <span className="material-symbols-outlined absolute right-3 top-3 text-zinc-500 text-sm">search</span>
                 </div>
                 <div className="flex items-center gap-2 w-full md:w-auto">
-                    <span className="font-label-bold text-xs uppercase text-surface-variant">Scope:</span>
+                    <span className="font-label-bold text-xs uppercase text-zinc-700 font-bold">Scope:</span>
                     <select
                         value={scopeFilter}
                         onChange={(e) => setScopeFilter(e.target.value)}
