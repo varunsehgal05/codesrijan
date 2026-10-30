@@ -1,0 +1,31 @@
+flowchart TD
+    subgraph Repo ["1. SOURCE REPOSITORY (GitHub)"]
+        LocalCommit["Local Changes Committed"] --> GitPush["Git Push origin/main"]
+        GitPush --> GH["GitHub: varunsehgal05/codesrijan"]
+    end
+
+    subgraph VercelCI ["2. FRONTEND PIPELINE (Vercel)"]
+        GH -->|Webhook Trigger| VercelBuild["Vercel Build Environment"]
+        VercelBuild --> ViteBuild["vite build (Client + Nitro SSR)"]
+        ViteBuild --> CheckVercel{"Build Success?"}
+        CheckVercel -->|Yes| VercelDeploy["Deploy to Global Edge (codesrijan-nine.vercel.app)"]
+        CheckVercel -->|No| VercelAlert["Vercel Build Error Notification -> Rollback to previous deployment"]
+    end
+
+    subgraph RenderCI ["3. BACKEND PIPELINE (Render)"]
+        GH -->|Webhook / Manual Deploy| RenderBuild["Render Environment (srv-db1b3ke0tbcc73ac3ea0)"]
+        RenderBuild --> NPMInstall["npm install in /server"]
+        NPMInstall --> StartNode["node server.js (Port 5001)"]
+        StartNode --> HealthProbe["Health Check Probe: GET /health"]
+        HealthProbe --> CheckRender{"Health 200 OK?"}
+        CheckRender -->|Yes| RenderLive["Promote to Live (codesrijan-api-6tfr.onrender.com)"]
+        CheckRender -->|No| RenderRollback["Keep prior live instance active -> Log error to Dashboard"]
+    end
+
+    subgraph RecoveryPlan ["4. INCIDENT RECOVERY RUNBOOK ($0 Budget)"]
+        IssueDetected["Issue Detected via Logs / Health Probe"] --> IdentifyLayer{"Failed Layer?"}
+        IdentifyLayer -->|Frontend Error| RollbackVercel["Instant Rollback in Vercel Dashboard (1-click to prior SHA)"]
+        IdentifyLayer -->|Backend Crash / Cold Start| WakeRender["Manual Deploy / Restart Service via Render Dashboard"]
+        IdentifyLayer -->|Database Desync| AuditAtlas["Run scripts/audit_db_live.mjs -> Verify 8 users & 2 hackathons"]
+        AuditAtlas --> CleanState["Zero-Cost Point-In-Time Restoration from Atlas Free Tier Snapshots"]
+    end

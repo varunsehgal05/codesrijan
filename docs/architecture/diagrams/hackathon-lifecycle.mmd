@@ -1,0 +1,50 @@
+flowchart TD
+    subgraph Phase1 ["1. EVENT CREATION & GOVERNANCE (Admin Only)"]
+        A[Admin opens /admin/hackathons] --> B[Launch 5-Step Creation Wizard]
+        B --> C[Step 1: Basic Info & Banner Upload]
+        C --> D[Step 2: Dates, Schedule & Modes]
+        D --> E[Step 3: Problem Statements, PDF Specs & Rubrics]
+        E --> F[Step 4: Admission Policy, Fee & UPI QR Upload]
+        F --> G[Step 5: Review & Publish Event]
+        G --> H[(Persist Hackathon in MongoDB Atlas)]
+    end
+
+    subgraph Phase2 ["2. REGISTRATION & SQUAD FORMATION (Students)"]
+        H --> I[Event visible on /hackathons]
+        I --> J{Admission Mode?}
+        J -->|Free Arena ₹0| K[Instant Registration Confirmed]
+        J -->|Paid Arena ₹100| L[Student sees Fee Due & Custom UPI QR]
+        L --> M[Student transfers fee & uploads payment proof]
+        M --> N[(Registration saved: payment_under_review)]
+        N --> O[Admin Audits & Verifies Payment]
+        O --> P[(Registration marked: verified)]
+        K --> Q[Student forms or joins Squad in /team or /recruitment]
+        P --> Q
+    end
+
+    subgraph Phase3 ["3. PROBLEM DIRECTIVE LOCKING & WORKSPACE"]
+        Q --> R[Squad reaches required quorum]
+        R --> S{Problems Released?}
+        S -->|Admin inspection| T[Admin clicks INSPECT DIRECTIVE -> View Dossier]
+        S -->|Locked for participants| U[Countdown active: Problem unlock at zero]
+        S -->|Unlocked / Live| V[Squad Leader selects Track Directive]
+        V --> W[(Squad locked to problemId in MongoDB)]
+        W --> X[Squad enters /workspace Kanban HUD]
+    end
+
+    subgraph Phase4 ["4. PAYLOAD TRANSMISSION & EVALUATION"]
+        X --> Y[Squad builds solution & uploads submission payload]
+        Y --> Z[(Submission record created with repo link & demo)]
+        Z --> AA[Hackathon concludes -> Submissions locked]
+        AA --> AB[Judges enter /evaluations matrix]
+        AB --> AC[Grade submissions against configured Rubric weights]
+        AC --> AD[(Grades persisted & composite scores calculated)]
+    end
+
+    subgraph Phase5 ["5. LEADERBOARD & CERTIFICATE DISPATCH"]
+        AD --> AE[Publish results to /leaderboard]
+        AE --> AF[Admin accesses /certificates console]
+        AF --> AG[Admin uploads official certificate & commendation]
+        AG --> AH[(Certificates saved in MongoDB with SHA-256 hash)]
+        AH --> AI[Students download official certificates in /certificates]
+    end

@@ -30,7 +30,7 @@ interface MessageItem {
 }
 
 function SupportPage() {
-  const { currentUser, users } = useAppStore();
+  const { currentUser, users, isLoaded } = useAppStore();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -213,6 +213,17 @@ function SupportPage() {
     navigator.clipboard.writeText(transcript);
     toast.success("📋 Complete ticket transcript copied to clipboard!");
   };
+
+  if (!isLoaded && typeof window !== 'undefined' && localStorage.getItem("codesrijan_auth_token")) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+        <div className="p-8 font-mono text-xs uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-electric-blue animate-ping"></span>
+          VERIFYING TRANSMISSION CREDENTIALS...
+        </div>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return (

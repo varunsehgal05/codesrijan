@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Admin / Event Trigger
+    participant Server as Express Server (server.js)
+    participant DB as MongoDB Atlas (notifications & users)
+    participant Sockets as Socket.IO Hub
+    participant GAS as Google Apps Script Email Relay
+    participant FCM as Firebase Cloud Messaging (Web Push)
+    actor Student as Student Operative (Client Browser)
+
+    Note over Admin, Student: 1. EVENT OCCURRENCE & PERSISTENCE
+    Admin->>Server: Trigger Event (e.g. Squad Join, Hackathon Announce, Certificate Issued)
+    Server->>DB: Query recipient operative record(s)
+    Server->>DB: Insert in-app Notification record { userId, title, message, category, link, read: false }
+    
+    Note over Server, Student: 2. REALTIME IN-APP DELIVERY (WebSockets & Store)
+    Server->>Sockets: Emit 'notification:new' to room `user:<userId>`
+    Sockets-->>Student: Deliver realtime payload to active session
+    Student->>Student: Increment Bell Badge & toast notification
+
+    Note over Server, GAS: 3. EXTERNAL EMAIL RELAY (Zero-Budget HTTP Relay)
+    opt User notification preferences include Email
+        Server->>Server: Build responsive HTML email template
+        Server->>GAS: POST https://script.google.com/macros/s/.../exec { to, subject, html, secret }
+        alt Relay Success
+            GAS-->>Server: 200 OK { status: 'sent', id: 'msg-...' }
+        else Free Tier SMTP Failure / Offline
+            Server->>Server: Log fallback to in-app notification without crashing request
+        end
+    end
+
+    Note over Server, FCM: 4. BROWSER PUSH NOTIFICATIONS (Optional FCM Web Push)
+    opt FCM device token registered on client
+        Server->>FCM: admin.messaging().send({ token, notification: { title, body } })
+        FCM-->>Student: ServiceWorker push event -> Show OS Notification
+    end

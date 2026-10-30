@@ -1,0 +1,75 @@
+sequenceDiagram
+    autonumber
+    actor Operative as User / Operative Browser
+    participant Client as Frontend (TanStack / Zustand)
+    participant Server as Express API (/api/auth)
+    participant DB as MongoDB Atlas (users)
+    participant Email as Email Relay (GAS)
+
+    %% Registration Flow
+    rect rgb(240, 248, 255)
+        Note over Operative, DB: 1. REGISTRATION & VERIFICATION FLOW
+        Operative->>Client: Submit Registration Form (Name, Email, Password, Role)
+        Client->>Server: POST /api/auth/register
+        Server->>DB: Check if email exists
+        alt Email already registered
+            Server-->>Client: 400 Bad Request ("Account already exists")
+        else Email is new
+            Server->>Server: Hash password (bcrypt salt 10)
+            Server->>Server: Generate 6-digit numeric OTP
+            Server->>DB: Save User record (isVerified: false, otpCode)
+            Server->>Email: Dispatch Verification OTP email
+            Server-->>Client: 201 Created (Redirect to /auth/otp)
+            Operative->>Client: Enter 6-digit OTP
+            Client->>Server: POST /api/auth/verify-otp { email, otp }
+            Server->>DB: Validate OTP & mark isVerified: true
+            Server-->>Client: 200 OK (Verification Confirmed)
+        end
+    end
+
+    %% Login Flow
+    rect rgb(255, 250, 240)
+        Note over Operative, DB: 2. AUTHENTICATION & JWT ISSUANCE
+        Operative->>Client: Enter Credentials (Email & Password)
+        Client->>Server: POST /api/auth/login { email, password }
+        Server->>DB: Find user by email
+        alt Invalid credentials
+            Server-->>Client: 401 Unauthorized ("Invalid credentials")
+        else Valid credentials
+            Server->>Server: Verify bcrypt hash match
+            Server->>Server: Sign JWT payload { id, email, role } (7d expiry)
+            Server-->>Client: 200 OK { token, user: { id, name, email, role } }
+            Client->>Client: Store token in localStorage (codesrijan_auth_token)
+            Client->>Client: Hydrate Zustand Store (currentUser, token)
+            Client-->>Operative: Redirect to /dashboard (Role-Gated Landing)
+        end
+    end
+
+    %% Authenticated Requests & RBAC
+    rect rgb(245, 255, 245)
+        Note over Operative, DB: 3. PROTECTED API REQUEST & RBAC GATE
+        Operative->>Client: Navigate to /admin/hackathons
+        Client->>Server: GET /api/admin/hackathons (Authorization: Bearer <JWT>)
+        Server->>Server: requireAuth middleware (Verify JWT signature & expiry)
+        alt Token Missing or Invalid
+            Server-->>Client: 401 Unauthorized
+            Client->>Client: Evict token, redirect to /login
+        else Token Valid
+            Server->>Server: requireRole(['admin']) middleware
+            alt Role != 'admin'
+                Server-->>Client: 403 Forbidden ("Administrative clearance denied")
+            else Role == 'admin'
+                Server->>DB: Query administrative records
+                Server-->>Client: 200 OK [ hackathon records ]
+            end
+        end
+    end
+
+    %% Session Termination
+    rect rgb(255, 240, 245)
+        Note over Operative, Client: 4. SESSION TERMINATION (LOGOUT)
+        Operative->>Client: Click "Terminate Session (Logout)"
+        Client->>Client: Clear localStorage & sessionStorage
+        Client->>Client: Reset Zustand store (currentUser = null)
+        Client-->>Operative: Redirect to /login
+    end

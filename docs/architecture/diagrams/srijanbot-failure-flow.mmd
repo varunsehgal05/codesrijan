@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Operative as Student / Admin Operative
+    participant UI as SrijanBot Widget (ChatBotWidget.tsx)
+    participant API as Express Endpoint (/api/ai/chat)
+    participant Grounding as Live Data Grounding Engine
+    participant Groq as Groq Cloud API (llama-3.3-70b-versatile)
+    participant Fallback as Heuristic Fallback Engine
+
+    Operative->>UI: Input prompt ("What is the submission deadline?")
+    UI->>API: POST /api/ai/chat { message, conversationHistory }
+    API->>Grounding: Query MongoDB for active hackathon dates, sponsors, rules
+    Grounding-->>API: Synthesized Grounding Context String
+
+    API->>Groq: Request Chat Completion with 5000ms AbortSignal
+    
+    alt Groq Responds Successfully (Within 5s)
+        Groq-->>API: 200 OK { choices: [ { message: { content: "The deadline is..." } } ] }
+        API-->>UI: 200 OK { reply: "The deadline is...", provider: "groq" }
+        UI-->>Operative: Stream / render Markdown response
+    else Timeout (>5s), Rate-Limit (429), or Decommissioned Model (400/404)
+        Groq--xAPI: Error / Timeout / 429 Rate Limit
+        API->>API: Catch error safely without crashing Express process
+        API->>Fallback: Pass prompt + Grounding Context to Heuristic Fallback Engine
+        Fallback->>Fallback: Match intent keywords (deadlines, rules, squads, support)
+        Fallback-->>API: Deterministic grounded assistance answer
+        API-->>UI: 200 OK { reply: "[SRIJANBOT HEURISTIC COPILOT] ...", provider: "fallback" }
+        UI-->>Operative: Display response with graceful fallback notice
+    end

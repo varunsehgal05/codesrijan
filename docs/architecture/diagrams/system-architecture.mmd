@@ -1,0 +1,90 @@
+graph TD
+    subgraph ClientLayer ["1. CLIENT TIER (Vercel Production)"]
+        UserBrowser["User / Operative Browser"]
+        ReactApp["React 18 + Vite SPA (TanStack Router)"]
+        ZustandStore["Zustand App Store (Local Cache)"]
+        ChatBotWidget["SrijanBot Floating Widget"]
+    end
+
+    subgraph CDN ["2. EDGE & HOSTING (Vercel)"]
+        VercelCDN["Vercel Global Edge Network"]
+        StaticAssets["Static HTML / JS / CSS Bundles"]
+    end
+
+    subgraph SecurityGate ["3. SECURITY & INGRESS GATE"]
+        CORS["Strict CORS Allowlist (codesrijan-nine.vercel.app)"]
+        AuthMiddleware["JWT Authentication (requireAuth)"]
+        RBAC["Role-Based Access Control (requireRole)"]
+        AppCheck["Firebase App Check (Header Validation)"]
+    end
+
+    subgraph APILayer ["4. CANONICAL BACKEND (Render Web Service)"]
+        ExpressApp["Express.js Server (Node v20/22)"]
+        SocketServer["Socket.IO Server (Realtime Comms)"]
+        
+        subgraph Controllers ["Controllers & Service Modules"]
+            AuthCtrl["Auth & Identity Service"]
+            HackCtrl["Hackathon & Teams Directorate"]
+            ProbCtrl["Problem Directives Engine"]
+            CertCtrl["Certificate Registry & Dispatcher"]
+            SuppCtrl["Support Ticketing & SOS Dispatch"]
+            SrijanCtrl["SrijanBot AI Engine (Groq + Heuristics)"]
+            EmailCtrl["Email Relay Service (GAS + SMTP)"]
+        end
+    end
+
+    subgraph DataStore ["5. DATABASE TIER (MongoDB Atlas Free Tier)"]
+        MongoCluster["MongoDB Atlas (codesrijan-cluster)"]
+        GridFS["GridFS Bucket (Persistent Attachments)"]
+        UsersCol[("users Collection (8 Accounts)")]
+        HacksCol[("hackathons Collection (2 Arenas)")]
+        TeamsCol[("teams Collection")]
+        RegCol[("registrations Collection")]
+        CertsCol[("certificates Collection")]
+        TicketsCol[("supporttickets Collection")]
+        ConvsCol[("conversations Collection")]
+        MsgsCol[("messages Collection")]
+    end
+
+    subgraph ExternalProviders ["6. APPROVED EXTERNAL PROVIDERS ($0/mo)"]
+        GroqAPI["Groq Cloud API (llama-3.3-70b-versatile)"]
+        FirebaseAdmin["Firebase Admin SDK (Project codesrijan-450d0)"]
+        GASRelay["Google Apps Script Web App (Email Relay)"]
+    end
+
+    UserBrowser -->|HTTPS Navigation| VercelCDN
+    VercelCDN --> StaticAssets
+    StaticAssets --> ReactApp
+    ReactApp <--> ZustandStore
+    ReactApp <--> ChatBotWidget
+
+    ReactApp -->|REST API Requests| SecurityGate
+    ReactApp <-->|WebSockets| SocketServer
+    
+    SecurityGate --> CORS
+    CORS --> AuthMiddleware
+    AuthMiddleware --> RBAC
+    RBAC --> ExpressApp
+
+    ExpressApp --> AuthCtrl
+    ExpressApp --> HackCtrl
+    ExpressApp --> ProbCtrl
+    ExpressApp --> CertCtrl
+    ExpressApp --> SuppCtrl
+    ExpressApp --> SrijanCtrl
+    ExpressApp --> EmailCtrl
+
+    AuthCtrl --> UsersCol
+    HackCtrl --> HacksCol
+    HackCtrl --> TeamsCol
+    HackCtrl --> RegCol
+    CertCtrl --> CertsCol
+    CertCtrl --> GridFS
+    SuppCtrl --> TicketsCol
+    SuppCtrl --> ConvsCol
+    SuppCtrl --> MsgsCol
+
+    SrijanCtrl -->|LLM Inference (5s Timeout)| GroqAPI
+    SrijanCtrl -.->|Fallback Heuristics| ExpressApp
+    EmailCtrl -->|HTTP Relay POST| GASRelay
+    ExpressApp -->|Admin Verification| FirebaseAdmin

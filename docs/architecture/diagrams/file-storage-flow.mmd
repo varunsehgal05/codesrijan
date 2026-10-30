@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    actor Operative as Admin / Student Operative
+    participant UI as React File Upload Component
+    participant Client as Browser File API & FileReader
+    participant API as Express Server (/api/storage & /api/admin)
+    participant GridFS as MongoDB GridFS Bucket (attachments)
+    participant DB as MongoDB Atlas Collections
+
+    Note over Operative, DB: 1. INLINE PREVIEW & CLIENT-SIDE VALIDATION
+    Operative->>UI: Select File (Image / PDF / Document)
+    UI->>Client: Validate file.type (image/png, image/jpeg, application/pdf)
+    UI->>Client: Validate file.size (Cover: 5MB, QR: 2MB, PDF Spec: 15MB)
+    alt Validation Fails
+        UI-->>Operative: Toast Error ("File exceeds limit" / "Invalid format")
+    else Validation Passes
+        Client->>Client: FileReader.readAsDataURL(file)
+        Client-->>UI: Display instant preview thumbnail & removal control
+    end
+
+    Note over Operative, DB: 2. PERSISTENCE WORKFLOW (GridFS & Base64 Metadata)
+    Operative->>UI: Submit Event / Certificate / Payment Proof
+    UI->>API: POST /api/admin/certificates/upload OR /api/hackathons (with fileData)
+    API->>API: Server-side MIME validation & payload size audit
+    alt Large Media (> 500KB)
+        API->>GridFS: Open upload stream into fs.files & fs.chunks
+        GridFS-->>API: Return GridFS fileId (ObjectId)
+        API->>DB: Persist document with { fileId, originalName, mimeType, size }
+    else Lightweight Media / Data URLs (QR / Avatars)
+        API->>DB: Persist clean data URL / sanitized URI in entity schema
+    end
+    API-->>UI: 200 OK / 201 Created { success: true, assetUrl }
+    UI-->>Operative: Render success feedback & update asset status
+
+    Note over Operative, DB: 3. RETRIEVAL & ACCESS CONTROL
+    Operative->>UI: Request asset (e.g. /api/certificates/:id/download)
+    UI->>API: GET /api/certificates/:id (Authorization: Bearer <JWT>)
+    API->>API: Validate user ownership or administrative clearance
+    alt Unauthorized
+        API-->>UI: 403 Forbidden ("Unauthorized asset access")
+    else Authorized
+        API->>GridFS: Stream file chunks from MongoDB Atlas
+        GridFS-->>API: Binary file stream
+        API-->>Operative: HTTP 200 with Content-Disposition & Content-Type
+    end
