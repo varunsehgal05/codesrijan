@@ -59,6 +59,8 @@ server/*.tmp
 !server/test_srijanbot_provider_failures.mjs
 !server/export_backup_free.mjs
 *.png
+!public/*.png
+!public/**/*.png
 platform-screenshots/
 test-results/
 playwright-report/

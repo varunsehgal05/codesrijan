@@ -10,10 +10,14 @@ export function Footer() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b-2 border-zinc-800">
                     {/* Brand Column */}
                     <div className="space-y-4 md:col-span-1">
-                        <Link to="/" className="inline-block">
-                            <span className="font-display-lg text-2xl font-black uppercase tracking-tight text-white hover:text-electric-blue transition-colors flex items-center gap-2">
-                                <span className="w-3 h-3 bg-electric-blue border border-white" />
-                                CodeSrijan
+                        <Link to="/" className="inline-flex items-center gap-3 group">
+                            <img
+                                src="/codesrijan-icon.png"
+                                alt="CodeSrijan Logo"
+                                className="w-8 h-8 object-contain group-hover:scale-105 transition-transform bg-white/10 p-1 rounded-xs border border-zinc-700"
+                            />
+                            <span className="font-display-lg text-2xl font-black uppercase tracking-tight text-white group-hover:text-electric-blue transition-colors">
+                                Code<span className="text-electric-blue">Srijan</span>
                             </span>
                         </Link>
                         <p className="text-xs text-zinc-400 leading-relaxed">

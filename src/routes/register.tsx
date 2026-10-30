@@ -97,8 +97,9 @@ function RegisterPage() {
             <div className="w-full max-w-2xl bg-pure-white brutal-border brutal-shadow-lg relative z-10 flex flex-col mt-8 mb-8">
                 {/* Header Block */}
                 <div className="bg-electric-blue border-b-2 border-stark-black p-6 flex justify-between items-center group">
-                    <Link to="/" className="font-headline-md italic uppercase text-pure-white flex items-center gap-2 group-hover:-translate-x-1 transition-transform">
+                    <Link to="/" className="font-headline-md italic uppercase text-pure-white flex items-center gap-2.5 group-hover:-translate-x-1 transition-transform">
                         <span className="material-symbols-outlined">arrow_back</span>
+                        <img src="/codesrijan-icon.png" alt="CodeSrijan Logo" className="w-6 h-6 object-contain bg-white rounded-xs p-0.5" />
                         CodeSrijan Registration
                     </Link>
                     <span className="material-symbols-outlined text-pure-white">person_add</span>
@@ -115,9 +116,14 @@ function RegisterPage() {
                         </button>
                     </div>
 
-                    <h1 className="font-display-lg text-headline-xl md:text-headline-xl leading-none text-stark-black uppercase mb-2">
-                        JOIN THE <br /> <span className="text-electric-blue">RESISTANCE</span>
-                    </h1>
+                    <div className="flex items-center gap-3.5 mb-2">
+                        <img src="/codesrijan-icon.png" alt="CodeSrijan Logo" className="w-12 h-12 object-contain" />
+                        <div>
+                            <h1 className="font-display-lg text-headline-xl md:text-headline-xl leading-none text-stark-black uppercase">
+                                JOIN THE <span className="text-electric-blue">RESISTANCE</span>
+                            </h1>
+                        </div>
+                    </div>
                     <p className="font-body-md text-on-surface-variant font-bold mb-6 tracking-widest text-sm uppercase">
                         Create your hacker profile and start building.
                     </p>

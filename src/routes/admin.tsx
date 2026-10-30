@@ -60,7 +60,8 @@ function AdminLayout() {
         <div className="min-h-[calc(100vh-65px)] bg-background text-on-background flex flex-col md:flex-row font-body-md overflow-x-hidden">
             {/* Sidebar Navigation */}
             <aside className="w-full md:w-64 bg-stark-black text-pure-white border-r-4 border-electric-blue flex flex-col md:h-[calc(100vh-65px)] md:sticky md:top-[65px] shrink-0">
-                <div className="p-6 border-b-2 border-electric-blue shrink-0 flex items-center justify-between">
+                <div className="p-5 border-b-2 border-electric-blue shrink-0 flex items-center gap-3">
+                    <img src="/codesrijan-icon.png" alt="CodeSrijan Logo" className="w-8 h-8 object-contain bg-white rounded-xs p-1" />
                     <h1 className="font-headline-md text-headline-md italic tracking-tighter">
                         <span className="text-electric-blue">ADMIN</span> COMMAND
                     </h1>

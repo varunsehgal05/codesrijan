@@ -85,8 +85,9 @@ function Page14() {
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: "radial-gradient(#000 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
         <div className="max-w-[1200px] mx-auto px-gutter relative z-10 grid md:grid-cols-2 gap-12 items-center">
           <div className="flex flex-col gap-6">
-            <div className="inline-block bg-deep-navy text-pure-white px-4 py-1 font-label-bold text-label-bold w-max brutal-border transform -rotate-2">
-              <span className="material-symbols-outlined align-middle mr-2 text-sm">code</span>The Ultimate Developer Hackathon
+            <div className="inline-flex items-center gap-2.5 bg-deep-navy text-pure-white px-4 py-1.5 font-label-bold text-label-bold w-max brutal-border transform -rotate-2">
+              <img src="/codesrijan-icon.png" alt="CodeSrijan Logo" className="w-5 h-5 object-contain" />
+              <span>The Ultimate Developer Hackathon</span>
             </div>
             <h1 className="font-display-lg text-display-lg text-stark-black uppercase leading-none">
               Build.<br />

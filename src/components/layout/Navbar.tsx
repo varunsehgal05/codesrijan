@@ -62,8 +62,15 @@ export function Navbar() {
         <nav className="w-full sticky top-0 z-50 bg-surface dark:bg-ink-black border-b-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
             <div className="flex justify-between items-center px-4 xl:px-6 py-3 max-w-[1500px] mx-auto overflow-x-visible">
                 {/* Logo */}
-                <Link to="/" className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright shrink-0">
-                    CodeSrijan
+                <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+                    <img
+                        src="/codesrijan-icon.png"
+                        alt="CodeSrijan Logo"
+                        className="w-8 h-8 sm:w-9 sm:h-9 object-contain group-hover:scale-105 transition-transform"
+                    />
+                    <span className="font-display-lg text-headline-md font-extrabold text-ink-black dark:text-surface-bright tracking-tight">
+                        Code<span className="text-electric-blue">Srijan</span>
+                    </span>
                 </Link>
 
                 {/* Desktop Nav Links */}

@@ -24,9 +24,12 @@ function Page11() {
       {/*TopNavBar*/}
 <main className="flex-grow w-full max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16 flex flex-col gap-24">
         {/*Hero Section*/}
-        <section className="flex flex-col items-center text-center gap-8 relative">
+        <section className="flex flex-col items-center text-center gap-6 relative">
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-electric-blue rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse"></div>
           <div className="absolute top-20 -right-10 w-40 h-40 bg-[#00f0ff] rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-pulse" style={{ animationDelay: "1s" }}></div>
+          <div className="relative z-10 p-4 bg-white/80 border-2 border-black brutal-shadow mb-2">
+            <img src="/codesrijan-logo.png" alt="CodeSrijan Official Brand" className="w-44 sm:w-56 object-contain mx-auto" />
+          </div>
           <h1 className="font-display-lg text-display-lg text-ink-black uppercase relative z-10">
             <span className="block transform -rotate-2 bg-electric-blue text-white px-4 border-4 border-ink-black neo-shadow-lg inline-block mb-4">Unleash</span>
             Your Potential
