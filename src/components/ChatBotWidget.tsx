@@ -114,9 +114,9 @@ export function ChatBotWidget() {
     };
 
     return (
-        <div className="fixed bottom-8 right-5 sm:bottom-12 sm:right-8 z-[100] flex flex-col items-end">
+        <div className="fixed bottom-24 right-6 sm:bottom-28 sm:right-8 z-[100] flex flex-col items-end pointer-events-none">
             {isOpen && (
-                <div className="bg-surface brutal-border brutal-shadow-lg w-[min(380px,calc(100vw-2rem))] h-[min(550px,calc(100dvh-2rem))] mb-4 flex flex-col overflow-hidden">
+                <div className="bg-surface brutal-border brutal-shadow-lg w-[min(380px,calc(100vw-2rem))] h-[min(500px,calc(100dvh-9rem))] mb-4 flex flex-col overflow-hidden pointer-events-auto">
                     {/* Header */}
                     <div className="bg-electric-blue text-white p-4 border-b-4 border-ink-black flex justify-between items-center shrink-0">
                         <span className="font-headline-md uppercase text-base flex items-center gap-2">
@@ -179,7 +179,7 @@ export function ChatBotWidget() {
                     disabled={!isReady}
                     aria-label="Open SrijanBot help"
                     onClick={() => setIsOpen(true)}
-                    className="bg-electric-blue text-white p-4 brutal-border brutal-shadow brutal-hover rounded-full flex items-center justify-center group relative mt-4 block pointer-events-auto"
+                    className="bg-electric-blue text-white p-4 brutal-border brutal-shadow brutal-hover rounded-full flex items-center justify-center group relative block pointer-events-auto"
                 >
                     <span className="absolute -top-3 -left-3 bg-[#FFE100] text-ink-black text-[10px] uppercase font-bold px-2 py-0.5 brutal-border rotate-[-10deg]">Help</span>
                     <span className="material-symbols-outlined text-[32px] group-hover:rotate-12 transition-transform">smart_toy</span>
