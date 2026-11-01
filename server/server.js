@@ -161,6 +161,7 @@ app.use(verifyAppCheck);
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask, MentorRequest } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
 import { FAQ, Gallery } from './models/tertiary.js';
+import { installRolePortals } from './role-portals.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
 import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail, sendTeammateJoinedEmail, sendTeamLeaderNewMemberEmail } from './services/email.js';
@@ -168,8 +169,7 @@ import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGr
 import { handleAIChat, handleAIFallback } from './services/srijanbot.js';
 import { detectProhibitedContent, handleContentModerationIncident } from './services/moderation.js';
 
-const DIRECT_REPLICA_MONGO_URI = 'mongodb://codesrijan_db_user:mbSBS100Zj9kE5pX@ac-bav0jva-shard-00-00.mrckx43.mongodb.net:27017,ac-bav0jva-shard-00-01.mrckx43.mongodb.net:27017,ac-bav0jva-shard-00-02.mrckx43.mongodb.net:27017/codesrijan?ssl=true&replicaSet=atlas-yuufg0-shard-0&authSource=admin';
-const MONGO_URI = (process.env.MONGO_URI && !process.env.MONGO_URI.includes('undefined')) ? process.env.MONGO_URI : DIRECT_REPLICA_MONGO_URI;
+const MONGO_URI = process.env.MONGO_URI;
 
 /**
  * Immutable server-side audit logging helper for administrative actions (Feature 7).
@@ -206,16 +206,8 @@ const connectMongo = async () => {
         serverSelectionTimeoutMS: 15000,
         socketTimeoutMS: 45000
     };
-    try {
-        await mongoose.connect(MONGO_URI, opts);
-    } catch (err) {
-        if (MONGO_URI !== DIRECT_REPLICA_MONGO_URI) {
-            console.warn('[MONGO SRV FALLBACK] SRV lookup failed, falling back to direct replica set hosts...');
-            await mongoose.connect(DIRECT_REPLICA_MONGO_URI, opts);
-        } else {
-            throw err;
-        }
-    }
+    if (!MONGO_URI) throw new Error('MONGO_URI must be explicitly configured.');
+    await mongoose.connect(MONGO_URI, opts);
 };
 
 connectMongo().then(async () => {
@@ -289,19 +281,10 @@ app.use(async (req, res, next) => {
         }
 
         // Check if admin is authenticated (Admin bypass)
-        const authHeader = req.headers.authorization;
-        if (authHeader && authHeader.startsWith('Bearer ')) {
-            const token = authHeader.split(' ')[1];
-            try {
-                const sessionTokenHash = crypto.createHash('sha256').update(token).digest('hex');
-                const session = await Session.findOne({ sessionTokenHash, revokedAt: null });
-                if (session) {
-                    const u = await User.findOne({ id: session.userId });
-                    if (u && u.role === 'admin') {
-                        return next(); // Admin bypasses maintenance completely!
-                    }
-                }
-            } catch (err) {}
+        if (req.headers.authorization) {
+            const authRequest = { headers: req.headers };
+            const user = await new Promise(resolve => requireAuth(authRequest, { status() { return this; }, json() { resolve(null); } }, () => resolve(authRequest.user)));
+            if (user?.role === 'admin') return next();
         }
 
         return res.status(503).json({
@@ -2951,6 +2934,8 @@ app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async 
     res.json(team);
 });
 
+
+
 app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, res) => {
     const { teamId, repositoryUrl, demoUrl, description, projectTitle } = req.body;
     const team = await Team.findOne({ id: teamId, memberIds: req.user.id });
@@ -2978,6 +2963,8 @@ app.post('/api/submissions', requireAuth, requireRole(['student']), async (req, 
     const submission = new Submission({
         id: `sub-${Date.now()}`,
         teamId,
+        hackathonId: team.hackathonId,
+        projectId: (await Project.findOne({ teamId: team.id, hackathonId: team.hackathonId }))?.id,
         submittedBy: req.user.id,
         projectTitle,
         description,
@@ -3047,30 +3034,11 @@ app.post('/api/admin/submissions/test-submission', requireAuth, requireRole(['ad
     }
 });
 
+installRolePortals(app, logAdminActivity);
+
 // EVALUATIONS (JUDGE/ADMIN)
-app.get('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    // Return all for admin, otherwise filter to judge
-    const query = req.user.role === 'admin' ? {} : { judgeId: req.user.id };
-    const items = await Evaluation.find(query);
-    res.json(items);
-});
-app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    const { hackathonId, projectId, assignmentId, scores, totalScore, comments, strengths, improvements } = req.body;
-    const evalData = new Evaluation({
-        id: `evl-${Date.now()}`,
-        hackathonId,
-        projectId,
-        judgeId: req.user.id,
-        assignmentId,
-        scores,
-        totalScore,
-        comments,
-        strengths,
-        improvements
-    });
-    await evalData.save();
-    res.json(evalData);
-});
+
+
 
 // CERTIFICATES 
 app.post('/api/certificates/generate', requireAuth, async (req, res) => {
@@ -3224,27 +3192,7 @@ app.post('/api/conversations/admin-team/:teamId', requireAuth, requireRole(['adm
         res.status(500).json({ message: e.message || "Failed to establish team comms." });
     }
 });
-app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    const { hackathonId, projectId, assignmentId, scores, totalScore, comments, strengths, improvements } = req.body;
 
-    // Ensure Judge is grading a correctly assigned project.
-    // In reality, this requires looking up Assignment documents too. For now we save securely.
-    const evaluation = new Evaluation({
-        id: `eval-${Date.now()}`,
-        hackathonId,
-        projectId,
-        judgeId: req.user.id,
-        assignmentId,
-        scores,
-        totalScore,
-        comments,
-        strengths,
-        improvements,
-        status: 'submitted'
-    });
-    await evaluation.save();
-    res.json(evaluation);
-});
 
 // RECRUITMENT
 app.get('/api/recruitment', requireAuth, async (req, res) => {
@@ -3906,100 +3854,18 @@ app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (re
 // ==========================================
 // EPIC 5: JUDGE & EVALUATION ENGINE
 // ==========================================
-app.get('/api/evaluations', requireAuth, async (req, res) => {
-    const evals = await Evaluation.find();
-    res.json(evals);
-});
 
-app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    const { hackathonId, totalScore, scores, status } = req.body;
-    
-    // Check if an evaluation already exists for this judge and team
-    let evaluation = await Evaluation.findOne({ teamId: req.params.teamId, judgeId: req.user.id });
-    
-    if (evaluation) {
-        if (evaluation.status === 'submitted') {
-            return res.status(400).json({ message: "Evaluation already submitted and locked." });
-        }
-        evaluation.totalScore = totalScore;
-        evaluation.scores = scores;
-        evaluation.status = status;
-        await evaluation.save();
-    } else {
-        evaluation = new Evaluation({
-            id: `eval-${Date.now()}`,
-            hackathonId,
-            teamId: req.params.teamId,
-            judgeId: req.user.id,
-            totalScore,
-            scores,
-            status: status || 'draft'
-        });
-        await evaluation.save();
-    }
-    
-    res.json(eval);
-});
+
+
 
 // GET Submissions Queue (Only returns teams that have transmitted payload)
-app.get('/api/submissions', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    try {
-        const submittedTeams = await Team.find({ isSubmitted: true });
-        res.json(submittedTeams);
-    } catch (e) {
-        res.status(500).json({ message: "Engine Failure fetching submissions." });
-    }
-});
+
 
 // GET Evaluations for leaderboard parsing
-app.get('/api/evaluations', async (req, res) => {
-    try {
-        const evals = await mongoose.model('Evaluation').find({});
-        res.json(evals);
-    } catch (e) {
-        res.json([]);
-    }
-});
+
 
 // POST Formulate a final score
-app.post('/api/evaluations/:teamId', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
-    try {
-        const { hackathonId, scores, totalScore, comments, strengths, improvements } = req.body;
 
-        // Prevent duplicate grading by the same judge for the same team?
-        const existing = await mongoose.model('Evaluation').findOne({
-            teamId: req.params.teamId,
-            judgeId: req.user.id
-        });
-
-        if (existing) {
-            existing.scores = scores;
-            existing.totalScore = totalScore;
-            existing.comments = comments;
-            existing.strengths = strengths;
-            existing.improvements = improvements;
-            await existing.save();
-            return res.json(existing);
-        }
-
-        const evaluation = await mongoose.model('Evaluation').create({
-            id: 'eval_' + Date.now().toString(),
-            hackathonId,
-            teamId: req.params.teamId,
-            judgeId: req.user.id,
-            scores,
-            totalScore,
-            comments,
-            strengths,
-            improvements,
-            status: 'submitted'
-        });
-
-        res.status(201).json(evaluation);
-    } catch (e) {
-        res.status(500).json({ message: "Core error locking evaluation payload." });
-    }
-});
 
 // ==========================================
 // EPIC 4: CONVERSATIONS & CHAT (REST API)
@@ -4032,9 +3898,7 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
             ? activeCondition
             : {
                 $or: [
-                    { userId: req.user.id },
-                    { userId: 'usr-student-master' },
-                    ...(req.user.teamId ? [{ description: { $regex: req.user.teamId, $options: 'i' } }] : [])
+                    { userId: req.user.id }
                 ],
                 ...activeCondition
             };
@@ -4150,6 +4014,7 @@ app.get('/api/conversations/:id', requireAuth, async (req, res) => {
                 $or: [{ conversationId: convId }, { id: convId }]
             });
             if (ticket) {
+                if (req.user.role !== 'admin' && ticket.userId !== req.user.id) return res.status(403).json({ message: 'Access Denied.' });
                 const targetId = ticket.conversationId || convId;
                 conv = await Conversation.findOne({ id: targetId });
                 if (!conv) {
@@ -4173,6 +4038,7 @@ app.get('/api/conversations/:id', requireAuth, async (req, res) => {
 
         if (!conv) return res.status(404).json({ message: "Conversation not found." });
 
+        if (req.user.role !== 'admin' && !conv.participantIds?.includes(req.user.id) && !(conv.teamId && await Team.exists({ id: conv.teamId, memberIds: req.user.id }))) return res.status(403).json({ message: 'Access Denied.' });
         const convObj = conv.toObject();
         if (conv.type === 'direct') {
             const otherUserId = conv.participantIds.find(id => id !== req.user.id);
@@ -4250,6 +4116,7 @@ app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
                 $or: [{ conversationId: convId }, { id: convId }]
             });
             if (ticket) {
+                if (req.user.role !== 'admin' && ticket.userId !== req.user.id) return res.status(403).json({ message: 'Access Denied.' });
                 const targetId = ticket.conversationId || convId;
                 conv = await Conversation.findOne({ id: targetId });
                 if (!conv) {
@@ -4283,7 +4150,7 @@ app.get('/api/conversations/:id/messages', requireAuth, async (req, res) => {
             let isTicketOwner = false;
             if (conv.type === 'support') {
                 const ticket = await SupportTicket.findOne({ conversationId: conv.id });
-                if (ticket && (ticket.userId === req.user.id || (req.user.teamId && ticket.description?.includes(req.user.teamId)))) {
+                if (ticket && (ticket.userId === req.user.id)) {
                     isTicketOwner = true;
                 }
             }
@@ -4870,123 +4737,15 @@ app.get('/api/admin/analytics', requireAuth, requireRole(['admin']), async (req,
 });
 
 // --- MENTOR REQUESTS ---
-app.post('/api/mentor/requests', requireAuth, async (req, res) => {
-    try {
-        if (!req.user.teamId) return res.status(403).json({ message: "You must be in a squad to request mentor support." });
-        
-        const { topic, description } = req.body;
-        const mentorReq = new MentorRequest({
-            id: 'mr-' + Date.now().toString(),
-            teamId: req.user.teamId,
-            requestedBy: req.user.id,
-            topic,
-            description,
-            status: 'pending'
-        });
-        await mentorReq.save();
 
-        const team = await Team.findOne({ id: req.user.teamId });
-        const squadName = team ? team.name : req.user.teamId;
 
-        // Create high-priority SupportTicket so it appears on /admin/support
-        const ticketId = 'tkt-sos-' + Date.now().toString();
-        const convId = 'conv-sup-' + ticketId;
 
-        await SupportTicket.create({
-            id: ticketId,
-            userId: req.user.id,
-            subject: `🚨 [SOS MENTOR DISPATCH] ${topic}`,
-            category: 'mentor_sos',
-            priority: 'urgent',
-            description: `[SQUAD: ${squadName}] ${description}`,
-            affectedPage: '/workspace',
-            status: 'open',
-            conversationId: convId
-        }).catch(() => {});
 
-        await Conversation.create({
-            id: convId,
-            type: 'support',
-            participantIds: [req.user.id]
-        }).catch(() => {});
 
-        await Message.create({
-            id: 'msg-' + Date.now().toString(),
-            conversationId: convId,
-            senderId: req.user.id,
-            message: `[SOS Broadcast] Squad "${squadName}" requested urgent mentor dispatch for topic: ${topic}.\nDetails: ${description}`
-        }).catch(() => {});
 
-        // Broadcast a notification to all mentors AND admins
-        const staffUsers = await User.find({ role: { $in: ['mentor', 'admin'] } });
-        for (const staff of staffUsers) {
-            await Notification.create({
-                id: 'notif-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7),
-                userId: staff.id,
-                title: '🚨 SQUAD SOS: MENTOR DISPATCH',
-                message: `Squad "${squadName}" sent an SOS distress signal: ${topic}`,
-                type: 'support',
-                relatedId: mentorReq.id,
-                isRead: false
-            }).catch(() => {});
-        }
 
-        res.json(mentorReq);
-    } catch (e) { res.status(500).json({ message: "Failed to request mentor: " + e.message }); }
-});
 
-app.get('/api/mentor/requests/all', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
-    try {
-        const reqs = await MentorRequest.find().sort({ createdAt: -1 });
-        res.json(reqs);
-    } catch (e) { res.status(500).json({ message: "Error fetching mentor requests." }); }
-});
 
-app.get('/api/teams/:id/mentor-requests', requireAuth, async (req, res) => {
-    try {
-        const reqs = await MentorRequest.find({ teamId: req.params.id }).sort({ createdAt: -1 });
-        res.json(reqs);
-    } catch (e) { res.status(500).json({ message: "Error fetching team mentor requests." }); }
-});
-
-app.post('/api/mentor/requests/:id/accept', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
-    try {
-        const { meetLink } = req.body;
-        const reqDoc = await MentorRequest.findOne({ id: req.params.id });
-        if (!reqDoc) return res.status(404).json({ message: "Request not found" });
-
-        reqDoc.status = 'accepted';
-        reqDoc.mentorId = req.user.id;
-        reqDoc.meetLink = meetLink;
-        reqDoc.acceptedAt = new Date();
-        await reqDoc.save();
-
-        // Notify the team leader
-        const team = await Team.findOne({ id: reqDoc.teamId });
-        if (team) {
-            await Notification.create({
-                id: 'notif-' + Date.now(),
-                userId: team.leaderId,
-                title: 'Mentor Request Accepted!',
-                message: `A mentor has accepted your request. Join the Meet link!`,
-                type: 'mentor',
-                relatedId: reqDoc.id
-            });
-        }
-
-        res.json(reqDoc);
-    } catch (e) { res.status(500).json({ message: "Error accepting request." }); }
-});
-
-app.post('/api/mentor/requests/:id/resolve', requireAuth, async (req, res) => {
-    try {
-        const reqDoc = await MentorRequest.findOne({ id: req.params.id });
-        if (!reqDoc) return res.status(404).json({ message: "Request not found" });
-        reqDoc.status = 'resolved';
-        await reqDoc.save();
-        res.json(reqDoc);
-    } catch (e) { res.status(500).json({ message: "Error resolving request." }); }
-});
 
 // --- PUBLIC GALLERY ---
 app.get('/api/gallery/projects', async (req, res) => {

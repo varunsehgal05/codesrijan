@@ -67,6 +67,7 @@ const evaluationCriteriaSchema = new mongoose.Schema({
     hackathonId: String,
     name: String,
     description: String,
+    minScore: { type: Number, default: 0 },
     maxScore: Number,
     weight: Number,
     order: Number,

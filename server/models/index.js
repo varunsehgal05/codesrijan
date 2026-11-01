@@ -55,6 +55,7 @@ const hackathonSchema = new mongoose.Schema({
     registrationEnd: Date,
     submissionDeadline: Date,
     evaluationDeadline: Date,
+    evaluationPolicy: { roundingDecimals: { type: Number, default: 2 }, mandatoryFeedback: { type: Boolean, default: true } },
     resultDate: Date,
     teamSizeMin: Number,
     teamSizeMax: Number,
@@ -292,6 +293,13 @@ const evaluationSchema = new mongoose.Schema({
     teamId: String,
     judgeId: String,
     assignmentId: String,
+    submissionId: String,
+    projectId: String,
+    submittedAt: Date,
+    reopenedAt: Date,
+    reopenedBy: String,
+    reopenReason: String,
+    rubricSnapshot: [{ criteriaId: String, name: String, minScore: Number, maxScore: Number, weight: Number }],
     scores: [{ criteriaId: String, score: Number }],
     totalScore: Number,
     comments: String,
@@ -415,7 +423,10 @@ const mentorRequestSchema = new mongoose.Schema({
     description: String,
     status: { type: String, enum: ['pending', 'accepted', 'resolved', 'cancelled'], default: 'pending' },
     meetLink: String,
-    acceptedAt: Date
+    acceptedAt: Date,
+    resolvedAt: Date,
+    priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
+    responses: [{ id: String, authorId: String, message: String, createdAt: Date }]
 }, { timestamps: true });
 
 // Export logic (prevent overwrite if extremely frequent hot reloading)
