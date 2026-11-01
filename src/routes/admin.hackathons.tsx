@@ -1,3 +1,4 @@
+import { toast } from "react-hot-toast";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
@@ -12,7 +13,7 @@ function toInputDate(val: any): string {
     if (!val) return "";
     try {
         const d = new Date(val);
-        return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+        return isNaN(d.getTime()) ? "" : (d.toISOString().split("T")[0] ?? "");
     } catch {
         return "";
     }

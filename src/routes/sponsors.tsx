@@ -22,7 +22,7 @@ interface SponsorItem {
   isPublished?: boolean;
 }
 
-function SponsorLogo({ logo, name, className, textSize }: { logo?: string; name: string; className?: string; textSize?: string }) {
+function SponsorLogo({ logo, name, className, textSize }: { logo?: string | undefined; name: string; className?: string; textSize?: string }) {
   const [error, setError] = useState(false);
   if (!logo || error) {
     return <span className={`font-bold ${textSize || 'text-2xl'} text-stark-black font-mono`}>{name.charAt(0)}</span>;

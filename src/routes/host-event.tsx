@@ -142,9 +142,9 @@ export function HostEventPage() {
     };
 
     const handleProblemChange = (idx: number, field: keyof ProblemDraft, val: string) => {
-        const next = [...problems];
-        next[idx] = { ...next[idx], [field]: val };
-        setProblems(next);
+        setProblems(current => current.map((problem, index) =>
+            index === idx ? { ...problem, [field]: val } : problem
+        ));
     };
 
     const handleNameChange = (val: string) => {
@@ -468,7 +468,7 @@ export function HostEventPage() {
                             <div className="space-y-2 pt-2">
                                 <label className="text-xs font-black uppercase text-stark-black">Campus Physical Venue Address &amp; Hall *</label>
                                 <input
-                                    required={mode !== 'online'}
+                                    required
                                     type="text"
                                     value={venue}
                                     onChange={(e) => setVenue(e.target.value)}

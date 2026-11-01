@@ -117,7 +117,7 @@ function LeaderboardPage() {
     }
 
     // Merge score data
-    const merged = candidateTeams.map(t => {
+    const merged: LeaderboardItem[] = candidateTeams.map(t => {
       const scored = scoreMap.get(t.id);
       return {
         id: t.id,
@@ -324,7 +324,7 @@ function LeaderboardPage() {
                       ? 'border-zinc-400 bg-gradient-to-b from-zinc-50/60 to-pure-white shadow-[6px_6px_0px_0px_#71717A]' 
                       : 'border-amber-600 bg-gradient-to-b from-amber-50/60 to-pure-white shadow-[6px_6px_0px_0px_#D97706]';
                   const hackathonMatch = genuineHackathons.find(h => h.id === team.hackathonId);
-                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member !== undefined);
 
                   return (
                     <div
@@ -421,7 +421,7 @@ function LeaderboardPage() {
               <div className="divide-y-2 divide-stark-black">
                 {filteredTeams.map((team, idx) => {
                   const hackathonMatch = genuineHackathons.find(h => h.id === team.hackathonId);
-                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+                  const members = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member !== undefined);
                   const isExpanded = expandedTeam === team.id;
 
                   return (

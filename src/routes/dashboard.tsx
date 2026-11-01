@@ -189,7 +189,7 @@ function DashboardPage() {
                             id: 'squad',
                             title: '2. Squad Allocation',
                             done: hasSquad,
-                            desc: hasSquad ? `Connected to squad "${userTeam.name}".` : 'Recruit teammates or join a 1-4 operative squad.',
+                            desc: hasSquad ? `Connected to squad "${userTeam?.name ?? ""}".` : 'Recruit teammates or join a 1-4 operative squad.',
                             link: '/recruitment',
                             action: 'Recruitment'
                         },
@@ -213,7 +213,7 @@ function DashboardPage() {
                             id: 'track',
                             title: '5. Problem Statement Track',
                             done: hasTrack,
-                            desc: hasTrack ? `Locked track: ${userTeam.problemId}` : (hasSquad ? 'Lock an active problem statement for your team.' : 'Requires active squad before track selection.'),
+                            desc: hasTrack ? `Locked track: ${userTeam?.problemId ?? ""}` : (hasSquad ? 'Lock an active problem statement for your team.' : 'Requires active squad before track selection.'),
                             link: '/problems',
                             action: 'View Tracks'
                         },

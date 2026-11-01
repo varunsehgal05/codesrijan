@@ -81,7 +81,7 @@ export async function requestNotificationPermission(): Promise<{ granted: boolea
         try {
             token = await getToken(messaging, {
                 vapidKey,
-                serviceWorkerRegistration: swRegistration
+                ...(swRegistration ? { serviceWorkerRegistration: swRegistration } : {})
             });
         } catch (tokenErr: any) {
             console.warn("[FCM] Token retrieval note:", tokenErr.message);

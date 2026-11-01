@@ -222,7 +222,7 @@ function AdminRecruitment() {
         ) : (
           filteredTeams.map(team => {
             const hackathonMatch = genuineHackathons.find(h => h.id === (team.hackathonId || (team as any).lockedForHackathonId));
-            const memberList = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+            const memberList = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member != null);
             const isDq = team.status === 'disqualified';
             const isActionBusy = actionLoadingId === team.id;
 

@@ -27,7 +27,7 @@ export function getFirebaseApp(): FirebaseApp | null {
     if (!app) {
         const existing = getApps();
         if (existing.length > 0) {
-            app = existing[0];
+            app = getApp();
         } else {
             app = initializeApp(firebaseConfig);
         }

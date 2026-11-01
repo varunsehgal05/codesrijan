@@ -81,6 +81,7 @@ function SupportPage() {
       const interval = setInterval(fetchTickets, 12000);
       return () => clearInterval(interval);
     }
+    return undefined;
   }, [currentUser]);
 
   const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null;
@@ -116,6 +117,7 @@ function SupportPage() {
     } else {
       setMessages([]);
     }
+    return undefined;
   }, [selectedTicketId]);
 
   useEffect(() => {
@@ -690,7 +692,7 @@ function SupportPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateTicket} className="p-6 flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
               
               {/* Category Card Selector (Discord Style) */}
               <div>

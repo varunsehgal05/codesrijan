@@ -108,6 +108,7 @@ function AdminSupport() {
     } else {
       setMessages([]);
     }
+    return undefined;
   }, [selectedTicketId]);
 
   useEffect(() => {

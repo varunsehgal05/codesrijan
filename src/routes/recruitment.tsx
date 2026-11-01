@@ -339,7 +339,7 @@ function RecruitmentMatrix() {
   // ==========================================================================
   // RENDER: ADMIN SQUAD DIRECTORATE (NO FIND / JOIN / CREATE TABS)
   // ==========================================================================
-  if (currentUser.role === 'admin') {
+  if (['admin'].includes(currentUser.role)) {
     return (
       <div className="min-h-screen bg-background text-on-background pb-20">
         <main className="max-w-[1300px] w-full mx-auto px-4 md:px-8 py-12 flex flex-col gap-8">
@@ -444,7 +444,7 @@ function RecruitmentMatrix() {
             ) : (
               adminFilteredTeams.map(team => {
                 const hackathonMatch = genuineHackathons.find(h => h.id === (team.hackathonId || (team as any).lockedForHackathonId));
-                const memberList = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter(Boolean);
+                const memberList = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member != null);
                 const isDq = team.status === 'disqualified';
                 const isActionBusy = actionLoadingId === team.id;
 

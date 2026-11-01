@@ -293,7 +293,7 @@ export function NotificationCenterComponent() {
                         </div>
                     ) : (
                         filteredNotifications.map(n => {
-                            const meta = NOTIF_ICONS[n.type] || NOTIF_ICONS.default;
+                            const meta = NOTIF_ICONS[n.type] ?? NOTIF_ICONS.default!;
                             const isSelected = selectedIds.includes(n.id);
 
                             return (

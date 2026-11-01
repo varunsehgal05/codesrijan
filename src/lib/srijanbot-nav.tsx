@@ -65,7 +65,7 @@ export function sanitizeNavigationRoute(route: string): string | null {
     if (/^[a-z]+:\/\//i.test(clean)) return null;
 
     // Strip query or fragment for base path check
-    const basePath = clean.split('?')[0].split('#')[0];
+    const basePath = clean.split(/[?#]/, 1)[0] ?? '';
 
     // Check if exact match or child of allowed route
     if (ALLOWED_NAVIGATION_ROUTES.has(basePath)) {

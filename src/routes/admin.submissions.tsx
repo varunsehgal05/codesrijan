@@ -46,7 +46,7 @@ function AdminSubmissions() {
 
   useEffect(() => {
     fetchSubmissions();
-    if (hackathons && hackathons.length > 0) {
+    if (hackathons?.[0]) {
       setTestHackathonId(hackathons[0].id);
     }
   }, [hackathons]);

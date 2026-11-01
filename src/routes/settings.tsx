@@ -59,7 +59,7 @@ function SettingsPage() {
     setNotifications(updated);
     try {
       localStorage.setItem("codesrijan_pref_notifications", JSON.stringify(updated));
-      toast.success(`Preference [${key}] updated.`);
+      toast.success(`Preference [${String(key)}] updated.`);
     } catch (e) {
       console.error(e);
     }
