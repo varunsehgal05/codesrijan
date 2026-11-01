@@ -8,7 +8,8 @@ import mongoose from 'mongoose';
 import { handleAIChat, handleAIFallback, computeAIFallback, getPlatformContext, VALID_ROUTES, getEffectiveGroqModel, DEFAULT_GROQ_MODEL, FALLBACK_GROQ_MODEL } from './services/srijanbot.js';
 import { User, Team, Hackathon, Registration, Submission } from './models/index.js';
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan';
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI || !/^mongodb:\/\/(127\.0\.0\.1|localhost):/.test(MONGO_URI)) throw new Error('Explicit isolated local MONGO_URI required for provider failure tests.');
 
 function createMockRes() {
     return {
