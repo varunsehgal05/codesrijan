@@ -26,6 +26,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as HighlightsRouteImport } from './routes/highlights'
 import { Route as HostEventRouteImport } from './routes/host-event'
+import { Route as JudgeCommandCenterRouteImport } from './routes/judge-command-center'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MentorRouteImport } from './routes/mentor'
@@ -38,6 +39,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProfileOverviewRouteImport } from './routes/profile-overview'
 import { Route as RecruitmentRouteImport } from './routes/recruitment'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RulesRouteImport } from './routes/rules'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SponsorsRouteImport } from './routes/sponsors'
 import { Route as SupportRouteImport } from './routes/support'
@@ -163,6 +165,11 @@ const HostEventRoute = HostEventRouteImport.update({
   path: '/host-event',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JudgeCommandCenterRoute = JudgeCommandCenterRouteImport.update({
+  id: '/judge-command-center',
+  path: '/judge-command-center',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
@@ -221,6 +228,11 @@ const RecruitmentRoute = RecruitmentRouteImport.update({
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RulesRoute = RulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -437,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
+  '/judge-command-center': typeof JudgeCommandCenterRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
@@ -449,6 +462,7 @@ export interface FileRoutesByFullPath {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
@@ -506,6 +520,7 @@ export interface FileRoutesByTo {
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
+  '/judge-command-center': typeof JudgeCommandCenterRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
@@ -518,6 +533,7 @@ export interface FileRoutesByTo {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
@@ -577,6 +593,7 @@ export interface FileRoutesById {
   '/gallery': typeof GalleryRoute
   '/highlights': typeof HighlightsRoute
   '/host-event': typeof HostEventRoute
+  '/judge-command-center': typeof JudgeCommandCenterRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/mentor': typeof MentorRoute
@@ -589,6 +606,7 @@ export interface FileRoutesById {
   '/profile-overview': typeof ProfileOverviewRoute
   '/recruitment': typeof RecruitmentRoute
   '/register': typeof RegisterRoute
+  '/rules': typeof RulesRoute
   '/settings': typeof SettingsRoute
   '/sponsors': typeof SponsorsRoute
   '/support': typeof SupportRoute
@@ -649,6 +667,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/highlights'
     | '/host-event'
+    | '/judge-command-center'
     | '/leaderboard'
     | '/login'
     | '/mentor'
@@ -661,6 +680,7 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/rules'
     | '/settings'
     | '/sponsors'
     | '/support'
@@ -718,6 +738,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/highlights'
     | '/host-event'
+    | '/judge-command-center'
     | '/leaderboard'
     | '/login'
     | '/mentor'
@@ -730,6 +751,7 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/rules'
     | '/settings'
     | '/sponsors'
     | '/support'
@@ -788,6 +810,7 @@ export interface FileRouteTypes {
     | '/gallery'
     | '/highlights'
     | '/host-event'
+    | '/judge-command-center'
     | '/leaderboard'
     | '/login'
     | '/mentor'
@@ -800,6 +823,7 @@ export interface FileRouteTypes {
     | '/profile-overview'
     | '/recruitment'
     | '/register'
+    | '/rules'
     | '/settings'
     | '/sponsors'
     | '/support'
@@ -859,6 +883,7 @@ export interface RootRouteChildren {
   GalleryRoute: typeof GalleryRoute
   HighlightsRoute: typeof HighlightsRoute
   HostEventRoute: typeof HostEventRoute
+  JudgeCommandCenterRoute: typeof JudgeCommandCenterRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   MentorRoute: typeof MentorRoute
@@ -871,6 +896,7 @@ export interface RootRouteChildren {
   ProfileOverviewRoute: typeof ProfileOverviewRoute
   RecruitmentRoute: typeof RecruitmentRoute
   RegisterRoute: typeof RegisterRoute
+  RulesRoute: typeof RulesRoute
   SettingsRoute: typeof SettingsRoute
   SponsorsRoute: typeof SponsorsRoute
   SupportRoute: typeof SupportRoute
@@ -1006,6 +1032,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HostEventRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/judge-command-center': {
+      id: '/judge-command-center'
+      path: '/judge-command-center'
+      fullPath: '/judge-command-center'
+      preLoaderRoute: typeof JudgeCommandCenterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/leaderboard': {
       id: '/leaderboard'
       path: '/leaderboard'
@@ -1088,6 +1121,13 @@ declare module '@tanstack/react-router' {
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rules': {
+      id: '/rules'
+      path: '/rules'
+      fullPath: '/rules'
+      preLoaderRoute: typeof RulesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -1466,6 +1506,7 @@ const rootRouteChildren: RootRouteChildren = {
   GalleryRoute: GalleryRoute,
   HighlightsRoute: HighlightsRoute,
   HostEventRoute: HostEventRoute,
+  JudgeCommandCenterRoute: JudgeCommandCenterRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   MentorRoute: MentorRoute,
@@ -1478,6 +1519,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileOverviewRoute: ProfileOverviewRoute,
   RecruitmentRoute: RecruitmentRoute,
   RegisterRoute: RegisterRoute,
+  RulesRoute: RulesRoute,
   SettingsRoute: SettingsRoute,
   SponsorsRoute: SponsorsRoute,
   SupportRoute: SupportRoute,

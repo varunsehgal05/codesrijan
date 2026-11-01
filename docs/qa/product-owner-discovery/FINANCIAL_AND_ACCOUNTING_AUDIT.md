@@ -101,3 +101,4 @@ The following financial decisions **cannot be solved by code** and require expli
 ---
 
 *Verified from payment controller and registration schema in `server/server.js`.*
+

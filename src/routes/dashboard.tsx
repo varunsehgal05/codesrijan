@@ -294,12 +294,21 @@ function DashboardPage() {
                     {/* Mission Status (Team/Project) */}
                     {/* Mission Status (Team/Project) & Judge Portal */}
                     <div className="col-span-1 md:col-span-8 bg-surface-bright brutal-border brutal-shadow p-8 flex flex-col justify-between h-full">
-                        {(currentUser.role === 'admin' || currentUser.role === 'judge') && (
+                        {currentUser.role === 'judge' && (
                             <div className="mb-8 border-4 border-ink-black p-6 bg-[#ffeb3b] text-ink-black brutal-shadow">
                                 <h3 className="font-display-md text-2xl uppercase mb-2 flex items-center gap-2"><span className="material-symbols-outlined text-3xl">policy</span> Judge Operations Center</h3>
                                 <p className="font-body-md mb-4 font-bold">You possess rigorous grade authorization capability. Open the matrix to begin rendering judgments on locked payloads.</p>
-                                <Link to="/evaluations" className="bg-ink-black text-pure-white w-full uppercase py-3 font-label-bold flex items-center justify-center gap-2 brutal-hover">
-                                    <span className="material-symbols-outlined text-electric-blue">launch</span> ENTER JUDGE PORTAL
+                                <Link to="/judge-command-center" className="bg-ink-black text-pure-white w-full uppercase py-3 font-label-bold flex items-center justify-center gap-2 brutal-hover">
+                                    <span className="material-symbols-outlined text-electric-blue">launch</span> ENTER JUDGE COMMAND CENTER
+                                </Link>
+                            </div>
+                        )}
+                        {currentUser.role === 'mentor' && (
+                            <div className="mb-8 border-4 border-ink-black p-6 bg-[#00E5FF] text-stark-black brutal-shadow">
+                                <h3 className="font-display-md text-2xl uppercase mb-2 flex items-center gap-2"><span className="material-symbols-outlined text-3xl">psychology</span> Mentor Guidance Hub</h3>
+                                <p className="font-body-md mb-4 font-bold">Provide technical assistance, resolve SOS tickets, and hold mentoring sessions with assigned squads.</p>
+                                <Link to="/mentor-command-center" className="bg-ink-black text-pure-white w-full uppercase py-3 font-label-bold flex items-center justify-center gap-2 brutal-hover">
+                                    <span className="material-symbols-outlined text-electric-blue">launch</span> ENTER MENTOR COMMAND CENTER
                                 </Link>
                             </div>
                         )}
@@ -392,6 +401,28 @@ function DashboardPage() {
                                             </Link>
                                         </div>
                                     </div>
+                                </div>
+                            ) : currentUser.role === 'mentor' ? (
+                                <div className="bg-surface-container-highest border-4 border-stark-black p-6 shadow-[6px_6px_0px_0px_#000000] space-y-4">
+                                    <span className="text-[10px] font-mono font-bold uppercase bg-electric-blue text-white px-2 py-0.5">
+                                        OFFICIAL MENTOR
+                                    </span>
+                                    <h3 className="font-display-md text-xl uppercase">Mentor Guidance Directorate</h3>
+                                    <p className="font-body-md text-zinc-600">You are registered as an official mentor. Oversee your assigned squads and answer technical guidance requests.</p>
+                                    <Link to="/mentor-command-center" className="inline-block bg-electric-blue text-white px-4 py-2 font-bold uppercase brutal-border">
+                                        Enter Mentor Command Center
+                                    </Link>
+                                </div>
+                            ) : currentUser.role === 'judge' ? (
+                                <div className="bg-surface-container-highest border-4 border-stark-black p-6 shadow-[6px_6px_0px_0px_#000000] space-y-4">
+                                    <span className="text-[10px] font-mono font-bold uppercase bg-[#FFD700] text-black px-2 py-0.5">
+                                        OFFICIAL JUDGE
+                                    </span>
+                                    <h3 className="font-display-md text-xl uppercase">Judge Evaluation Directorate</h3>
+                                    <p className="font-body-md text-zinc-600">You are registered as an official judge. Review submissions and score according to the event rubric.</p>
+                                    <Link to="/judge-command-center" className="inline-block bg-electric-blue text-white px-4 py-2 font-bold uppercase brutal-border">
+                                        Enter Judge Command Center
+                                    </Link>
                                 </div>
                             ) : !userTeam ? (
                                 <div className="bg-error text-on-primary p-6 brutal-border">
@@ -504,20 +535,46 @@ function DashboardPage() {
                     {/* Quick Stats & Notifications */}
                     <div className="col-span-1 md:col-span-4 flex flex-col gap-8 h-full">
 
-                        {/* Global Rank */}
-                        <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
-                            <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-4 tracking-wider">GLOBAL RANKING (LIVE)</p>
-                            {userTeam ? (
-                                <>
-                                    <div className="w-24 h-24 rounded-full border-4 border-ink-black bg-electric-blue text-on-primary flex items-center justify-center font-display-lg text-4xl mb-4 brutal-shadow animate-ping-slow">
-                                        #{myRank > 0 ? myRank : '?'}
-                                    </div>
-                                    <a href="/leaderboard" className="font-label-bold text-electric-blue hover:underline">VIEW LEADERBOARD &rarr;</a>
-                                </>
-                            ) : (
-                                <div className="text-zinc-500 font-label-bold mb-4 font-mono text-xl">N/A</div>
-                            )}
-                        </div>
+                        {/* Global Rank or Role HUD */}
+                        {currentUser.role === 'admin' ? (
+                            <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
+                                <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-2 tracking-wider">ADMIN CONTROL TERMINAL</p>
+                                <span className="material-symbols-outlined text-4xl text-electric-blue mb-2">admin_panel_settings</span>
+                                <Link to="/admin" className="w-full bg-[#00E5FF] text-black font-label-bold py-2 px-3 border-2 border-black hover:-translate-y-0.5 uppercase text-xs">
+                                    LAUNCH FULL ADMIN CONSOLE &rarr;
+                                </Link>
+                            </div>
+                        ) : currentUser.role === 'mentor' ? (
+                            <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
+                                <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-2 tracking-wider">MENTOR DESK</p>
+                                <span className="material-symbols-outlined text-4xl text-[#00E5FF] mb-2">psychology</span>
+                                <Link to="/mentor-command-center" className="w-full bg-electric-blue text-white font-label-bold py-2 px-3 border-2 border-black hover:-translate-y-0.5 uppercase text-xs">
+                                    OPEN MENTOR COMMAND &rarr;
+                                </Link>
+                            </div>
+                        ) : currentUser.role === 'judge' ? (
+                            <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
+                                <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-2 tracking-wider">JUDGE DESK</p>
+                                <span className="material-symbols-outlined text-4xl text-[#FFD700] mb-2">policy</span>
+                                <Link to="/judge-command-center" className="w-full bg-[#FFD700] text-black font-label-bold py-2 px-3 border-2 border-black hover:-translate-y-0.5 uppercase text-xs">
+                                    OPEN JUDGE COMMAND &rarr;
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="bg-white brutal-border brutal-shadow p-6 flex flex-col items-center justify-center text-center">
+                                <p className="font-mono text-xs uppercase font-bold text-zinc-600 mb-4 tracking-wider">GLOBAL RANKING (LIVE)</p>
+                                {userTeam ? (
+                                    <>
+                                        <div className="w-24 h-24 rounded-full border-4 border-ink-black bg-electric-blue text-on-primary flex items-center justify-center font-display-lg text-4xl mb-4 brutal-shadow animate-ping-slow">
+                                            #{myRank > 0 ? myRank : '?'}
+                                        </div>
+                                        <a href="/leaderboard" className="font-label-bold text-electric-blue hover:underline">VIEW LEADERBOARD &rarr;</a>
+                                    </>
+                                ) : (
+                                    <div className="text-zinc-500 font-label-bold mb-4 font-mono text-xl">N/A</div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Secure Comm Links */}
                         <div className="bg-surface-container-highest brutal-border brutal-shadow p-6 flex-grow">

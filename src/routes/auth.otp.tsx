@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 import { API_BASE } from "../lib/utils";
+import { roleHome } from '../lib/role-home';
 
 export const Route = createFileRoute("/auth/otp")({
     component: OTPVerification,
@@ -133,11 +134,7 @@ function OTPVerification() {
             const res = await verifyEmail(pendingId, fullCode);
             setSuccessMsg("Account verified successfully! Redirecting...");
             setTimeout(() => {
-                if (res.user?.role === "admin") {
-                    navigate({ to: "/admin" });
-                } else {
-                    navigate({ to: "/workspace" });
-                }
+                navigate({ to: roleHome(res.user?.role) });
             }, 800);
         } catch (err: any) {
             const rawMsg = err.message || "";

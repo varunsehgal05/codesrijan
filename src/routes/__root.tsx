@@ -139,6 +139,7 @@ function RootComponent() {
   }, [routerState.location.pathname]);
 
   const isAdminRoute = routerState.location.pathname.startsWith('/admin');
+  const isRolePortal = ['/mentor-command-center', '/judge-command-center', '/mentor', '/evaluations'].includes(routerState.location.pathname);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -148,9 +149,9 @@ function RootComponent() {
           <div key={routerState.location.pathname} className="neo-page-transition flex flex-col min-h-screen w-full relative overflow-x-hidden">
             <Navbar />
             <Outlet key={routerState.location.pathname} />
-            {!isAdminRoute && <Footer />}
+            {!isAdminRoute && !isRolePortal && <Footer />}
           </div>
-          <ChatBotWidget />
+          {!isRolePortal && <ChatBotWidget />}
           <Toaster position="bottom-right" toastOptions={{
             className: 'brutal-border font-label-bold rounded-none',
             style: {

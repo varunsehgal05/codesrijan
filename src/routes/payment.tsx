@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -74,6 +74,8 @@ function PaymentPage() {
 
     const loadData = async () => {
         setLoading(true);
+        setHackathon(null);
+        setRegistration(null);
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             if (!token) {
@@ -100,8 +102,7 @@ function PaymentPage() {
             }
 
             if (!targetHackathonId) {
-                // Fallback demo hackathon
-                targetHackathonId = 'hack-1';
+                return;
             }
 
             // Fetch registration
@@ -275,7 +276,8 @@ function PaymentPage() {
     };
 
     const copyUpi = () => {
-        const upi = hackathon?.upiId || "codesrijan@upi";
+        const upi = hackathon?.upiId;
+        if (!upi) return;
         navigator.clipboard.writeText(upi);
         toast.success("UPI ID copied to clipboard!");
     };
@@ -291,10 +293,26 @@ function PaymentPage() {
         );
     }
 
-    const feeToDisplay = registration?.feeAmount ?? hackathon?.fee ?? 1500;
-    const feeBasisDisplay = registration?.feeBasis ?? hackathon?.feeBasis ?? 'per_team';
-    const upiIdDisplay = hackathon?.upiId || "codesrijan@okhdfcbank";
-    const payeeDisplay = hackathon?.payeeName || "CodeSrijan Organization";
+    if (!hackathon || !registration) {
+        return <main className="max-w-3xl mx-auto p-8 space-y-4 min-h-[60vh]">
+            <h1 className="font-headline-md text-2xl">Choose a hackathon registration</h1>
+            <p>Register for an event to view its official fee and payment instructions. No payment is due from this page until a registration is available.</p>
+            <Link to="/hackathons" className="inline-block border-2 border-black p-3 font-bold">Browse hackathons</Link>
+        </main>;
+    }
+
+    if (registration.entryType === 'free' || registration.paymentStatus === 'not_required') {
+        return <main className="max-w-3xl mx-auto p-8 space-y-4 min-h-[60vh]">
+            <h1 className="font-headline-md text-2xl">No payment required</h1>
+            <p>{hackathon.name} is a free event. Registration status: {registration.status}.</p>
+            <Link to="/workspace" className="inline-block border-2 border-black p-3 font-bold">Open workspace</Link>
+        </main>;
+    }
+
+    const feeToDisplay = registration.feeAmount;
+    const feeBasisDisplay = registration.feeBasis;
+    const upiIdDisplay = hackathon.upiId || '';
+    const payeeDisplay = hackathon.payeeName || 'Not configured';
     const isUnderReview = registration?.paymentStatus === 'payment_under_review';
     const isVerified = registration?.paymentStatus === 'verified' || registration?.status === 'registered';
     const isRejected = registration?.paymentStatus === 'rejected';
@@ -417,7 +435,7 @@ function PaymentPage() {
                             <div className="space-y-3 text-sm">
                                 <div className="flex justify-between text-zinc-300">
                                     <span>Target Event</span>
-                                    <span className="font-bold text-white uppercase">{hackathon?.name || "CodeSrijan '24"}</span>
+                                    <span className="font-bold text-white uppercase">{hackathon.name}</span>
                                 </div>
                                 <div className="flex justify-between text-zinc-300">
                                     <span>Fee Structure</span>
@@ -429,7 +447,7 @@ function PaymentPage() {
                                 </div>
                                 <div className="flex justify-between text-zinc-300 pt-3 border-t-2 border-dashed border-zinc-800 text-base">
                                     <span className="font-bold text-electric-blue uppercase">Total Fee Due</span>
-                                    <span className="font-black text-2xl text-electric-blue">₹{feeToDisplay}</span>
+                                    <span className="font-black text-2xl text-electric-blue">{registration.currency} {feeToDisplay}</span>
                                 </div>
                             </div>
 
@@ -465,7 +483,7 @@ function PaymentPage() {
                             </h2>
 
                             {/* Official QR and UPI string */}
-                            <div className="bg-zinc-900 p-4 border border-zinc-800 flex items-center gap-4">
+                            {(hackathon.qrImageUrl || upiIdDisplay) ? <div className="bg-zinc-900 p-4 border border-zinc-800 flex items-center gap-4">
                                 <div className="bg-white p-2 border-2 border-zinc-700 w-28 h-28 shrink-0 flex items-center justify-center">
                                     <img
                                         src={hackathon?.qrImageUrl || `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${encodeURIComponent(upiIdDisplay)}%26pn=${encodeURIComponent(payeeDisplay)}%26am=${feeToDisplay}%26cu=INR`}
@@ -478,9 +496,10 @@ function PaymentPage() {
                                     <p className="font-bold text-white text-sm">{payeeDisplay}</p>
                                     <p className="text-zinc-400 uppercase mt-2">UPI ID:</p>
                                     <div className="flex items-center gap-2">
-                                        <span className="font-mono text-electric-blue font-bold truncate select-all">{upiIdDisplay}</span>
+                                        <span className="font-mono text-electric-blue font-bold truncate select-all">{upiIdDisplay || 'Not configured'}</span>
                                         <button
                                             type="button"
+                                            disabled={!upiIdDisplay}
                                             onClick={copyUpi}
                                             className="bg-zinc-800 hover:bg-zinc-700 text-white p-1 text-[10px] uppercase font-bold"
                                         >
@@ -488,7 +507,7 @@ function PaymentPage() {
                                         </button>
                                     </div>
                                 </div>
-                            </div>
+                            </div> : <p className="text-sm text-zinc-300">Official payment instructions have not been configured. Contact event support before making a payment.</p>}
                         </div>
 
                         {/* Payment Proof Form */}

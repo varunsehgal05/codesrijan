@@ -9,7 +9,7 @@ export const Route = createFileRoute("/workspace")({
 });
 
 function WorkspaceHUD() {
-  const { currentUser, teams, tasks, hackathons, problems, users, registrations, refetchData } = useAppStore();
+  const { currentUser, isLoaded, teams, tasks, hackathons, problems, users, registrations, refetchData } = useAppStore();
   const navigate = useNavigate();
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
@@ -135,9 +135,10 @@ function WorkspaceHUD() {
   }, [userTeam]);
 
   useEffect(() => {
-    if (!currentUser) navigate({ to: "/login" });
-  }, [currentUser]);
+    if (isLoaded && !currentUser) navigate({ to: "/login" });
+  }, [isLoaded, currentUser, navigate]);
 
+  if (!isLoaded) return <p role="status" className="p-8">Loading your workspace…</p>;
   if (!currentUser) return <div className="min-h-screen bg-background" />;
 
   if (!userTeam) {
@@ -207,7 +208,7 @@ function WorkspaceHUD() {
     if (currentIndex === -1) return;
     const targetIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     if (targetIndex >= 0 && targetIndex < kanbanColumns.length) {
-      await updateTaskStatus(taskId, kanbanColumns[targetIndex]);
+      await updateTaskStatus(taskId, kanbanColumns[targetIndex]!);
     }
   };
 
@@ -350,11 +351,14 @@ function WorkspaceHUD() {
             
             {activeMentorRequests.length > 0 && (
               <div className="mt-2 text-right">
-                <span className="font-label-bold uppercase text-[10px] text-zinc-600 block mb-1">Active SOS Tickets ({activeMentorRequests.length})</span>
+                <span className="font-label-bold uppercase text-[10px] text-zinc-600 block mb-1">Guidance requests ({activeMentorRequests.length})</span>
+                <button type="button" onClick={fetchMentorRequests} className="underline text-xs font-bold mb-2">Refresh guidance responses</button>
                 {activeMentorRequests.map(req => (
-                  <div key={req.id} className="bg-surface p-2 border-2 border-ink-black flex flex-col items-end gap-1 mb-1">
+                  <div key={req.id} className="bg-surface p-2 border-2 border-ink-black flex flex-col items-end gap-1 mb-1 max-w-md break-words">
                     <span className="font-label-bold text-xs uppercase">{req.topic} - <span className={req.status === 'accepted' ? 'text-success' : 'text-warning'}>{req.status}</span></span>
-                    {req.meetLink && <a href={req.meetLink} target="_blank" rel="noopener noreferrer" className="text-electric-blue text-xs font-bold underline flex items-center gap-1">JOIN MEET <span className="material-symbols-outlined text-xs">open_in_new</span></a>}
+                    {req.meetLink && /^https:\/\//i.test(req.meetLink) && <a href={req.meetLink} target="_blank" rel="noopener noreferrer" className="text-electric-blue text-xs font-bold underline flex items-center gap-1">JOIN MEET <span className="material-symbols-outlined text-xs">open_in_new</span></a>}
+                    {req.responses?.map((response: {id: string; message: string; createdAt?: string}) => <div key={response.id} className="text-left border-l-4 border-electric-blue pl-2 w-full my-2"><p className="text-xs font-bold">Mentor response</p><p className="text-sm whitespace-pre-wrap">{response.message}</p>{response.createdAt && <p className="text-xs mt-1">{new Date(response.createdAt).toLocaleString()}</p>}</div>)}
+                    {req.status === 'resolved' && <button type="button" className="underline text-xs font-bold" onClick={async () => { try { await axios.post(`${API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`}/mentor/requests/${encodeURIComponent(req.id)}/reopen`); await fetchMentorRequests(); } catch { toast.error('Could not reopen guidance request. Try again.'); } }}>Reopen guidance request</button>}
                   </div>
                 ))}
               </div>

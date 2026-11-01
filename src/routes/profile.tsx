@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAppStore } from "../lib/store";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -21,16 +21,23 @@ export const Route = createFileRoute("/profile")({
 });
 
 function Page7() {
-  const { currentUser, teams, refetchData } = useAppStore();
-  const userName = currentUser?.name || "Alex Chen";
+  const { currentUser, teams, registrations, hackathons, isLoaded, refetchData } = useAppStore();
+  const userName = currentUser?.name || "Profile";
   const currentTeam = teams.find(t => t.id === currentUser?.teamId);
   
   const [isEditing, setIsEditing] = useState(false);
-  const [bio, setBio] = useState(currentUser?.bio || "Full-stack wizard building the future. Focused on decentralized web technologies and high-performance computing.");
-  const [techStack, setTechStack] = useState(currentUser?.techStack?.join(", ") || "React, Rust, WebAssembly, Tailwind");
+  const [bio, setBio] = useState(currentUser?.bio || "");
+  const [techStack, setTechStack] = useState(currentUser?.techStack?.join(", ") || "");
   const [saving, setSaving] = useState(false);
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+
+  useEffect(() => {
+    if (!isEditing) {
+      setBio(currentUser?.bio || "");
+      setTechStack(currentUser?.techStack?.join(", ") || "");
+    }
+  }, [currentUser, isEditing]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -51,6 +58,9 @@ function Page7() {
         setSaving(false);
     }
   };
+
+  if (!isLoaded) return <p className="p-8">Loading profile...</p>;
+  if (!currentUser) return <main className="p-8"><h1>Sign in to view your profile</h1><Link to="/login">Sign in</Link></main>;
 
   return (
     <div className="min-h-screen bg-background text-on-background">
@@ -87,7 +97,7 @@ function Page7() {
         {/*Profile Hero*/}
         <section className="flex flex-col md:flex-row items-start gap-8 bg-surface-container-lowest border-2 border-ink-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <div className="shrink-0 relative">
-            <img className="w-40 h-40 object-cover border-2 border-ink-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]" data-alt="A striking neo-brutalist digital portrait of a young tech wizard. The avatar features a stylized, vibrant, vector-art style face with electric blue highlights against a crisp white background. Thick black outlines define the features, exuding a modern, high-octane hacker aesthetic." src={currentUser?.profileImage || "https://lh3.googleusercontent.com/aida-public/AB6AXuARxT0_L0dJOF7V_0PDgEWc39tPJBTMiHfgT7ctM62RX9I9WOMp4cLOdOqBoEfDMV6Iio00ydGtvtNlAiHtKy0YPlPK_tl-jabKvUkwbo2AMiPO9NiR9hmMpl1wnQzhEqAAqt0I6rthhXp0C8YUOCwNJNqlD0XjpxX3sG4nPyqc9kWAcPaJiFLt-TDnhFuOu6-nfQDF_N1LIHKo6MJLkATYN0EjfEpa57agOCPSMiqRnYIhHUWyAyDT"} />
+            {currentUser?.profileImage ? <img className="w-40 h-40 object-cover border-2 border-ink-black" alt={userName + "'s profile"} src={currentUser.profileImage} /> : <div className="w-40 h-40 border-2 border-ink-black flex items-center justify-center font-bold text-4xl" aria-label="Profile initials">{userName.slice(0, 1)}</div>}
           </div>
           <div className="flex flex-col gap-4 w-full">
             <div>
@@ -95,13 +105,13 @@ function Page7() {
               {isEditing ? (
                   <textarea className="w-full mt-2 p-2 border-2 border-ink-black font-body-lg text-body-lg" rows={3} value={bio} onChange={e => setBio(e.target.value)} placeholder="Write your bio..." />
               ) : (
-                  <p className="font-body-lg text-body-lg text-text-muted mt-2 max-w-2xl">{bio}</p>
+                  <p className="font-body-lg text-body-lg text-text-muted mt-2 max-w-2xl">{bio || "No bio added yet."}</p>
               )}
             </div>
             <div className="flex flex-col gap-2 mt-2">
               <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
                 <span className="material-symbols-outlined" data-icon="location_on" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
-                <span>{currentUser?.college || "San Francisco, CA"}</span>
+                <span>{currentUser?.college || "College not provided"}</span>
               </div>
               <div className="flex items-center gap-2 text-ink-black font-label-caps text-label-caps">
                 <span className="material-symbols-outlined text-electric-blue">diversity_3</span>
@@ -139,6 +149,7 @@ function Page7() {
                   </div>
               ) : (
                   <div className="flex flex-wrap gap-3">
+                    {!techStack.trim() && <p>No technology stack added yet.</p>}
                     {techStack.split(',').map((tech, idx) => (
                         <span key={idx} className="px-4 py-2 bg-yellow-300 border-2 border-ink-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-label-caps text-label-caps text-ink-black uppercase">{tech.trim()}</span>
                     ))}
@@ -147,89 +158,16 @@ function Page7() {
             </div>
           </div>
         </section>
-        {/*Achievement Gallery*/}
         <section>
-          <h2 className="font-headline-md text-headline-md text-ink-black mb-8 border-b-4 border-ink-black inline-block pb-2">Achievements</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/*Badge 1*/}
-            <div className="bg-surface-container-lowest border-2 border-ink-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[4px] hover:-translate-x-[4px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 flex flex-col items-center text-center gap-4 group cursor-pointer">
-              <div className="w-24 h-24 bg-electric-blue border-2 border-ink-black rounded-full flex items-center justify-center text-on-primary group-hover:bg-yellow-400 group-hover:text-ink-black transition-colors">
-                <span className="material-symbols-outlined text-4xl" data-icon="workspace_premium" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
-              </div>
-              <h3 className="font-button-text text-button-text text-ink-black uppercase tracking-wider">Top 10 Finalist</h3>
-              <p className="font-body-md text-body-md text-text-muted">Global Hackathon 2023</p>
-            </div>
-            {/*Badge 2*/}
-            <div className="bg-surface-container-lowest border-2 border-ink-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[4px] hover:-translate-x-[4px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 flex flex-col items-center text-center gap-4 group cursor-pointer">
-              <div className="w-24 h-24 bg-ink-black border-2 border-ink-black rounded-full flex items-center justify-center text-surface-bright group-hover:bg-cyan-400 group-hover:text-ink-black transition-colors">
-                <span className="material-symbols-outlined text-4xl" data-icon="shield" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
-              </div>
-              <h3 className="font-button-text text-button-text text-ink-black uppercase tracking-wider">Security Specialist</h3>
-              <p className="font-body-md text-body-md text-text-muted">DefCon Qualifier</p>
-            </div>
-            {/*Badge 3*/}
-            <div className="bg-surface-container-lowest border-2 border-ink-black p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-[4px] hover:-translate-x-[4px] hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all duration-200 flex flex-col items-center text-center gap-4 group cursor-pointer">
-              <div className="w-24 h-24 bg-surface border-2 border-ink-black rounded-full flex items-center justify-center text-ink-black group-hover:bg-electric-blue group-hover:text-on-primary transition-colors">
-                <span className="material-symbols-outlined text-4xl" data-icon="code_blocks" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>code_blocks</span>
-              </div>
-              <h3 className="font-button-text text-button-text text-ink-black uppercase tracking-wider">Open Source Contributor</h3>
-              <p className="font-body-md text-body-md text-text-muted">100+ Merged PRs</p>
-            </div>
-          </div>
+          <h2 className="font-headline-md text-2xl mb-4">Achievements</h2>
+          <p>View your issued awards in the <Link to="/certificates" className="underline">certificate center</Link>.</p>
         </section>
-        {/*Project History*/}
         <section>
-          <h2 className="font-headline-md text-headline-md text-ink-black mb-8 border-b-4 border-ink-black inline-block pb-2">Hackathon History</h2>
-          <div className="flex flex-col border-2 border-ink-black bg-surface-container-lowest shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            {/*History Item 1*/}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 border-b-2 border-ink-black hover:bg-canvas-gray transition-colors gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-4 h-4 bg-ink-black shrink-0"></div>
-                <div>
-                  <h4 className="font-button-text text-button-text text-ink-black">EthGlobal Paris</h4>
-                  <p className="font-body-md text-body-md text-text-muted">Built a decentralized identity verifier.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <span className="px-3 py-1 bg-electric-blue text-on-primary font-label-caps text-label-caps border-2 border-ink-black">1st Place</span>
-                <a className="text-ink-black hover:text-electric-blue transition-colors" href="/" title="View Repo">
-                  <span className="material-symbols-outlined text-3xl" data-icon="link" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
-                </a>
-              </div>
-            </div>
-            {/*History Item 2*/}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 border-b-2 border-ink-black hover:bg-canvas-gray transition-colors gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-4 h-4 bg-ink-black shrink-0"></div>
-                <div>
-                  <h4 className="font-button-text text-button-text text-ink-black">MIT Reality Hack</h4>
-                  <p className="font-body-md text-body-md text-text-muted">AR navigation tool for visually impaired.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <span className="px-3 py-1 bg-yellow-400 text-ink-black font-label-caps text-label-caps border-2 border-ink-black">Best UI/UX</span>
-                <a className="text-ink-black hover:text-electric-blue transition-colors" href="/" title="View Repo">
-                  <span className="material-symbols-outlined text-3xl" data-icon="link" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
-                </a>
-              </div>
-            </div>
-            {/*History Item 3*/}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-6 hover:bg-canvas-gray transition-colors gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-4 h-4 bg-ink-black shrink-0"></div>
-                <div>
-                  <h4 className="font-button-text text-button-text text-ink-black">Stanford TreeHacks</h4>
-                  <p className="font-body-md text-body-md text-text-muted">AI-driven climate predictive model.</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 shrink-0">
-                <span className="px-3 py-1 bg-surface-container-high text-ink-black font-label-caps text-label-caps border-2 border-ink-black">Participant</span>
-                <a className="text-ink-black hover:text-electric-blue transition-colors" href="/" title="View Repo">
-                  <span className="material-symbols-outlined text-3xl" data-icon="link" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>link</span>
-                </a>
-              </div>
-            </div>
-          </div>
+          <h2 className="font-headline-md text-2xl mb-4">Hackathon History</h2>
+          {registrations.length ? <ul className="space-y-3">{registrations.map(reg => <li key={reg.id} className="border-2 border-ink-black p-4">
+            <strong>{hackathons.find(event => event.id === reg.hackathonId)?.name || reg.hackathonId}</strong>
+            <p>Registration status: {reg.status}</p>
+          </li>)}</ul> : <p>No hackathon registrations recorded.</p>}
         </section>
       </main>
       {/*Footer*/}

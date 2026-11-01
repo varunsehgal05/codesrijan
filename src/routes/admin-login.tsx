@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAppStore } from "../lib/store";
+import { roleHome } from '../lib/role-home';
 
 export const Route = createFileRoute("/admin-login")({
     component: AdminLoginPage,
@@ -22,7 +23,7 @@ function AdminLoginPage() {
 
         try {
             const user = await login(adminId.trim(), password);
-            await navigate({ to: user.role === "admin" ? "/admin" : "/dashboard" });
+            await navigate({ to: roleHome(user.role) });
         } catch (err: unknown) {
             setErrorMsg(err instanceof Error ? err.message : "Admin authorization rejected.");
         } finally {

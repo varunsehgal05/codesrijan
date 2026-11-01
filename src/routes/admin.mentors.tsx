@@ -1,3 +1,4 @@
+import { RoleAssignments } from "../components/RoleAssignments";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import axios from "axios";
@@ -88,6 +89,7 @@ function AdminMentors() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
+      <RoleAssignments kind="mentor" />
       
       {/* Header Bar */}
       <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center flex-wrap gap-4">
@@ -188,7 +190,7 @@ function AdminMentors() {
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {(!m.assignedTeams || m.assignedTeams.length === 0) ? (
-                      <span className="text-[10px] font-code-snippet text-error font-bold">OPEN DISPATCH (ALL SQUADS)</span>
+                      <span className="text-[10px] font-code-snippet text-error font-bold">USE EVENT ASSIGNMENTS ABOVE</span>
                     ) : (
                       m.assignedTeams.map((tId: string) => (
                         <span key={tId} className="px-2 py-0.5 bg-electric-blue text-pure-white text-[10px] font-bold border border-stark-black">

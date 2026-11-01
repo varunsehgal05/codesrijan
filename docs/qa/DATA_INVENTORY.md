@@ -1,0 +1,52 @@
+# Data inventory
+Source models (not actual live collection count). No Atlas connection used for enumeration. Temporary Mongo fixtures created by test suites; no production mutations.
+
+- User — server/models/index.js
+- Hackathon — server/models/index.js
+- Registration — server/models/index.js
+- ProblemStatement — server/models/index.js
+- Team — server/models/index.js
+- TeamInvitation — server/models/index.js
+- TeamJoinRequest — server/models/index.js
+- ProjectTask — server/models/index.js
+- Project — server/models/index.js
+- Submission — server/models/index.js
+- Evaluation — server/models/index.js
+- RecruitmentProfile — server/models/index.js
+- Certificate — server/models/index.js
+- Setting — server/models/index.js
+- Conversation — server/models/index.js
+- Message — server/models/index.js
+- SupportTicket — server/models/index.js
+- Notification — server/models/index.js
+- MentorRequest — server/models/index.js
+- Bookmark — server/models/secondary.js
+- BookmarkedProfile — server/models/secondary.js
+- RecruitmentInvitation — server/models/secondary.js
+- Conversation — server/models/secondary.js
+- Message — server/models/secondary.js
+- Notification — server/models/secondary.js
+- Announcement — server/models/secondary.js
+- CalendarEvent — server/models/secondary.js
+- Certificate — server/models/secondary.js
+- Sponsor — server/models/secondary.js
+- SupportTicket — server/models/secondary.js
+- ActivityLog — server/models/secondary.js
+- SystemSetting — server/models/secondary.js
+- ProjectTask — server/models/tertiary.js
+- ProjectMilestone — server/models/tertiary.js
+- ProjectFile — server/models/tertiary.js
+- Judge — server/models/tertiary.js
+- JudgeAssignment — server/models/tertiary.js
+- EvaluationCriteria — server/models/tertiary.js
+- Mentor — server/models/tertiary.js
+- MentorAssignment — server/models/tertiary.js
+- MentorSession — server/models/tertiary.js
+- Gallery — server/models/tertiary.js
+- FAQ — server/models/tertiary.js
+- Session — server/models/auth.js
+- EmailVerification — server/models/auth.js
+- PasswordResetToken — server/models/auth.js
+- SecurityEvent — server/models/auth.js
+
+GridFS bucket and usage/reservation ledger are implemented in server/services/storage.js. Actual live indexes/collection counts/outage/recovery remain unverified. Mentor/Judge fixture data and lifecycle cleanup are recorded in role reports.

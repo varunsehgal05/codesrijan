@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
+import { roleHome } from '../lib/role-home';
 
 export const Route = createFileRoute("/register")({
     component: RegisterPage,
@@ -12,8 +13,7 @@ function RegisterPage() {
     
     useEffect(() => {
         if (currentUser) {
-            if (currentUser.role === 'admin') navigate({ to: "/admin" });
-            else navigate({ to: "/workspace" });
+            navigate({ to: roleHome(currentUser.role) });
         }
     }, [currentUser, navigate]);
 

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 import toast from "react-hot-toast";
+import { roleHome } from '../lib/role-home';
 
 export const Route = createFileRoute("/login")({
     component: LoginPage,
@@ -13,8 +14,7 @@ function LoginPage() {
     
     useEffect(() => {
         if (currentUser) {
-            if (currentUser.role === 'admin') navigate({ to: "/admin" });
-            else navigate({ to: "/dashboard" });
+            navigate({ to: roleHome(currentUser.role) });
         }
     }, [currentUser, navigate]);
 
@@ -36,8 +36,7 @@ function LoginPage() {
         try {
             const user = await login(email, password);
             toast.success("Identity Verified. Initiating Handshake.");
-            if (user.role === 'admin') navigate({ to: "/admin" });
-            else navigate({ to: "/dashboard" });
+            navigate({ to: roleHome(user.role) });
         } catch (err: any) {
             try {
                 const parsed = JSON.parse(err.message);

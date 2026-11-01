@@ -1,0 +1,2978 @@
+{
+  "date": "2026-11-02",
+  "basis": "AST extraction of actual route registrations; handler bodies/credentials excluded",
+  "routes": [
+    {
+      "file": "server/server.js",
+      "line": 300,
+      "method": "GET",
+      "path": "'/api/system/status'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 307,
+      "method": "GET",
+      "path": "'/api/settings/public'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 316,
+      "method": "GET",
+      "path": "['/health', '/api/health']",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 335,
+      "method": "POST",
+      "path": "'/api/notifications/fcm-token'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "updateOne"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 351,
+      "method": "DELETE",
+      "path": "'/api/notifications/fcm-token'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "updateOne"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 367,
+      "method": "POST",
+      "path": "'/api/notifications/test-self-push'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "updateOne"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 412,
+      "method": "POST",
+      "path": "'/api/auth/register'",
+      "middleware": "",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save",
+        "deleteMany"
+      ],
+      "errorCodes": [
+        400,
+        200,
+        201
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 529,
+      "method": "PUT",
+      "path": "'/api/users/profile'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 543,
+      "method": "POST",
+      "path": "'/api/auth/resend-otp'",
+      "middleware": "",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        400,
+        403,
+        200
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 587,
+      "method": "POST",
+      "path": "'/api/auth/verify-email'",
+      "middleware": "",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate",
+        "updateOne",
+        "save"
+      ],
+      "errorCodes": [
+        400,
+        429,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 667,
+      "method": "POST",
+      "path": "'/api/auth/login'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        401,
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 706,
+      "method": "GET",
+      "path": "'/api/auth/me'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 711,
+      "method": "POST",
+      "path": "'/api/auth/sessions/revoke'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "updateMany"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 720,
+      "method": "POST",
+      "path": "'/api/auth/forgot-password'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "deleteMany",
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 762,
+      "method": "POST",
+      "path": "'/api/auth/reset-password'",
+      "middleware": "",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate",
+        "save",
+        "updateMany"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 812,
+      "method": "GET",
+      "path": "'/api/hackathons'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 835,
+      "method": "GET",
+      "path": "'/api/admin/hackathons'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 843,
+      "method": "POST",
+      "path": "'/api/hackathons'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "save",
+        "create",
+        "find"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 933,
+      "method": "GET",
+      "path": "'/api/hackathons/active'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 940,
+      "method": "GET",
+      "path": "'/api/hackathons/:id'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 951,
+      "method": "PUT",
+      "path": "'/api/hackathons/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 964,
+      "method": "DELETE",
+      "path": "'/api/hackathons/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 988,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/publish'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 991,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/unpublish'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 994,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/open-registration'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 997,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/close-registration'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1000,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/open-submissions'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1003,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/close-submissions'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1006,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/complete'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1011,
+      "method": "PATCH",
+      "path": "'/api/admin/hackathons/:id/reveal-problems'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "updateMany",
+        "find",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1054,
+      "method": "PATCH",
+      "path": "'/api/admin/hackathons/:id/hide-problems'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "updateMany"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1082,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/register'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "find",
+        "deleteMany",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        409,
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1270,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/payment-proof'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate",
+        "updateOne",
+        "save"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        409,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1433,
+      "method": "GET",
+      "path": "'/api/hackathons/:id/my-registration'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1451,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/request-refund'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save",
+        "create",
+        "find"
+      ],
+      "errorCodes": [
+        404,
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1516,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/leave'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "deleteOne",
+        "save"
+      ],
+      "errorCodes": [
+        403,
+        404,
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1566,
+      "method": "POST",
+      "path": "'/api/users/:id/friend'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "updateOne",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1608,
+      "method": "GET",
+      "path": "'/api/users/:id/profile'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "find"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1663,
+      "method": "GET",
+      "path": "'/api/hackathons/:id/registration'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1670,
+      "method": "POST",
+      "path": "'/api/hackathons/:id/retry-payment'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1690,
+      "method": "GET",
+      "path": "'/api/admin/payments'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find",
+        "findOne",
+        "countDocuments"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1746,
+      "method": "POST",
+      "path": "'/api/admin/payments/:registrationId/review'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOneAndUpdate",
+        "findOne",
+        "find",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1909,
+      "method": "GET",
+      "path": "'/api/admin/payments/:registrationId/receipt'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 1932,
+      "method": "GET",
+      "path": "'/api/student/registrations/:registrationId/receipt'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2016,
+      "method": "GET",
+      "path": "'/api/admin/payments/:registrationId/receipt/file'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2027,
+      "method": "GET",
+      "path": "'/api/student/registrations/:registrationId/receipt/file'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2046,
+      "method": "DELETE",
+      "path": "'/api/hackathons/:id/registration'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2051,
+      "method": "GET",
+      "path": "'/api/student/registrations'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2059,
+      "method": "GET",
+      "path": "'/api/admin/problems'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2064,
+      "method": "POST",
+      "path": "'/api/admin/problems'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2077,
+      "method": "GET",
+      "path": "'/api/admin/problems/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2083,
+      "method": "PUT",
+      "path": "'/api/admin/problems/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2093,
+      "method": "DELETE",
+      "path": "'/api/admin/problems/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2098,
+      "method": "PATCH",
+      "path": "'/api/admin/problems/:id/publish'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2104,
+      "method": "PATCH",
+      "path": "'/api/admin/problems/:id/lock'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2112,
+      "method": "GET",
+      "path": "'/api/problems'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2118,
+      "method": "GET",
+      "path": "'/api/hackathons/:id/problems'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2159,
+      "method": "GET",
+      "path": "'/api/problems/:id'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2174,
+      "method": "GET",
+      "path": "'/api/users'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2179,
+      "method": "GET",
+      "path": "'/api/users/search'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2205,
+      "method": "GET",
+      "path": "'/api/users/:id'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2213,
+      "method": "GET",
+      "path": "'/api/teams'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2217,
+      "method": "POST",
+      "path": "'/api/teams'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2232,
+      "method": "POST",
+      "path": "'/api/teams/join'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403,
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2256,
+      "method": "POST",
+      "path": "'/api/teams/leave'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2278,
+      "method": "DELETE",
+      "path": "'/api/teams/:id'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "updateMany"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2291,
+      "method": "POST",
+      "path": "'/api/teams/:id/transfer'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        400
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2304,
+      "method": "POST",
+      "path": "'/api/teams/:id/lock'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2315,
+      "method": "PUT",
+      "path": "'/api/teams/:id/links'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2329,
+      "method": "POST",
+      "path": "'/api/teams/:id/submit'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2369,
+      "method": "GET",
+      "path": "'/api/admin/submissions'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2374,
+      "method": "PATCH",
+      "path": "'/api/admin/submissions/:id/:action'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2382,
+      "method": "POST",
+      "path": "'/api/admin/teams/:id/disqualify'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOneAndUpdate",
+        "save",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2424,
+      "method": "POST",
+      "path": "'/api/admin/teams/:id/undo-disqualify'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "create"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2455,
+      "method": "POST",
+      "path": "'/api/admin/teams/:id/ban'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2496,
+      "method": "POST",
+      "path": "'/api/admin/teams/:id/verify'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2524,
+      "method": "POST",
+      "path": "'/api/admin/teams/:id/notify'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2554,
+      "method": "POST",
+      "path": "'/api/admin/teams'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2564,
+      "method": "PUT",
+      "path": "'/api/admin/teams/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2593,
+      "method": "PATCH",
+      "path": "'/api/teams/:id/points'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2613,
+      "method": "POST",
+      "path": "'/api/teams/:id/invite'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        403,
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2659,
+      "method": "POST",
+      "path": "'/api/teams/accept-invite/:inviteId'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate",
+        "save",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2710,
+      "method": "GET",
+      "path": "'/api/teams/invitations/me'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2715,
+      "method": "POST",
+      "path": "'/api/teams/:id/select-problem'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2736,
+      "method": "POST",
+      "path": "'/api/teams/:id/request'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        400,
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2768,
+      "method": "GET",
+      "path": "'/api/teams/requests/me'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2777,
+      "method": "POST",
+      "path": "'/api/teams/requests/:id/:action'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2845,
+      "method": "GET",
+      "path": "'/api/notifications'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2854,
+      "method": "PATCH",
+      "path": "'/api/notifications/:id/read'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2868,
+      "method": "PATCH",
+      "path": "'/api/notifications/read-all'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "updateMany"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2880,
+      "method": "DELETE",
+      "path": "'/api/notifications/:id'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2890,
+      "method": "POST",
+      "path": "'/api/notifications/clear-selected'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "deleteMany"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2903,
+      "method": "DELETE",
+      "path": "'/api/notifications'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "deleteMany"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2912,
+      "method": "POST",
+      "path": "'/api/teams/:id/kick'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2930,
+      "method": "POST",
+      "path": "'/api/teams/:id/problem'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2939,
+      "method": "POST",
+      "path": "'/api/submissions'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 2987,
+      "method": "POST",
+      "path": "'/api/admin/submissions/test-submission'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "create"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3044,
+      "method": "POST",
+      "path": "'/api/certificates/generate'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3068,
+      "method": "GET",
+      "path": "'/api/certificates/verify/:id'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3075,
+      "method": "GET",
+      "path": "'/api/certificates/my'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3085,
+      "method": "POST",
+      "path": "'/api/admin/certificates/upload'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "find",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3156,
+      "method": "POST",
+      "path": "'/api/conversations/admin-team/:teamId'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "create",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3198,
+      "method": "GET",
+      "path": "'/api/recruitment'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3203,
+      "method": "POST",
+      "path": "'/api/recruitment'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3213,
+      "method": "GET",
+      "path": "'/api/problems'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3217,
+      "method": "POST",
+      "path": "'/api/problems'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3224,
+      "method": "GET",
+      "path": "'/api/users'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3228,
+      "method": "PATCH",
+      "path": "'/api/users/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3236,
+      "method": "GET",
+      "path": "'/api/timeline'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3240,
+      "method": "POST",
+      "path": "'/api/timeline'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3247,
+      "method": "GET",
+      "path": "'/api/sponsors'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3251,
+      "method": "POST",
+      "path": "'/api/sponsors'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3258,
+      "method": "GET",
+      "path": "'/api/gallery'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3262,
+      "method": "POST",
+      "path": "'/api/gallery'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3269,
+      "method": "GET",
+      "path": "'/api/faqs'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3273,
+      "method": "POST",
+      "path": "'/api/faqs'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3280,
+      "method": "GET",
+      "path": "'/api/search'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3293,
+      "method": "GET",
+      "path": "'/api/public/stats'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "countDocuments",
+        "findOne"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3316,
+      "method": "GET",
+      "path": "'/api/announcements'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3325,
+      "method": "POST",
+      "path": "'/api/announcements'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3345,
+      "method": "POST",
+      "path": "'/api/admin/users'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        400,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3366,
+      "method": "PUT",
+      "path": "'/api/admin/users/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3381,
+      "method": "DELETE",
+      "path": "'/api/admin/users/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "deleteOne",
+        "deleteMany"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3421,
+      "method": "GET",
+      "path": "'/api/admin/logs'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3432,
+      "method": "GET",
+      "path": "'/api/admin/health'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "countDocuments"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3506,
+      "method": "GET",
+      "path": "'/api/admin/hackathon-operations'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find",
+        "countDocuments"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3586,
+      "method": "GET",
+      "path": "'/api/admin/hackathons/:id/export-csv'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "find"
+      ],
+      "errorCodes": [
+        404,
+        200,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3651,
+      "method": "GET",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3660,
+      "method": "POST",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3676,
+      "method": "POST",
+      "path": "'/api/ai/chat'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3679,
+      "method": "GET",
+      "path": "'/api/teams/:id/tasks'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "find"
+      ],
+      "errorCodes": [
+        404,
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3689,
+      "method": "POST",
+      "path": "'/api/teams/:id/tasks'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3704,
+      "method": "PUT",
+      "path": "'/api/teams/:id/tasks/:taskId/status'",
+      "middleware": "requireAuth, requireRole(['student', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3717,
+      "method": "DELETE",
+      "path": "'/api/teams/:id/tasks/:taskId'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [
+        403,
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3733,
+      "method": "POST",
+      "path": "'/api/teams/:id/submit'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        400
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3772,
+      "method": "GET",
+      "path": "'/api/admin/submissions'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3778,
+      "method": "GET",
+      "path": "'/api/admin/analytics'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "countDocuments",
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3797,
+      "method": "GET",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3806,
+      "method": "POST",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3825,
+      "method": "PATCH",
+      "path": "'/api/admin/submissions/:id/unlock'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3833,
+      "method": "PATCH",
+      "path": "'/api/admin/submissions/:id/lock'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3841,
+      "method": "PUT",
+      "path": "'/api/teams/:id/links'",
+      "middleware": "requireAuth, requireRole(['student'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        403
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 3874,
+      "method": "GET",
+      "path": "'/api/conversations'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find",
+        "findOne",
+        "create",
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4007,
+      "method": "GET",
+      "path": "'/api/conversations/:id'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "create",
+        "find"
+      ],
+      "errorCodes": [
+        403,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4081,
+      "method": "POST",
+      "path": "'/api/conversations/direct'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4109,
+      "method": "GET",
+      "path": "'/api/conversations/:id/messages'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "create",
+        "find"
+      ],
+      "errorCodes": [
+        403,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4169,
+      "method": "POST",
+      "path": "'/api/conversations/:id/messages'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "create",
+        "save"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        403,
+        201,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4256,
+      "method": "POST",
+      "path": "'/api/support'",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "countDocuments",
+        "create",
+        "save",
+        "find"
+      ],
+      "errorCodes": [
+        403,
+        429,
+        400,
+        201,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4367,
+      "method": "GET",
+      "path": "'/api/support'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4388,
+      "method": "GET",
+      "path": "'/api/admin/support'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4402,
+      "method": "PATCH",
+      "path": "'/api/support/:id/status'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "save"
+      ],
+      "errorCodes": [
+        404,
+        403,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4418,
+      "method": "PATCH",
+      "path": "'/api/admin/support/:id/status'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4453,
+      "method": "POST",
+      "path": "'/api/admin/support/:id/clone'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "create"
+      ],
+      "errorCodes": [
+        404,
+        201,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4484,
+      "method": "DELETE",
+      "path": "'/api/admin/support/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne",
+        "deleteOne",
+        "deleteMany"
+      ],
+      "errorCodes": [
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4502,
+      "method": "GET",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4511,
+      "method": "POST",
+      "path": "'/api/admin/settings'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4527,
+      "method": "GET",
+      "path": "'/api/announcements'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4536,
+      "method": "GET",
+      "path": "'/api/admin/announcements'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4545,
+      "method": "POST",
+      "path": "'/api/admin/announcements'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [
+        201,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4559,
+      "method": "PUT",
+      "path": "'/api/admin/announcements/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4568,
+      "method": "DELETE",
+      "path": "'/api/admin/announcements/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4578,
+      "method": "GET",
+      "path": "'/api/sponsors'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4584,
+      "method": "GET",
+      "path": "'/api/admin/sponsors'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4590,
+      "method": "POST",
+      "path": "'/api/admin/sponsors'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "save"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4597,
+      "method": "DELETE",
+      "path": "'/api/admin/sponsors/:id'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4605,
+      "method": "GET",
+      "path": "'/api/admin/certificates'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4612,
+      "method": "POST",
+      "path": "'/api/admin/certificates/issue'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "save",
+        "find",
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        404,
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4691,
+      "method": "POST",
+      "path": "'/api/admin/certificates/batch'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4698,
+      "method": "GET",
+      "path": "'/api/notifications'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4703,
+      "method": "PATCH",
+      "path": "'/api/notifications/:id/read'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4708,
+      "method": "PATCH",
+      "path": "'/api/notifications/read-all'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "updateMany"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4718,
+      "method": "GET",
+      "path": "'/api/admin/analytics'",
+      "middleware": "requireAuth, requireRole(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "countDocuments",
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4751,
+      "method": "GET",
+      "path": "'/api/gallery/projects'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find",
+        "findOne"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/server.js",
+      "line": 4776,
+      "method": "GET",
+      "path": "'/api/leaderboard'",
+      "middleware": "",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [
+        500
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 101,
+      "method": "GET",
+      "path": "`/api/admin/${kind}-assignments`",
+      "middleware": "...staff(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 102,
+      "method": "POST",
+      "path": "`/api/admin/${kind}-assignments`",
+      "middleware": "...staff(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        400,
+        201
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 112,
+      "method": "DELETE",
+      "path": "`/api/admin/${kind}-assignments/:id`",
+      "middleware": "...staff(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        404
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 114,
+      "method": "GET",
+      "path": "'/api/admin/hackathons/:id/rubric'",
+      "middleware": "...staff(['admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 115,
+      "method": "PUT",
+      "path": "'/api/admin/hackathons/:id/rubric'",
+      "middleware": "...staff(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "updateMany",
+        "updateOne"
+      ],
+      "errorCodes": [
+        404,
+        400,
+        409
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 127,
+      "method": "GET",
+      "path": "'/api/mentor/dashboard'",
+      "middleware": "...staff(['mentor', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find",
+        "findOne",
+        "countDocuments"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 144,
+      "method": "GET",
+      "path": "'/api/mentor/teams/:id/notes'",
+      "middleware": "...staff(['mentor'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 145,
+      "method": "POST",
+      "path": "'/api/mentor/teams/:id/notes'",
+      "middleware": "...staff(['mentor'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "create"
+      ],
+      "errorCodes": [
+        400,
+        201
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 146,
+      "method": "POST",
+      "path": "'/api/mentor/requests'",
+      "middleware": "...staff(['student'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "create"
+      ],
+      "errorCodes": [
+        403,
+        400,
+        201
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 155,
+      "method": "GET",
+      "path": "'/api/mentor/requests/all'",
+      "middleware": "...staff(['mentor', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 156,
+      "method": "GET",
+      "path": "'/api/teams/:id/mentor-requests'",
+      "middleware": "requireAuth",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 157,
+      "method": "POST",
+      "path": "`/api/mentor/requests/:id/${action}`",
+      "middleware": "requireAuth",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOne",
+        "findOneAndUpdate"
+      ],
+      "errorCodes": [
+        403,
+        409,
+        400
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 187,
+      "method": "GET",
+      "path": "'/api/judge/dashboard'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 197,
+      "method": "GET",
+      "path": "'/api/judge/submissions/:id'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "findOne"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 198,
+      "method": "PUT",
+      "path": "'/api/judge/submissions/:id/evaluation'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 199,
+      "method": "GET",
+      "path": "'/api/submissions'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 200,
+      "method": "GET",
+      "path": "'/api/evaluations'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [
+        "find"
+      ],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 209,
+      "method": "POST",
+      "path": "'/api/evaluations'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 210,
+      "method": "POST",
+      "path": "'/api/evaluations/:teamId'",
+      "middleware": "...staff(['judge', 'admin'])",
+      "validation": "Not established by extraction",
+      "effects": [],
+      "errorCodes": [],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    },
+    {
+      "file": "server/role-portals.js",
+      "line": 211,
+      "method": "POST",
+      "path": "'/api/admin/evaluations/:id/reopen'",
+      "middleware": "...staff(['admin'])",
+      "validation": "Validation branches present; inspect handler",
+      "effects": [
+        "findOneAndUpdate",
+        "updateOne"
+      ],
+      "errorCodes": [
+        400,
+        409
+      ],
+      "testStatus": "NOT RUN individually; see scoped suite reports"
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { EventRubricEditor } from "../components/EventRubricEditor";
+import { RoleAssignments } from "../components/RoleAssignments";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import axios from "axios";
@@ -94,6 +96,8 @@ function AdminJudges() {
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto pb-20">
+      <RoleAssignments kind="judge" />
+      <EventRubricEditor />
       
       {/* Header Bar */}
       <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex justify-between items-center flex-wrap gap-4">
@@ -177,7 +181,7 @@ function AdminJudges() {
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {(!j.assignedHackathons || j.assignedHackathons.length === 0) ? (
-                      <span className="text-[10px] font-code-snippet text-error font-bold">UNASSIGNED (GLOBAL ALL-ACCESS)</span>
+                      <span className="text-[10px] font-code-snippet text-error font-bold">USE EVENT ASSIGNMENTS ABOVE</span>
                     ) : (
                       j.assignedHackathons.map((hId: string) => {
                         const hack = genuineHackathons.find(h => h.id === hId);

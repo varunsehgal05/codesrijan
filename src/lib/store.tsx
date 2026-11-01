@@ -272,7 +272,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 }
             }
 
-            const studentRegPromise = token 
+            const studentRegPromise = token && nextUser?.role === 'student'
                 ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
                 : Promise.resolve({ data: [] });
 
@@ -281,12 +281,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 : axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] }));
 
             const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
-                axios.get(`${API_URL}/users`).catch(() => ({ data: [] })),
-                axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })),
+                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/users`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
                 axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
                 hackathonsPromise,
                 studentRegPromise,
-                axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] }))
+                nextUser?.role === 'admin' ? axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
             ]);
 
             persistCache({
@@ -390,6 +390,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 try {
                     const { getAuth, signInWithEmailAndPassword } = await import("firebase/auth");
                     const firebaseApp = (await import("./firebase")).default;
+                    if (!firebaseApp) throw new Error('Firebase sign-in is not configured.');
                     const auth = getAuth(firebaseApp);
                     const userCredential = await signInWithEmailAndPassword(auth, email, password);
                     const idToken = await userCredential.user.getIdToken();
