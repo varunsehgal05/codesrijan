@@ -89,6 +89,32 @@ try {
         for(const user of ['student','judge','admin','other-mentor']) assert.equal((await call('/mentor/teams/team-a/notes',user)).status,403);
         assert.equal(JSON.stringify((await call('/mentor/dashboard','mentor')).data).includes('Private diagnostic context'),false);
     });
+    await test('dedicated guidance queue, claim, respond with meetLink, and isolated mentor notes endpoints', async () => {
+        const q = await call('/mentor/guidance/queue', 'mentor');
+        assert.equal(q.status, 200);
+        assert.ok(Array.isArray(q.data));
+        assert.equal((await call('/mentor/guidance/queue', 'student')).status, 403);
+        assert.equal((await call('/mentor/guidance/queue', 'judge')).status, 403);
+
+        const req2 = await call('/mentor/requests', 'student', { topic: 'SOS guidance link test', description: 'Need google meet room', priority: 'urgent' });
+        assert.equal(req2.status, 201);
+        const req2Id = req2.data.id;
+
+        const claimRes = await call(`/mentor/guidance/${req2Id}/claim`, 'mentor', { meetLink: 'https://meet.google.com/abc-defg-hij' });
+        assert.equal(claimRes.status, 200);
+        assert.equal(claimRes.data.status, 'accepted');
+        assert.equal(claimRes.data.meetLink, 'https://meet.google.com/abc-defg-hij');
+
+        const respRes = await call(`/mentor/guidance/${req2Id}/respond`, 'mentor', { notes: 'Joining call now with guidance notes.', meetLink: 'https://meet.google.com/xyz-uvw-rst' });
+        assert.equal(respRes.status, 200);
+        assert.equal(respRes.data.meetLink, 'https://meet.google.com/xyz-uvw-rst');
+        assert.ok(respRes.data.responses.some(r => r.message === 'Joining call now with guidance notes.'));
+
+        const noteRes = await call('/mentor/notes', 'mentor', { teamId: 'team-a', notes: 'Private isolated session notes test' });
+        assert.equal(noteRes.status, 201);
+        assert.equal((await call('/mentor/notes', 'student', { teamId: 'team-a', notes: 'forbidden' })).status, 403);
+        assert.equal((await call('/mentor/notes', 'judge', { teamId: 'team-a', notes: 'forbidden' })).status, 403);
+    });
     await test('conversation metadata and support auto-healing cannot bypass ownership', async () => {
         await Conversation.create({id:'private-conversation',type:'direct',participantIds:['student','mentor']});
         await Message.create({id:'private-message',conversationId:'private-conversation',senderId:'student',message:'Private fixture'});

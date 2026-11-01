@@ -4,7 +4,11 @@ import mongoose from 'mongoose';
 import { handleAIFallback, checkAdversarialSecurity, checkActionLimitations, VALID_ROUTES } from './services/srijanbot.js';
 import { Hackathon, Team, User, Registration } from './models/index.js';
 
-const MONGO_URI = 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan?appName=codesrijan-cluster';
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+    console.error('CRITICAL: MONGO_URI environment variable is required.');
+    process.exit(1);
+}
 
 // Mock response object
 function createMockRes() {

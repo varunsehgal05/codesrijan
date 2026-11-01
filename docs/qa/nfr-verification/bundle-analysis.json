@@ -1,0 +1,119 @@
+{
+  "css": {
+    "files": [
+      {
+        "file": "styles-4_YMmdFh.css",
+        "ext": ".css",
+        "rawSize": 178995,
+        "gzipSize": 28245,
+        "brSize": 21943
+      }
+    ],
+    "totalRaw": 178995,
+    "totalGzip": 28245,
+    "totalBr": 21943
+  },
+  "js": {
+    "chunkCount": 76,
+    "largestChunks": [
+      {
+        "file": "index-DvAeaxHd.js",
+        "ext": ".js",
+        "rawSize": 675868,
+        "gzipSize": 186781,
+        "brSize": 157378
+      },
+      {
+        "file": "index.esm-VG_v6S25.js",
+        "ext": ".js",
+        "rawSize": 77467,
+        "gzipSize": 22928,
+        "brSize": 20101
+      },
+      {
+        "file": "dashboard-CCgoV0Ab.js",
+        "ext": ".js",
+        "rawSize": 49642,
+        "gzipSize": 10514,
+        "brSize": 9005
+      },
+      {
+        "file": "recruitment-vzU-Pna9.js",
+        "ext": ".js",
+        "rawSize": 46375,
+        "gzipSize": 10131,
+        "brSize": 8631
+      },
+      {
+        "file": "workspace-BfoGLwiz.js",
+        "ext": ".js",
+        "rawSize": 39153,
+        "gzipSize": 9394,
+        "brSize": 8084
+      },
+      {
+        "file": "admin.payments-swkwmtvV.js",
+        "ext": ".js",
+        "rawSize": 38883,
+        "gzipSize": 7903,
+        "brSize": 6843
+      },
+      {
+        "file": "admin.teams-DxiqAukU.js",
+        "ext": ".js",
+        "rawSize": 36883,
+        "gzipSize": 7258,
+        "brSize": 6297
+      },
+      {
+        "file": "chat-EVGTVXg1.js",
+        "ext": ".js",
+        "rawSize": 35265,
+        "gzipSize": 7777,
+        "brSize": 6781
+      },
+      {
+        "file": "index.esm-x6SQU4_X.js",
+        "ext": ".js",
+        "rawSize": 27068,
+        "gzipSize": 8798,
+        "brSize": 7914
+      },
+      {
+        "file": "leaderboard-DXYYZ9oM.js",
+        "ext": ".js",
+        "rawSize": 26772,
+        "gzipSize": 6656,
+        "brSize": 5762
+      }
+    ],
+    "totalRaw": 1605939,
+    "totalGzip": 436371,
+    "totalBr": 372693
+  },
+  "svgs": {
+    "faviconSize": 129913,
+    "partnerLogos": [
+      {
+        "file": "firebase.svg",
+        "size": 387
+      },
+      {
+        "file": "github.svg",
+        "size": 992
+      },
+      {
+        "file": "google-cloud.svg",
+        "size": 608
+      },
+      {
+        "file": "intel.svg",
+        "size": 326
+      },
+      {
+        "file": "vercel.svg",
+        "size": 153
+      }
+    ]
+  }
+}

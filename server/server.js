@@ -584,9 +584,13 @@ app.post('/api/auth/resend-otp', async (req, res) => {
     }
 });
 
-app.post('/api/auth/verify-email', async (req, res) => {
+app.post(['/api/auth/verify-email', '/api/auth/otp/verify'], async (req, res) => {
     try {
-        const { userId, code } = req.body;
+        let { userId, email, code } = req.body;
+        if (!userId && email) {
+            const u = await User.findOne({ email: String(email).toLowerCase().trim() });
+            if (u) userId = u.id;
+        }
         if (!userId || !code) {
             return res.status(400).json({ message: "User ID and 6-digit verification code are required." });
         }
@@ -899,6 +903,8 @@ app.post('/api/hackathons', requireAuth, async (req, res) => {
                         description: ps.description || ps.title,
                         fullDescription: ps.fullDescription || ps.description || ps.title,
                         requirements: Array.isArray(ps.requirements) ? ps.requirements : (ps.requirements ? [ps.requirements] : []),
+                        pdfUrl: ps.attachmentUrl || ps.pdfUrl,
+                        attachmentUrl: ps.attachmentUrl || ps.pdfUrl,
                         isPublished: isImmediate,
                         isLocked: !isImmediate,
                         createdBy: req.user.id
@@ -2117,6 +2123,17 @@ app.get('/api/problems', async (req, res) => {
 
 app.get('/api/hackathons/:id/problems', async (req, res) => {
     try {
+        let isAdmin = false;
+        const authHeader = req.headers.authorization;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            const session = await Session.findOne({ sessionTokenHash: crypto.createHash('sha256').update(token).digest('hex') });
+            if (session) {
+                const user = await User.findOne({ id: session.userId });
+                if (user?.role === 'admin') isAdmin = true;
+            }
+        }
+
         const hackathon = await Hackathon.findOne({ id: req.params.id });
         if (hackathon) {
             const now = new Date();
@@ -2124,32 +2141,23 @@ app.get('/api/hackathons/:id/problems', async (req, res) => {
             const isRevealed = hackathon.problemStatementsRevealed === true ||
                                hackathon.problemRevealMode === 'immediate' ||
                                isStartReached;
-            if (!isRevealed) {
-                let isAdmin = false;
-                const authHeader = req.headers.authorization;
-                if (authHeader && authHeader.startsWith('Bearer ')) {
-                    const token = authHeader.split(' ')[1];
-                    const session = await Session.findOne({ sessionTokenHash: crypto.createHash('sha256').update(token).digest('hex') });
-                    if (session) {
-                        const user = await User.findOne({ id: session.userId });
-                        if (user?.role === 'admin') isAdmin = true;
-                    }
-                }
-                if (!isAdmin) {
-                    return res.json([]);
-                }
+            if (!isRevealed && !isAdmin) {
+                return res.json([]);
             }
         }
         // Extract published problems for this hackathon OR global problems
-        const problems = await ProblemStatement.find({ 
-            isPublished: true,
+        let filter = {
             $or: [
                 { hackathonId: req.params.id },
                 { hackathonId: '' },
                 { hackathonId: null },
                 { hackathonId: { $exists: false } }
             ]
-        });
+        };
+        if (!isAdmin) {
+            filter.isPublished = true;
+        }
+        const problems = await ProblemStatement.find(filter);
         res.json(problems);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -2170,8 +2178,8 @@ app.get('/api/problems/:id', async (req, res) => {
     res.json(problem);
 });
 
-// --- USER DIRECTORY ---
-app.get('/api/users', requireAuth, async (req, res) => {
+// --- USER DIRECTORY (ADMIN ONLY) ---
+app.get('/api/users', requireAuth, requireRole(['admin']), async (req, res) => {
     const users = await User.find().select('-passwordHash');
     res.json(users);
 });
@@ -2211,7 +2219,8 @@ app.get('/api/users/:id', requireAuth, async (req, res) => {
 
 // TEAMS
 app.get('/api/teams', requireAuth, async (req, res) => {
-    const teams = await Team.find();
+    const projection = req.user.role === 'admin' ? '' : '-adminNote';
+    const teams = await Team.find().select(projection);
     res.json(teams);
 });
 app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (req, res) => {

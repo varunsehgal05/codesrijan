@@ -1,0 +1,1479 @@
+{
+  "timestamp": "2026-11-01T23:40:20.585Z",
+  "targetUrl": "https://codesrijan-nine.vercel.app",
+  "accessibility": {
+    "liveObjectiveMatrices": {
+      "exists": true,
+      "headingText": "Live Objective Matrices",
+      "headingColor": "rgb(255, 255, 255)",
+      "sectionBg": "rgb(0, 0, 0)",
+      "sectionBorderTop": "4px solid rgb(0, 53, 213)",
+      "cardsCount": 2,
+      "cards": [
+        {
+          "idx": 0,
+          "cardBg": "rgb(255, 255, 255)",
+          "cardBorder": "4px solid rgb(0, 0, 0)",
+          "cardShadow": "rgb(0, 0, 0) 4px 4px 0px 0px",
+          "titleText": "Decentralized Academic Credential Verification System",
+          "titleColor": "rgb(0, 0, 0)",
+          "titleFont": "900 20px",
+          "descText": "Build a tamper-proof digital credential issuance and verification protocol for hackathon certificates and academic accolades.",
+          "descColor": "oklch(0.274 0.006 286.033)",
+          "descFont": "500 14px",
+          "badgeText": "Cybersecurity & Web3",
+          "badgeBg": "rgb(0, 53, 213)",
+          "badgeColor": "rgb(255, 255, 255)",
+          "linkText": "EXPLORE PARAMETERS arrow_forward",
+          "linkColor": "rgb(0, 53, 213)"
+        },
+        {
+          "idx": 1,
+          "cardBg": "rgb(255, 255, 255)",
+          "cardBorder": "4px solid rgb(0, 0, 0)",
+          "cardShadow": "rgb(0, 0, 0) 4px 4px 0px 0px",
+          "titleText": "Realtime Collaborative Code Review & Pair Programming Engine",
+          "titleColor": "rgb(0, 0, 0)",
+          "titleFont": "900 20px",
+          "descText": "Construct a browser-native collaborative code editor with synchronized cursor tracking, AST-based linting, and voice comms.",
+          "descColor": "oklch(0.274 0.006 286.033)",
+          "descFont": "500 14px",
+          "badgeText": "Developer Tools & Distributed Systems",
+          "badgeBg": "rgb(0, 53, 213)",
+          "badgeColor": "rgb(255, 255, 255)",
+          "linkText": "EXPLORE PARAMETERS arrow_forward",
+          "linkColor": "rgb(0, 53, 213)"
+        }
+      ]
+    },
+    "srijanBotFloatingWidget": {
+      "exists": true,
+      "containerClasses": "fixed bottom-24 right-6 sm:bottom-28 sm:right-8 z-[100] flex flex-col items-end pointer-events-none",
+      "containerPosition": "fixed",
+      "containerBottom": "112px",
+      "containerRight": "32px",
+      "containerZIndex": "100",
+      "containerPointerEvents": "none",
+      "buttonPointerEvents": "auto",
+      "buttonWidth": 60,
+      "buttonHeight": 60,
+      "distanceFromBottom": 112,
+      "distanceFromRight": 32,
+      "overlapsAnyFooterLink": false,
+      "overlappedLinks": []
+    },
+    "colorContrastAudit": [
+      {
+        "element": "LOM Title on Card BG",
+        "ratio": 21,
+        "colors": [
+          "rgb(0, 0, 0)",
+          "rgb(255, 255, 255)"
+        ]
+      },
+      {
+        "element": "LOM Description on Card BG",
+        "ratio": 14.894588477600598,
+        "colors": [
+          "oklch(0.274 0.006 286.033)",
+          "rgb(255, 255, 255)"
+        ]
+      },
+      {
+        "element": "LOM Badge Text on Badge BG",
+        "ratio": 8.501816163279974,
+        "colors": [
+          "rgb(255, 255, 255)",
+          "rgb(0, 53, 213)"
+        ]
+      },
+      {
+        "element": "LOM Link Text on Card BG",
+        "ratio": 8.501816163279974,
+        "colors": [
+          "rgb(0, 53, 213)",
+          "rgb(255, 255, 255)"
+        ]
+      }
+    ],
+    "neoBrutalistDesignSystem": {
+      "colorTokens": {
+        "electricBlue": "#0035d5",
+        "starkBlack": "#000",
+        "pureWhite": "#fff",
+        "errorColor": "#ba1a1a",
+        "successColor": "#22C55E"
+      },
+      "calculatedContrasts": {
+        "whiteOnBlue": 8.501816163279974,
+        "blueOnWhite": 8.501816163279974,
+        "blackOnWhite": 21,
+        "whiteOnError": 6.460555052499582,
+        "blackOnSuccess": 9.216147598515207
+      }
+    }
+  },
+  "responsiveLayouts": [
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/hackathons",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/problems",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/leaderboard",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/timeline",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/announcements",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/faq",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/code-of-conduct",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/admin-login",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-320",
+      "width": 320,
+      "route": "/support",
+      "status": "PASS",
+      "scrollWidth": 320,
+      "clientWidth": 320,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/hackathons",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/problems",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/leaderboard",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/timeline",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/announcements",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/faq",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/code-of-conduct",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/admin-login",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "mobile-390",
+      "width": 390,
+      "route": "/support",
+      "status": "PASS",
+      "scrollWidth": 390,
+      "clientWidth": 390,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 96
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/hackathons",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/problems",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/leaderboard",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/timeline",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/announcements",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/faq",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/code-of-conduct",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/admin-login",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "tablet-768",
+      "width": 768,
+      "route": "/support",
+      "status": "PASS",
+      "scrollWidth": 768,
+      "clientWidth": 768,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/hackathons",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/problems",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/leaderboard",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/timeline",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/announcements",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/faq",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/code-of-conduct",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/admin-login",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    },
+    {
+      "viewport": "desktop-1440",
+      "width": 1440,
+      "route": "/support",
+      "status": "PASS",
+      "scrollWidth": 1440,
+      "clientWidth": 1440,
+      "hasHorizontalScroll": false,
+      "offendingElements": [],
+      "botDistBottom": 112
+    }
+  ],
+  "assetOptimization": {
+    "fonts": {
+      "preconnects": [
+        "https://fonts.googleapis.com/",
+        "https://fonts.gstatic.com/"
+      ],
+      "fontSheets": [
+        "https://fonts.googleapis.com/css2?family=Anybody:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@300..900&display=swap",
+        "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+      ],
+      "hasFontPreconnect": true,
+      "hasDisplaySwap": true,
+      "totalFontsLoaded": 41,
+      "loadedFonts": [
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "italic",
+          "status": "unloaded"
+        },
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "italic",
+          "status": "unloaded"
+        },
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "italic",
+          "status": "loaded"
+        },
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Anybody",
+          "weight": "100 900",
+          "style": "normal",
+          "status": "loaded"
+        },
+        {
+          "family": "Hanken Grotesk",
+          "weight": "300 900",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Hanken Grotesk",
+          "weight": "300 900",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Hanken Grotesk",
+          "weight": "300 900",
+          "style": "normal",
+          "status": "unloaded"
+        },
+        {
+          "family": "Hanken Grotesk",
+          "weight": "300 900",
+          "style": "normal",
+          "status": "loaded"
+        }
+      ]
+    },
+    "svgs": {
+      "inlineSvgCount": 1,
+      "externalSvgCount": 0,
+      "externalSvgs": [],
+      "inlineSvgSamples": [
+        {
+          "viewBox": "0 0 24 24",
+          "width": "28",
+          "height": "28",
+          "hasAriaLabel": true
+        }
+      ]
+    },
+    "bundles": {
+      "totalCssRequests": 126,
+      "totalJsRequests": 420,
+      "sampleCss": [
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "styles-BXn-vyc3.css",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        },
+        {
+          "url": "css2",
+          "status": 200,
+          "encoding": "gzip",
+          "size": 0
+        }
+      ],
+      "sampleJs": [
+        {
+          "url": "react-3BKWdGy3.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "useMatch-BRDQstVZ.js",
+          "status": 200,
+          "encoding": "none",
+          "size": "659"
+        },
+        {
+          "url": "link-DDGSXONE.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "routes-CgR7igeO.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "jsx-runtime-Cx0BB4qO.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "useRouter-hGNDSd7Y.js",
+          "status": 200,
+          "encoding": "none",
+          "size": "179"
+        },
+        {
+          "url": "root-DLTE-HSj.js",
+          "status": 200,
+          "encoding": "none",
+          "size": "32"
+        },
+        {
+          "url": "useRouterState-D5M-h2ik.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "index-BJ65Zkvl.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        },
+        {
+          "url": "useSelector-Dj1GaA7S.js",
+          "status": 200,
+          "encoding": "br",
+          "size": 0
+        }
+      ]
+    },
+    "cssMinification": {}
+  },
+  "summary": {
+    "totalChecks": 62,
+    "passed": 62,
+    "failed": 0,
+    "warnings": 0
+  }
+}

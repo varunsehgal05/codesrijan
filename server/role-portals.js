@@ -143,6 +143,14 @@ export function installRolePortals(app, audit) {
     }));
     app.get('/api/mentor/teams/:id/notes', ...staff(['mentor']), wrap(async (req, res) => { await mentorTeam(req.user, req.params.id); res.json(await MentorSession.find({ mentorId: req.user.id, teamId: req.params.id, title: 'Private mentor note' }).sort({ createdAt: -1 }).lean()); }));
     app.post('/api/mentor/teams/:id/notes', ...staff(['mentor']), wrap(async (req, res) => { const team = await mentorTeam(req.user, req.params.id); if (!text(req.body.notes)) throw fail(400, 'A note of 1–5000 characters is required.'); const note = await MentorSession.create({ id: id('note'), mentorId: req.user.id, teamId: team.id, hackathonId: team.hackathonId, title: 'Private mentor note', notes: req.body.notes.trim(), status: 'completed' }); res.status(201).json(note); }));
+    app.post('/api/mentor/notes', ...staff(['mentor']), wrap(async (req, res) => {
+        const teamId = req.body.teamId || req.params.id;
+        if (!teamId) throw fail(400, 'A teamId is required.');
+        const team = await mentorTeam(req.user, teamId);
+        if (!text(req.body.notes)) throw fail(400, 'A note of 1–5000 characters is required.');
+        const note = await MentorSession.create({ id: id('note'), mentorId: req.user.id, teamId: team.id, hackathonId: team.hackathonId, title: 'Private mentor note', notes: req.body.notes.trim(), status: 'completed' });
+        res.status(201).json(note);
+    }));
     app.post('/api/mentor/requests', ...staff(['student']), wrap(async (req, res) => {
         const team = await Team.findOne({ id: req.user.teamId, memberIds: req.user.id }).lean();
         if (!team) throw fail(403, 'Squad membership is required.');
@@ -153,8 +161,9 @@ export function installRolePortals(app, audit) {
         await req.roleAudit({ action: 'GUIDANCE_REQUESTED', entityType: 'MENTOR_REQUEST', entityId: row.id, description: 'Squad requested guidance.' }); res.status(201).json(row);
     }));
     app.get('/api/mentor/requests/all', ...staff(['mentor', 'admin']), wrap(async (req, res) => { const assignments = await mentorAssignments(req.user); res.json(await MentorRequest.find(req.user.role === 'admin' ? {} : { $or: assignments.length ? assignments.map(a => ({ teamId: a.teamId, hackathonId: a.hackathonId })) : [{ id: null }] }).sort({ createdAt: -1 }).lean()); }));
+    app.get('/api/mentor/guidance/queue', ...staff(['mentor', 'admin']), wrap(async (req, res) => { const assignments = await mentorAssignments(req.user); res.json(await MentorRequest.find(req.user.role === 'admin' ? {} : { $or: assignments.length ? assignments.map(a => ({ teamId: a.teamId, hackathonId: a.hackathonId })) : [{ id: null }] }).sort({ createdAt: -1 }).lean()); }));
     app.get('/api/teams/:id/mentor-requests', requireAuth, wrap(async (req, res) => { await requestAccess(req.user, { teamId: req.params.id }); res.json(await MentorRequest.find({ teamId: req.params.id }).sort({ createdAt: -1 }).lean()); }));
-    for (const action of ['accept', 'respond', 'resolve', 'reopen']) app.post(`/api/mentor/requests/:id/${action}`, requireAuth, wrap(async (req, res) => {
+    const handleGuidanceAction = async (req, res, action) => {
         const row = await MentorRequest.findOne({ id: req.params.id }).lean();
         const team = await requestAccess(req.user, row, action !== 'reopen');
         const isStaff = ['mentor', 'admin'].includes(req.user.role);
@@ -169,8 +178,14 @@ export function installRolePortals(app, audit) {
             update = { $set: { mentorId: req.user.id, status: 'accepted', acceptedAt: new Date(), meetLink } };
         } else if (action === 'respond') {
             if (row.status !== 'accepted') throw fail(409, 'Claim an open request before responding.');
-            if (!text(req.body.message)) throw fail(400, 'A response of 1–5000 characters is required.');
-            update = { $push: { responses: { id: id('response'), authorId: req.user.id, message: req.body.message.trim(), createdAt: new Date() } } };
+            const content = req.body.message ?? req.body.notes ?? '';
+            if (!text(content)) throw fail(400, 'A response of 1–5000 characters is required.');
+            const meetLink = req.body.meetLink;
+            if (meetLink && (typeof meetLink !== 'string' || meetLink.length > 2000 || !/^https:\/\//i.test(meetLink))) throw fail(400, 'Meeting URL must use HTTPS.');
+            update = {
+                $push: { responses: { id: id('response'), authorId: req.user.id, message: content.trim(), createdAt: new Date() } },
+                ...(meetLink ? { $set: { meetLink } } : {})
+            };
         } else if (action === 'resolve') {
             if (row.status !== 'accepted') throw fail(409, 'Only accepted requests can be resolved.');
             if (!row.responses?.length) throw fail(400, 'Add a response before resolving the request.');
@@ -183,7 +198,10 @@ export function installRolePortals(app, audit) {
         if (!saved) throw fail(409, 'Request changed concurrently. Reload before retrying.');
         await notify(isStaff ? team.memberIds : await assignedMentorUsers(team), `Guidance request ${action}`, row.topic, row.id);
         await req.roleAudit({ action: `GUIDANCE_${action.toUpperCase()}`, entityType: 'MENTOR_REQUEST', entityId: row.id, description: 'Guidance state updated.' }); res.json(saved);
-    }));
+    };
+    for (const action of ['accept', 'respond', 'resolve', 'reopen']) app.post(`/api/mentor/requests/:id/${action}`, requireAuth, wrap((req, res) => handleGuidanceAction(req, res, action)));
+    app.post('/api/mentor/guidance/:id/claim', requireAuth, wrap((req, res) => handleGuidanceAction(req, res, 'accept')));
+    app.post('/api/mentor/guidance/:id/respond', requireAuth, wrap((req, res) => handleGuidanceAction(req, res, 'respond')));
     app.get('/api/judge/dashboard', ...staff(['judge', 'admin']), wrap(async (req, res) => {
         const assignments = await judgeAssignments(req.user);
         const submissions = assignments.length ? await Submission.find({ ...submissionScope(assignments), status: { $in: ['submitted', 'locked'] } }).sort({ createdAt: -1 }).lean() : [];
@@ -195,17 +213,29 @@ export function installRolePortals(app, audit) {
         res.json({ submissions, assignments, evaluations, criteria, teams, hackathons, metrics: { totalAssigned: submissions.length, pendingEvaluations: Math.max(0, submissions.length - submitted), draftEvaluations: drafts, submittedEvaluations: submitted } });
     }));
     app.get('/api/judge/submissions/:id', ...staff(['judge', 'admin']), wrap(async (req, res) => { const { submission, assignment } = await judgeSubmission(req.user, req.params.id); res.json({ submission, assignment, rubric: await rubricFor(submission.hackathonId), evaluation: await Evaluation.findOne(await evaluationScope(req.user, [assignment])).lean() }); }));
+    app.get('/api/judge/evaluations/:id', ...staff(['judge', 'admin']), wrap(async (req, res) => {
+        let submission = await Submission.findOne({ id: req.params.id, status: { $in: ['submitted', 'locked'] } }).lean();
+        if (!submission) {
+            const ev = await Evaluation.findOne({ id: req.params.id }).lean();
+            if (ev) submission = (ev.submissionId ? await Submission.findOne({ id: ev.submissionId, status: { $in: ['submitted', 'locked'] } }).lean() : null) || await Submission.findOne({ teamId: ev.teamId, hackathonId: ev.hackathonId, status: { $in: ['submitted', 'locked'] } }).lean();
+        }
+        if (!submission) throw fail(404, 'Submitted project not found.');
+        const { assignment } = await judgeSubmission(req.user, submission.id);
+        res.json({ submission, assignment, rubric: await rubricFor(submission.hackathonId), evaluation: await Evaluation.findOne(await evaluationScope(req.user, [assignment])).lean() });
+    }));
     app.put('/api/judge/submissions/:id/evaluation', ...staff(['judge', 'admin']), wrap((req, res) => saveEvaluation(req, res, req.params.id)));
     app.get('/api/submissions', ...staff(['judge', 'admin']), wrap(async (req, res) => { const assignments = await judgeAssignments(req.user); res.json(req.user.role === 'admin' ? await Submission.find({ status: { $in: ['submitted', 'locked'] } }).lean() : assignments.length ? await Submission.find({ ...submissionScope(assignments), status: { $in: ['submitted', 'locked'] } }).lean() : []); }));
     app.get('/api/evaluations', ...staff(['judge', 'admin']), wrap(async (req, res) => { const assignments = await judgeAssignments(req.user); res.json(await Evaluation.find(req.user.role === 'admin' ? {} : await evaluationScope(req.user, assignments)).lean()); }));
     const legacySave = wrap(async (req, res) => {
         let submission;
-        if (typeof req.body.submissionId === 'string') submission = await Submission.findOne({ id: req.body.submissionId }).lean();
+        if (typeof (req.body.submissionId || req.body.id) === 'string') submission = await Submission.findOne({ id: req.body.submissionId || req.body.id }).lean();
         else if (typeof (req.params.teamId || req.body.teamId) === 'string') submission = await Submission.findOne({ teamId: req.params.teamId || req.body.teamId, ...(typeof req.body.hackathonId === 'string' ? { hackathonId: req.body.hackathonId } : {}) }).sort({ createdAt: -1 }).lean();
         else if (typeof req.body.projectId === 'string') submission = await Submission.findOne({ projectId: req.body.projectId }).sort({ createdAt: -1 }).lean();
         if (!submission) throw fail(400, 'A submitted project is required.');
         return saveEvaluation(req, res, submission.id);
     });
+    app.post('/api/judge/evaluations/draft', ...staff(['judge', 'admin']), wrap((req, res) => { req.body.status = 'draft'; return legacySave(req, res); }));
+    app.post('/api/judge/evaluations/submit', ...staff(['judge', 'admin']), wrap((req, res) => { req.body.status = 'submitted'; return legacySave(req, res); }));
     app.post('/api/evaluations', ...staff(['judge', 'admin']), legacySave);
     app.post('/api/evaluations/:teamId', ...staff(['judge', 'admin']), legacySave);
     app.post('/api/admin/evaluations/:id/reopen', ...staff(['admin']), wrap(async (req, res) => {

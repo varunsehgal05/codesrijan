@@ -11,7 +11,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://codesrijan_db_user:mbSBS100Zj9kE5pX@codesrijan-cluster.mrckx43.mongodb.net/codesrijan';
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+    console.error('CRITICAL: MONGO_URI environment variable is required to run backup.');
+    process.exit(1);
+}
 
 const BACKUP_DIR = path.join(__dirname, '../backups');
 
