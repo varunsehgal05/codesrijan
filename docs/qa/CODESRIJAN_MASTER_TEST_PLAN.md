@@ -6,7 +6,7 @@
 **Production Backend API:** [https://codesrijan-api-6tfr.onrender.com/api](https://codesrijan-api-6tfr.onrender.com/api)  
 **Git Remote:** `https://github.com/varunsehgal05/codesrijan.git`  
 **Operating Budget:** **$0.00 / month** (MongoDB Atlas M0 Free + Render Web Service Free + Vercel Hobby + Google Apps Script Relay v5)  
-**Current Authoritative Release Gate:** `74/74 Passing Tests across 8 Test Suites, 68 Registered Routes, Clean Working Tree`  
+**Current Authoritative Release Gate:** `266/266 Passing Scenarios across 17 Test Suites (671 Raw Assertions), 267 Master QA Test Matrix Coverage (100%), 68 Registered Routes, Clean Working Tree`  
 
 ---
 
@@ -106,15 +106,27 @@ src/routes/
 
 ---
 
-## 5. TEST EXECUTION ENVIRONMENT & REGRESSION SCRIPTS
+## 5. TEST EXECUTION ENVIRONMENT & REGRESSION SUITES
 
-### Core Project Regression Commands:
-1. `node server/test_focused_regression.mjs` (19 scenarios)
-2. `node --test server/test-security-local.mjs` (8 scenarios)
-3. `node --test server/test_cors_policies.mjs` (5 scenarios)
-4. `node --test server/test_firebase_and_catalog_regression.mjs` (8 scenarios)
-5. `node --test server/test_gridfs_concurrency.mjs` (4 scenarios)
-6. `node --test server/test_gridfs_lease_lifecycle.mjs` (4 scenarios)
-7. `node --test server/test_gridfs_storage.mjs` (15 scenarios)
-8. `node --test server/test_admin_health_and_ops.mjs` (11 scenarios)
-9. `npm run build` (Production client and SSR build)
+### Authoritative Platform Test Suites (266 Passing Scenarios, 671 Raw Assertions):
+1. `node --test server/test-role-portals.js` (23 scenarios, 105 asserts) — Mentor/Judge Command Centers, Rubrics, Locking
+2. `node --test server/test-security-local.mjs` (8 scenarios, 15 asserts) — Socket auth, Roster lock, Token protection, RBAC
+3. `node server/test-auth-verification.js` (14 scenarios, 111 asserts) — Registration, OTP lockout, Login, Password Reset
+4. `node --test server/test_final_paid_acceptance.mjs` (1 scenario, 41 asserts) — Paid registration, GridFS proof upload, Review cycle
+5. `node --test server/test_cors_policies.mjs` (1 scenario / 5 sections, 36 asserts) — HTTP Preflight, Origin allowlist, Rejection headers
+6. `node --test server/test_gridfs_storage.mjs` (15 scenarios, 56 asserts) — GridFS magic bytes, 5MB limit, streaming integrity
+7. `node --test server/test_gridfs_concurrency.mjs` (4 scenarios, 14 asserts) — Atomic capacity reservation leases under load
+8. `node --test server/test_gridfs_lease_lifecycle.mjs` (5 scenarios, 25 asserts) — Storage lease TTL, chunk abort, orphan sweep
+9. `node --test server/test_realtime_socket.mjs` (9 scenarios, 29 asserts) — Socket connection auth, Room join ACLs, Typing relay
+10. `node server/test_srijanbot_provider_failures.mjs` (22 scenarios) — AI model failover, Heuristic fallback, Privacy
+11. `node server/test_srijanbot_qa.mjs` (49 scenarios) — SrijanBot 32-category platform knowledge audit
+12. `node --test server/test_email_integration.mjs` (10 scenarios, 44 asserts) — Apps Script HTTPS relay & Nodemailer SMTP fallback
+13. `node --test server/test_subadmin_verification.mjs` (5 scenarios, 32 asserts) — Admin uploads (Banner, PDF, QR), Certificates, DQ
+14. `node server/test_focused_regression.mjs` (19 scenarios, 72 asserts) — Support queues, role scoping, layout keys, badges
+15. `node --test server/test_admin_health_and_ops.mjs` (11 scenarios, 82 asserts) — Storage stats, CSV sanitization, ActivityLog hooks
+16. `node --test server/test_firebase_and_catalog_regression.mjs` (8 scenarios, 9 asserts) — Magic bytes, SVG blocking, catalog lock
+17. `node scripts/verify-nfr-master.mjs` (62 checks) — 4 viewports, WCAG AAA contrast, Bundle Brotli size
+18. `npm run build` (2,139 modules) — Production client (Rolldown/Vite) & Nitro SSR bundle compilation
+
+### 267 Master QA Matrix Mapping:
+The full mapping of the 267 QA test cases across the 11 functional domains (Public Pages, Authentication, Student, Mentor, Judge, Admin, Payments, Chat, Security, Maintenance, and NFR) is permanently recorded with evidence citations in `docs/qa/CODESRIJAN_MASTER_ALL_IN_ONE_QA_DELIVERABLES.md` (Section 11.2).

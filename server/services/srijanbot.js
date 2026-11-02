@@ -62,7 +62,7 @@ export async function getPlatformContext(req) {
     }
 
     const clientContext = req.body?.context || {};
-    const isTestHarness = process.env.NODE_ENV === 'test' || req._isTestRunner === true || req.headers?.['x-srijanbot-test'] === 'true';
+    const isTestHarness = req._isTestRunner === true || req.headers?.['x-srijanbot-test'] === 'true';
 
     let userId = null;
     let role = 'guest';

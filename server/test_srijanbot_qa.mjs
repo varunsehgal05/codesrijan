@@ -1,13 +1,16 @@
 import dns from 'dns';
 dns.setServers(['8.8.8.8', '1.1.1.1']);
 import mongoose from 'mongoose';
+import { MongoMemoryServer } from 'mongodb-memory-server';
 import { handleAIFallback, checkAdversarialSecurity, checkActionLimitations, VALID_ROUTES } from './services/srijanbot.js';
 import { Hackathon, Team, User, Registration } from './models/index.js';
 
-const MONGO_URI = process.env.MONGO_URI;
+let mongod = null;
+let MONGO_URI = process.env.MONGO_URI;
 if (!MONGO_URI) {
-    console.error('CRITICAL: MONGO_URI environment variable is required.');
-    process.exit(1);
+    mongod = await MongoMemoryServer.create();
+    MONGO_URI = mongod.getUri();
+    process.env.MONGO_URI = MONGO_URI;
 }
 
 // Mock response object
@@ -33,6 +36,22 @@ async function runSrijanBotTestSuite() {
 
     await mongoose.connect(MONGO_URI, { dbName: 'codesrijan' });
     console.log("Connected to MongoDB for live verified platform facts.\n");
+
+    const count = await Hackathon.countDocuments();
+    if (count === 0) {
+        await Hackathon.create({
+            id: 'hackathon-qa-01',
+            name: 'CodeSrijan Hackathon 2026',
+            status: 'active',
+            fee: 0,
+            entryType: 'free',
+            startDate: new Date(),
+            endDate: new Date(Date.now() + 86400000 * 7),
+            registrationStart: new Date(Date.now() - 86400000),
+            registrationEnd: new Date(Date.now() + 86400000 * 3),
+            submissionDeadline: new Date(Date.now() + 86400000 * 5)
+        });
+    }
 
     // Fetch active hackathons for verification
     const liveHackathons = await Hackathon.find({
@@ -779,6 +798,9 @@ async function runSrijanBotTestSuite() {
     console.log("=========================================================================\n");
 
     await mongoose.disconnect();
+    if (mongod) {
+        await mongod.stop();
+    }
 
     if (failed > 0) {
         process.exit(1);

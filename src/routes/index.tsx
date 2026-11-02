@@ -101,7 +101,7 @@ function Page14() {
               <Link to={currentUser ? "/dashboard" : "/register"} className="bg-electric-blue text-pure-white font-label-bold text-label-bold px-6 py-4 md:px-8 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-base md:text-lg flex items-center justify-center gap-2 hover:-translate-y-1 flex-1 min-w-[200px]">
                 Start Building <span className="material-symbols-outlined font-bold">arrow_forward</span>
               </Link>
-              <Link to="/about" className="bg-surface-container text-stark-black font-label-bold text-label-bold px-6 py-4 md:px-8 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-base md:text-lg flex items-center justify-center gap-2 hover:-translate-y-1 flex-1 min-w-[200px]">
+              <Link to="/timeline" className="bg-surface-container text-stark-black font-label-bold text-label-bold px-6 py-4 md:px-8 brutal-border brutal-shadow brutal-shadow-hover transition-all duration-200 text-base md:text-lg flex items-center justify-center gap-2 hover:-translate-y-1 flex-1 min-w-[200px]">
                 View Schedule
               </Link>
             </div>
