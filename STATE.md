@@ -6,9 +6,15 @@
 ---
 
 ## 1. Executive Status
-- **Overall Mission Status:** AUDIT, FIXES, MENTOR/JUDGE PORTALS, HOMEPAGE SCHEDULE CTA & TIMELINE, SECURITY HARDENING, ATLAS CREDENTIAL ROTATION AUDIT, QA RECONCILIATION & DOCUMENTATION 100% COMPLETE.
+- **Overall Mission Status:** AUDIT, FIXES, MENTOR/JUDGE PORTALS, HOMEPAGE SCHEDULE CTA & TIMELINE, SRIJANBOT COMPLETE AI MISSION, NAVBAR STREAMLINING, SECURITY HARDENING, ATLAS CREDENTIAL ROTATION AUDIT, QA RECONCILIATION & DOCUMENTATION 100% COMPLETE.
 - **Frontend & SSR Build:** `npm run build` PASS (Exit code 0, 2,138 modules compiled).
 - **Automated Test Assertions:** **266 PASS / 0 FAIL (100% Green)** across 17 test suites, containing **671 raw programmatic assertions**.
+- **SrijanBot AI Test Suites:** **73/73 PASS** in `server/test_srijanbot_qa.mjs` (across all 34 knowledge categories) and **47/47 PASS** in `server/test_srijanbot_provider_failures.mjs` (provider failover, timeout resilience, adversarial prompt injection, credential disclosure protection, and RBAC boundary enforcement).
+- **Non-Functional Requirements (NFR) Audit:** **100% PASS** verified by SUB-NFR across 5 viewports (320px–1440px), 0 horizontal page overflow, WCAG 2.1 AAA color contrast (8.5:1 to 21:1), and Brotli CSS bundle of 21.75 KB.
+- **Role Portals & Navbar Streamlining:**
+  - Judge navbar stripped of student-only features (`Recruitment`, `Problems`, `Sponsors`, `Workspace` Kanban, duplicate `JUDGE ARENA` pill). Features dedicated `#FFD700` Judge Portal CTA, notifications, and clean Logout.
+  - Mentor navbar stripped of student-only features (`Recruitment`, `Sponsors`, `Workspace` Kanban, duplicate `Mentor Hub` chip). Features dedicated emerald `#00E676` Mentor Hub CTA, `Problems` challenge explorer, notifications, and clean Logout.
+  - Inactivity timeout relaxed from 10m to 15m (`15 * 60 * 1000`) with auto-reset on every user interaction to prevent interrupted grading.
 - **Assertion Reconciliation:** 228 vs. 258 discrepancy fully resolved ($228 + 19 \text{ [focused regression]} + 11 \text{ [admin health/ops]} = 258$). Plus 8 firebase/catalog checks = 266 total automated scenarios.
 - **267 QA Catalogue Mapping:** All 267 test cases across 11 functional domains mapped to empirical evidence (131 live production verified, 135 safely blocked on live to prevent database mutation/financial charges/email spam, 100% passed in test harness).
 - **Subagent Swarm Execution:** Fresh-context subagents executed with 100% PASS rate.

@@ -6,14 +6,36 @@ const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.en
 export const socket = io(API_URL.replace('/api', ''), { autoConnect: false, auth: (cb) => cb({ token: typeof localStorage === 'undefined' ? null : localStorage.getItem('codesrijan_auth_token') }) });
 
 // Global API Interceptor for JWT Tokens
+axios.defaults.timeout = 15000; // 15s max timeout to prevent hanging connections
 axios.interceptors.request.use((config) => {
-    const token = localStorage.getItem("codesrijan_auth_token");
+    const token = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
     if (token) {
         config.headers = config.headers || {};
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
 }, (error) => Promise.reject(error));
+
+const USER_CACHE_KEY = "codesrijan_user";
+export const getCachedUser = (): User | null => {
+    try {
+        const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(USER_CACHE_KEY) : null;
+        if (!raw) return null;
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+};
+export const setCachedUser = (user: User | null) => {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        if (user) {
+            localStorage.setItem(USER_CACHE_KEY, JSON.stringify(user));
+        } else {
+            localStorage.removeItem(USER_CACHE_KEY);
+        }
+    } catch {}
+};
 
 export type Role = "student" | "admin" | "judge" | "mentor";
 
@@ -172,17 +194,22 @@ interface StoreContextType extends StoreState {
 const AppStoreContext = createContext<StoreContextType | null>(null);
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
-    const [state, setState] = useState<StoreState>({
-        currentUser: null,
-        users: [],
-        teams: [],
-        problems: [],
-        hackathons: [],
-        chatMessages: [],
-        registrations: [],
-        tasks: [],
-        evaluations: [],
-        isLoaded: false
+    const [state, setState] = useState<StoreState>(() => {
+        const cachedUser = getCachedUser();
+        const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
+        const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
+        return {
+            currentUser: storedToken ? cachedUser : null,
+            users: [],
+            teams: [],
+            problems: [],
+            hackathons: [],
+            chatMessages: [],
+            registrations: [],
+            tasks: [],
+            evaluations: [],
+            isLoaded: storedToken ? !!cachedUser : true
+        };
     });
 
     useEffect(() => {
@@ -244,18 +271,21 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const refetchData = async () => {
         try {
-            const rawToken = localStorage.getItem("codesrijan_auth_token");
+            const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
             const token = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
             let nextUser = null;
             if (token) {
                 try {
                     const meRes = await axios.get(`${API_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${token}` }
+                        headers: { Authorization: `Bearer ${token}` },
+                        timeout: 8000
                     });
                     nextUser = meRes.data.user;
+                    setCachedUser(nextUser);
                 } catch (e: any) {
                     if (e.response?.status === 401 || e.response?.status === 403) {
                         localStorage.removeItem("codesrijan_auth_token");
+                        setCachedUser(null);
                     }
                 }
             }
@@ -264,7 +294,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             if (nextUser && nextUser.teamId && token) {
                 try {
                     const taskRes = await axios.get(`${API_URL}/teams/${nextUser.teamId}/tasks`, {
-                        headers: { Authorization: `Bearer ${token}` }
+                        headers: { Authorization: `Bearer ${token}` },
+                        timeout: 8000
                     });
                     teamTasks = taskRes.data;
                 } catch (e) {
@@ -273,20 +304,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             }
 
             const studentRegPromise = token && nextUser?.role === 'student'
-                ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
+                ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` }, timeout: 8000 }).catch(() => ({ data: [] }))
                 : Promise.resolve({ data: [] });
 
             const hackathonsPromise = token
-                ? axios.get(`${API_URL}/hackathons`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] }))
-                : axios.get(`${API_URL}/hackathons`).catch(() => ({ data: [] }));
+                ? axios.get(`${API_URL}/hackathons`, { headers: { Authorization: `Bearer ${token}` }, timeout: 8000 }).catch(() => ({ data: [] }))
+                : axios.get(`${API_URL}/hackathons`, { timeout: 8000 }).catch(() => ({ data: [] }));
 
             const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
-                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/users`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/teams`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                axios.get(`${API_URL}/problems`).catch(() => ({ data: [] })),
+                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/users`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/teams`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
+                axios.get(`${API_URL}/problems`, { timeout: 8000 }).catch(() => ({ data: [] })),
                 hackathonsPromise,
                 studentRegPromise,
-                nextUser?.role === 'admin' ? axios.get(`${API_URL}/evaluations`).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+                nextUser?.role === 'admin' ? axios.get(`${API_URL}/evaluations`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
             ]);
 
             persistCache({
@@ -324,8 +355,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (cached.hackathons && cached.hackathons.length > 0) {
             setState(prev => ({
                 ...prev,
-                ...cached,
-                isLoaded: !storedToken
+                ...cached
             }));
         }
 
@@ -333,32 +363,38 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const loadWithToken = async () => {
                 try {
                     const meRes = await axios.get(`${API_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${storedToken}` }
+                        headers: { Authorization: `Bearer ${storedToken}` },
+                        timeout: 8000
                     });
 
+                    const user = meRes.data.user;
+                    setCachedUser(user);
                     // Set user & mark loaded immediately for instant UI render
-                    setState(prev => ({ ...prev, currentUser: meRes.data.user, isLoaded: true }));
+                    setState(prev => ({ ...prev, currentUser: user, isLoaded: true }));
                     
                     // Fetch auxiliary collections asynchronously in background
-                    refetchData();
+                    void refetchData();
                 } catch (e: any) {
                     if (e.response?.status === 401 || e.response?.status === 403) {
                         // Stale or expired token - purge quietly without alarming console error
                         localStorage.removeItem("codesrijan_auth_token");
+                        setCachedUser(null);
                         setState(prev => ({ ...prev, currentUser: null, isLoaded: true }));
                     } else {
                         console.warn("Network error verifying session, server might be spinning up. Keeping token intact.");
+                        // CRITICAL: Always mark loaded so UI unblocks and never freezes indefinitely
                         setState(prev => ({ ...prev, isLoaded: true }));
                     }
-                    refetchData();
+                    void refetchData();
                 }
             };
-            loadWithToken();
+            void loadWithToken();
         } else {
             // Fresh unauthenticated visitor - clear any malformed token and load public state
             localStorage.removeItem("codesrijan_auth_token");
+            setCachedUser(null);
             setState(prev => ({ ...prev, currentUser: null, isLoaded: true }));
-            refetchData();
+            void refetchData();
         }
     }, []);
 
@@ -397,10 +433,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                     
                     localStorage.setItem("codesrijan_auth_token", idToken);
                     const meRes = await axios.get(`${API_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${idToken}` }
+                        headers: { Authorization: `Bearer ${idToken}` },
+                        timeout: 8000
                     });
 
                     const u = meRes.data.user;
+                    setCachedUser(u);
                     setState(prev => ({ ...prev, currentUser: u }));
                     socket.disconnect().connect();
                     return u;
@@ -416,6 +454,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             }
 
             const { user: u, token } = res.data;
+            setCachedUser(u);
             setState(prev => ({ ...prev, currentUser: u }));
             localStorage.setItem("codesrijan_auth_token", token);
             socket.disconnect().connect();
@@ -442,6 +481,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const res = await axios.post<EmailVerificationResult>(`${API_URL}/auth/verify-email`, { userId, code });
             const { user: u, token } = res.data;
             if (u && token) {
+                setCachedUser(u);
                 setState(prev => ({ ...prev, currentUser: u }));
                 localStorage.setItem("codesrijan_auth_token", token);
                 socket.disconnect().connect();
@@ -454,6 +494,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const logout = () => {
         socket.disconnect();
+        setCachedUser(null);
         setState(prev => ({ ...prev, currentUser: null }));
         localStorage.removeItem("codesrijan_auth_token");
     };
