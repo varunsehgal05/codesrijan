@@ -5,7 +5,7 @@ import { parseSrijanBotMessageNodes } from "../lib/srijanbot-nav";
 import axios from "axios";
 
 export function ChatBotWidget() {
-    const { currentUser } = useAppStore();
+    const { currentUser, hackathons = [], teams = [] } = useAppStore();
     const apiBaseUrl = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
     const routerState = useRouterState();
     const [isOpen, setIsOpen] = useState(false);
@@ -112,8 +112,14 @@ export function ChatBotWidget() {
                     responseText = "How to Prepare Your Winning Pitch: 1. The Hook (30s): Clear problem & user impact. 2. Live Demo (60-90s): Working prototype flow. 3. Technical Edge (30s): Architecture & uniqueness. 4. Feasibility & Roadmap (30s). Tip: Record an offline video backup in case of Wi-Fi issues! [Explore Hackathons -> /hackathons]";
                 } else if (q.includes("submit") || q.includes("workspace") || q.includes("project")) {
                     responseText = "To submit your project, navigate to your Workspace sector, attach your GitHub repository link, and click [Deliver Payload -> /workspace].";
-                } else if (q.includes("deadline") || q.includes("schedule") || q.includes("time") || q.includes("when")) {
-                    responseText = "Live submission deadlines and event milestones are displayed on the [Hackathons Hub -> /timeline].";
+                } else if (q.includes("deadline") || q.includes("schedule") || q.includes("time") || q.includes("when") || q.includes("end") || q.includes("finish") || q.includes("start")) {
+                    const activeH = (teams && currentUser?.teamId && teams.find(t => t.id === currentUser.teamId)?.hackathonId)
+                        ? (hackathons.find(h => h.id === teams.find(t => t.id === currentUser.teamId)?.hackathonId) || hackathons[0])
+                        : (hackathons && hackathons[0]);
+                    const hName = activeH?.name || activeH?.title || "CodeSrijan Impact Challenge — Free Edition";
+                    const deadline = activeH?.submissionDeadline ? new Date(activeH.submissionDeadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) : "November 14, 2026, 3:36 AM IST";
+                    const endDate = activeH?.endDate ? new Date(activeH.endDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) : "November 14, 2026, 5:36 AM IST";
+                    responseText = `Active Tournament Schedule for "${hName}":\n• Final Submission Deadline: ${deadline}\n• Event Conclusion: ${endDate}\nCheck the live chronological roadmap at [View Official Timeline -> /timeline].`;
                 } else if (q.includes("team") || q.includes("squad") || q.includes("find") || q.includes("join") || q.includes("teammate")) {
                     responseText = "You can recruit squad members, find teammates by tech skill, or search for open teams in the [Recruitment Sector -> /recruitment].";
                 } else if (q.includes("problem") || q.includes("statement") || q.includes("challenge")) {

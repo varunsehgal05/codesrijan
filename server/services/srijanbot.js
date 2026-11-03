@@ -804,44 +804,47 @@ export async function computeAIFallback(req, precomputedCtx = null) {
         // PRIORITY 5: Countdown, Deadlines & Timings (Cat 9 & 28)
         if (
             !/announcement|notification/i.test(lowerMsg) && (
-                /system lockdown/i.test(lowerMsg) ||
-                /countdown/i.test(lowerMsg) ||
-                /timer/i.test(lowerMsg) ||
-                /clock reaches zero/i.test(lowerMsg) ||
-                /how much time (do i have )?left/i.test(lowerMsg) ||
-                /deadline/i.test(lowerMsg) ||
-                /which timezone/i.test(lowerMsg) ||
-                /cutoff/i.test(lowerMsg) ||
-                /timeline/i.test(lowerMsg) ||
-                /schedule/i.test(lowerMsg) ||
-                /when does (the )?hackathon (start|end)/i.test(lowerMsg) ||
-                /when hackthon starts/i.test(lowerMsg) ||
-                /when does it end/i.test(lowerMsg) ||
-                /when is it ending/i.test(lowerMsg)
+                /system lockdown|clock reaches zero/i.test(lowerMsg) ||
+                /countdown|timer|cutoff|deadline/i.test(lowerMsg) ||
+                /timeline|schedule/i.test(lowerMsg) ||
+                /\b(when|what time|how much time|how long)\b.*\b(start|end|starts|ends|ending|finish|finishes|close|closes|expire|over|left)\b/i.test(lowerMsg) ||
+                /\b(when|what).*\b(hackathon|event|tournament).*\b(start|end|starts|ends|over|finish|close)/i.test(lowerMsg) ||
+                /\bhackathons?\b.*\b(end|ends|start|starts|deadline)\b/i.test(lowerMsg) ||
+                /\b(end|ending|finish)\b.*\b(date|time|deadline)\b/i.test(lowerMsg) ||
+                /which timezone/i.test(lowerMsg)
             )
         ) {
             const isTimelineOrScheduleIntent = /timeline|schedule/i.test(lowerMsg);
-            const h = ctx.activeHackathon;
-            if (h && h.submissionDeadline) {
-                const deadline = new Date(h.submissionDeadline);
+            const h = (ctx.team?.hackathonId && ctx.hackathons?.find(x => x.id === ctx.team.hackathonId)) || ctx.activeHackathon || (ctx.hackathons && ctx.hackathons[0]);
+            if (h) {
+                const deadline = h.submissionDeadline ? new Date(h.submissionDeadline) : (h.endDate ? new Date(h.endDate) : null);
+                const endDate = h.endDate ? new Date(h.endDate) : deadline;
                 const now = new Date();
-                const diffMs = deadline.getTime() - now.getTime();
+
+                const formattedDeadline = deadline ? deadline.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }) : 'TBD';
+
+                const formattedEnd = endDate ? endDate.toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                }) : formattedDeadline;
+
+                const targetDate = deadline || endDate;
+                const diffMs = targetDate ? (targetDate.getTime() - now.getTime()) : 0;
                 const isExpired = diffMs <= 0;
                 const hoursLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
                 const minutesLeft = Math.max(0, Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60)));
 
-                const formattedDate = deadline.toLocaleString('en-IN', {
-                    timeZone: 'Asia/Kolkata',
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                });
-
                 if (isExpired) {
-                    reply = `Submissions for "${h.name}" closed on ${formattedDate} IST. The countdown has reached zero and workspace submission forms are locked. [View Leaderboard -> /leaderboard]`;
+                    reply = `Submissions for "${h.name || h.title}" closed on ${formattedDeadline} IST. The tournament has concluded and workspace submission forms are locked. [View Leaderboard -> /leaderboard]`;
                 } else if (isTimelineOrScheduleIntent) {
-                    reply = `Live Schedule for "${h.name}": Submission deadline is ${formattedDate} IST (Indian Standard Time). Time remaining: ${hoursLeft} hours and ${minutesLeft} minutes. [View Official Timeline -> /timeline]`;
+                    reply = `Live Schedule for "${h.name || h.title}":\n• Submission Deadline: ${formattedDeadline} IST\n• Tournament Conclusion: ${formattedEnd} IST\n• Time Remaining: ${hoursLeft} hours and ${minutesLeft} minutes.\n[View Official Timeline -> /timeline]`;
                 } else {
-                    reply = `Live Schedule for "${h.name}": Submission deadline is ${formattedDate} IST (Indian Standard Time). Time remaining: ${hoursLeft} hours and ${minutesLeft} minutes. [Open Workspace -> /workspace]`;
+                    reply = `Your active tournament "${h.name || h.title}" has the following schedule:\n• Final Submission Deadline: ${formattedDeadline} IST\n• Event Conclusion: ${formattedEnd} IST\n• Time Remaining: ${hoursLeft} hours and ${minutesLeft} minutes until submissions lock.\n[Open Workspace -> /workspace]`;
                 }
             } else {
                 reply = "Official hackathon timeline and submission deadlines are posted on the live schedule. All platform events operate on Indian Standard Time (IST). [View Official Timeline -> /timeline]";

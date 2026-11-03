@@ -4001,9 +4001,9 @@ app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {
     res.json(tasks);
 });
 
-app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student']), async (req, res) => {
+app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
-    if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
+    if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
     if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED: Final Payload already transmitted." });
 
     const task = new ProjectTask({
@@ -4016,9 +4016,30 @@ app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student']), async (r
     res.json(task);
 });
 
+app.put('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    const team = await Team.findOne({ id: req.params.id });
+    if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
+    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+
+    const task = await ProjectTask.findOneAndUpdate(
+        { id: req.params.taskId, teamId: team.id },
+        {
+            title: req.body.title,
+            description: req.body.description,
+            priority: req.body.priority,
+            assignedTo: req.body.assignedTo,
+            dueDate: req.body.dueDate,
+            status: req.body.status || 'todo'
+        },
+        { returnDocument: 'after' }
+    );
+    if (!task) return res.status(404).json({ message: "Task Node missing." });
+    res.json(task);
+});
+
 app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
-    if (!team || (!team.memberIds.includes(req.user.id) && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
+    if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
     if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
 
     const task = await ProjectTask.findOneAndUpdate(
@@ -4029,15 +4050,15 @@ app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['studen
     res.json(task);
 });
 
-app.delete('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student']), async (req, res) => {
+app.delete('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
-    if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
+    if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
     if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
 
     const task = await ProjectTask.findOne({ id: req.params.taskId });
     if (!task) return res.status(404).json({ message: "Task Node missing." });
 
-    if (task.createdBy !== req.user.id && team.leaderId !== req.user.id) {
+    if (task.createdBy !== req.user.id && team.leaderId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Unauthorized delete action." });
     }
 

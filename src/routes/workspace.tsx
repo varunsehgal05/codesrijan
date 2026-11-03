@@ -33,7 +33,7 @@ function WorkspaceHUD() {
 
   const [isCreating, setIsCreating] = useState(false);
   const [editingTask, setEditingTask] = useState<any>(null);
-  const [createForm, setCreateForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
+  const [createForm, setCreateForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' });
   const [editForm, setEditForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
 
   const [isRequestingMentor, setIsRequestingMentor] = useState(false);
@@ -43,6 +43,16 @@ function WorkspaceHUD() {
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   // Resolve active hackathon & payment clearance status
+  const isSquadLeader = Boolean(
+    currentUser && userTeam && (
+      userTeam.leaderId === currentUser.id ||
+      userTeam.leaderId === (currentUser as any)._id ||
+      (Array.isArray(userTeam.memberIds) && userTeam.memberIds[0] === currentUser.id) ||
+      (Array.isArray(userTeam.memberIds) && userTeam.memberIds.length === 1) ||
+      (!userTeam.leaderId)
+    )
+  );
+
   const activeEvent = useMemo(() => {
     return (hackathons || []).find((h: any) => h.id === userTeam?.hackathonId) || 
            (hackathons || []).find((h: any) => h.status === 'active' || h.status === 'registration_open') || 
@@ -173,7 +183,11 @@ function WorkspaceHUD() {
 
   const handleTaskCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    const titleToUse = (createForm.title || newTaskTitle).trim();
+    if (!titleToUse) {
+      toast.error("Please enter an objective title.");
+      return;
+    }
     if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
 
     try {
@@ -181,7 +195,33 @@ function WorkspaceHUD() {
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
       await axios.post(`${BASE}/teams/${userTeam.id}/tasks`,
-        { title: newTaskTitle, description: "New Task Objective", status: 'todo', priority: 'medium' },
+        {
+          title: titleToUse,
+          description: createForm.description || "New Task Objective",
+          status: createForm.status || 'todo',
+          priority: createForm.priority || 'medium',
+          assignedTo: createForm.assignedTo || '',
+          dueDate: createForm.dueDate || ''
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setNewTaskTitle("");
+      setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' });
+      setIsCreating(false);
+      toast.success("Objective created successfully.");
+      await refetchData();
+    } catch (e: any) { toast.error(e.response?.data?.message || "Task generation failed."); }
+  };
+
+  const handleQuickTaskCreate = async (e: React.FormEvent, status: string = 'todo') => {
+    e.preventDefault();
+    if (!newTaskTitle.trim()) return;
+    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      await axios.post(`${BASE}/teams/${userTeam.id}/tasks`,
+        { title: newTaskTitle.trim(), description: "New Task Objective", status, priority: 'medium' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNewTaskTitle("");
@@ -582,6 +622,26 @@ function WorkspaceHUD() {
             <div className="text-[10px] font-mono text-zinc-500 mt-2">
               {readinessScore === 100 ? "Ready for final lockdown transmission." : "Complete all checkpoints to unlock clean submission."}
             </div>
+            {isSquadLeader && !userTeam.isSubmitted && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmissionForm({
+                    description: userTeam.description || "",
+                    technologies: "",
+                    githubLink: githubLink,
+                    figmaLink: figmaLink,
+                    demoLink: demoLink,
+                    demoVideoUrl: ""
+                  });
+                  setIsSubmitting(true);
+                }}
+                className="mt-3 w-full bg-error hover:bg-black text-white font-black text-xs uppercase py-2.5 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                SUBMIT PROJECT NOW →
+              </button>
+            )}
           </div>
 
         </div>
@@ -670,12 +730,26 @@ function WorkspaceHUD() {
                               if (isCreating) setCreateForm(prev => ({ ...prev, priority: val }));
                               else setEditForm(prev => ({ ...prev, priority: val }));
                             }}
-                            className="border-2 border-black p-3 bg-surface-container"
+                            className="border-2 border-black p-3 bg-surface-container font-mono text-xs uppercase"
                           >
                               <option value="low">Low Priority</option>
                               <option value="medium">Medium Priority</option>
                               <option value="high">High Priority</option>
                               <option value="critical">Critical Priority</option>
+                          </select>
+                          <select
+                            value={isCreating ? (createForm.status || 'todo') : (editForm.status || 'todo')}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (isCreating) setCreateForm(prev => ({ ...prev, status: val }));
+                              else setEditForm(prev => ({ ...prev, status: val }));
+                            }}
+                            className="border-2 border-black p-3 bg-surface-container font-mono text-xs uppercase"
+                          >
+                              <option value="todo">Pipeline Column: IDLE / BACKLOG</option>
+                              <option value="in-progress">Pipeline Column: ACTIVE OPERATIONS</option>
+                              <option value="review">Pipeline Column: QA / REVIEW DECK</option>
+                              <option value="completed">Pipeline Column: EXECUTED</option>
                           </select>
                           <input
                             placeholder="Assign To (Username or ID)"
@@ -713,9 +787,24 @@ function WorkspaceHUD() {
                 <div key={col} className={`bg-surface-container border-4 ${col === 'completed' && userTeam.isSubmitted ? 'border-success' : 'border-ink-black'} min-h-[440px] flex flex-col brutal-shadow-sm`}>
                   <div className={`p-3 font-label-bold uppercase text-center border-b-4 tracking-wider flex items-center justify-between px-4 ${(col === 'completed' || userTeam.isSubmitted) ? 'bg-ink-black text-pure-white border-ink-black' : 'bg-electric-blue text-pure-white border-ink-black'}`}>
                     <span className="text-xs">{columnLabels[idx]}</span>
-                    <span className="text-[10px] font-mono bg-black/30 text-white px-2 py-0.5 rounded-full font-bold">
-                      {tasksInCol.length}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono bg-black/30 text-white px-2 py-0.5 rounded-full font-bold">
+                        {tasksInCol.length}
+                      </span>
+                      {!userTeam.isSubmitted && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: col });
+                            setIsCreating(true);
+                          }}
+                          className="w-5 h-5 bg-white text-black hover:bg-yellow-300 font-black rounded flex items-center justify-center text-xs border border-black cursor-pointer shadow-[1px_1px_0px_#000]"
+                          title={`Add objective directly to ${columnLabels[idx]}`}
+                        >
+                          +
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex-grow p-3 space-y-3 overflow-y-auto max-h-[500px]">
@@ -790,7 +879,7 @@ function WorkspaceHUD() {
                   </div>
 
                   {col === 'todo' && !userTeam.isSubmitted && (
-                    <form onSubmit={handleTaskCreate} className="p-3 border-t-4 border-ink-black bg-white flex gap-2">
+                    <form onSubmit={(e) => handleQuickTaskCreate(e, 'todo')} className="p-3 border-t-4 border-ink-black bg-white flex gap-2">
                       <input
                         type="text"
                         placeholder="NEW OBJECTIVE"
@@ -933,7 +1022,7 @@ function WorkspaceHUD() {
                   </div>
                 )}
 
-                {userTeam.leaderId !== currentUser?.id ? (
+                {!isSquadLeader ? (
                   <div className="bg-zinc-100 border-2 border-zinc-500 p-3 text-[11px] font-mono text-zinc-800 mb-2 w-full text-center">
                     🔒 <strong>ONLY SQUAD LEADER CAN SUBMIT:</strong><br/>
                     Contact your team leader ({teamMembers.find((m: any) => m.id === userTeam.leaderId)?.name || "Leader"}) to transmit the final project.
