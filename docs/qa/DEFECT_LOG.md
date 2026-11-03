@@ -80,3 +80,19 @@ Commit Ref: HEAD (ahead of `origin/main` by 5 commits)
 - **Expected:** Frontend and API consumers can verify OTP using either `/api/auth/otp/verify` or legacy `/api/auth/verify-email`.
 - **Fix:** Express route defined with array alias: `app.post(['/api/auth/verify-email', '/api/auth/otp/verify'], ...)`, supporting both `userId` and `email` lookup.
 - **Status:** **VERIFIED & RESOLVED (14/14 auth tests passing)**
+
+## QA-LIVE-005 — Session Verification Infinite Loading Freeze on Render Cold Start
+- **Severity:** P0 (Critical / User Experience)
+- **Environment:** Live Production (`/judge-command-center`, `/mentor-command-center`, protected routes)
+- **Symptoms:** Page permanently displayed `"Verifying your session…"` with pulsing skeleton bars for 30+ minutes without unblocking or redirecting.
+- **Root Cause:**
+  1. `axios.get(`${API_URL}/auth/me`)` in `store.tsx` had no timeout configuration (`timeout: 0` = infinite).
+  2. When the Render free-tier backend is in sleep mode, incoming browser TCP connections stalled or dropped, causing `isLoaded` to stay `false` indefinitely.
+  3. User profile object (`codesrijan_user`) was not persisted in `localStorage` (only `codesrijan_auth_token` was stored), forcing every page reload/navigation to wait synchronously for a remote network handshake.
+  4. `PortalGuard` displayed a static `<p>` tag without timeout detection, retry buttons, or recovery mechanisms.
+- **Fix:**
+  1. Implemented `codesrijan_user` persistence in `localStorage`, enabling 0ms instant dashboard hydration on mount.
+  2. Enforced strict 8-second timeout on session verification (`GET /api/auth/me`) and 15-second global axios timeout.
+  3. Upgraded `PortalGuard` and `EvaluationRedirect` with timeout detection (3.5s) rendering a neo-brutalist status card with an animated spinner, explicit status messages ("Render instance cold start in progress"), and actionable `[↻ Retry Connection]` and `[Sign In Again]` buttons.
+- **Status:** **VERIFIED & RESOLVED (Commit `845b645` pushed to `main`)**
+
