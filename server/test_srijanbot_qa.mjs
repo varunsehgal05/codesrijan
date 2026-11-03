@@ -911,6 +911,164 @@ async function runSrijanBotTestSuite() {
             validate(res) {
                 return res.body?.reply?.includes("[View Code of Conduct -> /code-of-conduct]");
             }
+        },
+
+        // CATEGORY 34: Technical, CS & Educational Engineering Topics
+        {
+            id: "TC-CAT34-01",
+            category: "34. Technical & CS Education (DSA)",
+            role: "student",
+            message: "Explain dynamic programming",
+            expectedIntent: "DP concepts (memoization, tabulation) with navigation",
+            requiredSource: "General CS knowledge",
+            expectedNav: "/problems",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Dynamic Programming") || reply.includes("Memoization")) && reply.includes("/problems");
+            }
+        },
+        {
+            id: "TC-CAT34-02",
+            category: "34. Technical & CS Education (Frontend)",
+            role: "student",
+            message: "How does React useEffect work?",
+            expectedIntent: "useEffect hook mechanics, lifecycle, dependency array",
+            requiredSource: "Frontend engineering knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("useEffect") || reply.includes("dependency array")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-03",
+            category: "34. Technical & CS Education (Git)",
+            role: "student",
+            message: "How to resolve git merge conflicts?",
+            expectedIntent: "Merge conflict resolution protocol and markers",
+            requiredSource: "Git & version control knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("merge conflicts") || reply.includes("<<<<<<<")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-04",
+            category: "34. Technical & CS Education (DSA)",
+            role: "student",
+            message: "What is binary search and its time complexity?",
+            expectedIntent: "Binary search divide-and-conquer explanation with O(log N)",
+            requiredSource: "Algorithms knowledge",
+            expectedNav: "/problems",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Binary Search") || reply.includes("O(log N)")) && reply.includes("/problems");
+            }
+        },
+        {
+            id: "TC-CAT34-05",
+            category: "34. Technical & CS Education (DSA)",
+            role: "student",
+            message: "Explain Big-O complexity",
+            expectedIntent: "Big-O runtime asymptotic analysis overview",
+            requiredSource: "Algorithms knowledge",
+            expectedNav: "/problems",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Big-O") || reply.includes("O(1)") || reply.includes("O(N)")) && reply.includes("/problems");
+            }
+        },
+        {
+            id: "TC-CAT34-06",
+            category: "34. Technical & CS Education (Frontend)",
+            role: "student",
+            message: "How do I use Tailwind CSS?",
+            expectedIntent: "Tailwind CSS utility-first guidelines",
+            requiredSource: "Frontend engineering knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Tailwind") || reply.includes("utility-first")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-07",
+            category: "34. Technical & CS Education (Backend)",
+            role: "student",
+            message: "How does Express.js work?",
+            expectedIntent: "Express.js REST endpoints and middleware overview",
+            requiredSource: "Backend engineering knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Express") || reply.includes("REST")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-08",
+            category: "34. Technical & CS Education (Backend)",
+            role: "student",
+            message: "How does JWT authentication work?",
+            expectedIntent: "JWT token signing, bearer auth, stateless verification",
+            requiredSource: "Backend & security knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("JWT") || reply.includes("JSON Web Token")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-09",
+            category: "34. Technical & CS Education (Backend)",
+            role: "student",
+            message: "How do WebSockets work?",
+            expectedIntent: "WebSockets full-duplex real-time communication",
+            requiredSource: "Real-time communication knowledge",
+            expectedNav: "/chat",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("WebSocket") || reply.includes("Socket.io")) && reply.includes("/chat");
+            }
+        },
+        {
+            id: "TC-CAT34-10",
+            category: "34. Technical & CS Education (Git)",
+            role: "student",
+            message: "What is git branching and PR workflow?",
+            expectedIntent: "Git feature branching and pull request protocol",
+            requiredSource: "Git & version control knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Git") || reply.includes("branch")) && reply.includes("/workspace");
+            }
+        },
+        {
+            id: "TC-CAT34-11",
+            category: "34. Technical & CS Education (Pitch)",
+            role: "student",
+            message: "What is a winning hackathon pitch formula?",
+            expectedIntent: "Hackathon 3-5 minute demo pitch framework",
+            requiredSource: "Hackathon strategy knowledge",
+            expectedNav: "/leaderboard",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("Pitch") || reply.includes("Demo")) && reply.includes("/leaderboard");
+            }
+        },
+        {
+            id: "TC-CAT34-12",
+            category: "34. Technical & CS Education (MVP Strategy)",
+            role: "student",
+            message: "What is the MVP strategy for winning a hackathon?",
+            expectedIntent: "MVP scope management and 4-pillar evaluation alignment",
+            requiredSource: "Hackathon strategy knowledge",
+            expectedNav: "/workspace",
+            validate(res) {
+                const reply = res.body?.reply || "";
+                return (reply.includes("MVP") || reply.includes("Scope")) && reply.includes("/workspace");
+            }
         }
     ];
 

@@ -626,7 +626,7 @@ export async function computeAIFallback(req, precomputedCtx = null) {
 
         // 3. Check Database Outage Condition
         if (ctx.dbUnavailable) {
-            if (/registration|payment|submission|deadline|when|workspace|team|squad|score/i.test(lowerMsg)) {
+            if (!/git|commit/i.test(lowerMsg) && /registration|payment|submission|deadline|when|workspace|team|squad|score/i.test(lowerMsg)) {
                 return { reply: "SYSTEM NOTICE: Live platform database records are currently unreachable. Your current registration, squad, or deadline status could not be verified from the database. Please try again in a few moments or open a support ticket: [Open Support Desk -> /support]" };
             }
         }

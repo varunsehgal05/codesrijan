@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-11-03T00:05:33.507Z",
+  "timestamp": "2026-11-03T00:11:03.443Z",
   "baseUrl": "http://localhost:5173",
   "viewports": {
     "320": {
@@ -25,6 +25,8 @@
         "height": "60px"
       },
       "overlappingLinksCount": 0,
+      "minDistanceX": 15.6875,
+      "minDistanceY": 74.875,
       "passedOverlap": true,
       "screenshot": "srijanbot-clearance-320px.png"
     },
@@ -51,6 +53,8 @@
         "height": "60px"
       },
       "overlappingLinksCount": 0,
+      "minDistanceX": 70.6875,
+      "minDistanceY": 58.5625,
       "passedOverlap": true,
       "screenshot": "srijanbot-clearance-375px.png"
     },
@@ -77,6 +81,8 @@
         "height": "60px"
       },
       "overlappingLinksCount": 0,
+      "minDistanceX": 0,
+      "minDistanceY": 100.015625,
       "passedOverlap": true,
       "screenshot": "srijanbot-clearance-768px.png"
     },
@@ -102,8 +108,10 @@
         "width": "132px",
         "height": "60px"
       },
-      "overlappingLinksCount": 1,
-      "passedOverlap": false,
+      "overlappingLinksCount": 0,
+      "minDistanceX": 55.046875,
+      "minDistanceY": 39.359375,
+      "passedOverlap": true,
       "screenshot": "srijanbot-clearance-1280px.png"
     },
     "1440": {
@@ -129,11 +137,12 @@
         "height": "60px"
       },
       "overlappingLinksCount": 0,
+      "minDistanceX": 130.046875,
+      "minDistanceY": 688.984375,
       "passedOverlap": true,
       "screenshot": "srijanbot-clearance-1440px.png"
     }
   },
-  "accessibility": {},
   "widgetSizing": {
     "320": {
       "widgetBox": {
@@ -142,20 +151,22 @@
         "width": 288,
         "height": 500
       },
-      "expectedWidth": 288,
+      "expectedMaxWidth": 288,
+      "expectedMaxHeight": 500,
       "horizontalOverflow": false,
       "widgetAria": {
         "closeAria": "Close SrijanBot",
+        "clearAria": "Clear conversation",
         "inputAria": "Message SrijanBot",
         "sendAria": "Send message",
         "chipsCount": 6,
         "chipsAriaLabels": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Ask: Suggest Hackathon Tech Stack",
+          "Ask: How to prepare pitch?",
+          "Ask: When is submission?",
+          "Ask: Find a teammate",
+          "Ask: How do I submit?",
+          "Ask: Where are problem statements?"
         ]
       },
       "screenshot": "srijanbot-widget-320px.png"
@@ -167,20 +178,22 @@
         "width": 343,
         "height": 500
       },
-      "expectedWidth": 343,
+      "expectedMaxWidth": 343,
+      "expectedMaxHeight": 500,
       "horizontalOverflow": false,
       "widgetAria": {
         "closeAria": "Close SrijanBot",
+        "clearAria": "Clear conversation",
         "inputAria": "Message SrijanBot",
         "sendAria": "Send message",
         "chipsCount": 6,
         "chipsAriaLabels": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Ask: Suggest Hackathon Tech Stack",
+          "Ask: How to prepare pitch?",
+          "Ask: When is submission?",
+          "Ask: Find a teammate",
+          "Ask: How do I submit?",
+          "Ask: Where are problem statements?"
         ]
       },
       "screenshot": "srijanbot-widget-375px.png"
@@ -192,20 +205,22 @@
         "width": 380,
         "height": 500
       },
-      "expectedWidth": 380,
+      "expectedMaxWidth": 380,
+      "expectedMaxHeight": 500,
       "horizontalOverflow": false,
       "widgetAria": {
         "closeAria": "Close SrijanBot",
+        "clearAria": "Clear conversation",
         "inputAria": "Message SrijanBot",
         "sendAria": "Send message",
         "chipsCount": 6,
         "chipsAriaLabels": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Ask: Suggest Hackathon Tech Stack",
+          "Ask: How to prepare pitch?",
+          "Ask: When is submission?",
+          "Ask: Find a teammate",
+          "Ask: How do I submit?",
+          "Ask: Where are problem statements?"
         ]
       },
       "screenshot": "srijanbot-widget-768px.png"
@@ -217,20 +232,22 @@
         "width": 380,
         "height": 500
       },
-      "expectedWidth": 380,
+      "expectedMaxWidth": 380,
+      "expectedMaxHeight": 500,
       "horizontalOverflow": false,
       "widgetAria": {
         "closeAria": "Close SrijanBot",
+        "clearAria": "Clear conversation",
         "inputAria": "Message SrijanBot",
         "sendAria": "Send message",
         "chipsCount": 6,
         "chipsAriaLabels": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Ask: Suggest Hackathon Tech Stack",
+          "Ask: How to prepare pitch?",
+          "Ask: When is submission?",
+          "Ask: Find a teammate",
+          "Ask: How do I submit?",
+          "Ask: Where are problem statements?"
         ]
       },
       "screenshot": "srijanbot-widget-1280px.png"
@@ -242,20 +259,22 @@
         "width": 380,
         "height": 500
       },
-      "expectedWidth": 380,
+      "expectedMaxWidth": 380,
+      "expectedMaxHeight": 500,
       "horizontalOverflow": false,
       "widgetAria": {
         "closeAria": "Close SrijanBot",
+        "clearAria": "Clear conversation",
         "inputAria": "Message SrijanBot",
         "sendAria": "Send message",
         "chipsCount": 6,
         "chipsAriaLabels": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Ask: Suggest Hackathon Tech Stack",
+          "Ask: How to prepare pitch?",
+          "Ask: When is submission?",
+          "Ask: Find a teammate",
+          "Ask: How do I submit?",
+          "Ask: Where are problem statements?"
         ]
       },
       "screenshot": "srijanbot-widget-1440px.png"
@@ -274,21 +293,22 @@
         "hasOverflow": false
       },
       "pageAria": {
-        "backBtnAria": null,
-        "inputElAria": null,
-        "sendBtnAria": null,
+        "backBtnAria": "Go back",
+        "clearBtnAria": "Clear conversation history",
+        "inputElAria": "Ask about tech stacks, pitch prep, schedules, teams, rules, or submissions",
+        "sendBtnAria": "Send message",
         "promptButtonsCount": 10,
         "promptArias": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Prompt: Suggest Hackathon Tech Stack",
+          "Prompt: How to prepare pitch?",
+          "Prompt: Best practices for MVP demo?",
+          "Prompt: When is the submission deadline?",
+          "Prompt: How do I submit our project?",
+          "Prompt: How do I create a squad?",
+          "Prompt: What hackathons are available?",
+          "Prompt: Where are problem statements?",
+          "Prompt: How are projects evaluated?",
+          "Prompt: Is this hackathon free or paid?"
         ]
       },
       "screenshot": "ai-assistant-page-320px.png"
@@ -305,21 +325,22 @@
         "hasOverflow": false
       },
       "pageAria": {
-        "backBtnAria": null,
-        "inputElAria": null,
-        "sendBtnAria": null,
+        "backBtnAria": "Go back",
+        "clearBtnAria": "Clear conversation history",
+        "inputElAria": "Ask about tech stacks, pitch prep, schedules, teams, rules, or submissions",
+        "sendBtnAria": "Send message",
         "promptButtonsCount": 10,
         "promptArias": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Prompt: Suggest Hackathon Tech Stack",
+          "Prompt: How to prepare pitch?",
+          "Prompt: Best practices for MVP demo?",
+          "Prompt: When is the submission deadline?",
+          "Prompt: How do I submit our project?",
+          "Prompt: How do I create a squad?",
+          "Prompt: What hackathons are available?",
+          "Prompt: Where are problem statements?",
+          "Prompt: How are projects evaluated?",
+          "Prompt: Is this hackathon free or paid?"
         ]
       },
       "screenshot": "ai-assistant-page-375px.png"
@@ -336,21 +357,22 @@
         "hasOverflow": false
       },
       "pageAria": {
-        "backBtnAria": null,
-        "inputElAria": null,
-        "sendBtnAria": null,
+        "backBtnAria": "Go back",
+        "clearBtnAria": "Clear conversation history",
+        "inputElAria": "Ask about tech stacks, pitch prep, schedules, teams, rules, or submissions",
+        "sendBtnAria": "Send message",
         "promptButtonsCount": 10,
         "promptArias": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Prompt: Suggest Hackathon Tech Stack",
+          "Prompt: How to prepare pitch?",
+          "Prompt: Best practices for MVP demo?",
+          "Prompt: When is the submission deadline?",
+          "Prompt: How do I submit our project?",
+          "Prompt: How do I create a squad?",
+          "Prompt: What hackathons are available?",
+          "Prompt: Where are problem statements?",
+          "Prompt: How are projects evaluated?",
+          "Prompt: Is this hackathon free or paid?"
         ]
       },
       "screenshot": "ai-assistant-page-768px.png"
@@ -367,21 +389,22 @@
         "hasOverflow": false
       },
       "pageAria": {
-        "backBtnAria": null,
-        "inputElAria": null,
-        "sendBtnAria": null,
+        "backBtnAria": "Go back",
+        "clearBtnAria": "Clear conversation history",
+        "inputElAria": "Ask about tech stacks, pitch prep, schedules, teams, rules, or submissions",
+        "sendBtnAria": "Send message",
         "promptButtonsCount": 10,
         "promptArias": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Prompt: Suggest Hackathon Tech Stack",
+          "Prompt: How to prepare pitch?",
+          "Prompt: Best practices for MVP demo?",
+          "Prompt: When is the submission deadline?",
+          "Prompt: How do I submit our project?",
+          "Prompt: How do I create a squad?",
+          "Prompt: What hackathons are available?",
+          "Prompt: Where are problem statements?",
+          "Prompt: How are projects evaluated?",
+          "Prompt: Is this hackathon free or paid?"
         ]
       },
       "screenshot": "ai-assistant-page-1280px.png"
@@ -398,21 +421,22 @@
         "hasOverflow": false
       },
       "pageAria": {
-        "backBtnAria": null,
-        "inputElAria": null,
-        "sendBtnAria": null,
+        "backBtnAria": "Go back",
+        "clearBtnAria": "Clear conversation history",
+        "inputElAria": "Ask about tech stacks, pitch prep, schedules, teams, rules, or submissions",
+        "sendBtnAria": "Send message",
         "promptButtonsCount": 10,
         "promptArias": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "Prompt: Suggest Hackathon Tech Stack",
+          "Prompt: How to prepare pitch?",
+          "Prompt: Best practices for MVP demo?",
+          "Prompt: When is the submission deadline?",
+          "Prompt: How do I submit our project?",
+          "Prompt: How do I create a squad?",
+          "Prompt: What hackathons are available?",
+          "Prompt: Where are problem statements?",
+          "Prompt: How are projects evaluated?",
+          "Prompt: Is this hackathon free or paid?"
         ]
       },
       "screenshot": "ai-assistant-page-1440px.png"
@@ -511,57 +535,57 @@
     }
   ],
   "bundleMetrics": {
-    "totalClientRawKB": "1770.28",
-    "totalClientGzipKB": "459.33",
-    "totalClientBrotliKB": "389.70",
+    "totalClientRawKB": "1773.15",
+    "totalClientGzipKB": "459.72",
+    "totalClientBrotliKB": "389.93",
     "keyAssets": [
       {
-        "file": "admin.index-BULe_pnf.js",
+        "file": "admin.index-CFlH8EKq.js",
         "rawKB": "9.81",
         "gzipKB": "2.30",
-        "brotliKB": "1.98"
+        "brotliKB": "1.97"
       },
       {
-        "file": "admin.payments-CZILwQxO.js",
+        "file": "admin.payments-CM7Tt1pE.js",
         "rawKB": "37.97",
         "gzipKB": "7.72",
         "brotliKB": "6.69"
       },
       {
-        "file": "admin.teams-BKcSfDuy.js",
+        "file": "admin.teams-BYQML-Y5.js",
         "rawKB": "36.02",
         "gzipKB": "7.09",
         "brotliKB": "6.15"
       },
       {
-        "file": "ai-assistant-h1o1u2f8.js",
-        "rawKB": "12.03",
-        "gzipKB": "4.29",
-        "brotliKB": "3.66"
+        "file": "ai-assistant-Bo4f0UXh.js",
+        "rawKB": "12.31",
+        "gzipKB": "4.37",
+        "brotliKB": "3.73"
       },
       {
-        "file": "chat-DNhp_Q_u.js",
+        "file": "chat-DX96wNUs.js",
         "rawKB": "34.44",
         "gzipKB": "7.59",
-        "brotliKB": "6.64"
+        "brotliKB": "6.63"
       },
       {
-        "file": "dashboard-BLD0xDFO.js",
+        "file": "dashboard-C0kvopGD.js",
         "rawKB": "48.48",
         "gzipKB": "10.27",
-        "brotliKB": "8.80"
+        "brotliKB": "8.79"
       },
       {
-        "file": "hackathons.index-Cxc8wYhf.js",
+        "file": "hackathons.index-CEF8oGGq.js",
         "rawKB": "6.74",
         "gzipKB": "2.42",
-        "brotliKB": "2.08"
+        "brotliKB": "2.07"
       },
       {
-        "file": "index-DRdjU7h7.js",
-        "rawKB": "680.54",
-        "gzipKB": "186.81",
-        "brotliKB": "157.08"
+        "file": "index-CwpNyECg.js",
+        "rawKB": "682.00",
+        "gzipKB": "186.96",
+        "brotliKB": "157.11"
       },
       {
         "file": "index.esm-VG_v6S25.js",
@@ -576,22 +600,22 @@
         "brotliKB": "7.73"
       },
       {
-        "file": "recruitment-hlXoahM7.js",
+        "file": "recruitment-ipkMEQ5v.js",
         "rawKB": "45.29",
         "gzipKB": "9.89",
         "brotliKB": "8.43"
       },
       {
-        "file": "styles-CP4sAkAJ.css",
-        "rawKB": "178.42",
-        "gzipKB": "27.96",
-        "brotliKB": "21.65"
+        "file": "styles-CvPHYo7F.css",
+        "rawKB": "178.97",
+        "gzipKB": "28.03",
+        "brotliKB": "21.75"
       },
       {
-        "file": "workspace-Dgfw-RiR.js",
+        "file": "workspace-DOMfGIql.js",
         "rawKB": "38.24",
         "gzipKB": "9.17",
-        "brotliKB": "7.90"
+        "brotliKB": "7.89"
       }
     ],
     "serverBuildExists": true
