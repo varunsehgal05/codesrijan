@@ -124,7 +124,7 @@ export function JudgePortal() {
         ? !evaluationFor(s)
         : tab === "Saved Drafts"
           ? evaluationFor(s)?.status === "draft"
-          : tab === "Submitted Evaluations"
+          : tab === "Submitted Evaluations" || tab === "Evaluation History"
             ? evaluationFor(s)?.status === "submitted"
             : true,
     ) || [];
@@ -239,7 +239,7 @@ export function JudgePortal() {
                         ? "No final evaluations submitted yet."
                         : tab === "Pending Evaluations"
                           ? "No evaluations awaiting a first review."
-                          : "No submissions assigned. Your event administrator can assign a submission to your judge identity."}
+                          : tab === "Evaluation History" ? "No historical completed evaluations recorded yet." : "No submissions assigned. Your event administrator can assign a submission to your judge identity."}
                   </Empty>
                 )}
                 {submissions.map((s) => (
@@ -252,7 +252,7 @@ export function JudgePortal() {
                           : "Not started"}
                     </p>
                     <h3 className="font-black text-2xl mt-2 break-words">
-                      {s.projectTitle || "Untitled submission"}
+                      {s.projectTitle && s.projectTitle.trim() && s.projectTitle !== "Untitled submission" ? s.projectTitle : (data.teams.find((t) => t.id === s.teamId)?.name ? `${data.teams.find((t) => t.id === s.teamId)?.name} Project Payload` : "Assigned Hackathon Submission")}
                     </h3>
                     <p className="font-bold mt-2">
                       {data.teams.find((t) => t.id === s.teamId)?.name || s.teamId}
@@ -453,7 +453,7 @@ function EvaluationWorkspace({ submissionId, back }: { submissionId: string; bac
         <p className="font-mono text-xs break-all">
           {s.id} · Submission {s.status}
         </p>
-        <h3 className="font-black text-2xl mt-2">{s.projectTitle || "Untitled submission"}</h3>
+        <h3 className="font-black text-2xl mt-2">{s.projectTitle && s.projectTitle.trim() && s.projectTitle !== "Untitled submission" ? s.projectTitle : "Assigned Hackathon Submission"}</h3>
         <p className="whitespace-pre-wrap break-words mt-4">
           {s.description || "No description supplied."}
         </p>

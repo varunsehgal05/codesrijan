@@ -6,7 +6,7 @@ import { Menu, X } from "lucide-react";
 import { NotificationBell } from "../NotificationBell";
 
 export function Navbar() {
-    const { currentUser, isLoaded } = useAppStore();
+    const { currentUser, isLoaded, logout } = useAppStore();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -21,28 +21,43 @@ export function Navbar() {
         if (!isLoaded) return null;
 
         if (currentUser) {
+            const isJudge = currentUser.role === 'judge';
+            const isMentor = currentUser.role === 'mentor';
+            const isAdmin = currentUser.role === 'admin';
+            const isStudent = !isJudge && !isMentor && !isAdmin;
+
             return (
                 <>
                     <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                         <span className="material-symbols-outlined text-sm">trophy</span> Hackathons
                     </Link>
-                    <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Problems</Link>
-                    <Link to="/recruitment" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Recruitment</Link>
-                    <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Sponsors</Link>
-                    <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Announcements</Link>
-                    <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Leaderboard</Link>
-                    {currentUser.role === 'judge' && (
-                        <Link to="/judge-command-center" className="text-stark-black bg-[#FFD700] px-2 py-0.5 brutal-border font-black text-xs uppercase" activeProps={{ className: "border-b-2 border-black" }} onClick={() => isMobile && toggleMobileMenu()}>
-                            ⚖️ Judge Arena
+                    {!isJudge && (
+                        <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                            Problems
                         </Link>
                     )}
-                    {currentUser.role === 'mentor' && (
-                        <Link to="/mentor-command-center" className="text-stark-black bg-emerald-400 px-2 py-0.5 brutal-border font-black text-xs uppercase" activeProps={{ className: "border-b-2 border-black" }} onClick={() => isMobile && toggleMobileMenu()}>
-                            💡 Mentor Hub
+                    {isStudent && (
+                        <Link to="/recruitment" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                            Recruitment
                         </Link>
                     )}
-                    <Link to="/chat" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Comms</Link>
-                    <Link to="/support" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>Help & Support</Link>
+                    {isStudent && (
+                        <Link to="/sponsors" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                            Sponsors
+                        </Link>
+                    )}
+                    <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                        Leaderboard
+                    </Link>
+                    <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                        Announcements
+                    </Link>
+                    <Link to="/chat" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                        Comms
+                    </Link>
+                    <Link to="/support" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                        Help &amp; Support
+                    </Link>
                 </>
             );
         }
@@ -86,7 +101,7 @@ export function Navbar() {
                 </div>
 
                 {/* Desktop Buttons */}
-                <div className="hidden lg:flex shrink-0 gap-2 xl:gap-3 pr-1">
+                <div className="hidden lg:flex shrink-0 gap-2 xl:gap-3 pr-1 items-center">
                     {!isLoaded ? (
                         <div className="flex gap-4 animate-pulse">
                             <div className="w-24 h-12 bg-gray-200 dark:bg-gray-700"></div>
@@ -95,33 +110,46 @@ export function Navbar() {
                     ) : currentUser ? (
                         <>
                             {currentUser.role === 'admin' && (
-                                <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-2 whitespace-nowrap">
+                                <Link to="/admin" className="bg-electric-blue text-pure-white font-button-text text-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap">
                                     <span className="material-symbols-outlined text-[18px]">shield_person</span>
                                     Admin Panel
                                 </Link>
                             )}
                             {currentUser.role === 'judge' && (
-                                <Link to="/judge-command-center" className="bg-[#FFD700] text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-3 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
+                                <Link to="/judge-command-center" className="bg-[#FFD700] text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
                                     <span className="material-symbols-outlined text-[18px]">gavel</span>
                                     Judge Portal
                                 </Link>
                             )}
                             {currentUser.role === 'mentor' && (
-                                <Link to="/mentor-command-center" className="bg-emerald-400 text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-3 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
+                                <Link to="/mentor-command-center" className="bg-emerald-400 text-stark-black font-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 whitespace-nowrap font-black">
                                     <span className="material-symbols-outlined text-[18px]">psychology</span>
                                     Mentor Hub
                                 </Link>
                             )}
                             <NotificationBell />
-                            {currentUser.role !== 'admin' && (
-                                <Link to="/workspace" className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-3 py-2 lg:px-4 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Operative Workspace">
+                            {/* Workspace is strictly for students forming squads and submitting payloads */}
+                            {currentUser.role !== 'admin' && currentUser.role !== 'judge' && currentUser.role !== 'mentor' && (
+                                <Link to="/workspace" className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-3 py-2 lg:px-4 lg:py-2.5 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap" title="Operative Workspace">
                                     <span className="material-symbols-outlined text-[18px]">terminal</span>
                                     Workspace
                                 </Link>
                             )}
-                            <Link to={roleHome(currentUser?.role)} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-6 lg:py-3 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
-                                Go to Dashboard
-                            </Link>
+                            {/* Dashboard button for students and admins; Logout button for judges and mentors */}
+                            {currentUser.role !== 'judge' && currentUser.role !== 'mentor' ? (
+                                <Link to={roleHome(currentUser?.role)} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
+                                    Go to Dashboard
+                                </Link>
+                            ) : (
+                                <button
+                                    onClick={logout}
+                                    className="border-2 border-black bg-white hover:bg-black hover:text-white text-black font-button-text px-3 py-2 lg:px-4 lg:py-2.5 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-0.5 transition-all flex items-center gap-1.5 font-bold whitespace-nowrap cursor-pointer"
+                                    title="Sign out of verified session"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">logout</span>
+                                    Logout
+                                </button>
+                            )}
                         </>
                     ) : (
                         <>
@@ -137,7 +165,7 @@ export function Navbar() {
 
                 {/* Mobile Hamburger Button */}
                 <div className="xl:hidden flex items-center ml-auto">
-                    <button onClick={toggleMobileMenu} className="p-2 text-ink-black dark:text-surface-bright focus:outline-none">
+                    <button onClick={toggleMobileMenu} className="p-2 text-ink-black dark:text-surface-bright focus:outline-none" aria-label="Toggle Navigation Menu">
                         {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
                     </button>
                 </div>
@@ -156,15 +184,34 @@ export function Navbar() {
                                         Admin Panel
                                     </Link>
                                 )}
-                                {currentUser.role !== 'admin' && (
+                                {currentUser.role === 'judge' && (
+                                    <Link to="/judge-command-center" onClick={toggleMobileMenu} className="bg-[#FFD700] text-stark-black font-button-text px-4 py-3 brutal-border brutal-shadow text-center flex justify-center items-center gap-2 font-black">
+                                        <span className="material-symbols-outlined text-[18px]">gavel</span>
+                                        Judge Portal
+                                    </Link>
+                                )}
+                                {currentUser.role === 'mentor' && (
+                                    <Link to="/mentor-command-center" onClick={toggleMobileMenu} className="bg-emerald-400 text-stark-black font-button-text px-4 py-3 brutal-border brutal-shadow text-center flex justify-center items-center gap-2 font-black">
+                                        <span className="material-symbols-outlined text-[18px]">psychology</span>
+                                        Mentor Hub
+                                    </Link>
+                                )}
+                                {currentUser.role !== 'admin' && currentUser.role !== 'judge' && currentUser.role !== 'mentor' && (
                                     <Link to="/workspace" onClick={toggleMobileMenu} className="bg-surface-container-highest hover:bg-electric-blue hover:text-white text-ink-black dark:text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center flex justify-center items-center gap-2">
                                         <span className="material-symbols-outlined text-[18px]">terminal</span>
                                         Workspace HUD
                                     </Link>
                                 )}
-                                <Link to={roleHome(currentUser?.role)} onClick={toggleMobileMenu} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center">
-                                    Go to Dashboard
-                                </Link>
+                                {currentUser.role !== 'judge' && currentUser.role !== 'mentor' ? (
+                                    <Link to={roleHome(currentUser?.role)} onClick={toggleMobileMenu} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center">
+                                        Go to Dashboard
+                                    </Link>
+                                ) : (
+                                    <button onClick={() => { logout(); toggleMobileMenu(); }} className="border-2 border-black bg-white hover:bg-black hover:text-white text-black font-button-text px-4 py-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] text-center font-bold flex items-center justify-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                                        Logout
+                                    </button>
+                                )}
                             </>
                         ) : (
                             <>

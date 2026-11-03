@@ -1,1479 +1,599 @@
 {
-  "timestamp": "2026-11-01T23:40:20.585Z",
-  "targetUrl": "https://codesrijan-nine.vercel.app",
-  "accessibility": {
-    "liveObjectiveMatrices": {
-      "exists": true,
-      "headingText": "Live Objective Matrices",
-      "headingColor": "rgb(255, 255, 255)",
-      "sectionBg": "rgb(0, 0, 0)",
-      "sectionBorderTop": "4px solid rgb(0, 53, 213)",
-      "cardsCount": 2,
-      "cards": [
-        {
-          "idx": 0,
-          "cardBg": "rgb(255, 255, 255)",
-          "cardBorder": "4px solid rgb(0, 0, 0)",
-          "cardShadow": "rgb(0, 0, 0) 4px 4px 0px 0px",
-          "titleText": "Decentralized Academic Credential Verification System",
-          "titleColor": "rgb(0, 0, 0)",
-          "titleFont": "900 20px",
-          "descText": "Build a tamper-proof digital credential issuance and verification protocol for hackathon certificates and academic accolades.",
-          "descColor": "oklch(0.274 0.006 286.033)",
-          "descFont": "500 14px",
-          "badgeText": "Cybersecurity & Web3",
-          "badgeBg": "rgb(0, 53, 213)",
-          "badgeColor": "rgb(255, 255, 255)",
-          "linkText": "EXPLORE PARAMETERS arrow_forward",
-          "linkColor": "rgb(0, 53, 213)"
-        },
-        {
-          "idx": 1,
-          "cardBg": "rgb(255, 255, 255)",
-          "cardBorder": "4px solid rgb(0, 0, 0)",
-          "cardShadow": "rgb(0, 0, 0) 4px 4px 0px 0px",
-          "titleText": "Realtime Collaborative Code Review & Pair Programming Engine",
-          "titleColor": "rgb(0, 0, 0)",
-          "titleFont": "900 20px",
-          "descText": "Construct a browser-native collaborative code editor with synchronized cursor tracking, AST-based linting, and voice comms.",
-          "descColor": "oklch(0.274 0.006 286.033)",
-          "descFont": "500 14px",
-          "badgeText": "Developer Tools & Distributed Systems",
-          "badgeBg": "rgb(0, 53, 213)",
-          "badgeColor": "rgb(255, 255, 255)",
-          "linkText": "EXPLORE PARAMETERS arrow_forward",
-          "linkColor": "rgb(0, 53, 213)"
-        }
-      ]
+  "timestamp": "2026-11-03T00:05:33.507Z",
+  "baseUrl": "http://localhost:5173",
+  "viewports": {
+    "320": {
+      "viewport": {
+        "name": "Mobile Ultra-Narrow (320px)",
+        "width": 320,
+        "height": 667
+      },
+      "launcherBox": {
+        "x": 164,
+        "y": 511,
+        "width": 132,
+        "height": 60
+      },
+      "launcherStyles": {
+        "parentPointerEvents": "none",
+        "buttonPointerEvents": "auto",
+        "parentPosition": "fixed",
+        "parentBottom": "96px",
+        "parentRight": "24px",
+        "parentZIndex": "100",
+        "width": "132px",
+        "height": "60px"
+      },
+      "overlappingLinksCount": 0,
+      "passedOverlap": true,
+      "screenshot": "srijanbot-clearance-320px.png"
     },
-    "srijanBotFloatingWidget": {
-      "exists": true,
-      "containerClasses": "fixed bottom-24 right-6 sm:bottom-28 sm:right-8 z-[100] flex flex-col items-end pointer-events-none",
-      "containerPosition": "fixed",
-      "containerBottom": "112px",
-      "containerRight": "32px",
-      "containerZIndex": "100",
-      "containerPointerEvents": "none",
-      "buttonPointerEvents": "auto",
-      "buttonWidth": 60,
-      "buttonHeight": 60,
-      "distanceFromBottom": 112,
-      "distanceFromRight": 32,
-      "overlapsAnyFooterLink": false,
-      "overlappedLinks": []
+    "375": {
+      "viewport": {
+        "name": "Mobile Modern (375px)",
+        "width": 375,
+        "height": 667
+      },
+      "launcherBox": {
+        "x": 219,
+        "y": 511,
+        "width": 132,
+        "height": 60
+      },
+      "launcherStyles": {
+        "parentPointerEvents": "none",
+        "buttonPointerEvents": "auto",
+        "parentPosition": "fixed",
+        "parentBottom": "96px",
+        "parentRight": "24px",
+        "parentZIndex": "100",
+        "width": "132px",
+        "height": "60px"
+      },
+      "overlappingLinksCount": 0,
+      "passedOverlap": true,
+      "screenshot": "srijanbot-clearance-375px.png"
     },
-    "colorContrastAudit": [
-      {
-        "element": "LOM Title on Card BG",
-        "ratio": 21,
-        "colors": [
-          "rgb(0, 0, 0)",
-          "rgb(255, 255, 255)"
-        ]
+    "768": {
+      "viewport": {
+        "name": "Tablet Portrait (768px)",
+        "width": 768,
+        "height": 1024
       },
-      {
-        "element": "LOM Description on Card BG",
-        "ratio": 14.894588477600598,
-        "colors": [
-          "oklch(0.274 0.006 286.033)",
-          "rgb(255, 255, 255)"
-        ]
+      "launcherBox": {
+        "x": 604,
+        "y": 852,
+        "width": 132,
+        "height": 60
       },
-      {
-        "element": "LOM Badge Text on Badge BG",
-        "ratio": 8.501816163279974,
-        "colors": [
-          "rgb(255, 255, 255)",
-          "rgb(0, 53, 213)"
-        ]
+      "launcherStyles": {
+        "parentPointerEvents": "none",
+        "buttonPointerEvents": "auto",
+        "parentPosition": "fixed",
+        "parentBottom": "112px",
+        "parentRight": "32px",
+        "parentZIndex": "100",
+        "width": "132px",
+        "height": "60px"
       },
-      {
-        "element": "LOM Link Text on Card BG",
-        "ratio": 8.501816163279974,
-        "colors": [
-          "rgb(0, 53, 213)",
-          "rgb(255, 255, 255)"
-        ]
-      }
-    ],
-    "neoBrutalistDesignSystem": {
-      "colorTokens": {
-        "electricBlue": "#0035d5",
-        "starkBlack": "#000",
-        "pureWhite": "#fff",
-        "errorColor": "#ba1a1a",
-        "successColor": "#22C55E"
+      "overlappingLinksCount": 0,
+      "passedOverlap": true,
+      "screenshot": "srijanbot-clearance-768px.png"
+    },
+    "1280": {
+      "viewport": {
+        "name": "Desktop HD (1280px)",
+        "width": 1280,
+        "height": 800
       },
-      "calculatedContrasts": {
-        "whiteOnBlue": 8.501816163279974,
-        "blueOnWhite": 8.501816163279974,
-        "blackOnWhite": 21,
-        "whiteOnError": 6.460555052499582,
-        "blackOnSuccess": 9.216147598515207
-      }
+      "launcherBox": {
+        "x": 1116,
+        "y": 628,
+        "width": 132,
+        "height": 60
+      },
+      "launcherStyles": {
+        "parentPointerEvents": "none",
+        "buttonPointerEvents": "auto",
+        "parentPosition": "fixed",
+        "parentBottom": "112px",
+        "parentRight": "32px",
+        "parentZIndex": "100",
+        "width": "132px",
+        "height": "60px"
+      },
+      "overlappingLinksCount": 1,
+      "passedOverlap": false,
+      "screenshot": "srijanbot-clearance-1280px.png"
+    },
+    "1440": {
+      "viewport": {
+        "name": "Desktop Full (1440px)",
+        "width": 1440,
+        "height": 900
+      },
+      "launcherBox": {
+        "x": 1276,
+        "y": 728,
+        "width": 132,
+        "height": 60
+      },
+      "launcherStyles": {
+        "parentPointerEvents": "none",
+        "buttonPointerEvents": "auto",
+        "parentPosition": "fixed",
+        "parentBottom": "112px",
+        "parentRight": "32px",
+        "parentZIndex": "100",
+        "width": "132px",
+        "height": "60px"
+      },
+      "overlappingLinksCount": 0,
+      "passedOverlap": true,
+      "screenshot": "srijanbot-clearance-1440px.png"
     }
   },
-  "responsiveLayouts": [
+  "accessibility": {},
+  "widgetSizing": {
+    "320": {
+      "widgetBox": {
+        "x": 8,
+        "y": 55,
+        "width": 288,
+        "height": 500
+      },
+      "expectedWidth": 288,
+      "horizontalOverflow": false,
+      "widgetAria": {
+        "closeAria": "Close SrijanBot",
+        "inputAria": "Message SrijanBot",
+        "sendAria": "Send message",
+        "chipsCount": 6,
+        "chipsAriaLabels": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "srijanbot-widget-320px.png"
+    },
+    "375": {
+      "widgetBox": {
+        "x": 8,
+        "y": 55,
+        "width": 343,
+        "height": 500
+      },
+      "expectedWidth": 343,
+      "horizontalOverflow": false,
+      "widgetAria": {
+        "closeAria": "Close SrijanBot",
+        "inputAria": "Message SrijanBot",
+        "sendAria": "Send message",
+        "chipsCount": 6,
+        "chipsAriaLabels": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "srijanbot-widget-375px.png"
+    },
+    "768": {
+      "widgetBox": {
+        "x": 356,
+        "y": 396,
+        "width": 380,
+        "height": 500
+      },
+      "expectedWidth": 380,
+      "horizontalOverflow": false,
+      "widgetAria": {
+        "closeAria": "Close SrijanBot",
+        "inputAria": "Message SrijanBot",
+        "sendAria": "Send message",
+        "chipsCount": 6,
+        "chipsAriaLabels": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "srijanbot-widget-768px.png"
+    },
+    "1280": {
+      "widgetBox": {
+        "x": 868,
+        "y": 172,
+        "width": 380,
+        "height": 500
+      },
+      "expectedWidth": 380,
+      "horizontalOverflow": false,
+      "widgetAria": {
+        "closeAria": "Close SrijanBot",
+        "inputAria": "Message SrijanBot",
+        "sendAria": "Send message",
+        "chipsCount": 6,
+        "chipsAriaLabels": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "srijanbot-widget-1280px.png"
+    },
+    "1440": {
+      "widgetBox": {
+        "x": 1028,
+        "y": 272,
+        "width": 380,
+        "height": 500
+      },
+      "expectedWidth": 380,
+      "horizontalOverflow": false,
+      "widgetAria": {
+        "closeAria": "Close SrijanBot",
+        "inputAria": "Message SrijanBot",
+        "sendAria": "Send message",
+        "chipsCount": 6,
+        "chipsAriaLabels": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "srijanbot-widget-1440px.png"
+    }
+  },
+  "fullScreenPage": {
+    "320": {
+      "viewport": {
+        "name": "Mobile Ultra-Narrow (320px)",
+        "width": 320,
+        "height": 667
+      },
+      "pageOverflow": {
+        "scrollWidth": 320,
+        "innerWidth": 320,
+        "hasOverflow": false
+      },
+      "pageAria": {
+        "backBtnAria": null,
+        "inputElAria": null,
+        "sendBtnAria": null,
+        "promptButtonsCount": 10,
+        "promptArias": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "ai-assistant-page-320px.png"
+    },
+    "375": {
+      "viewport": {
+        "name": "Mobile Modern (375px)",
+        "width": 375,
+        "height": 667
+      },
+      "pageOverflow": {
+        "scrollWidth": 375,
+        "innerWidth": 375,
+        "hasOverflow": false
+      },
+      "pageAria": {
+        "backBtnAria": null,
+        "inputElAria": null,
+        "sendBtnAria": null,
+        "promptButtonsCount": 10,
+        "promptArias": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "ai-assistant-page-375px.png"
+    },
+    "768": {
+      "viewport": {
+        "name": "Tablet Portrait (768px)",
+        "width": 768,
+        "height": 1024
+      },
+      "pageOverflow": {
+        "scrollWidth": 768,
+        "innerWidth": 768,
+        "hasOverflow": false
+      },
+      "pageAria": {
+        "backBtnAria": null,
+        "inputElAria": null,
+        "sendBtnAria": null,
+        "promptButtonsCount": 10,
+        "promptArias": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "ai-assistant-page-768px.png"
+    },
+    "1280": {
+      "viewport": {
+        "name": "Desktop HD (1280px)",
+        "width": 1280,
+        "height": 800
+      },
+      "pageOverflow": {
+        "scrollWidth": 1280,
+        "innerWidth": 1280,
+        "hasOverflow": false
+      },
+      "pageAria": {
+        "backBtnAria": null,
+        "inputElAria": null,
+        "sendBtnAria": null,
+        "promptButtonsCount": 10,
+        "promptArias": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "ai-assistant-page-1280px.png"
+    },
+    "1440": {
+      "viewport": {
+        "name": "Desktop Full (1440px)",
+        "width": 1440,
+        "height": 900
+      },
+      "pageOverflow": {
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "hasOverflow": false
+      },
+      "pageAria": {
+        "backBtnAria": null,
+        "inputElAria": null,
+        "sendBtnAria": null,
+        "promptButtonsCount": 10,
+        "promptArias": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      "screenshot": "ai-assistant-page-1440px.png"
+    }
+  },
+  "contrastAudits": [
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Electric Blue CTA Button",
+      "foreground": "#FFFFFF",
+      "background": "#0035D5",
+      "contrastRatio": "8.50 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/hackathons",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Stark Black Header on White Surface",
+      "foreground": "#000000",
+      "background": "#FFFFFF",
+      "contrastRatio": "21.00 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/problems",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Pure White Text on Black Mainframe",
+      "foreground": "#FFFFFF",
+      "background": "#000000",
+      "contrastRatio": "21.00 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/leaderboard",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Problem Card Description (zinc-800 on White)",
+      "foreground": "#27272A",
+      "background": "#FFFFFF",
+      "contrastRatio": "14.89 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/timeline",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Category / Domain Badge (White on Electric Blue)",
+      "foreground": "#FFFFFF",
+      "background": "#0035D5",
+      "contrastRatio": "8.50 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/announcements",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "SrijanBot Help Floating Badge (Black on Yellow #FFE100)",
+      "foreground": "#000000",
+      "background": "#FFE100",
+      "contrastRatio": "16.02 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/faq",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Error Banner (White on Signal Red #BA1A1A)",
+      "foreground": "#FFFFFF",
+      "background": "#BA1A1A",
+      "contrastRatio": "6.46 : 1",
+      "wcagAA": true,
+      "wcagAAA": false,
+      "grade": "WCAG AA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/code-of-conduct",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Success Banner (Black on Emerald Green #22C55E)",
+      "foreground": "#000000",
+      "background": "#22C55E",
+      "contrastRatio": "9.22 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/admin-login",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
+      "name": "Warning Badge (Black on Amber Yellow #F59E0B)",
+      "foreground": "#000000",
+      "background": "#F59E0B",
+      "contrastRatio": "9.78 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     },
     {
-      "viewport": "mobile-320",
-      "width": 320,
-      "route": "/support",
-      "status": "PASS",
-      "scrollWidth": 320,
-      "clientWidth": 320,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/hackathons",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/problems",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/leaderboard",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/timeline",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/announcements",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/faq",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/code-of-conduct",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/admin-login",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "mobile-390",
-      "width": 390,
-      "route": "/support",
-      "status": "PASS",
-      "scrollWidth": 390,
-      "clientWidth": 390,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 96
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/hackathons",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/problems",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/leaderboard",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/timeline",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/announcements",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/faq",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/code-of-conduct",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/admin-login",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "tablet-768",
-      "width": 768,
-      "route": "/support",
-      "status": "PASS",
-      "scrollWidth": 768,
-      "clientWidth": 768,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/hackathons",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/problems",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/leaderboard",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/timeline",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/announcements",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/faq",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/code-of-conduct",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/admin-login",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
-    },
-    {
-      "viewport": "desktop-1440",
-      "width": 1440,
-      "route": "/support",
-      "status": "PASS",
-      "scrollWidth": 1440,
-      "clientWidth": 1440,
-      "hasHorizontalScroll": false,
-      "offendingElements": [],
-      "botDistBottom": 112
+      "name": "Quick Suggestion Chip (Black on Surface #FFFFFF)",
+      "foreground": "#000000",
+      "background": "#FFFFFF",
+      "contrastRatio": "21.00 : 1",
+      "wcagAA": true,
+      "wcagAAA": true,
+      "grade": "WCAG AAA"
     }
   ],
-  "assetOptimization": {
-    "fonts": {
-      "preconnects": [
-        "https://fonts.googleapis.com/",
-        "https://fonts.gstatic.com/"
-      ],
-      "fontSheets": [
-        "https://fonts.googleapis.com/css2?family=Anybody:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@300..900&display=swap",
-        "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-      ],
-      "hasFontPreconnect": true,
-      "hasDisplaySwap": true,
-      "totalFontsLoaded": 41,
-      "loadedFonts": [
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "italic",
-          "status": "unloaded"
-        },
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "italic",
-          "status": "unloaded"
-        },
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "italic",
-          "status": "loaded"
-        },
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "normal",
-          "status": "unloaded"
-        },
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "normal",
-          "status": "unloaded"
-        },
-        {
-          "family": "Anybody",
-          "weight": "100 900",
-          "style": "normal",
-          "status": "loaded"
-        },
-        {
-          "family": "Hanken Grotesk",
-          "weight": "300 900",
-          "style": "normal",
-          "status": "unloaded"
-        },
-        {
-          "family": "Hanken Grotesk",
-          "weight": "300 900",
-          "style": "normal",
-          "status": "unloaded"
-        },
-        {
-          "family": "Hanken Grotesk",
-          "weight": "300 900",
-          "style": "normal",
-          "status": "unloaded"
-        },
-        {
-          "family": "Hanken Grotesk",
-          "weight": "300 900",
-          "style": "normal",
-          "status": "loaded"
-        }
-      ]
-    },
-    "svgs": {
-      "inlineSvgCount": 1,
-      "externalSvgCount": 0,
-      "externalSvgs": [],
-      "inlineSvgSamples": [
-        {
-          "viewBox": "0 0 24 24",
-          "width": "28",
-          "height": "28",
-          "hasAriaLabel": true
-        }
-      ]
-    },
-    "bundles": {
-      "totalCssRequests": 126,
-      "totalJsRequests": 420,
-      "sampleCss": [
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "styles-BXn-vyc3.css",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        },
-        {
-          "url": "css2",
-          "status": 200,
-          "encoding": "gzip",
-          "size": 0
-        }
-      ],
-      "sampleJs": [
-        {
-          "url": "react-3BKWdGy3.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "useMatch-BRDQstVZ.js",
-          "status": 200,
-          "encoding": "none",
-          "size": "659"
-        },
-        {
-          "url": "link-DDGSXONE.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "routes-CgR7igeO.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "jsx-runtime-Cx0BB4qO.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "useRouter-hGNDSd7Y.js",
-          "status": 200,
-          "encoding": "none",
-          "size": "179"
-        },
-        {
-          "url": "root-DLTE-HSj.js",
-          "status": 200,
-          "encoding": "none",
-          "size": "32"
-        },
-        {
-          "url": "useRouterState-D5M-h2ik.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "index-BJ65Zkvl.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        },
-        {
-          "url": "useSelector-Dj1GaA7S.js",
-          "status": 200,
-          "encoding": "br",
-          "size": 0
-        }
-      ]
-    },
-    "cssMinification": {}
-  },
-  "summary": {
-    "totalChecks": 62,
-    "passed": 62,
-    "failed": 0,
-    "warnings": 0
+  "bundleMetrics": {
+    "totalClientRawKB": "1770.28",
+    "totalClientGzipKB": "459.33",
+    "totalClientBrotliKB": "389.70",
+    "keyAssets": [
+      {
+        "file": "admin.index-BULe_pnf.js",
+        "rawKB": "9.81",
+        "gzipKB": "2.30",
+        "brotliKB": "1.98"
+      },
+      {
+        "file": "admin.payments-CZILwQxO.js",
+        "rawKB": "37.97",
+        "gzipKB": "7.72",
+        "brotliKB": "6.69"
+      },
+      {
+        "file": "admin.teams-BKcSfDuy.js",
+        "rawKB": "36.02",
+        "gzipKB": "7.09",
+        "brotliKB": "6.15"
+      },
+      {
+        "file": "ai-assistant-h1o1u2f8.js",
+        "rawKB": "12.03",
+        "gzipKB": "4.29",
+        "brotliKB": "3.66"
+      },
+      {
+        "file": "chat-DNhp_Q_u.js",
+        "rawKB": "34.44",
+        "gzipKB": "7.59",
+        "brotliKB": "6.64"
+      },
+      {
+        "file": "dashboard-BLD0xDFO.js",
+        "rawKB": "48.48",
+        "gzipKB": "10.27",
+        "brotliKB": "8.80"
+      },
+      {
+        "file": "hackathons.index-Cxc8wYhf.js",
+        "rawKB": "6.74",
+        "gzipKB": "2.42",
+        "brotliKB": "2.08"
+      },
+      {
+        "file": "index-DRdjU7h7.js",
+        "rawKB": "680.54",
+        "gzipKB": "186.81",
+        "brotliKB": "157.08"
+      },
+      {
+        "file": "index.esm-VG_v6S25.js",
+        "rawKB": "75.65",
+        "gzipKB": "22.39",
+        "brotliKB": "19.63"
+      },
+      {
+        "file": "index.esm-x6SQU4_X.js",
+        "rawKB": "26.43",
+        "gzipKB": "8.59",
+        "brotliKB": "7.73"
+      },
+      {
+        "file": "recruitment-hlXoahM7.js",
+        "rawKB": "45.29",
+        "gzipKB": "9.89",
+        "brotliKB": "8.43"
+      },
+      {
+        "file": "styles-CP4sAkAJ.css",
+        "rawKB": "178.42",
+        "gzipKB": "27.96",
+        "brotliKB": "21.65"
+      },
+      {
+        "file": "workspace-Dgfw-RiR.js",
+        "rawKB": "38.24",
+        "gzipKB": "9.17",
+        "brotliKB": "7.90"
+      }
+    ],
+    "serverBuildExists": true
   }
 }

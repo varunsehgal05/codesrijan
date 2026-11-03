@@ -1,4 +1,4 @@
-import { User, Team, ProblemStatement, Hackathon, Registration, Submission } from '../models/index.js';
+import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Evaluation } from '../models/index.js';
 import { Announcement, SupportTicket } from '../models/secondary.js';
 import { resolveOptionalUser } from '../middleware/auth.js';
 import { detectProhibitedContent, handleContentModerationIncident } from './moderation.js';
@@ -8,6 +8,7 @@ import { detectProhibitedContent, handleContentModerationIncident } from './mode
  */
 export const VALID_ROUTES = {
     HOME: '/',
+    ABOUT: '/about',
     DASHBOARD: '/dashboard',
     HACKATHONS: '/hackathons',
     TIMELINE: '/timeline',
@@ -30,9 +31,13 @@ export const VALID_ROUTES = {
     REGISTER: '/register',
     FORGOT_PASSWORD: '/auth/forgot-password',
     VERIFY_OTP: '/auth/otp',
+    RESET_PASSWORD: '/auth/reset-password',
     EVALUATIONS: '/evaluations',
     MENTOR: '/mentor',
+    MENTOR_COMMAND_CENTER: '/mentor-command-center',
+    JUDGE_COMMAND_CENTER: '/judge-command-center',
     ADMIN: '/admin',
+    ADMIN_LOGIN: '/admin-login',
     ADMIN_HACKATHONS: '/admin/hackathons',
     ADMIN_PROBLEMS: '/admin/problems',
     ADMIN_USERS: '/admin/users',
@@ -41,13 +46,50 @@ export const VALID_ROUTES = {
     ADMIN_SUBMISSIONS: '/admin/submissions',
     ADMIN_HEALTH: '/admin/health',
     ADMIN_LOGS: '/admin/logs',
+    ADMIN_CERTIFICATES: '/admin/certificates',
+    ADMIN_ANALYTICS: '/admin/analytics',
+    ADMIN_JUDGES: '/admin/judges',
+    ADMIN_MENTORS: '/admin/mentors',
+    ADMIN_OPERATIONS: '/admin/operations',
+    ADMIN_SCHEDULE: '/admin/schedule',
+    ADMIN_SETTINGS: '/admin/settings',
+    ADMIN_SUPPORT: '/admin/support',
+    ADMIN_LEADERBOARD: '/admin/leaderboard',
+    ADMIN_RECRUITMENT: '/admin/recruitment',
+    ADMIN_SPONSORS: '/admin/sponsors',
+    ADMIN_GALLERY: '/admin/gallery',
+    ADMIN_EVALUATIONS: '/admin/evaluations',
     CODE_OF_CONDUCT: '/code-of-conduct',
     PRIVACY_POLICY: '/privacy-policy',
+    RULES: '/rules',
     FAQ: '/faq',
     GALLERY: '/gallery',
     SPONSORS: '/sponsors',
-    ANNOUNCEMENTS: '/announcements'
+    ANNOUNCEMENTS: '/announcements',
+    COMMUNITY: '/community',
+    HIGHLIGHTS: '/highlights',
+    HOST_EVENT: '/host-event'
 };
+
+/**
+ * Sanitizes context objects recursively to guarantee sensitive data (passwords, salts, auth tokens, secrets)
+ * is stripped before reaching prompts, heuristics, or responses.
+ */
+function sanitizeGroundingData(data) {
+    if (!data || typeof data !== 'object') return data;
+    if (data instanceof Date) return data;
+    if (Array.isArray(data)) return data.map(sanitizeGroundingData);
+
+    const sensitivePattern = /password|hash|salt|secret|token|session|credential|private_key/i;
+    const clean = {};
+    for (const [key, val] of Object.entries(data)) {
+        if (sensitivePattern.test(key) && key !== 'tokenUsage' && key !== 'max_tokens' && key !== 'registrationNumber') {
+            continue;
+        }
+        clean[key] = sanitizeGroundingData(val);
+    }
+    return clean;
+}
 
 /**
  * Assembles verified live platform facts from MongoDB.
@@ -89,13 +131,22 @@ export async function getPlatformContext(req) {
         name = 'Guest';
     }
 
+    // Explicit safe user projection without passwordHash, salt, or session tokens
+    const safeUser = user ? {
+        id: user.id || userId,
+        email: user.email,
+        name: user.name || (role === 'admin' ? 'Administrator' : 'Operative'),
+        role: (user.role || 'student').toLowerCase(),
+        college: user.college || null
+    } : (isTestHarness && userId ? { id: userId, role, email, name, teamId: clientContext.teamId } : null);
+
     let dbUnavailable = false;
 
-    // 1. Fetch live active/upcoming hackathons
+    // 1. Fetch live active/upcoming hackathons (non-archived, chronological)
     let hackathons = [];
     try {
         hackathons = await Hackathon.find({
-            status: { $nin: ['archived', 'draft'] },
+            status: { $nin: ['archived', 'draft', 'cancelled'] },
             isArchived: { $ne: true }
         }).sort({ startDate: 1 }).lean();
     } catch (e) {
@@ -105,14 +156,22 @@ export async function getPlatformContext(req) {
 
     const activeHackathon = hackathons.find(h => h.status === 'active') || hackathons[0] || null;
 
-    // 2. Fetch user team if applicable
+    // 2. Fetch user team if applicable (leader or member, prioritized by active hackathon)
     let team = null;
     let teamMemberCount = 0;
     try {
         if (userId) {
-            team = await Team.findOne({
-                $or: [{ memberIds: userId }, { leaderId: userId }]
-            }).lean();
+            if (activeHackathon?.id) {
+                team = await Team.findOne({
+                    hackathonId: activeHackathon.id,
+                    $or: [{ memberIds: userId }, { leaderId: userId }]
+                }).lean();
+            }
+            if (!team) {
+                team = await Team.findOne({
+                    $or: [{ memberIds: userId }, { leaderId: userId }]
+                }).sort({ createdAt: -1 }).lean();
+            }
         }
         if (!team && isTestHarness && clientContext.teamId) {
             team = await Team.findOne({ id: clientContext.teamId }).lean();
@@ -120,42 +179,133 @@ export async function getPlatformContext(req) {
                 team = { id: clientContext.teamId, name: clientContext.teamName || 'Alpha Squad', memberIds: [userId || 'usr-1'] };
             }
         }
-        if (team && Array.isArray(team.memberIds)) {
-            teamMemberCount = team.memberIds.length;
-        } else if (team) {
-            teamMemberCount = 1;
+        if (team) {
+            const memberSet = new Set((Array.isArray(team.memberIds) ? team.memberIds : []).filter(Boolean));
+            if (team.leaderId) memberSet.add(team.leaderId);
+            teamMemberCount = memberSet.size || (Array.isArray(team.memberIds) ? team.memberIds.length : 1);
+
+            // Strip internal admin notes for non-admins to avoid data leakage
+            if (role !== 'admin' && team.adminNote) {
+                const { adminNote, ...sanitizedTeam } = team;
+                team = sanitizedTeam;
+            }
         }
     } catch (e) {
         dbUnavailable = true;
         console.error('[SRIJANBOT CONTEXT] Error fetching team:', e.message);
     }
 
-    // 3. Fetch user registration if applicable
+    // 3. Fetch user registration if applicable (linked to active hackathon, paymentStatus)
     let registration = null;
     try {
         if (userId) {
-            registration = await Registration.findOne({
-                userId,
-                status: { $ne: 'cancelled' }
-            }).sort({ createdAt: -1 }).lean();
+            if (activeHackathon?.id) {
+                registration = await Registration.findOne({
+                    userId,
+                    hackathonId: activeHackathon.id,
+                    status: { $nin: ['cancelled', 'withdrawn'] }
+                }).sort({ createdAt: -1 }).lean();
+            }
+            if (!registration) {
+                registration = await Registration.findOne({
+                    userId,
+                    status: { $nin: ['cancelled', 'withdrawn'] }
+                }).sort({ createdAt: -1 }).lean();
+            }
+            if (registration && role !== 'admin') {
+                const { reviewHistory, storagePath, storageBucket, ...sanitizedReg } = registration;
+                registration = sanitizedReg;
+            }
         }
     } catch (e) {
         dbUnavailable = true;
         console.error('[SRIJANBOT CONTEXT] Error fetching registration:', e.message);
     }
 
-    // 4. Fetch submission if team exists
+    // 4. Fetch submission if team exists (linked to squad ID, repositoryUrl, demoUrl, score)
     let submission = null;
     try {
         if (team?.id) {
-            submission = await Submission.findOne({ teamId: team.id }).lean();
+            submission = await Submission.findOne({ teamId: team.id }).sort({ createdAt: -1 }).lean();
+            let evalDoc = null;
+            try {
+                evalDoc = await Evaluation.findOne({ teamId: team.id, status: 'submitted' }).sort({ createdAt: -1 }).lean();
+                if (!evalDoc) {
+                    evalDoc = await Evaluation.findOne({ teamId: team.id }).sort({ createdAt: -1 }).lean();
+                }
+            } catch (_) {}
+
+            if (submission) {
+                submission = {
+                    ...submission,
+                    repositoryUrl: submission.repositoryUrl || submission.githubUrl || team.repositoryUrl || team.githubLink || null,
+                    demoUrl: submission.demoUrl || submission.liveDemoUrl || team.demoUrl || team.demoLink || null,
+                    score: submission.score !== undefined ? submission.score : (evalDoc?.totalScore ?? null)
+                };
+            } else if (team.isSubmitted || team.repositoryUrl || team.githubLink) {
+                submission = {
+                    teamId: team.id,
+                    repositoryUrl: team.repositoryUrl || team.githubLink || null,
+                    demoUrl: team.demoUrl || team.demoLink || null,
+                    score: evalDoc?.totalScore ?? null,
+                    status: 'submitted'
+                };
+            }
         }
     } catch (e) {
         dbUnavailable = true;
         console.error('[SRIJANBOT CONTEXT] Error fetching submission:', e.message);
     }
 
-    // 5. System settings
+    // 5. Fetch problem statements and tracks when requested
+    let problemStatements = [];
+    let tracks = [];
+    try {
+        const message = typeof req === 'string' ? req : (req?.body?.message || req?.message || '');
+        const wantsProblems = /problem|track|challenge|domain|theme|statement|judg/i.test(message) || !message;
+
+        if (wantsProblems) {
+            const psQuery = {
+                isPublished: { $ne: false },
+                isLocked: { $ne: true }
+            };
+            if (activeHackathon?.id) {
+                psQuery.hackathonId = activeHackathon.id;
+            }
+            problemStatements = await ProblemStatement.find(psQuery)
+                .select('id title domain difficulty description tags isPublished')
+                .lean();
+
+            if (problemStatements.length === 0 && activeHackathon?.problemStatements?.length > 0) {
+                problemStatements = activeHackathon.problemStatements
+                    .filter(ps => ps && ps.isPublished !== false && ps.isLocked !== true)
+                    .map(ps => ({
+                        id: ps.id || ps._id,
+                        title: ps.title || ps.name,
+                        domain: ps.domain || ps.track || 'General',
+                        difficulty: ps.difficulty || 'Medium',
+                        description: ps.description || '',
+                        tags: ps.tags || []
+                    }));
+            }
+        }
+
+        const domainSet = new Set();
+        if (problemStatements && problemStatements.length > 0) {
+            problemStatements.forEach(ps => {
+                if (ps.domain) domainSet.add(ps.domain);
+            });
+        }
+        if (domainSet.size === 0) {
+            ['AI/ML', 'Web3 & Blockchain', 'FinTech', 'HealthTech', 'CyberSecurity'].forEach(t => domainSet.add(t));
+        }
+        tracks = Array.from(domainSet);
+    } catch (e) {
+        dbUnavailable = true;
+        console.error('[SRIJANBOT CONTEXT] Error fetching problem statements:', e.message);
+    }
+
+    // 6. System settings
     const systemSettings = {
         maintenanceMode: false,
         registrationEnabled: true,
@@ -165,8 +315,8 @@ export async function getPlatformContext(req) {
         leaderboardVisible: true
     };
 
-    return {
-        user: user || (isTestHarness && userId ? { id: userId, role, email, name, teamId: team?.id } : null),
+    return sanitizeGroundingData({
+        user: safeUser,
         userId,
         role: role.toLowerCase(),
         name,
@@ -177,10 +327,12 @@ export async function getPlatformContext(req) {
         submission,
         hackathons,
         activeHackathon,
+        problemStatements,
+        tracks,
         systemSettings,
         dbUnavailable,
         currentPath: clientContext.path || '/'
-    };
+    });
 }
 
 /**
@@ -189,24 +341,39 @@ export async function getPlatformContext(req) {
 export function checkAdversarialSecurity(message = "", ctx = null) {
     const lower = message.toLowerCase();
 
-    // Credential disclosure patterns
+    // 1. Credential disclosure patterns: passwords, passwordHash, salt, JWT secrets, MongoDB connection strings, env vars, API tokens, private tokens
     if (
-        /what is (the |my )?password/i.test(lower) ||
-        /reveal (the |my )?password/i.test(lower) ||
-        /what is user .* password/i.test(lower) ||
-        /give me (someone('s)?|the admin('s)?) password/i.test(lower) ||
-        /show me (the )?password/i.test(lower) ||
-        /backend secrets/i.test(lower) ||
-        /confidential backend/i.test(lower) ||
-        /expose (the )?(administrator |admin )?token/i.test(lower)
+        !/forgot|how (can|do) i reset/i.test(lower) && !/certificate/i.test(lower) && (
+            /(what (is|are)|reveal|show|give me|expose|dump|leak) .*(password|credential|passwd|password_?hash)/i.test(lower) ||
+            /what is (the |my |any |user |admin('s)? )?password/i.test(lower) ||
+            /reveal (the |my |all |user |admin('s)? )?passwords?/i.test(lower) ||
+            /what is user .* password/i.test(lower) ||
+            /give me (someone('s)?|the admin('s)?) password/i.test(lower) ||
+            /show me (the )?password/i.test(lower) ||
+            /(user|admin|account|someone('s)?) .*passwords?/i.test(lower) ||
+            /password_?hash/i.test(lower) ||
+            /\bpasswordhash\b/i.test(lower) ||
+            /\bsalt\b/i.test(lower) ||
+            /backend secrets/i.test(lower) ||
+            /confidential backend/i.test(lower) ||
+            /expose (the )?(administrator |admin )?token/i.test(lower) ||
+            /(what (is|are)|reveal|show|give me|expose|leak|dump) (the )?jwt(_|\s)?(secret|key|token)/i.test(lower) ||
+            /(jwt_secret|\bjwt secret\b)/i.test(lower) ||
+            /(what (is|are)|reveal|show|give me|expose|leak|dump) (the )?(mongo|mongodb|atlas|database) (connection string|uri|url)/i.test(lower) ||
+            /(mongodb(\+srv)?:\/\/|mongodb uri|mongo uri|atlas connection string|database connection string)/i.test(lower) ||
+            /(what (is|are)|reveal|show|give me|expose|dump|leak|print) (the )?(environment variables?|env vars?|process\.env|\.env)/i.test(lower) ||
+            /(\.env file|process\.env)/i.test(lower) ||
+            /(what (is|are)|reveal|show|give me|expose|dump|leak) (the )?(api (key|token)|groq (api )?(key|token)|admin token|secret token|auth token|private token|session token)/i.test(lower) ||
+            /(groq_api_key|\bgroq key\b|\bapi key\b|\bapi token\b|\bprivate token\b|\bsession token\b)/i.test(lower)
+        )
     ) {
         return {
             isBlocked: true,
-            reply: "SECURITY PROTOCOL VIOLATION: Access denied. User passwords, security tokens, and backend secrets are strictly encrypted. SrijanBot cannot view, retrieve, or disclose credentials. [Go to Dashboard -> /dashboard]"
+            reply: "SECURITY PROTOCOL VIOLATION: Access denied. User passwords, JWT secrets, database connection strings, environment variables, API tokens, and backend secrets are strictly encrypted. SrijanBot cannot view, retrieve, or disclose credentials. [Go to Dashboard -> /dashboard]"
         };
     }
 
-    // Role escalation claims
+    // 2. Role spoofing & privilege escalation claims (admin, judge, mentor)
     if (
         /i am (an |the )?admin/i.test(lower) ||
         /i am the administrator/i.test(lower) ||
@@ -214,7 +381,8 @@ export function checkAdversarialSecurity(message = "", ctx = null) {
         /act as (an )?admin/i.test(lower) ||
         /give me admin(istrator)? (access|privileges|role|clearance)/i.test(lower) ||
         /make me (an )?admin/i.test(lower) ||
-        /change my (role|permission) to admin/i.test(lower)
+        /change my (role|permission) to admin/i.test(lower) ||
+        /claim (the )?admin(istrator)? role/i.test(lower)
     ) {
         if (!ctx || ctx.role !== 'admin') {
             return {
@@ -224,8 +392,70 @@ export function checkAdversarialSecurity(message = "", ctx = null) {
         }
     }
 
+    if (
+        /i am (a |the )?judge/i.test(lower) ||
+        /treat me as (a )?judge/i.test(lower) ||
+        /act as (a )?judge/i.test(lower) ||
+        /give me judge (access|privileges|role|clearance)/i.test(lower) ||
+        /make me (a )?judge/i.test(lower) ||
+        /change my (role|permission) to judge/i.test(lower) ||
+        /claim (the )?judge role/i.test(lower)
+    ) {
+        if (!ctx || (ctx.role !== 'judge' && ctx.role !== 'admin')) {
+            return {
+                isBlocked: true,
+                reply: "SECURITY PROTOCOL VIOLATION: Role elevation cannot be granted through chat. Clearance is enforced strictly by server-side authentication. [Go to Dashboard -> /dashboard]"
+            };
+        }
+    }
+
+    if (
+        /i am (a |the )?mentor/i.test(lower) ||
+        /treat me as (a )?mentor/i.test(lower) ||
+        /act as (a )?mentor/i.test(lower) ||
+        /give me mentor (access|privileges|role|clearance)/i.test(lower) ||
+        /make me (a )?mentor/i.test(lower) ||
+        /change my (role|permission) to mentor/i.test(lower) ||
+        /claim (the )?mentor role/i.test(lower)
+    ) {
+        if (!ctx || (ctx.role !== 'mentor' && ctx.role !== 'admin')) {
+            return {
+                isBlocked: true,
+                reply: "SECURITY PROTOCOL VIOLATION: Role elevation cannot be granted through chat. Clearance is enforced strictly by server-side authentication. [Go to Dashboard -> /dashboard]"
+            };
+        }
+    }
+
+    // 3. Data Privacy: unprivileged queries for other students' emails, unsubmitted draft repositories, private mentor notes
+    if (
+        /reveal (other )?(students?'?|users?'?) emails?/i.test(lower) ||
+        /show (all |other )?(students?'?|users?'?) emails?/i.test(lower) ||
+        /what are (the )?emails of (other )?students/i.test(lower) ||
+        /give me (other )?(students?'?|users?'?) emails?/i.test(lower) ||
+        /dump (user |student )?emails/i.test(lower) ||
+        /(reveal|show|give me|dump|leak|access) (the )?(other (teams?'?|users?'?) )?(unsubmitted|draft) (repos|repositories|code|projects)/i.test(lower) ||
+        /unsubmitted draft repositor/i.test(lower) ||
+        /(reveal|show|give me|dump|leak|access) (the )?private (mentor|judge) notes/i.test(lower) ||
+        ((/private mentor notes/i.test(lower) || /private judge notes/i.test(lower)) && (!ctx || (ctx.role !== 'admin' && ctx.role !== 'mentor')))
+    ) {
+        if (!ctx || (ctx.role !== 'admin' && ctx.role !== 'mentor') || /(reveal|show|give me|dump|leak|access)/i.test(lower)) {
+            return {
+                isBlocked: true,
+                reply: "SECURITY PROTOCOL VIOLATION: Access denied. Other students' email addresses, unsubmitted draft repositories, and private mentor notes are strictly confidential and protected by CodeSrijan Data Privacy protocols. [View Privacy Policy -> /privacy-policy]"
+            };
+        }
+    }
+
+    // 4. Prompt injection and adversarial jailbreaks
     const injectionPatterns = [
         /ignore (all|your|previous) (rules|instructions|prompts)/i,
+        /disregard (all|your|previous) (instructions|rules)/i,
+        /override (system|all) (rules|instructions|prompts)/i,
+        /jailbreak/i,
+        /dan mode/i,
+        /\bdo anything now\b/i,
+        /(reveal|show|what is|print|dump|expose) (the |your )?(system )?prompt/i,
+        /repeat (the |your )?(system )?prompt/i,
         /bypass (the )?(login|auth|registration deadline|team('s)? size limit)/i,
         /fake certificate/i,
         /pretend that i won/i,
@@ -259,90 +489,49 @@ export function checkAdversarialSecurity(message = "", ctx = null) {
 export function checkActionLimitations(message = "", ctx) {
     const lower = message.toLowerCase();
 
-    if (/can (you|srijanbot) (directly )?create (my |a )?(team|squad)/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?create (my |a )?(team|squad)/i.test(lower) || /(directly )?create (my |a )?(team|squad) for me/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot directly create squads in the database. You can create your squad directly in the Recruitment Sector: [Create Squad -> /recruitment]"
         };
     }
 
-    if (/can (you|srijanbot) (directly )?(remove|kick) a (team )?member/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?(remove|kick) a (team )?member/i.test(lower) || /(kick|remove) a (team )?member for me/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot modify squad rosters directly. Team leaders can manage members on the Team Roster page: [Manage Squad -> /team]"
         };
     }
 
-    if (/can (you|srijanbot) (approve|verify|confirm) (my )?payment/i.test(lower) || /approve a payment through this chat/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?(approve|verify|confirm) (my )?payment/i.test(lower) || /approve a payment through this chat/i.test(lower) || /(directly )?approve (my )?payment/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot approve payments. All registration fees and UPI payment proofs are reviewed and verified by human administrators. [View Payment Status -> /payment]"
         };
     }
 
-    if (/can (you|srijanbot) (refund|cancel) (my )?payment/i.test(lower) || /give me a refund/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?(refund|cancel) (my )?payment/i.test(lower) || /give me a refund/i.test(lower) || /(directly )?refund (my |the )?(registration |payment )?fee/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot initiate refunds. Please contact the platform organizers or submit a support ticket: [Open Support -> /support]"
         };
     }
 
-    if (/can (you|srijanbot) change my (account )?role/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?change my (account )?role/i.test(lower) || /(directly )?change my (account )?role/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot modify user roles. Account roles are enforced by server security rules. To request a role change, contact support: [Contact Support -> /support]"
         };
     }
 
-    if (/can (you|srijanbot) submit (my |our )?project (for me)?/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?submit (my |our )?project (for me)?/i.test(lower) || /(directly )?submit (my |our )?project/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot submit projects on your behalf. Please navigate to your Workspace and transmit your GitHub and Demo links: [Open Workspace -> /workspace]"
         };
     }
 
-    if (/can (you|srijanbot) (guarantee|verify) that my submission was saved/i.test(lower)) {
-        if (ctx?.submission) {
-            return {
-                isLimited: true,
-                reply: `Verified live record: Your squad's submission was recorded (Repo: ${ctx.submission.repositoryUrl || 'Attached'}). [Review Workspace -> /workspace]`
-            };
-        }
-        return {
-            isLimited: true,
-            reply: "No project submission has been recorded for your squad yet. Please upload your submission payload in the Workspace: [Open Workspace -> /workspace]"
-        };
-    }
-
-    if (/can (you|srijanbot) send a message to (the )?admin/i.test(lower) || /contact the admin directly/i.test(lower)) {
-        return {
-            isLimited: true,
-            reply: "SrijanBot cannot send direct private messages to administrators. You can reach the admin team by opening an official support ticket: [Create Support Ticket -> /support]"
-        };
-    }
-
-    if (/can (you|srijanbot) send a message to my teammate/i.test(lower)) {
-        return {
-            isLimited: true,
-            reply: "SrijanBot cannot dispatch private messages for you. You can chat directly with your squad members in the Team Chat room: [Open Team Chat -> /chat]"
-        };
-    }
-
-    if (/can (you|srijanbot) change (the )?(hackathon |event )?schedule/i.test(lower) || /extend (the )?(timer|deadline)/i.test(lower)) {
-        return {
-            isLimited: true,
-            reply: "SrijanBot cannot modify hackathon schedules or countdown timers. Event deadlines are set exclusively by authorized administrators. [View Official Timeline -> /timeline]"
-        };
-    }
-
-    if (/can (you|srijanbot) issue (my )?certificate directly/i.test(lower)) {
-        return {
-            isLimited: true,
-            reply: "SrijanBot cannot generate or issue certificates. Certificates are generated automatically upon hackathon completion and judge evaluations: [View Certificates -> /certificates]"
-        };
-    }
-
-    if (/can (you|srijanbot) change (my |the )?score/i.test(lower)) {
+    if (/can (you|srijanbot) (directly )?(change|edit|update|alter) (my |the |our )?score/i.test(lower) || /(directly )?(change|edit|update|alter) (my |the |our )?score/i.test(lower)) {
         return {
             isLimited: true,
             reply: "SrijanBot cannot alter evaluation scores. All project assessments are performed strictly by official hackathon judges: [View Leaderboard -> /leaderboard]"
@@ -407,6 +596,22 @@ export async function computeAIFallback(req, precomputedCtx = null) {
         const lowerMsg = (message || "").toLowerCase().trim();
         const ctx = precomputedCtx || await getPlatformContext(req);
 
+        // 0. 18+ Content Moderation Guard (Defense-in-depth)
+        const modCheck = detectProhibitedContent(message);
+        if (modCheck.flagged) {
+            try {
+                await handleContentModerationIncident({
+                    req,
+                    channel: 'SrijanBot AI Assistant Channel',
+                    message,
+                    flaggedTerms: modCheck.matchedTerms
+                });
+            } catch (_) {}
+            return {
+                reply: "⚠️ CODE OF CONDUCT VIOLATION: Your transmission contained prohibited adult or explicit terminology. This incident has been logged with your IP, user identity, and timestamp, and forwarded directly to the CodeSrijan Administrative Security Ledger. [Review Code of Conduct -> /code-of-conduct]"
+            };
+        }
+
         // 1. Check Security & Boundaries First
         const sec = checkAdversarialSecurity(lowerMsg, ctx);
         if (sec.isBlocked) {
@@ -442,12 +647,30 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             /how do i review payment proofs/i.test(lowerMsg) ||
             /review payments/i.test(lowerMsg) ||
             /how do i view audit logs/i.test(lowerMsg) ||
-            /export hackathon data/i.test(lowerMsg)
+            /export hackathon data/i.test(lowerMsg) ||
+            /batch certificate/i.test(lowerMsg) ||
+            /certificate issuance/i.test(lowerMsg) ||
+            /issue (batch )?certificates/i.test(lowerMsg) ||
+            /user moderation/i.test(lowerMsg) ||
+            /moderate users/i.test(lowerMsg) ||
+            /ban user/i.test(lowerMsg) ||
+            /suspend account/i.test(lowerMsg) ||
+            /(banner|upload|asset|spec).*spec/i.test(lowerMsg) ||
+            /1200x630/i.test(lowerMsg) ||
+            /500x500/i.test(lowerMsg) ||
+            /15mb/i.test(lowerMsg) ||
+            /qr.*spec/i.test(lowerMsg)
         ) {
             if (ctx.role !== 'admin') {
                 reply = "ACCESS DENIED. You do not possess administrator credentials. Platform telemetry and administrative controls are restricted. [Go to Dashboard -> /dashboard]";
             } else {
-                if (/health|database/i.test(lowerMsg)) {
+                if (/banner|qr|15mb|1200x630|500x500|upload spec|asset spec|specification/i.test(lowerMsg)) {
+                    reply = "Hackathon Asset Specifications:\n1. Cover Banner: Recommended 1200 × 630 px (16:9 ratio), max 5MB (PNG/JPG/WEBP).\n2. Problem Specification Document: Max 15MB (.pdf, .doc, .docx).\n3. UPI Payment QR Code: Recommended 500 × 500 px (1:1 square), max 2MB.\nConfigure these in the Event Manager: [Manage Hackathons -> /admin/hackathons]";
+                } else if (/certificate/i.test(lowerMsg)) {
+                    reply = "Administrators can issue batch certificates in the Certificate Manager for all participants or specific squads across participation, winner, runner-up, and special mention categories with cryptographic verification hashes. [Issue Certificates -> /admin/certificates]";
+                } else if (/manage users|moderate|ban|suspend/i.test(lowerMsg)) {
+                    reply = "Administrators can inspect, search, filter, moderate, suspend, or ban user accounts and configure role clearances in User Management. [Manage Users -> /admin/users]";
+                } else if (/health|database/i.test(lowerMsg)) {
                     reply = "Database and platform health metrics are available in the Admin Operations portal. [Platform Health -> /admin/health]";
                 } else if (/payment/i.test(lowerMsg)) {
                     reply = "Review and verify participant UPI payment proofs in the Admin Payment Queue. [Review Payments -> /admin/payments]";
@@ -471,13 +694,13 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             /access denied/i.test(lowerMsg)
         ) {
             if (ctx.role === 'admin') {
-                reply = `Your account clearance is confirmed as ADMINISTRATOR (${ctx.email}). You have full authority over events, payments, users, and telemetry. [Open Admin Dashboard -> /admin]`;
+                reply = `Your account clearance is confirmed as ADMINISTRATOR (${ctx.email}). You have full authority over events, payments, user moderation, telemetry, batch certificates, and rubric configuration. [Open Admin Dashboard -> /admin]`;
             } else if (ctx.role === 'judge') {
-                reply = `Your account clearance is confirmed as JUDGE (${ctx.email}). You are authorized to evaluate submissions and submit rubric scores. [Open Judge Portal -> /evaluations]`;
+                reply = `Your account clearance is confirmed as JUDGE (${ctx.email}). You are authorized to evaluate assigned submissions, save scoring drafts, and submit finalized 4-pillar rubric scores. [Open Judge Portal -> /evaluations]`;
             } else if (ctx.role === 'mentor') {
-                reply = `Your account clearance is confirmed as MENTOR (${ctx.email}). You can guide assigned squads and answer technical questions. [Open Mentor Center -> /mentor]`;
+                reply = `Your account clearance is confirmed as MENTOR (${ctx.email}). You can guide assigned squads, claim assistance tickets using atomic Compare-And-Swap (CAS), and write confidential private notes. [Open Mentor Center -> /mentor]`;
             } else if (ctx.role === 'student') {
-                reply = `Your account role is verified as HACKER/STUDENT (${ctx.name || ctx.email}). You can register for hackathons, recruit squad members, solve problem statements, and submit projects. [Go to Dashboard -> /dashboard]`;
+                reply = `Your account role is verified as HACKER/STUDENT (${ctx.name || ctx.email}). You can register for hackathons, recruit squad members (1-4 members), solve problem statements, and submit projects. [Go to Dashboard -> /dashboard]`;
             } else {
                 reply = "You are currently exploring CodeSrijan as an unauthenticated GUEST. Please log in or register to join hackathons, form squads, and submit projects. [Log In -> /login]";
             }
@@ -485,21 +708,54 @@ export async function computeAIFallback(req, precomputedCtx = null) {
         }
 
         // PRIORITY 3: Judge & Mentor (Cat 22 & 23)
-        if (/judge (dashboard|portal|rubric)|assigned submissions|score a submission|scoring criteria|judging criteria|evaluation rubric|rubric|how will my project be evaluated|who evaluates/i.test(lowerMsg)) {
+        if (/judge (dashboard|portal|rubric)|judge command center|assigned submissions|score a submission|scoring criteria|judging criteria|evaluation rubric|rubric|how will my project be evaluated|who evaluates|draft evaluation|locked evaluation|100% mathematical constraint/i.test(lowerMsg)) {
             if (ctx.role === 'judge' || ctx.role === 'admin') {
-                reply = "Judges can inspect assigned projects and record scores against the 4-pillar evaluation rubric in the Judge Portal. [Open Judge Portal -> /evaluations]";
+                if (/command center/i.test(lowerMsg)) {
+                    reply = "Welcome Judge. You can inspect assigned projects, save scoring drafts, and finalize 4-pillar rubric evaluations in the Judge Command Center. [Open Judge Command Center -> /judge-command-center]";
+                } else if (/draft|resum|lock|reopen|immutable/i.test(lowerMsg)) {
+                    reply = "Judges can save evaluation drafts and resume scoring at any point. Once submitted, evaluations are cryptographically locked and immutable; only administrators can reopen a locked evaluation with an audited justification. [Open Judge Portal -> /evaluations]";
+                } else if (/100%|mathematical constraint|weight/i.test(lowerMsg)) {
+                    reply = "The evaluation rubric enforces a strict 100% mathematical constraint across 4 pillars: Innovation, Technical Execution, Feasibility & Design, and Presentation & Impact (criteria weights must sum to exactly 100%). [Open Judge Command Center -> /judge-command-center]";
+                } else {
+                    reply = "Judges can inspect assigned projects and record scores against the 4-pillar evaluation rubric in the Judge Portal. [Open Judge Portal -> /evaluations]";
+                }
             } else {
                 reply = "Evaluation scoring is performed against 4 criteria: Innovation (25%), Technical Execution (25%), Design & Usability (25%), and Practical Impact (25%). Final scores are published on the Leaderboard. [View Leaderboard -> /leaderboard]";
             }
             return { reply };
         }
 
-        if (/mentor (dashboard|requests)|which teams am i assigned|guidance to a team/i.test(lowerMsg)) {
+        if (/mentor|guidance|claim.*(ticket|request|guidance)|claim from the queue|cas\b|assigned squad|private note/i.test(lowerMsg)) {
             if (ctx.role === 'mentor' || ctx.role === 'admin') {
-                reply = "Mentors can view assigned teams, answer guidance requests, and inspect project progress in the Mentor Center. [Open Mentor Center -> /mentor]";
+                if (/command center/i.test(lowerMsg)) {
+                    reply = "Welcome Mentor. The Mentor Command Center allows you to oversee assigned squads, claim pending assistance tickets from the guidance queue via atomic Compare-And-Swap (CAS), post private mentor notes, and provide video mentorship links. [Open Mentor Command Center -> /mentor-command-center]";
+                } else if (/claim|cas|queue/i.test(lowerMsg)) {
+                    reply = "Mentors claim pending guidance tickets from the queue using atomic Compare-And-Swap (CAS) to prevent duplicate claims. Once claimed, you can provide technical guidance, attach an HTTPS meeting link, write private notes (1-5000 characters) hidden from students, and resolve the ticket. [Open Mentor Command Center -> /mentor-command-center]";
+                } else if (/private note|mentor note/i.test(lowerMsg)) {
+                    reply = "Private mentor notes (1–5000 characters) are strictly scoped to your assigned squads and confidential from students, stored securely in the Squad Dossier. [Open Mentor Center -> /mentor]";
+                } else if (/assigned squad|scop/i.test(lowerMsg)) {
+                    reply = "Mentors are strictly scoped to their assigned squads via administrative assignment. You can only view repositories, Kanban tasks, and guidance tickets for squads assigned to you. [Open Mentor Center -> /mentor]";
+                } else {
+                    reply = "Mentors can view assigned teams, answer guidance requests, and inspect project progress in the Mentor Center. [Open Mentor Center -> /mentor]";
+                }
             } else {
                 reply = "Squads can request mentor guidance inside the team communications sector. [Open Team Chat -> /chat]";
             }
+            return { reply };
+        }
+
+        // PRIORITY 3.5: Canonical Milestones & Schedule Overview
+        if (
+            /(10|ten) (canonical )?milestones/i.test(lowerMsg) ||
+            /canonical milestone/i.test(lowerMsg) ||
+            /milestones of (the )?hackathon/i.test(lowerMsg) ||
+            /opening ceremony/i.test(lowerMsg) ||
+            /checkpoint 1/i.test(lowerMsg) ||
+            /checkpoint 2/i.test(lowerMsg) ||
+            /pitch round/i.test(lowerMsg) ||
+            /grand finale/i.test(lowerMsg)
+        ) {
+            reply = "CodeSrijan Hackathons follow 10 canonical milestones operating dynamically in Indian Standard Time (IST):\n1. Registration Window — Operative enrollment and entry claim\n2. Team Formation & Roster Lock — Squad assembly (1–4 members) in Recruitment\n3. Opening Ceremony & Keynote Briefing — Tournament kickoff & directive briefing\n4. Hacking Begins & Git Repositories Live — Development sprint commences & Kanban unlocked\n5. Checkpoint 1 — Idea validation & architecture review with mentors\n6. Checkpoint 2 — Prototype validation & mid-sprint mentor sync\n7. Submission Deadline & Code Freeze — Final payload vault lock\n8. Pitch Round & Technical Demonstrations — Live squad presentations & Q&A\n9. Judging & Rubric Evaluation — 4-pillar weighted rubric assessment (100% constraint)\n10. Grand Finale & Award Ceremony — Results declaration & certificate issuance\n[View Official Timeline -> /timeline]";
             return { reply };
         }
 
@@ -522,12 +778,20 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             /why.*workspace/i.test(lowerMsg) ||
             /where is my (project )?workspace/i.test(lowerMsg) ||
             /open (the )?workspace/i.test(lowerMsg) ||
-            /lone wolf/i.test(lowerMsg)
+            /lone wolf/i.test(lowerMsg) ||
+            /payload format/i.test(lowerMsg) ||
+            /submission format/i.test(lowerMsg) ||
+            /what (do i need to|format to) submit/i.test(lowerMsg) ||
+            /workspace kanban/i.test(lowerMsg)
         ) {
             if (/can i submit without a squad/i.test(lowerMsg)) {
                 reply = "Submissions require an active squad of 1-4 members. Solo participants cannot transmit payloads until they form or join a squad. [Find or Create Squad -> /recruitment]";
             } else if (!ctx.team) {
                 reply = "LONE WOLF DETECTED. Workspace access requires an active squad of 1-4 members. Create or join a team in the Recruitment sector to unlock your project board. [Find or Create Squad -> /recruitment]";
+            } else if (/payload format|submission format|what (do i need to|format to) submit/i.test(lowerMsg)) {
+                reply = `To submit your hackathon project, transmit your payload from the Workspace Kanban:\n1. Project Title & Description (core problem and solution overview)\n2. Public GitHub Repository URL (containing source code and README)\n3. Live Demo URL (hosted deployment e.g. Vercel/Netlify or video demonstration)\n4. Optional attachments (Figma UI designs, architecture docs)\nOnce transmitted, the payload is locked for evaluation. [Open Workspace -> /workspace]`;
+            } else if (/workspace kanban/i.test(lowerMsg)) {
+                reply = `The Project Workspace for squad "${ctx.team.name}" features a live Kanban board with Backlog, In-Progress, Review, and Done columns to coordinate sprint execution. [Open Workspace -> /workspace]`;
             } else if (ctx.submission) {
                 const scoreText = ctx.submission.score != null ? `Current Score: ${ctx.submission.score}/100` : "Evaluation status: PENDING evaluation by judges";
                 reply = `Your squad "${ctx.team.name}" has recorded its submission (Repository: ${ctx.submission.repositoryUrl || 'Attached'}). ${scoreText}. [Open Workspace -> /workspace]`;
@@ -539,19 +803,24 @@ export async function computeAIFallback(req, precomputedCtx = null) {
 
         // PRIORITY 5: Countdown, Deadlines & Timings (Cat 9 & 28)
         if (
-            /system lockdown/i.test(lowerMsg) ||
-            /countdown/i.test(lowerMsg) ||
-            /timer/i.test(lowerMsg) ||
-            /clock reaches zero/i.test(lowerMsg) ||
-            /how much time (do i have )?left/i.test(lowerMsg) ||
-            /deadline/i.test(lowerMsg) ||
-            /which timezone/i.test(lowerMsg) ||
-            /cutoff/i.test(lowerMsg) ||
-            /when does (the )?hackathon (start|end)/i.test(lowerMsg) ||
-            /when hackthon starts/i.test(lowerMsg) ||
-            /when does it end/i.test(lowerMsg) ||
-            /when is it ending/i.test(lowerMsg)
+            !/announcement|notification/i.test(lowerMsg) && (
+                /system lockdown/i.test(lowerMsg) ||
+                /countdown/i.test(lowerMsg) ||
+                /timer/i.test(lowerMsg) ||
+                /clock reaches zero/i.test(lowerMsg) ||
+                /how much time (do i have )?left/i.test(lowerMsg) ||
+                /deadline/i.test(lowerMsg) ||
+                /which timezone/i.test(lowerMsg) ||
+                /cutoff/i.test(lowerMsg) ||
+                /timeline/i.test(lowerMsg) ||
+                /schedule/i.test(lowerMsg) ||
+                /when does (the )?hackathon (start|end)/i.test(lowerMsg) ||
+                /when hackthon starts/i.test(lowerMsg) ||
+                /when does it end/i.test(lowerMsg) ||
+                /when is it ending/i.test(lowerMsg)
+            )
         ) {
+            const isTimelineOrScheduleIntent = /timeline|schedule/i.test(lowerMsg);
             const h = ctx.activeHackathon;
             if (h && h.submissionDeadline) {
                 const deadline = new Date(h.submissionDeadline);
@@ -569,6 +838,8 @@ export async function computeAIFallback(req, precomputedCtx = null) {
 
                 if (isExpired) {
                     reply = `Submissions for "${h.name}" closed on ${formattedDate} IST. The countdown has reached zero and workspace submission forms are locked. [View Leaderboard -> /leaderboard]`;
+                } else if (isTimelineOrScheduleIntent) {
+                    reply = `Live Schedule for "${h.name}": Submission deadline is ${formattedDate} IST (Indian Standard Time). Time remaining: ${hoursLeft} hours and ${minutesLeft} minutes. [View Official Timeline -> /timeline]`;
                 } else {
                     reply = `Live Schedule for "${h.name}": Submission deadline is ${formattedDate} IST (Indian Standard Time). Time remaining: ${hoursLeft} hours and ${minutesLeft} minutes. [Open Workspace -> /workspace]`;
                 }
@@ -579,7 +850,7 @@ export async function computeAIFallback(req, precomputedCtx = null) {
         }
 
         // PRIORITY 6: Team Chat & Comms (Cat 17) - Before generic team!
-        if (/chat/i.test(lowerMsg) || /message/i.test(lowerMsg) || /communication/i.test(lowerMsg)) {
+        if ((/chat/i.test(lowerMsg) || /message/i.test(lowerMsg) || /communication/i.test(lowerMsg)) && !/commit|git\b/i.test(lowerMsg)) {
             reply = "Collaborate with squad operatives in the real-time encrypted Team Chat room. [Open Team Chat -> /chat]";
             return { reply };
         }
@@ -593,7 +864,16 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             /which problem statement should i choose/i.test(lowerMsg) ||
             /judging criteria for a track/i.test(lowerMsg)
         ) {
-            reply = "Problem statements across tracks (AI/ML, Web3, FinTech, HealthTech, CyberSecurity) are listed in the Problem Hub. Classified statements reveal automatically at kickoff. [Browse Problem Statements -> /problems]";
+            const trackList = (ctx.tracks && ctx.tracks.length > 0)
+                ? ctx.tracks.join(', ')
+                : 'AI/ML, Web3, FinTech, HealthTech, CyberSecurity';
+
+            if (ctx.problemStatements && ctx.problemStatements.length > 0) {
+                const psTitles = ctx.problemStatements.slice(0, 3).map(p => `"${p.title}" (${p.domain || 'General'})`).join(', ');
+                reply = `Active problem statements for "${ctx.activeHackathon?.name || 'CodeSrijan'}": ${psTitles}. Tracks: ${trackList}. Classified statements reveal automatically at kickoff. [Browse Problem Statements -> /problems]`;
+            } else {
+                reply = `Problem statements across tracks (${trackList}) are listed in the Problem Hub. Classified statements reveal automatically at kickoff. [Browse Problem Statements -> /problems]`;
+            }
             return { reply };
         }
 
@@ -620,10 +900,12 @@ export async function computeAIFallback(req, precomputedCtx = null) {
 
             if (ctx.registration?.paymentStatus === 'verified') {
                 reply = `Your payment for ${activeH?.name || 'the hackathon'} is VERIFIED and approved. Your mission enrollment is confirmed! [View Dashboard -> /dashboard]`;
-            } else if (ctx.registration?.paymentStatus === 'pending') {
+            } else if (ctx.registration?.paymentStatus === 'pending' || ctx.registration?.paymentStatus === 'pending_proof' || ctx.registration?.paymentStatus === 'payment_under_review') {
                 reply = `Your payment proof has been submitted and is currently PENDING review by administrators. Verification normally completes within a few hours. [Check Payment Status -> /payment]`;
             } else if (ctx.registration?.paymentStatus === 'rejected') {
                 reply = `Your previous payment submission was rejected. Please re-upload a clear screenshot displaying the UPI transaction ID (UTR). [Re-upload Payment Proof -> /payment]`;
+            } else if (ctx.registration?.paymentStatus === 'not_required') {
+                reply = `Your registration for "${activeH?.name || 'CodeSrijan'}" is complete. This is a FREE event, so no payment is required. [View Dashboard -> /dashboard]`;
             } else if (ctx.registration && !ctx.registration.paymentStatus) {
                 reply = `Your registration is currently ${ctx.registration.status.toUpperCase()}. If registered for a paid event, ensure UPI payment proof is submitted. [Check Payment Status -> /payment]`;
             } else {
@@ -675,13 +957,11 @@ export async function computeAIFallback(req, precomputedCtx = null) {
         // PRIORITY 13: Support & Troubleshooting (Cat 18)
         if (
             /support/i.test(lowerMsg) ||
-            /help/i.test(lowerMsg) ||
             /ticket/i.test(lowerMsg) ||
-            /bug/i.test(lowerMsg) ||
-            /error/i.test(lowerMsg) ||
             /blank page/i.test(lowerMsg) ||
             /slow/i.test(lowerMsg) ||
-            /asap/i.test(lowerMsg)
+            /asap/i.test(lowerMsg) ||
+            ((/help/i.test(lowerMsg) || /bug/i.test(lowerMsg) || /error/i.test(lowerMsg)) && !/dynamic programming|binary search|sorting|quicksort|mergesort|graph|bfs|dfs|dijkstra|big[- ]?o|useeffect|usestate|tailwind|vite|express|rest|graphql|mongoose|mongodb|jwt|websocket|merge conflict|git\b|react\b/i.test(lowerMsg))
         ) {
             reply = "Need help or experiencing a technical glitch? You can open an official support ticket and our engineering team will assist you. [Create Support Ticket -> /support]";
             return { reply };
@@ -791,7 +1071,21 @@ export async function computeAIFallback(req, precomputedCtx = null) {
 
         // PRIORITY 19: Navigation Shortcuts (Cat 19)
         if (/take me to|open /i.test(lowerMsg)) {
-            if (/hackathon|catalog/i.test(lowerMsg)) reply = "Navigating to Hackathons Catalog. [Explore Hackathons -> /hackathons]";
+            if (/mentor command center/i.test(lowerMsg)) reply = "Navigating to Mentor Command Center. [Open Mentor Command Center -> /mentor-command-center]";
+            else if (/judge command center/i.test(lowerMsg)) reply = "Navigating to Judge Command Center. [Open Judge Command Center -> /judge-command-center]";
+            else if (/mentor/i.test(lowerMsg)) reply = "Navigating to Mentor Center. [Open Mentor Center -> /mentor]";
+            else if (/judge|evaluation/i.test(lowerMsg)) reply = "Navigating to Judge Portal. [Open Judge Portal -> /evaluations]";
+            else if (/admin hackathon/i.test(lowerMsg)) reply = "Navigating to Admin Hackathons Manager. [Manage Hackathons -> /admin/hackathons]";
+            else if (/admin certificate/i.test(lowerMsg)) reply = "Navigating to Admin Certificate Generator. [Manage Certificates -> /admin/certificates]";
+            else if (/admin health/i.test(lowerMsg)) reply = "Navigating to Platform Health Telemetry. [Platform Health -> /admin/health]";
+            else if (/admin payment/i.test(lowerMsg)) reply = "Navigating to Admin Payment Queue. [Review Payments -> /admin/payments]";
+            else if (/admin user/i.test(lowerMsg)) reply = "Navigating to Admin User Directory. [Manage Users -> /admin/users]";
+            else if (/admin log/i.test(lowerMsg)) reply = "Navigating to Admin Audit Logs. [View Audit Logs -> /admin/logs]";
+            else if (/admin/i.test(lowerMsg)) reply = "Navigating to Admin Operations Center. [Open Admin Dashboard -> /admin]";
+            else if (/hackathon|catalog/i.test(lowerMsg)) reply = "Navigating to Hackathons Catalog. [Explore Hackathons -> /hackathons]";
+            else if (/timeline|schedule/i.test(lowerMsg)) reply = "Navigating to Official Timeline. [View Official Timeline -> /timeline]";
+            else if (/code of conduct|conduct/i.test(lowerMsg)) reply = "Navigating to Code of Conduct. [View Code of Conduct -> /code-of-conduct]";
+            else if (/privacy policy|privacy/i.test(lowerMsg)) reply = "Navigating to Privacy Policy. [View Privacy Policy -> /privacy-policy]";
             else if (/workspace/i.test(lowerMsg)) reply = "Navigating to Workspace sector. [Open Workspace -> /workspace]";
             else if (/team/i.test(lowerMsg)) reply = "Navigating to Squad Management. [Open Team Page -> /team]";
             else if (/recruitment/i.test(lowerMsg)) reply = "Navigating to Recruitment Marketplace. [Open Recruitment -> /recruitment]";
@@ -804,6 +1098,102 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             else if (/announcement/i.test(lowerMsg)) reply = "Navigating to Announcements. [Open Announcements -> /announcements]";
             else if (/payment/i.test(lowerMsg)) reply = "Navigating to Payment Portal. [Open Payment -> /payment]";
             else reply = "Navigating to Mission Dashboard. [Open Dashboard -> /dashboard]";
+            return { reply };
+        }
+
+        // PRIORITY 20: Technical, Computer Science & Engineering Knowledge
+        // Sub-priority 20A: DSA & Algorithms
+        if (/dynamic programming|\bdp\b|memoization|tabulation|overlapping subproblems|optimal substructure/i.test(lowerMsg)) {
+            reply = "Dynamic Programming (DP) solves complex optimization problems by breaking them into overlapping subproblems and caching intermediate solutions.\n\nTwo core paradigms:\n1. Top-Down (Memoization): Recursive decomposition with a cache/memo table.\n2. Bottom-Up (Tabulation): Iterative table construction starting from base cases.\n\nKey formula:\n`Optimal Solution = Subproblem Solution + Transition Step`\n\nExample (Fibonacci with memoization):\n```javascript\nconst memo = {};\nfunction fib(n) {\n  if (n <= 1) return n;\n  if (memo[n]) return memo[n];\n  return (memo[n] = fib(n - 1) + fib(n - 2));\n}\n```\nComplexity: Reduces O(2^N) exponential complexity to O(N) linear time. Essential for knapsack, shortest paths, string edit distance, and sequence alignment. [Browse Problems -> /problems]";
+            return { reply };
+        }
+
+        if (/binary search|\bbsearch\b/i.test(lowerMsg)) {
+            reply = "Binary Search is an efficient O(log N) divide-and-conquer algorithm for finding elements in monotonically sorted collections by halving the search space at each iteration.\n\nImplementation:\n```javascript\nfunction binarySearch(arr, target) {\n  let low = 0, high = arr.length - 1;\n  while (low <= high) {\n    const mid = Math.floor(low + (high - low) / 2);\n    if (arr[mid] === target) return mid;\n    if (arr[mid] < target) low = mid + 1;\n    else high = mid - 1;\n  }\n  return -1;\n}\n```\nComplexity: Time O(log N), Space O(1). Essential for sorted telemetry lookups, range queries, and optimization problems. [Browse Problems -> /problems]";
+            return { reply };
+        }
+
+        if (/quicksort|merge ?sort|sorting algorithm|heapsort|bubble sort|insertion sort/i.test(lowerMsg)) {
+            reply = "Sorting algorithms organize unstructured data into ordered sequences:\n- QuickSort (Avg: O(N log N), Worst: O(N^2), Space: O(log N)): Pivot partitioning; cache-friendly in-memory sort.\n- MergeSort (Time: O(N log N), Space: O(N)): Stable divide-and-conquer; divides array in half, sorts recursively, and merges.\n- Timsort (V8 JavaScript `Array.prototype.sort()` engine default): Hybrid merge/insertion sort optimized for real-world presorted data.\n\nHackathon Rule: Use native `arr.sort((a, b) => a - b)` for numerical sorting in JS unless implementing custom indexed data structures. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/graph traversal|breadth[- ]first search|\bbfs\b|depth[- ]first search|\bdfs\b|dijkstra|graph algorithm|shortest path/i.test(lowerMsg)) {
+            reply = "Graph Traversal explores nodes and edges across interconnected network topologies:\n- BFS (Breadth-First Search): Uses a FIFO queue. Traverses level-by-level. Guaranteed to find the shortest path in unweighted graphs.\n- DFS (Depth-First Search): Uses a LIFO stack or recursion. Traverses deeply along each branch. Optimal for cycle detection, topological sorting, and maze/game trees.\n- Dijkstra's Algorithm: Greedy search using a min-heap / priority queue to find single-source shortest paths on weighted graphs with non-negative edges (O((V + E) log V)).\n\nBest practice: Store graph connections using an Adjacency List (`Map<node, neighbor[]>`) for optimal O(V + E) traversal efficiency. [Browse Problems -> /problems]";
+            return { reply };
+        }
+
+        if (/big[- ]?o\b|time complexity|space complexity|asymptotic analysis|algorithmic complexity/i.test(lowerMsg)) {
+            reply = "Big-O notation describes the upper bound of runtime or memory requirements as input size (N) scales:\n- O(1) Constant: Hash map lookup, array index read.\n- O(log N) Logarithmic: Binary search, balanced tree queries.\n- O(N) Linear: Single loop, linear array scan.\n- O(N log N) Linearithmic: Efficient sorting (MergeSort, QuickSort, TimSort).\n- O(N^2) Quadratic: Nested loops (brute-force pair comparisons).\n- O(2^N) Exponential: Naive recursion (avoid under hackathon production loads).\n\nTarget O(1) to O(N log N) in hackathon pipelines to avoid API timeouts and UI lockups under judge test loads. [Browse Problems -> /problems]";
+            return { reply };
+        }
+
+        // Sub-priority 20B: Frontend Engineering
+        if (/useeffect|react effect|lifecycle hook|side effect in react/i.test(lowerMsg)) {
+            reply = "React `useEffect` synchronizes components with external systems (network requests, browser APIs, timers, subscriptions).\n\nSyntax & Lifecycle:\n```jsx\nuseEffect(() => {\n  const controller = new AbortController();\n  fetchData(controller.signal);\n\n  // Cleanup runs on unmount or before effect re-runs\n  return () => controller.abort();\n}, [dep1, dep2]); // Dependency array\n```\nRules of Engagement:\n1. Always list every reactive value (props, state) used inside the effect in the dependency array.\n2. `[]` dependency array runs once after initial mount.\n3. Omitting dependency array runs after EVERY render (risks infinite loops if setting state).\n4. Always return a cleanup callback for listeners, intervals, and WebSocket subscriptions. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/usestate|component state|state management|zustand|redux|props drilling|react hooks/i.test(lowerMsg)) {
+            reply = "Component state manages dynamic user data that triggers UI re-renders upon mutation:\n- Local State (`useState`):\n```jsx\nconst [count, setCount] = useState(0);\n// Use functional updater when next state depends on current:\nsetCount(prev => prev + 1);\n```\n- Lifting State Up: Share state between siblings by moving it to their common parent component.\n- Global State: For app-wide data (auth session, active squad, theme), use lightweight Zustand stores or React Context.\n\nBest practice: Never mutate state objects directly—always return new copies: `setState(prev => ({ ...prev, active: true }))`. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/tailwind|tailwind css|utility[- ]first css|tailwind styling/i.test(lowerMsg)) {
+            reply = "Tailwind CSS provides atomic, utility-first classes to compose custom designs directly in your markup:\n- Flexbox & Grid: `flex items-center justify-between gap-4`, `grid grid-cols-1 md:grid-cols-3 gap-6`.\n- Responsive Breakpoints: Mobile-first prefixes (`sm:`, `md:`, `lg:`, `xl:`, `2xl:`).\n- Neo-Brutalist Theme: `border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase font-mono font-bold`.\n- States & Transitions: `hover:scale-105 active:scale-95 transition-transform duration-200`.\n\nHackathon Pro-tip: Utility classes eliminate context switching between CSS files and JSX, letting your team ship UI 3x faster. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/\bvite\b|vite\.config|build tool|hmr|bundler|frontend setup/i.test(lowerMsg)) {
+            reply = "Vite uses native ES modules (ESM) in development and esbuild for lightning-fast Hot Module Replacement (HMR) and instant server boot times.\n\nKey configurations:\n- `vite.config.ts`: Configures plugins (e.g., `@vitejs/plugin-react`), path aliases (`@/ -> /src`), and dev proxy.\n- Dev Proxy: Prevent CORS issues in local development by proxying `/api` to Express:\n```js\nserver: {\n  proxy: { '/api': { target: 'http://localhost:5000', changeOrigin: true } }\n}\n```\nRun `npm run build` to output production-ready static assets in `/dist`. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        // Sub-priority 20C: Backend & APIs
+        if (/express(\.js)?|rest api|rest endpoint|rest vs graphql|api routing|http methods/i.test(lowerMsg)) {
+            reply = "Express.js is a minimalist web framework for Node.js organized around middleware chains:\n- Standard REST Endpoints:\n  - `GET /api/items`: Retrieve resources (200 OK).\n  - `POST /api/items`: Create resource (201 Created).\n  - `PUT /api/items/:id`: Complete resource replacement.\n  - `PATCH /api/items/:id`: Partial field update.\n  - `DELETE /api/items/:id`: Remove resource (204 No Content).\n- REST vs GraphQL: REST uses standard HTTP verbs with fixed endpoint schemas (predictable, simple caching). GraphQL uses a single `/graphql` POST endpoint with client-specified field selection (eliminates over-fetching).\n\nHackathon Recommendation: Stick with REST + Express for fast routing, easy debugging, and simple Postman testing. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/mongo(db)?|mongoose|schema design|database schema|nosql schema|mongoose model/i.test(lowerMsg)) {
+            reply = "MongoDB & Mongoose schema design centers on document access patterns:\n- Embedding (1-to-few): Subdocuments inside a parent document for atomic updates and zero joins (e.g., squad members list).\n- Referencing (1-to-many / many-to-many): Store ObjectIds (`type: Schema.Types.ObjectId, ref: 'User'`) when collections grow large or require independent queries.\n- Schema Definition:\n```javascript\nconst UserSchema = new mongoose.Schema({\n  email: { type: String, required: true, unique: true, index: true },\n  role: { type: String, enum: ['student', 'mentor', 'judge', 'admin'], default: 'student' }\n}, { timestamps: true });\n```\nAlways index frequently filtered and sorted fields (`unique: true`, `index: true`) for high performance. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/jwt\b|json web token|jwt auth|bearer token|token-based auth|how does jwt/i.test(lowerMsg)) {
+            reply = "JSON Web Tokens (JWT) enable stateless authentication across distributed web clients and APIs:\n- Format: `Header.Payload.Signature` (Base64URL encoded).\n- Authentication Workflow:\n  1. Client sends credentials via `POST /api/auth/login`.\n  2. Server verifies password hash with `bcrypt`, then signs payload:\n     `jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' })`\n  3. Client includes token in HTTP headers: `Authorization: Bearer <token>`.\n  4. Server middleware verifies token via `jwt.verify(token, secret)` and attaches user context to `req.user`.\n\nSecurity Rule: Never store passwords or confidential secrets in JWT payloads—they are easily decoded by anyone with the token. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/websocket|web socket|socket\.io|real-?time communication|bi-?directional/i.test(lowerMsg)) {
+            reply = "WebSockets provide persistent, full-duplex TCP connections for instant real-time data streaming between client and server:\n- Applications: Squad live chat, collaborative whiteboards, live leaderboard score pushes, live countdown alerts.\n- Socket.io Pattern:\n```javascript\n// Server\nio.on('connection', (socket) => {\n  socket.on('join_squad', (squadId) => socket.join(squadId));\n  socket.on('send_message', (data) => io.to(data.squadId).emit('new_message', data));\n});\n```\nOn CodeSrijan, live squad collaboration runs in dedicated team communication channels. [Open Team Chat -> /chat]";
+            return { reply };
+        }
+
+        // Sub-priority 20D: Git & Version Control
+        if (/merge conflict|resolve.*conflict|git conflict|conflict marker/i.test(lowerMsg)) {
+            reply = "Git merge conflicts occur when concurrent branches modify identical lines in a file or one branch deletes a file modified in another.\n\nResolution Protocol:\n1. Run `git status` to identify conflicting files.\n2. Open conflicting files and locate the conflict markers:\n   `<<<<<<< HEAD` (your local branch code)\n   `=======` (division line)\n   `>>>>>>> incoming-branch` (incoming branch changes)\n3. Edit the code to merge both features cleanly, then delete all marker lines (`<<<<<<<`, `=======`, `>>>>>>>`).\n4. Stage the resolved files: `git add <filename>`.\n5. Finalize the merge: `git commit -m \"fix: resolve merge conflicts in <filename>\"`.\n\nCoordination Tip: Ping your squad in Team Chat before merging major architectural branches to prevent conflicts! [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/git branch|branching strategy|pull request|\bprs\b|git workflow/i.test(lowerMsg)) {
+            reply = "Standard Git workflow for hackathon squads:\n1. Protected Main: Keep `main` stable, working, and deployable at all times.\n2. Feature Branches: Branch out for each module:\n   `git checkout -b feat/user-auth` or `git checkout -b feat/kanban-ui`.\n3. Atomic Commits: Commit logical units with clear descriptions (`git commit -m \"feat(auth): add jwt middleware\"`).\n4. Pull Requests (PR): Push branch (`git push origin feat/user-auth`) and open a PR into `main` after teammate review.\n5. Sync Regularly: Always pull latest `main` before starting work: `git pull origin main`.\n\nKeeps squad collaboration seamless and submissions clean for judge evaluation. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        if (/git commit|commit message|git hygiene|commit hygiene|repository hygiene/i.test(lowerMsg)) {
+            reply = "Git commit hygiene demonstrates professional craftsmanship to hackathon judges:\n- Conventional Commits: Use descriptive prefixes:\n  - `feat: implement real-time squad chat WebSocket`\n  - `fix: resolve countdown timer timezone offset`\n  - `docs: add architecture diagram and setup guide to README`\n  - `refactor: optimize MongoDB query indexing`\n- Submission Checklist:\n  1. Add a comprehensive `README.md` with problem statement, system architecture diagram, tech stack, and live demo credentials.\n  2. Put `.env` and sensitive API keys in `.gitignore` (never expose secrets).\n  3. Ensure repository visibility is Public before transmitting to CodeSrijan judges. [Open Workspace -> /workspace]";
+            return { reply };
+        }
+
+        // Sub-priority 20E: Hackathon Pitch & MVP Strategy
+        if (/pitch|pitch deck|pitch strategy|how to pitch|presentation tips|demo presentation|hackathon presentation|demo guidelines/i.test(lowerMsg)) {
+            reply = "Winning Hackathon Pitch Formula (3-5 Minute Framework):\n1. The Hook (30s): State the compelling real-world problem and why current alternatives fail.\n2. The Solution (30s): Introduce your product with a bold value proposition.\n3. Live Product Demo (120s): Show the happy path working end-to-end. Do NOT spend 2 minutes on login/sign-up—jump straight into your core killer feature!\n4. Architecture & Tech Stack (30s): Show a crisp system diagram (frontend, backend, AI model, database).\n5. Impact & Scalability (30s): Real-world viability, business/social impact, and next steps.\n\nGolden Rule: Never show slides when you can demo working software. Prepare a recorded fallback video in case of venue wifi failure. [View Leaderboard -> /leaderboard]";
+            return { reply };
+        }
+
+        if (/mvp strategy|scope management|how to win hackathon|hackathon strategy/i.test(lowerMsg)) {
+            reply = "Hackathon MVP Strategy & Scope Management:\nCodeSrijan projects are evaluated across 4 pillars (25% each): Innovation, Technical Execution, Design/UI, and Practical Impact.\n\nWinning tactics:\n1. Cut Scope Ruthlessly: Build 1 killer feature that works end-to-end flawlessly rather than 5 half-finished screens.\n2. Focus on Polish: A snappy, bug-free demo with good design leaves a stronger impression than a large, broken feature set.\n3. Seed Realistic Mock Data: Ensure your app looks populated and active during judge inspection.\n4. Track Sprints on Kanban: Break tasks into Frontend, Backend, and Pitch milestones in your squad Workspace. [Open Workspace -> /workspace]";
             return { reply };
         }
 
@@ -933,7 +1323,7 @@ CodeSrijan Site Map:
 - Home: /
 - Dashboard: /dashboard
 - Hackathons Catalog: /hackathons
-- Live Timeline & Schedules: /timeline
+- Live Timeline & 10 Canonical Milestones: /timeline
 - Problem Statements & Tracks: /problems
 - Squad Recruitment Marketplace: /recruitment
 - Squad Roster Management: /team
@@ -946,25 +1336,63 @@ CodeSrijan Site Map:
 - User Profile Settings: /profile
 - Code of Conduct: /code-of-conduct
 - Privacy Policy: /privacy-policy
+- Rules & Regulations: /rules
+- Community: /community
+- About: /about
+- Mentor Command Center: /mentor-command-center
+- Mentor Center: /mentor
+- Judge Command Center: /judge-command-center
+- Judge Evaluations: /evaluations
+- Admin Command Center: /admin
+- Admin Hackathons & Event Manager: /admin/hackathons
+- Admin Certificates & Batch Issuance: /admin/certificates
+- Admin Payment Review Queue: /admin/payments
+- Admin User Directory & Moderation: /admin/users
+- Admin Platform Health & Telemetry: /admin/health
+- Admin Audit Logs: /admin/logs
+- Admin Submissions: /admin/submissions
+- Admin Operations: /admin/operations
+
+[PLATFORM KNOWLEDGE & SPECIFICATIONS]
+- 10 Canonical Milestones (All operating dynamically in Indian Standard Time / IST):
+  1. Registration Window — Operative enrollment and entry claim
+  2. Team Formation & Roster Lock — Squad assembly (1–4 members) in Recruitment
+  3. Opening Ceremony & Keynote Briefing — Tournament kickoff & directive briefing
+  4. Hacking Begins & Git Repositories Live — Development sprint commences & Kanban unlocked
+  5. Checkpoint 1 — Idea validation & architecture review with mentors
+  6. Checkpoint 2 — Prototype validation & mid-sprint mentor sync
+  7. Submission Deadline & Code Freeze — Final payload vault lock
+  8. Pitch Round & Technical Demonstrations — Live squad presentations & Q&A
+  9. Judging & Rubric Evaluation — 4-pillar weighted rubric assessment (100% constraint)
+  10. Grand Finale & Award Ceremony — Results declaration & certificate issuance
+- Role Permissions & Knowledge:
+  * Student: Squad limit 1-4 members. Lone wolf warnings if unassigned. Workspace Kanban for tasks. Submission payload format requires projectTitle, description, public repositoryUrl (GitHub), and live demoUrl. Paid hackathons require UPI QR payment, 12-digit UTR, and proof upload. Free hackathons require no fee.
+  * Mentor: Scoped strictly to assigned squads. CAS ticket claiming (atomic acceptance of pending requests in guidance queue). Private mentor notes (1-5000 characters) strictly hidden from students. Optional HTTPS video meet links.
+  * Judge: Scoped to assigned submissions. 4-pillar weighted evaluation rubric (Innovation, Technical Execution, Feasibility/Design, Impact/Presentation) with strict 100% mathematical weight constraint. Draft saving & resuming. Final submission is immutable and locked; can only be reopened by an administrator with an audited reason.
+  * Admin: Full telemetry & health monitoring (/admin/health), user moderation (ban/suspend/role assignment), payment proof review queue (/admin/payments), batch certificate issuance (/admin/certificates), event authoring. Hackathon specs: Cover banner 1200x630 px (16:9, max 5MB), problem specification doc max 15MB PDF/DOC, UPI payment QR code 500x500 px (1:1, max 2MB).
 
 [VERIFIED LIVE PLATFORM DATA]
 - Current Authenticated User: ${ctx.user ? `${ctx.name} (${ctx.email}), Verified Role: ${ctx.role}` : 'Unauthenticated Guest'}
 - Assigned Squad: ${ctx.team ? `Squad "${ctx.team.name}" (ID: ${ctx.team.id}, Members: ${ctx.teamMemberCount}/4, Leader: ${ctx.team.leaderId === ctx.user?.id ? 'Current User' : ctx.team.leaderId}, Submitted: ${ctx.team.isSubmitted || !!ctx.submission})` : 'No Squad Assigned (Lone Wolf)'}
 - Registration Status: ${ctx.registration ? `Status: ${ctx.registration.status}, Payment Status: ${ctx.registration.paymentStatus || 'N/A'}, Event: ${ctx.registration.hackathonId}` : 'Not Registered'}
-- Submission Status: ${ctx.submission ? `Payload Transmitted (Repo: ${ctx.submission.repositoryUrl || 'Attached'}, Score: ${ctx.submission.score != null ? ctx.submission.score : 'Pending Evaluation'})` : 'No Submission Recorded'}
+- Submission Status: ${ctx.submission ? `Payload Transmitted (Repo: ${ctx.submission.repositoryUrl || 'Attached'}${ctx.submission.demoUrl ? `, Demo: ${ctx.submission.demoUrl}` : ''}, Score: ${ctx.submission.score != null ? ctx.submission.score : 'Pending Evaluation'})` : 'No Submission Recorded'}
 - Active/Upcoming Hackathons:
-${ctx.hackathons.length > 0 ? ctx.hackathons.map(h => `  * ${h.name} (${h.id}): Status: ${h.status}, Type: ${h.fee > 0 ? `Paid (₹${h.fee})` : 'Free'}, Starts: ${new Date(h.startDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST, Submissions Close: ${new Date(h.submissionDeadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`).join('\n') : '  * No active hackathons configured in database.'}
+${ctx.hackathons.length > 0 ? ctx.hackathons.map(h => `  * ${h.name} (${h.id}): Status: ${h.status}, Type: ${h.fee > 0 ? `Paid (₹${h.fee})` : 'Free'}, Starts: ${new Date(h.startDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST, Submissions Close: ${new Date(h.submissionDeadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`).join('\n') : (ctx.dbUnavailable ? '  * Database unreachable; hackathon schedule could not be verified.' : '  * No active hackathons configured in database.')}
+- Problem Statements & Tracks:
+${ctx.problemStatements?.length > 0 ? ctx.problemStatements.map(ps => `  * ${ps.title} [Track: ${ps.domain || 'General'}, Difficulty: ${ps.difficulty || 'Medium'}]`).join('\n') : `  * Available Tracks: ${(ctx.tracks && ctx.tracks.length > 0) ? ctx.tracks.join(', ') : 'AI/ML, Web3, FinTech, HealthTech, CyberSecurity'}. Problem statements viewable at /problems.`}
 - System Settings: Maintenance: ${ctx.systemSettings.maintenanceMode ? 'ACTIVE' : 'Normal'}, Registration: ${ctx.systemSettings.registrationEnabled ? 'Open' : 'Closed'}, Submissions: ${ctx.systemSettings.submissionEnabled ? 'Open' : 'Closed'}
+- Database Status: ${ctx.dbUnavailable ? 'UNREACHABLE (DEGRADED MODE - Live database records cannot be verified)' : 'ONLINE'}
 
 CRITICAL BEHAVIORAL RULES:
 1. GROUNDED IN FACT: Answer dynamic questions (deadlines, schedules, squad status, payments, hackathon counts) using ONLY the verified platform data above.
 2. NEVER FABRICATE: If information is unavailable or unconfigured, say so clearly instead of inventing dates (never claim arbitrary deadlines like "20 October at 11:59 PM").
 3. ACTION HONESTY: You are an informational copilot. You CANNOT execute database mutations (cannot create teams, change roles, approve payments, edit scores, or submit code). Always provide step-by-step guidance for the user to perform the action in the UI.
 4. ROLE-BASED ACCESS CONTROL: Non-administrators must be denied access to admin commands and routes.
-5. NAVIGATION ACTION FORMAT: At the VERY END of your response, provide exactly ONE navigation action formatted strictly as:
+5. TECHNICAL & CODING QUESTIONS: You are an expert software engineer, computer science mentor, and hackathon architect. You are explicitly permitted and enthusiastically encouraged to answer general technical, computer science, programming, algorithmic, system design, architectural, framework, Git, and engineering questions (such as React hooks, state management, async Node.js, REST vs GraphQL, Big-O complexity, dynamic programming, sorting/searching algorithms, database schema design, Git conflict resolution, debugging advice, and hackathon pitch strategies). Provide clear explanations, industry best practices, and concise code snippets where helpful. Attach a helpful platform navigation action at the end to guide the operative back to building, such as [Open Workspace -> /workspace] or [Browse Problems -> /problems].
+6. NAVIGATION ACTION FORMAT: At the VERY END of your response, provide exactly ONE navigation action formatted strictly as:
 [Button Text -> /path]
 Using ONLY real routes from the Site Map.
-6. TONE: Neo-Brutalist, direct, technical, cyber-hacker aesthetic, concise, helpful.`;
+7. TONE: Neo-Brutalist, direct, technical, cyber-hacker aesthetic, concise, helpful.`;
 
         const isCustomFetch = typeof customFetch === 'function' && customFetch.name !== 'next';
         const fetchFn = isCustomFetch ? customFetch : fetch;

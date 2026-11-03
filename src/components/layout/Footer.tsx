@@ -6,7 +6,7 @@ export function Footer() {
             {/* Top accent line */}
             <div className="h-1.5 w-full bg-gradient-to-r from-electric-blue via-yellow-400 to-purple-600" />
 
-            <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-6 md:px-8 py-12">
+            <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-6 md:px-8 py-12 pb-20 sm:pb-28">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pb-10 border-b-2 border-zinc-800">
                     {/* Brand Column */}
                     <div className="space-y-4 md:col-span-1">
@@ -35,11 +35,11 @@ export function Footer() {
                             <span className="material-symbols-outlined text-sm">terminal</span> ARENA & MISSIONS
                         </h4>
                         <ul className="space-y-2 text-xs">
-                            <li><Link to="/hackathons" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Hackathons Directory</Link></li>
-                            <li><Link to="/problems" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Problem Statements</Link></li>
-                            <li><Link to="/recruitment" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Squad Directorate</Link></li>
-                            <li><Link to="/leaderboard" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Global Leaderboard</Link></li>
-                            <li><Link to="/timeline" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Milestones & Timeline</Link></li>
+                            <li><Link to="/hackathons" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Hackathons Directory</Link></li>
+                            <li><Link to="/problems" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Problem Statements</Link></li>
+                            <li><Link to="/recruitment" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Squad Directorate</Link></li>
+                            <li><Link to="/leaderboard" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Global Leaderboard</Link></li>
+                            <li><Link to="/timeline" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Milestones & Timeline</Link></li>
                         </ul>
                     </div>
 
@@ -48,24 +48,24 @@ export function Footer() {
                             <span className="material-symbols-outlined text-sm">support_agent</span> COMMS & SUPPORT
                         </h4>
                         <ul className="space-y-2 text-xs">
-                            <li><Link to="/ai-assistant" className="text-zinc-300 hover:text-white hover:underline transition-colors block">SrijanBot AI Copilot</Link></li>
-                            <li><Link to="/chat" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Comms Command Hub</Link></li>
-                            <li><Link to="/announcements" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Directives & Announcements</Link></li>
-                            <li><Link to="/support" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Support Desk & SOS</Link></li>
-                            <li><Link to="/faq" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Frequently Asked Questions</Link></li>
+                            <li><Link to="/ai-assistant" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">SrijanBot AI Copilot</Link></li>
+                            <li><Link to="/chat" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Comms Command Hub</Link></li>
+                            <li><Link to="/announcements" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Directives & Announcements</Link></li>
+                            <li><Link to="/support" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Support Desk & SOS</Link></li>
+                            <li><Link to="/faq" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Frequently Asked Questions</Link></li>
                         </ul>
                     </div>
 
-                    <div>
+                    <div className="lg:pr-14 xl:pr-16">
                         <h4 className="text-xs font-black uppercase tracking-widest text-electric-blue mb-3 pb-1 border-b border-zinc-800 flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-sm">policy</span> GOVERNANCE & LEGAL
                         </h4>
                         <ul className="space-y-2 text-xs">
-                            <li><Link to="/sponsors" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Sponsor Network</Link></li>
-                            <li><Link to="/code-of-conduct" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Operative Code of Conduct</Link></li>
-                            <li><Link to="/privacy-policy" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Data Privacy Policy</Link></li>
-                            <li><Link to="/host-event" className="text-zinc-300 hover:text-white hover:underline transition-colors block">Host a Hackathon</Link></li>
-                            <li><Link to="/admin-login" className="text-zinc-500 hover:text-zinc-400 block text-[11px] pt-1">Administrative Terminal</Link></li>
+                            <li><Link to="/sponsors" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Sponsor Network</Link></li>
+                            <li><Link to="/code-of-conduct" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Operative Code of Conduct</Link></li>
+                            <li><Link to="/privacy-policy" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Data Privacy Policy</Link></li>
+                            <li><Link to="/host-event" className="text-zinc-300 hover:text-white hover:underline transition-colors inline-block">Host a Hackathon</Link></li>
+                            <li><Link to="/admin-login" className="text-zinc-500 hover:text-zinc-400 inline-block text-[11px] pt-1">Administrative Terminal</Link></li>
                         </ul>
                     </div>
                 </div>

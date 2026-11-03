@@ -13,10 +13,13 @@ export function ChatBotWidget() {
     useEffect(() => setIsReady(true), []);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
+    const initialGreeting = `SYSTEM WAKE. Greetings, ${currentUser?.name || 'Operative'}. I am SrijanBot. How can I assist your navigation today? [Explore Hackathons -> /hackathons]`;
+
     const [messages, setMessages] = useState<{ role: "bot" | "user", text: string }[]>([
-        { role: "bot", text: `SYSTEM WAKE. Greetings, ${currentUser?.name || 'Operative'}. I am SrijanBot. How can I assist your navigation today?` }
+        { role: "bot", text: initialGreeting }
     ]);
 
     // Auto-scroll to bottom of chat only when open
@@ -24,6 +27,54 @@ export function ChatBotWidget() {
         if (!isOpen) return;
         endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }, [messages, isTyping, isOpen]);
+
+    const copyToClipboard = async (text: string) => {
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+                return true;
+            }
+            throw new Error("Clipboard API unavailable");
+        } catch {
+            try {
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.left = "-9999px";
+                textarea.style.top = "0";
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                const success = document.execCommand("copy");
+                document.body.removeChild(textarea);
+                return success;
+            } catch (err) {
+                console.error("Copy failed", err);
+                return false;
+            }
+        }
+    };
+
+    const handleCopyResponse = async (text: string, index: number) => {
+        const success = await copyToClipboard(text);
+        if (success) {
+            setCopiedIndex(index);
+            setTimeout(() => {
+                setCopiedIndex(prev => (prev === index ? null : prev));
+            }, 2000);
+        }
+    };
+
+    const handleClearConversation = () => {
+        setMessages([
+            {
+                role: "bot",
+                text: `SYSTEM RESET. Greetings, ${currentUser?.name || 'Operative'}. SrijanBot memory cleared. How can I assist you with hackathons, squads, submissions, or tech advice today? [Explore Hackathons -> /hackathons]`
+            }
+        ]);
+        setInput("");
+        setCopiedIndex(null);
+    };
 
     const handleSend = async (messageText: string) => {
         if (!messageText.trim()) return;
@@ -55,12 +106,18 @@ export function ChatBotWidget() {
 
             if (!responseText) {
                 const q = messageText.toLowerCase();
-                if (q.includes("submit") || q.includes("workspace") || q.includes("project")) {
+                if (q.includes("stack") || q.includes("tech") || q.includes("architecture")) {
+                    responseText = "Recommended Hackathon Tech Stack: Frontend: React / Next.js / TanStack + Tailwind CSS. Backend: Node.js (Express) or Python (FastAPI). Database: MongoDB or PostgreSQL. AI: OpenAI/Gemini SDKs. Rapid Prototyping Tip: Build end-to-end MVP features first before adding complex settings! [View Problem Statements -> /problems]";
+                } else if (q.includes("pitch") || q.includes("presentation") || q.includes("demo")) {
+                    responseText = "How to Prepare Your Winning Pitch: 1. The Hook (30s): Clear problem & user impact. 2. Live Demo (60-90s): Working prototype flow. 3. Technical Edge (30s): Architecture & uniqueness. 4. Feasibility & Roadmap (30s). Tip: Record an offline video backup in case of Wi-Fi issues! [Explore Hackathons -> /hackathons]";
+                } else if (q.includes("submit") || q.includes("workspace") || q.includes("project")) {
                     responseText = "To submit your project, navigate to your Workspace sector, attach your GitHub repository link, and click [Deliver Payload -> /workspace].";
                 } else if (q.includes("deadline") || q.includes("schedule") || q.includes("time") || q.includes("when")) {
                     responseText = "Live submission deadlines and event milestones are displayed on the [Hackathons Hub -> /timeline].";
-                } else if (q.includes("team") || q.includes("squad") || q.includes("find") || q.includes("join")) {
-                    responseText = "You can recruit squad members or search for open teams in the [Recruitment Sector -> /recruitment].";
+                } else if (q.includes("team") || q.includes("squad") || q.includes("find") || q.includes("join") || q.includes("teammate")) {
+                    responseText = "You can recruit squad members, find teammates by tech skill, or search for open teams in the [Recruitment Sector -> /recruitment].";
+                } else if (q.includes("problem") || q.includes("statement") || q.includes("challenge")) {
+                    responseText = "Explore assigned challenge tracks and technical problem statements under [Problem Statements -> /problems].";
                 } else if (q.includes("support") || q.includes("help") || q.includes("ticket") || q.includes("contact")) {
                     responseText = "You can create an official support ticket or contact team leads directly at [Support Sector -> /support].";
                 } else if (q.includes("admin") || q.includes("stats")) {
@@ -76,7 +133,7 @@ export function ChatBotWidget() {
                         responseText = "Evaluation access is restricted to official judges. Participant results will be posted on the leaderboard. [View Leaderboard -> /leaderboard]";
                     }
                 } else {
-                    responseText = `Greetings! I am SrijanBot, your CodeSrijan AI Assistant. You can explore [Hackathons Hub -> /timeline], browse [Problem Statements -> /problems], or open a [Support Ticket -> /support].`;
+                    responseText = `Greetings! I am SrijanBot, your CodeSrijan AI Assistant. You can explore [Hackathons Hub -> /hackathons], browse [Problem Statements -> /problems], recruit squad members at [Recruitment -> /recruitment], or open a [Support Ticket -> /support].`;
                 }
             }
 
@@ -85,7 +142,7 @@ export function ChatBotWidget() {
                 text: responseText
             }]);
         } catch (error) {
-            setMessages(prev => [...prev, { role: "bot", text: "SYSTEM NOTICE. SrijanBot ready. Please ask any platform question." }]);
+            setMessages(prev => [...prev, { role: "bot", text: "SYSTEM NOTICE. SrijanBot ready. Please ask any platform question. [Explore Hackathons -> /hackathons]" }]);
         } finally {
             setIsTyping(false);
         }
@@ -99,15 +156,35 @@ export function ChatBotWidget() {
     };
 
     const generateQuickSuggestions = () => {
-        const studentSuggs = ["When is submission?", "Find a teammate", "How do I submit?"];
-        const adminSuggs = ["Show hackathon stats"];
+        let suggs: string[] = [];
 
-        let suggs = ["What is the deadline?", "Who is my team?"];
-        if (currentUser?.role === 'admin') suggs = adminSuggs;
-        if (currentUser?.role === 'student' || !currentUser) suggs = studentSuggs;
+        if (currentUser?.role === 'admin') {
+            suggs = [
+                "Show hackathon stats",
+                "Suggest Hackathon Tech Stack",
+                "How to prepare pitch?",
+                "View evaluations",
+                "When is submission?"
+            ];
+        } else {
+            suggs = [
+                "Suggest Hackathon Tech Stack",
+                "How to prepare pitch?",
+                "When is submission?",
+                "Find a teammate",
+                "How do I submit?",
+                "Where are problem statements?"
+            ];
+        }
 
         return suggs.map((sText, idx) => (
-            <button key={idx} onClick={() => handleSend(sText)} className="whitespace-nowrap px-3 py-1 bg-surface neo-border font-label-caps text-[11px] hover:bg-surface-variant transition-colors">
+            <button
+                key={idx}
+                type="button"
+                onClick={() => handleSend(sText)}
+                aria-label={`Ask: ${sText}`}
+                className="whitespace-nowrap px-3 py-1 bg-surface neo-border font-label-caps text-[11px] hover:bg-electric-blue hover:text-white active:bg-electric-blue/90 transition-colors cursor-pointer shrink-0"
+            >
                 {sText}
             </button>
         ));
@@ -118,13 +195,30 @@ export function ChatBotWidget() {
             {isOpen && (
                 <div className="bg-surface brutal-border brutal-shadow-lg w-[min(380px,calc(100vw-2rem))] h-[min(500px,calc(100dvh-9rem))] mb-4 flex flex-col overflow-hidden pointer-events-auto">
                     {/* Header */}
-                    <div className="bg-electric-blue text-white p-4 border-b-4 border-ink-black flex justify-between items-center shrink-0">
+                    <div className="bg-electric-blue text-white p-3.5 sm:p-4 border-b-4 border-ink-black flex justify-between items-center shrink-0">
                         <span className="font-headline-md uppercase text-base flex items-center gap-2">
                             <span className="material-symbols-outlined">smart_toy</span> SrijanBot
                         </span>
-                        <button aria-label="Close SrijanBot" onClick={() => setIsOpen(false)} className="hover:text-ink-black transition-colors rotate-0 hover:rotate-90 duration-200">
-                            <span className="material-symbols-outlined text-2xl">close</span>
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                type="button"
+                                aria-label="Clear conversation"
+                                title="Clear conversation"
+                                onClick={handleClearConversation}
+                                className="p-1 hover:text-ink-black hover:bg-white/20 active:bg-white/30 transition-colors rounded flex items-center justify-center cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-2xl">restart_alt</span>
+                            </button>
+                            <button
+                                type="button"
+                                aria-label="Close SrijanBot"
+                                title="Close SrijanBot"
+                                onClick={() => setIsOpen(false)}
+                                className="hover:text-ink-black hover:bg-white/20 active:bg-white/30 p-1 rounded transition-colors rotate-0 hover:rotate-90 duration-200 flex items-center justify-center cursor-pointer"
+                            >
+                                <span className="material-symbols-outlined text-2xl">close</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Chat History */}
@@ -136,8 +230,31 @@ export function ChatBotWidget() {
                                         <span className="material-symbols-outlined text-[12px]">security</span> OFFICIAL KNOWLEDGE
                                     </div>
                                 )}
-                                <div className={`p-3 brutal-border whitespace-pre-wrap ${m.role === 'bot' ? 'bg-surface text-ink-black' : 'bg-electric-blue text-on-primary'}`}>
-                                    {m.role === 'bot' ? parseMessageNodes(m.text) : m.text}
+                                <div className={`p-3 brutal-border whitespace-pre-wrap relative ${m.role === 'bot' ? 'bg-surface text-ink-black' : 'bg-electric-blue text-on-primary'}`}>
+                                    <div>
+                                        {m.role === 'bot' ? parseMessageNodes(m.text) : m.text}
+                                    </div>
+                                    {m.role === 'bot' && (
+                                        <div className="mt-2.5 pt-1.5 border-t border-ink-black/15 flex items-center justify-between text-[11px] font-mono">
+                                            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">SrijanBot</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleCopyResponse(m.text, i)}
+                                                aria-label={copiedIndex === i ? "Copied response to clipboard" : "Copy response"}
+                                                title={copiedIndex === i ? "Copied!" : "Copy response"}
+                                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all cursor-pointer font-bold ${
+                                                    copiedIndex === i
+                                                        ? "bg-emerald-100 text-emerald-800 border border-emerald-500"
+                                                        : "text-zinc-600 hover:text-ink-black hover:bg-zinc-200/60"
+                                                }`}
+                                            >
+                                                <span className="material-symbols-outlined text-[14px]">
+                                                    {copiedIndex === i ? "check" : "content_copy"}
+                                                </span>
+                                                <span>{copiedIndex === i ? "Copied!" : "Copy"}</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -166,7 +283,11 @@ export function ChatBotWidget() {
                                 placeholder="Ask SrijanBot..."
                                 className="w-full bg-surface-container-lowest brutal-border p-3 pr-12 font-body-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-electric-blue"
                             />
-                            <button aria-label="Send message" type="submit" className="absolute right-0 top-0 bottom-0 px-3 bg-electric-blue text-white border-l-2 border-ink-black hover:bg-primary-fixed-dim hover:text-ink-black transition-colors flex items-center justify-center">
+                            <button
+                                aria-label="Send message"
+                                type="submit"
+                                className="absolute right-0 top-0 bottom-0 px-3 bg-electric-blue text-white border-l-2 border-ink-black hover:bg-primary-fixed-dim hover:text-ink-black transition-colors flex items-center justify-center cursor-pointer"
+                            >
                                 <span className="material-symbols-outlined">send</span>
                             </button>
                         </form>
@@ -178,8 +299,9 @@ export function ChatBotWidget() {
                 <button
                     disabled={!isReady}
                     aria-label="Open SrijanBot help"
+                    title="Open SrijanBot AI Assistant"
                     onClick={() => setIsOpen(true)}
-                    className="bg-electric-blue text-white p-4 brutal-border brutal-shadow brutal-hover rounded-full flex items-center justify-center group relative block pointer-events-auto"
+                    className="bg-electric-blue text-white p-4 brutal-border brutal-shadow brutal-hover rounded-full flex items-center justify-center group relative block pointer-events-auto cursor-pointer"
                 >
                     <span className="absolute -top-3 -left-3 bg-[#FFE100] text-ink-black text-[10px] uppercase font-bold px-2 py-0.5 brutal-border rotate-[-10deg]">Help</span>
                     <span className="material-symbols-outlined text-[32px] group-hover:rotate-12 transition-transform">smart_toy</span>

@@ -6,6 +6,7 @@ import { Link } from '@tanstack/react-router';
  */
 export const ALLOWED_NAVIGATION_ROUTES = new Set([
     '/',
+    '/about',
     '/dashboard',
     '/hackathons',
     '/timeline',
@@ -28,9 +29,13 @@ export const ALLOWED_NAVIGATION_ROUTES = new Set([
     '/register',
     '/auth/forgot-password',
     '/auth/otp',
+    '/auth/reset-password',
     '/evaluations',
     '/mentor',
+    '/mentor-command-center',
+    '/judge-command-center',
     '/admin',
+    '/admin-login',
     '/admin/hackathons',
     '/admin/problems',
     '/admin/users',
@@ -39,12 +44,29 @@ export const ALLOWED_NAVIGATION_ROUTES = new Set([
     '/admin/submissions',
     '/admin/health',
     '/admin/logs',
+    '/admin/certificates',
+    '/admin/analytics',
+    '/admin/judges',
+    '/admin/mentors',
+    '/admin/operations',
+    '/admin/schedule',
+    '/admin/settings',
+    '/admin/support',
+    '/admin/leaderboard',
+    '/admin/recruitment',
+    '/admin/sponsors',
+    '/admin/gallery',
+    '/admin/evaluations',
     '/code-of-conduct',
     '/privacy-policy',
+    '/rules',
     '/faq',
     '/gallery',
     '/sponsors',
-    '/announcements'
+    '/announcements',
+    '/community',
+    '/highlights',
+    '/host-event'
 ]);
 
 /**
@@ -144,6 +166,18 @@ export function parseSrijanBotMessageNodes(
             } else if (/explore hackathons/i.test(rawContent)) {
                 buttonText = rawContent;
                 targetRoute = '/hackathons';
+            } else if (/mentor command center/i.test(rawContent)) {
+                buttonText = rawContent;
+                targetRoute = '/mentor-command-center';
+            } else if (/judge command center/i.test(rawContent)) {
+                buttonText = rawContent;
+                targetRoute = '/judge-command-center';
+            } else if (/view timeline|official timeline/i.test(rawContent)) {
+                buttonText = rawContent;
+                targetRoute = '/timeline';
+            } else if (/code of conduct/i.test(rawContent)) {
+                buttonText = rawContent;
+                targetRoute = '/code-of-conduct';
             }
         }
 
@@ -155,7 +189,7 @@ export function parseSrijanBotMessageNodes(
 
             parts.push(
                 <div key={`nav-${match.index}`} className={containerClass}>
-                    <Link to={targetRoute} className={btnClass}>
+                    <Link to={targetRoute} className={btnClass} aria-label={`Navigate to ${buttonText}`}>
                         <span>{buttonText}</span>
                         <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                     </Link>

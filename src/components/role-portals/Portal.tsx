@@ -82,14 +82,14 @@ export function Portal({
               {tab}
             </button>
           ))}
-          <Link to="/profile" className="p-3 border-2 border-white/40 text-sm font-bold">
+          <Link to="/profile" className="p-3 border-2 border-white/40 hover:border-white hover:bg-white/10 text-sm font-bold transition-colors">
             Profile
           </Link>
-          <Link to="/settings" className="p-3 border-2 border-white/40 text-sm font-bold">
+          <Link to="/settings" className="p-3 border-2 border-white/40 hover:border-white hover:bg-white/10 text-sm font-bold transition-colors">
             Settings
           </Link>
           <button
-            className="p-3 text-left border-2 border-white text-sm font-bold"
+            className="p-3 text-left border-2 border-white text-sm font-bold hover:bg-white hover:text-black transition-colors cursor-pointer flex items-center justify-between"
             onClick={logout}
           >
             Logout

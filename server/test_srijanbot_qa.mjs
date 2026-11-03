@@ -60,6 +60,23 @@ async function runSrijanBotTestSuite() {
     }).lean();
     console.log(`Verified Live Data: Found ${liveHackathons.length} active hackathons in database.`);
 
+    // Verify VALID_ROUTES includes all modern routes
+    const requiredModernRoutes = [
+        '/timeline',
+        '/code-of-conduct',
+        '/mentor-command-center',
+        '/judge-command-center',
+        '/admin/hackathons',
+        '/admin/certificates',
+        '/recruitment'
+    ];
+    for (const route of requiredModernRoutes) {
+        if (!Object.values(VALID_ROUTES).includes(route)) {
+            throw new Error(`VALID_ROUTES missing required modern route: ${route}`);
+        }
+    }
+    console.log("Verified VALID_ROUTES contains all required modern routes (timeline, code-of-conduct, mentor-command-center, judge-command-center, admin/hackathons, admin/certificates, recruitment).\n");
+
     const testCases = [
         // CATEGORY 1: Greetings & General Platform Questions
         {
@@ -728,6 +745,171 @@ async function runSrijanBotTestSuite() {
             validate(res) {
                 const reply = res.body?.reply || "";
                 return !reply.includes("20 October at 11:59 PM") && (reply.includes("IST") || reply.includes("Schedule") || reply.includes("Timeline"));
+            }
+        },
+
+        // CATEGORY 33: Modern Platform Grounding & Role Knowledge
+        {
+            id: "TC-CAT33-01",
+            category: "33. Modern Grounding & Timeline",
+            role: "student",
+            message: "What are the 10 canonical milestones of the hackathon?",
+            expectedIntent: "All 10 canonical milestones with dynamic IST timeline",
+            requiredSource: "Platform milestone specifications",
+            expectedNav: "/timeline",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("Registration Window") &&
+                    r.includes("Opening Ceremony") &&
+                    r.includes("Hacking Begins") &&
+                    r.includes("Checkpoint 1") &&
+                    r.includes("Checkpoint 2") &&
+                    r.includes("Submission Deadline") &&
+                    r.includes("Pitch Round") &&
+                    r.includes("Judging") &&
+                    r.includes("Grand Finale") &&
+                    r.includes("IST") &&
+                    r.includes("[View Official Timeline -> /timeline]");
+            }
+        },
+        {
+            id: "TC-CAT33-02",
+            category: "33. Modern Grounding & Student Knowledge",
+            role: "student",
+            message: "What is the submission payload format?",
+            expectedIntent: "Detailed submission payload fields and locking",
+            requiredSource: "Submission requirements",
+            expectedNav: "/workspace",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("GitHub") && r.includes("Demo") && r.includes("Title") && r.includes("[Open Workspace -> /workspace]");
+            }
+        },
+        {
+            id: "TC-CAT33-03",
+            category: "33. Modern Grounding & Mentor Knowledge",
+            role: "mentor",
+            message: "How do I claim a mentor assistance ticket from the queue?",
+            expectedIntent: "CAS ticket claiming and meeting link guidance",
+            requiredSource: "Mentor guidance workflow",
+            expectedNav: "/mentor-command-center",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return (r.includes("CAS") || r.includes("Compare-And-Swap")) && r.includes("[Open Mentor Command Center -> /mentor-command-center]");
+            }
+        },
+        {
+            id: "TC-CAT33-04",
+            category: "33. Modern Grounding & Mentor Knowledge",
+            role: "mentor",
+            message: "Where can I write private mentor notes for my assigned squad?",
+            expectedIntent: "Confidential private notes",
+            requiredSource: "Mentor notes workflow",
+            expectedNav: "/mentor",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("Private") && r.includes("5000") && r.includes("[Open Mentor Center -> /mentor]");
+            }
+        },
+        {
+            id: "TC-CAT33-05",
+            category: "33. Modern Grounding & Judge Knowledge",
+            role: "judge",
+            message: "How is the 4-pillar evaluation rubric scored and what is the mathematical constraint?",
+            expectedIntent: "4-pillar rubric with 100% mathematical constraint",
+            requiredSource: "Judge rubric specifications",
+            expectedNav: "/judge-command-center",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("100%") && r.includes("Innovation") && r.includes("Technical Execution") && r.includes("[Open Judge Command Center -> /judge-command-center]");
+            }
+        },
+        {
+            id: "TC-CAT33-06",
+            category: "33. Modern Grounding & Judge Knowledge",
+            role: "judge",
+            message: "Can I save a draft evaluation and can locked evaluations be changed?",
+            expectedIntent: "Draft evaluation saving and immutable locked scores",
+            requiredSource: "Judge evaluation rules",
+            expectedNav: "/evaluations",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("draft") && r.includes("locked") && r.includes("immutable") && r.includes("[Open Judge Portal -> /evaluations]");
+            }
+        },
+        {
+            id: "TC-CAT33-07",
+            category: "33. Modern Grounding & Admin Specs",
+            role: "admin",
+            message: "What are the cover banner, problem spec PDF, and payment QR code specifications?",
+            expectedIntent: "Hackathon upload specifications",
+            requiredSource: "Event Manager specifications",
+            expectedNav: "/admin/hackathons",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("1200") && r.includes("630") && r.includes("15MB") && r.includes("500") && r.includes("[Manage Hackathons -> /admin/hackathons]");
+            }
+        },
+        {
+            id: "TC-CAT33-08",
+            category: "33. Modern Grounding & Admin Knowledge",
+            role: "admin",
+            message: "How do I issue batch certificates for hackathon participants?",
+            expectedIntent: "Batch certificate generation with cryptographic hashes",
+            requiredSource: "Certificate Manager",
+            expectedNav: "/admin/certificates",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("batch certificates") && r.includes("hash") && r.includes("[Issue Certificates -> /admin/certificates]");
+            }
+        },
+        {
+            id: "TC-CAT33-09",
+            category: "33. Modern Grounding & RBAC Isolation",
+            role: "student",
+            message: "What are the asset upload specifications for creating a hackathon?",
+            expectedIntent: "RBAC enforcement on admin event specifications",
+            requiredSource: "Admin clearance verification",
+            expectedNav: "/dashboard",
+            validate(res) {
+                const r = res.body?.reply || "";
+                return r.includes("ACCESS DENIED") && r.includes("[Go to Dashboard -> /dashboard]");
+            }
+        },
+        {
+            id: "TC-CAT33-10",
+            category: "33. Modern Grounding & Navigation",
+            role: "mentor",
+            message: "Take me to the mentor command center.",
+            expectedIntent: "Direct navigation to mentor command center",
+            requiredSource: "Site map",
+            expectedNav: "/mentor-command-center",
+            validate(res) {
+                return res.body?.reply?.includes("[Open Mentor Command Center -> /mentor-command-center]");
+            }
+        },
+        {
+            id: "TC-CAT33-11",
+            category: "33. Modern Grounding & Navigation",
+            role: "judge",
+            message: "Take me to the judge command center.",
+            expectedIntent: "Direct navigation to judge command center",
+            requiredSource: "Site map",
+            expectedNav: "/judge-command-center",
+            validate(res) {
+                return res.body?.reply?.includes("[Open Judge Command Center -> /judge-command-center]");
+            }
+        },
+        {
+            id: "TC-CAT33-12",
+            category: "33. Modern Grounding & Navigation",
+            role: "student",
+            message: "Take me to the code of conduct.",
+            expectedIntent: "Direct navigation to code of conduct",
+            requiredSource: "Site map",
+            expectedNav: "/code-of-conduct",
+            validate(res) {
+                return res.body?.reply?.includes("[View Code of Conduct -> /code-of-conduct]");
             }
         }
     ];
