@@ -37,6 +37,39 @@ export const setCachedUser = (user: User | null) => {
     } catch {}
 };
 
+const CACHE_KEY = "codesrijan_platform_cache_v2";
+
+export const getCachedState = (): any => {
+    try {
+        if (typeof localStorage === 'undefined') return {};
+        const raw = localStorage.getItem(CACHE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (Date.now() - (parsed._cachedAt || 0) < 1000 * 60 * 30) { // 30 min cache
+            return parsed;
+        }
+    } catch {
+        // Ignore cache read errors
+    }
+    return {};
+};
+
+export const persistCache = (data: any) => {
+    try {
+        if (typeof localStorage === 'undefined') return;
+        const toSave = {
+            users: data.users || [],
+            teams: data.teams || [],
+            problems: data.problems || [],
+            hackathons: data.hackathons || [],
+            _cachedAt: Date.now()
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
+    } catch {
+        // Ignore storage quotas
+    }
+};
+
 export type Role = "student" | "admin" | "judge" | "mentor";
 
 export interface User {
@@ -238,37 +271,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             socket.off('receive_message', handleReceive);
         };
     }, [state.currentUser?.teamId]);
-
-    const CACHE_KEY = "codesrijan_platform_cache_v2";
-
-    const getCachedState = (): Partial<StoreState> => {
-        try {
-            const raw = localStorage.getItem(CACHE_KEY);
-            if (!raw) return {};
-            const parsed = JSON.parse(raw);
-            if (Date.now() - (parsed._cachedAt || 0) < 1000 * 60 * 30) { // 30 min cache
-                return parsed;
-            }
-        } catch {
-            // Ignore cache read errors
-        }
-        return {};
-    };
-
-    const persistCache = (data: Partial<StoreState>) => {
-        try {
-            const toSave = {
-                users: data.users || [],
-                teams: data.teams || [],
-                problems: data.problems || [],
-                hackathons: data.hackathons || [],
-                _cachedAt: Date.now()
-            };
-            localStorage.setItem(CACHE_KEY, JSON.stringify(toSave));
-        } catch {
-            // Ignore storage quotas
-        }
-    };
 
     const refetchData = async () => {
         try {
