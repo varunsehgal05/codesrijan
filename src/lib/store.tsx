@@ -198,12 +198,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const cachedUser = getCachedUser();
         const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
         const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
+        const cachedPlatform = typeof window !== 'undefined' ? getCachedState() : {};
         return {
             currentUser: storedToken ? cachedUser : null,
-            users: [],
-            teams: [],
-            problems: [],
-            hackathons: [],
+            users: Array.isArray(cachedPlatform.users) ? cachedPlatform.users : [],
+            teams: Array.isArray(cachedPlatform.teams) ? cachedPlatform.teams : [],
+            problems: Array.isArray(cachedPlatform.problems) ? cachedPlatform.problems : [],
+            hackathons: Array.isArray(cachedPlatform.hackathons) ? cachedPlatform.hackathons : [],
             chatMessages: [],
             registrations: [],
             tasks: [],
@@ -275,12 +276,12 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             const token = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
             const authHeader = token ? { headers: { Authorization: `Bearer ${token}` }, timeout: 6000 } : { timeout: 6000 };
 
-            // Fire main core endpoints in parallel for maximum performance
+            // Fire main core endpoints in parallel for maximum performance with auth token
             const [meRes, usersRes, teamsRes, problemsRes, hackathonsRes] = await Promise.allSettled([
                 token ? axios.get(`${API_URL}/auth/me`, authHeader) : Promise.reject(new Error("No token")),
-                axios.get(`${API_URL}/users`, { timeout: 6000 }),
-                axios.get(`${API_URL}/teams`, { timeout: 6000 }),
-                axios.get(`${API_URL}/problems`, { timeout: 6000 }),
+                axios.get(`${API_URL}/users`, authHeader),
+                axios.get(`${API_URL}/teams`, authHeader),
+                axios.get(`${API_URL}/problems`, authHeader),
                 axios.get(`${API_URL}/hackathons`, authHeader)
             ]);
 
@@ -506,7 +507,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     };
 
     const logout = () => {
-        socket.disconnect();
+        try {
+            socket.disconnect();
+        } catch {}
         setCachedUser(null);
         setState(prev => ({ ...prev, currentUser: null }));
         try {
@@ -515,7 +518,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             sessionStorage.clear();
         } catch {}
         if (typeof window !== 'undefined') {
-            window.location.href = '/login';
+            window.location.replace('/login');
         }
     };
 

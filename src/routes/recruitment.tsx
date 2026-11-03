@@ -44,15 +44,16 @@ function RecruitmentMatrix() {
   const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
+  const safeUsers = Array.isArray(users) ? users : [];
+  const safeTeams = Array.isArray(teams) ? teams : [];
+  const safeHackathons = Array.isArray(hackathons) ? hackathons : [];
+
   // Filtered teams for Admin view - declared unconditionally before any early returns
   const genuineHackathons = useMemo(() => {
-    const list = Array.isArray(hackathons) ? hackathons : [];
-    return list.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
-  }, [hackathons]);
+    return safeHackathons.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
+  }, [safeHackathons]);
 
   const adminFilteredTeams = useMemo(() => {
-    const safeTeams = Array.isArray(teams) ? teams : [];
-    const safeUsers = Array.isArray(users) ? users : [];
     return safeTeams.filter(team => {
       const q = adminSearch.toLowerCase().trim();
       const matchesSearch = !q || 
@@ -69,10 +70,10 @@ function RecruitmentMatrix() {
 
       return matchesSearch && matchesHackathon && matchesStatus;
     });
-  }, [teams, users, adminSearch, adminHackathonFilter, adminStatusFilter]);
+  }, [safeTeams, safeUsers, adminSearch, adminHackathonFilter, adminStatusFilter]);
 
   const hasSquad = !!currentUser?.teamId;
-  const currentTeam = (teams || []).find(t => t.id === currentUser?.teamId);
+  const currentTeam = safeTeams.find(t => t.id === currentUser?.teamId);
   const isTeamLeader = !!(currentTeam && currentUser && currentTeam.leaderId === currentUser.id);
 
   // Modal States (replacing window.prompt and window.confirm)
@@ -490,7 +491,7 @@ function RecruitmentMatrix() {
           <div className="space-y-4">
             <div className="flex justify-between items-center px-1">
               <span className="font-label-bold text-xs uppercase tracking-wider text-on-surface-variant">
-                MATCHING SQUADS: {adminFilteredTeams.length} OF {teams.length} TOTAL
+                MATCHING SQUADS: {adminFilteredTeams.length} OF {safeTeams.length} TOTAL
               </span>
             </div>
 
@@ -505,7 +506,7 @@ function RecruitmentMatrix() {
             ) : (
               adminFilteredTeams.map(team => {
                 const hackathonMatch = genuineHackathons.find(h => h.id === (team.hackathonId || (team as any).lockedForHackathonId));
-                const memberList = (team.memberIds || []).map(mid => users.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member != null);
+                const memberList = (team.memberIds || []).map(mid => safeUsers.find(u => u.id === mid)).filter((member): member is NonNullable<typeof member> => member != null);
                 const isDq = team.status === 'disqualified';
                 const isActionBusy = actionLoadingId === team.id;
 
@@ -868,7 +869,7 @@ function RecruitmentMatrix() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {pendingRequests.map((req: any) => {
-                const requester = users.find(u => u.id === req.userId);
+                const requester = safeUsers.find(u => u.id === req.userId);
                 return (
                   <div key={req.id} className="border-2 border-black p-4 bg-surface-container flex flex-col justify-between gap-3">
                     <div>
@@ -916,9 +917,9 @@ function RecruitmentMatrix() {
             </div>
             <div className="flex flex-wrap gap-3">
               {(currentUser as any).friends.map((friendId: string) => {
-                const friend = users.find(u => u.id === friendId);
+                const friend = safeUsers.find(u => u.id === friendId);
                 if (!friend) return null;
-                const friendTeam = teams.find(t => t.id === friend.teamId);
+                const friendTeam = safeTeams.find(t => t.id === friend.teamId);
                 return (
                   <div key={friendId} className="border-2 border-black bg-surface p-2.5 flex items-center gap-3">
                     <div>
@@ -1004,8 +1005,8 @@ function RecruitmentMatrix() {
               {/* Operative Candidates Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(() => {
-                  const candidatePool = users.filter(u => {
-                    if (u.role !== 'student' || u.id === currentUser.id) return false;
+                  const candidatePool = safeUsers.filter(u => {
+                    if (u.role !== 'student' || (currentUser?.id && u.id === currentUser.id)) return false;
                     const slotting = getOperativeSlotting(u);
                     const skills = getOperativeSkills(u, slotting);
 
@@ -1037,7 +1038,7 @@ function RecruitmentMatrix() {
                     const slotting = getOperativeSlotting(user);
                     const skills = getOperativeSkills(user, slotting);
                     const isFriend = Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(user.id);
-                    const candidateTeam = teams.find(t => t.id === user.teamId || t.memberIds?.includes(user.id));
+                    const candidateTeam = safeTeams.find(t => t.id === user.teamId || t.memberIds?.includes(user.id));
                     const isFreeAgent = !candidateTeam;
 
                     return (
@@ -1152,12 +1153,12 @@ function RecruitmentMatrix() {
                     Available Open Squads Seeking Operatives
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {teams.filter(t => t.memberIds && t.memberIds.length < 4).length === 0 ? (
+                    {safeTeams.filter(t => t.memberIds && t.memberIds.length < 4).length === 0 ? (
                       <div className="col-span-full text-center bg-pure-white brutal-border p-8">
                         <p className="font-mono text-zinc-500 text-xs">All deployed squads are currently full.</p>
                       </div>
                     ) : (
-                      teams.filter(t => t.memberIds && t.memberIds.length < 4).map((team) => (
+                      safeTeams.filter(t => t.memberIds && t.memberIds.length < 4).map((team) => (
                         <article key={team.id} className="bg-pure-white brutal-border brutal-shadow p-5 flex flex-col justify-between gap-4">
                           <div>
                             <div className="flex justify-between items-start gap-2 mb-2">
@@ -1199,7 +1200,7 @@ function RecruitmentMatrix() {
 
               {hasSquad ? (
                 <div className="p-6 bg-amber-50 border-2 border-amber-600 text-amber-950 font-label-bold uppercase brutal-border mb-4">
-                  ⚠️ You are currently an active operative in squad: <strong>{currentTeam?.name || currentUser.teamId}</strong>.
+                  ⚠️ You are currently an active operative in squad: <strong>{currentTeam?.name || currentUser?.teamId}</strong>.
                   <br/><br/>
                   To join another squad, please depart from your existing squad in the <Link to="/workspace" className="underline text-electric-blue font-bold">Workspace</Link> first.
                 </div>
@@ -1238,7 +1239,7 @@ function RecruitmentMatrix() {
               
               {hasSquad ? (
                 <div className="p-6 bg-amber-50 border-2 border-amber-600 text-amber-950 font-label-bold uppercase brutal-border mb-4">
-                  ⚠️ You are already the leader or member of squad: <strong>{currentTeam?.name || currentUser.teamId}</strong>.
+                  ⚠️ You are already the leader or member of squad: <strong>{currentTeam?.name || currentUser?.teamId}</strong>.
                   <br/><br/>
                   <Link to="/workspace" className="underline text-electric-blue font-bold">Go to Squad Workspace →</Link>
                 </div>

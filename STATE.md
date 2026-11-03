@@ -141,14 +141,28 @@ Designed for technical mentors to guide assigned hackathon squads, resolve block
    - **Comms / Chat Layout**: Streamlined container layout to eliminate empty margins on left, right, and bottom while preserving Neo-Brutalist colors and ensuring strict cross-student support ticket isolation.
    - **Dashboard Cleanup**: Removed the redundant `/workspace` link from the bottom Secure Comm Links section.
 
+6. **Judge/Mentor Role Credentials, Render Master Branch Sync, and Performance Hardening**:
+   - **Dedicated Credentials Provisioned**:
+     - **Mentor**: `mentor@codesrijan.com` / `MentorSrijan99!` (Role: `mentor`, active on live MongoDB).
+     - **Judge**: `judge@codesrijan.com` / `JudgeSrijan99!` (Role: `judge`, active on live MongoDB).
+     - **Varun Judge**: `varunsehgal2005@gmail.com` / `V@run2Sehgal05!` (Role: `judge`, active on live MongoDB).
+     - **Admin**: `admin@codesrijan.com` / `CodeSrijan99!` (Role: `admin`).
+     - **Student**: `student@codesrijan.com` / `HackerStudent99!`.
+   - **Render Master Upstream Sync**: Synchronized `origin/master` with `main` after discovering Render was tracking `master` (which had lagged behind 38 commits), restoring all `/api/judge/*`, `/api/mentor/*`, `/api/admin/judge-assignments`, `/api/admin/certificates/issue`, and `/api/timeline` endpoints in production.
+   - **Recruitment Crash Resolution**: Guarded all user and team arrays (`safeUsers`, `safeTeams`) and added optional chaining across all `currentUser` accesses in `src/routes/recruitment.tsx` to prevent fatal runtime TypeErrors.
+   - **Admin Instant Data Loading**: Hydrated platform state (`users`, `teams`, `problems`, `hackathons`) from local cache during initialization and attached Bearer tokens to all core parallel fetches in `src/lib/store.tsx`.
+   - **Instant Logout Acceleration**: Transitioned `logout()` to instant cache purging, socket teardown, and non-blocking `window.location.replace('/login')`.
+   - **Certificate Issuance Payload Expansion**: Increased Express body limit in `server/server.js` from 10MB to 50MB to support high-resolution certificate template images.
+
 ---
 
 ## 3. Deployment & Release Instructions
-1. Commit all modified files and push to GitHub:
+1. Commit all modified files and push to both `main` and `master`:
    ```bash
    git add .
-   git commit -m "feat(timeline): implement homepage schedule CTA, 10-milestone chronological timeline, and update QA reconciliation"
+   git commit -m "fix(prod): resolve recruitment crash, accelerate admin loading, instant logout, expand certificate limit, and sync master"
    git push origin main
+   git push origin main:master
    ```
-2. Vercel and Render automatically deploy the latest verified commit.
+2. Vercel automatically deploys from `main` and Render deploys from `master`.
 3. Follow the Blue-Green Atlas rotation steps in `docs/security/ATLAS_CREDENTIAL_ROTATION_AND_DB_SECURITY_REPORT.md` to rotate `codesrijan_api_v2` credentials in Atlas and update `MONGO_URI` on Render.
