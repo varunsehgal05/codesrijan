@@ -59,6 +59,17 @@
    - Payment review endpoint enforces `payment_under_review` precondition before status transition.
    - Removed all hardcoded database credentials across 14 legacy scripts/artifacts; enforced `process.env.MONGO_URI`.
 
+5. **Multi-Screen Polish, Handle Space Validation, Profile Editing, Workspace Controls & Recruitment Enhancements**:
+   - **Handle Space Validation**: Enforced strict handle slug validation (`/^[a-z0-9_-]+$/`) and space auto-sanitization (`replace(/\s+/g, '_')`) across frontend registration, profile editing, and backend persistence.
+   - **OTP Verification Theming**: Modernized `/auth/otp` from dark navy into high-contrast Neo-Brutalist styling (pure white card, 4px stark black borders, high-contrast inputs, electric blue accents).
+   - **Hackathon Registration Auto-fill**: Auto-populates `college`, `branch`, and `year` dynamically from the user's initial platform registration, styled in Neo-Brutalist design.
+   - **Recruitment Enhancements**: Optimistic friend toggles, instant join request feedback ("✓ REQUEST TRANSMITTED"), candidate squad tags (`IN SQUAD: [Name]` vs. `FREE AGENT`), direct 1-click messaging button linking to `/chat`, independent squad creation without upfront hackathon enrollment, and hiding the Join tab for already-enrolled students.
+   - **Profile Edit Upgrade**: Comprehensive editing for all operative details (Name, Handle, College, Branch, Year, Phone/Mobile, Bio, Tech Stack, Specialization, Recruitment Status, GitHub, LinkedIn, and Portfolio links).
+   - **Workspace Enhancements**: Prominent Squad Authorization Code banner with 1-click copy, Project Submission renamed to "SUBMIT YOUR PROJECT" with team leader only restriction and irreversible confirmation modal, plus Squad Leadership Transfer protocol.
+   - **Leaderboard Streamline**: Removed the "ALL HACKATHONS" filter button and defaulted selection to the first active hackathon.
+   - **Comms / Chat Layout**: Streamlined container layout to eliminate empty margins on left, right, and bottom while preserving Neo-Brutalist colors and ensuring strict cross-student support ticket isolation.
+   - **Dashboard Cleanup**: Removed the redundant `/workspace` link from the bottom Secure Comm Links section.
+
 ---
 
 ## 3. Deployment & Release Instructions
