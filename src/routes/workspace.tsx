@@ -247,6 +247,21 @@ function WorkspaceHUD() {
     }
   };
 
+  const handleTransferLeadership = async (newLeaderId: string, memberName: string) => {
+    if (!confirm(`Are you sure you want to transfer Squad Leadership to ${memberName}? They will become the primary leader.`)) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      await axios.post(`${BASE}/teams/${userTeam.id}/transfer`, { newLeaderId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(`Squad leadership transferred to ${memberName}!`);
+      await refetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to transfer leadership.");
+    }
+  };
+
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!submissionForm.githubLink && !submissionForm.figmaLink && !submissionForm.demoLink) {
@@ -366,6 +381,33 @@ function WorkspaceHUD() {
           </div>
         </div>
 
+        {/* Squad Authorization Code Box */}
+        <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="bg-electric-blue text-white text-[10px] font-mono font-bold px-2 py-0.5 uppercase">
+                SQUAD INVITE CODE
+              </span>
+              <span className="text-zinc-500 font-mono text-xs">Share with teammates to join</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xl sm:text-2xl font-black text-ink-black tracking-wider bg-zinc-100 border-2 border-black px-3 py-1 select-all">
+                {userTeam.id}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(userTeam.id);
+              toast.success("Squad Code copied to clipboard! Teammates can enter this in Recruitment > Join.");
+            }}
+            className="bg-electric-blue hover:bg-stark-black text-white font-mono text-xs font-bold uppercase px-5 py-3 border-2 border-black shadow-[3px_3px_0_#000] hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+          >
+            <span className="material-symbols-outlined text-sm">content_copy</span> COPY SQUAD CODE
+          </button>
+        </div>
+
         {/* Payment Clearance Warning Banner (If Payment Incomplete/In Audit) */}
         {isPaidEvent && !isPaymentVerified && (
           <div className={`border-4 p-4 sm:p-5 brutal-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
@@ -456,19 +498,32 @@ function WorkspaceHUD() {
               <div className="space-y-1.5 mt-2">
                 {teamMembers.map((member: any) => {
                   const isLeader = member.id === userTeam.leaderId;
+                  const isCurrentUserLeader = userTeam.leaderId === currentUser?.id;
+                  const canTransfer = isCurrentUserLeader && !isLeader && !userTeam.isSubmitted;
                   return (
-                    <div key={member.id} className="flex items-center justify-between text-xs font-mono bg-white p-2 border border-zinc-300">
+                    <div key={member.id} className="flex items-center justify-between text-xs font-mono bg-white p-2 border border-zinc-300 gap-2">
                       <div className="flex items-center gap-2 truncate">
-                        <span className="w-5 h-5 rounded-full bg-electric-blue text-white flex items-center justify-center font-bold text-[10px]">
+                        <span className="w-5 h-5 rounded-full bg-electric-blue text-white flex items-center justify-center font-bold text-[10px] shrink-0">
                           {(member.name || 'O').charAt(0).toUpperCase()}
                         </span>
                         <span className="font-bold text-black truncate">{member.name || member.id}</span>
                       </div>
-                      {isLeader && (
-                        <span className="text-[9px] font-bold text-amber-600 bg-amber-100 border border-amber-300 px-1.5 py-0.5 uppercase">
-                          LEADER
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {isLeader ? (
+                          <span className="text-[9px] font-bold text-amber-600 bg-amber-100 border border-amber-300 px-1.5 py-0.5 uppercase">
+                            LEADER
+                          </span>
+                        ) : canTransfer ? (
+                          <button
+                            type="button"
+                            onClick={() => handleTransferLeadership(member.id, member.name || member.id)}
+                            className="text-[9px] font-bold text-electric-blue bg-blue-50 border border-electric-blue hover:bg-electric-blue hover:text-white px-1.5 py-0.5 uppercase transition-colors cursor-pointer"
+                            title="Transfer Squad Leadership"
+                          >
+                            TRANSFER LEADERSHIP
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
                   );
                 })}
@@ -860,44 +915,51 @@ function WorkspaceHUD() {
             {!userTeam.isSubmitted ? (
               <>
                 <span className="material-symbols-outlined text-error text-6xl mb-4 animate-pulse">crisis_alert</span>
-                <h3 className="font-display-lg uppercase text-error text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">TRANSMIT PAYLOAD</h3>
+                <h3 className="font-display-lg uppercase text-error text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[280px]">SUBMIT YOUR PROJECT</h3>
                 <p className="font-mono text-xs mb-6 px-2 opacity-80 leading-relaxed">
-                  Execute this action ONLY when your squad has finalized structural construction. This will lock your Kanban arrays and team roster indefinitely.
+                  Execute this action ONLY when your squad has finalized structural construction. Submitting locks your project links permanently for evaluation.
                 </p>
 
                 {isPaidEvent && !isPaymentVerified && (
                   <div className="bg-amber-100 border-2 border-amber-500 p-2 text-[11px] font-mono text-amber-900 mb-4 w-full">
-                    ⚠️ Payment clearance (₹{feeAmount}) required before transmission.
+                    ⚠️ Payment clearance (₹{feeAmount}) required before submission.
                   </div>
                 )}
 
-                <button
-                  onClick={() => {
-                    if (isPaidEvent && !isPaymentVerified) {
-                      toast.error(`Clearance blocked: Payment of ₹${feeAmount} is required. Please verify payment at /payment.`);
-                      navigate({ to: '/payment' });
-                      return;
-                    }
-                    setSubmissionForm({
-                      description: userTeam.description || "",
-                      technologies: "",
-                      githubLink: githubLink,
-                      figmaLink: figmaLink,
-                      demoLink: demoLink,
-                      demoVideoUrl: ""
-                    });
-                    setIsSubmitting(true);
-                  }}
-                  className="bg-error text-pure-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  INITIATE LOCKDOWN
-                </button>
+                {userTeam.leaderId !== currentUser?.id ? (
+                  <div className="bg-zinc-100 border-2 border-zinc-500 p-3 text-[11px] font-mono text-zinc-800 mb-2 w-full text-center">
+                    🔒 <strong>ONLY SQUAD LEADER CAN SUBMIT:</strong><br/>
+                    Contact your team leader ({teamMembers.find((m: any) => m.id === userTeam.leaderId)?.name || "Leader"}) to transmit the final project.
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (isPaidEvent && !isPaymentVerified) {
+                        toast.error(`Clearance blocked: Payment of ₹${feeAmount} is required. Please verify payment at /payment.`);
+                        navigate({ to: '/payment' });
+                        return;
+                      }
+                      setSubmissionForm({
+                        description: userTeam.description || "",
+                        technologies: "",
+                        githubLink: githubLink,
+                        figmaLink: figmaLink,
+                        demoLink: demoLink,
+                        demoVideoUrl: ""
+                      });
+                      setIsSubmitting(true);
+                    }}
+                    className="bg-error text-pure-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    SUBMIT YOUR PROJECT
+                  </button>
+                )}
               </>
             ) : (
               <>
                 <span className="material-symbols-outlined text-pure-white text-6xl mb-4">gpp_good</span>
-                <h3 className="font-display-lg uppercase text-pure-white text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">STRUCTURE LOCKED</h3>
-                <p className="font-mono text-xs text-pure-white/90">Your squad payload is under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
+                <h3 className="font-display-lg uppercase text-pure-white text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">PROJECT SUBMITTED</h3>
+                <p className="font-mono text-xs text-pure-white/90">Your squad project is under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
               </>
             )}
           </div>
@@ -944,12 +1006,12 @@ function WorkspaceHUD() {
 
                 <div className="bg-warning/20 border-2 border-warning p-3 mt-1">
                   <p className="font-code-snippet text-[11px] text-ink-black font-bold uppercase">
-                    WARNING: Ensure all access permissions (GitHub, Figma, Videos) are set to PUBLIC or accessible via link.
+                    CRITICAL CONFIRMATION: Are you sure? You can submit only ONCE. Once submitted, your squad workspace, links, and codebase are permanently locked for judging.
                   </p>
                 </div>
 
                 <div className="flex gap-4 mt-2">
-                  <button type="submit" className="flex-1 bg-success text-white font-bold py-3.5 text-lg border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer">LOCK PAYLOAD & SUBMIT</button>
+                  <button type="submit" className="flex-1 bg-error text-white font-bold py-3.5 text-base sm:text-lg border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer uppercase">CONFIRM & SUBMIT PROJECT</button>
                   <button type="button" onClick={() => setIsSubmitting(false)} className="bg-zinc-300 text-black font-bold py-3.5 px-6 border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer">CANCEL</button>
                 </div>
               </form>

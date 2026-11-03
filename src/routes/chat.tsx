@@ -316,8 +316,8 @@ function ChatDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-7xl mx-auto flex h-[85vh] border-4 border-ink-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-pure-white overflow-hidden">
+    <div className="min-h-[calc(100vh-64px)] bg-background p-2 md:p-4 pb-4">
+      <div className="w-full max-w-[1700px] mx-auto flex h-[calc(100vh-95px)] border-4 border-ink-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-pure-white overflow-hidden">
         
         {/* Sidebar */}
         <div className={`w-full md:w-1/3 lg:w-1/4 border-r-4 border-ink-black flex-col bg-surface z-10 shrink-0 ${activeConv ? 'hidden md:flex' : 'flex'}`}>

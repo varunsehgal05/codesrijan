@@ -47,6 +47,15 @@ function HackathonRegistrationPage() {
         }
     };
 
+    // Auto-fill registration details from currentUser profile
+    useEffect(() => {
+        if (currentUser) {
+            if (!college && (currentUser as any)?.college) setCollege((currentUser as any).college);
+            if (!branch && (currentUser as any)?.branch) setBranch((currentUser as any).branch);
+            if (!year && (currentUser as any)?.year) setYear((currentUser as any).year);
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         if (!isLoaded) return;
         
@@ -161,66 +170,60 @@ function HackathonRegistrationPage() {
     const hasSquad = !!(currentUser as any)?.teamId;
 
     return (
-        <div className="min-h-screen bg-[#070b14] text-white flex items-center justify-center p-4 sm:p-6 font-mono relative overflow-hidden">
-            {/* Dynamic Cyber Grid & Radial Dots */}
-            <div className="absolute inset-0 bg-[radial-gradient(#38bdf822_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none opacity-80" />
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b12_1px,transparent_1px),linear-gradient(to_bottom,#1e293b12_1px,transparent_1px)] bg-[size:48px_48px] pointer-events-none" />
+        <div className="min-h-screen bg-surface-container-lowest bg-pattern text-stark-black flex items-center justify-center p-4 sm:p-6 font-mono relative overflow-hidden">
+            {/* Subtle cyber decorative glow */}
+            <div className="absolute top-0 right-1/4 w-[600px] h-[300px] bg-electric-blue opacity-10 transform rotate-12 blur-3xl pointer-events-none" />
 
-            {/* Atmospheric Glowing Orbs */}
-            <div className="absolute -top-32 -left-32 w-96 h-96 bg-electric-blue/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-electric-blue/5 rounded-full blur-[150px] pointer-events-none" />
-
-            {/* Main Cyber Neo-Brutalist Card */}
-            <div className="w-full max-w-lg bg-[#0c1220]/95 backdrop-blur-md p-6 sm:p-8 border-4 border-electric-blue shadow-[8px_8px_0px_0px_rgba(0,102,255,1)] relative z-10">
+            {/* Main Neo-Brutalist Enrollment Card */}
+            <div className="w-full max-w-lg bg-pure-white p-6 sm:p-8 border-4 border-stark-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] relative z-10">
                 {/* Tech HUD Corner Accents */}
-                <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white" />
-                <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white" />
-                <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white" />
-                <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white" />
+                <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-stark-black" />
+                <div className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-stark-black" />
+                <div className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-stark-black" />
+                <div className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-stark-black" />
 
                 {/* HUD Top Bar */}
-                <div className="flex items-center justify-between mb-6 pb-3 border-b border-zinc-800">
-                    <Link to="/hackathons" className="flex items-center gap-1.5 text-xs font-bold text-zinc-400 hover:text-electric-blue transition-colors uppercase">
+                <div className="flex items-center justify-between mb-6 pb-3 border-b-2 border-stark-black">
+                    <Link to="/hackathons" className="flex items-center gap-1.5 text-xs font-label-bold text-ink-black hover:text-electric-blue transition-colors uppercase">
                         <span className="material-symbols-outlined text-sm">arrow_back</span> BACK TO HACKATHONS
                     </Link>
-                    <span className="text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 bg-electric-blue/10 text-electric-blue border border-electric-blue/40">
+                    <span className="text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 bg-surface-container text-stark-black border-2 border-stark-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                         HUD // ENROLLMENT PROTOCOL
                     </span>
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-white mb-1">
+                <h1 className="text-2xl sm:text-3xl font-display-lg uppercase tracking-tight text-stark-black mb-1">
                     Hackathon Enrollment
                 </h1>
-                <p className="text-electric-blue mb-4 font-mono text-xs uppercase tracking-widest border-b border-zinc-800/80 pb-3 flex items-center gap-1.5">
+                <p className="text-electric-blue mb-4 font-mono text-xs font-bold uppercase tracking-widest border-b-2 border-stark-black pb-3 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm">flag</span> TARGET ARENA: {hackathon?.name || id}
                 </p>
 
                 {/* If already registered: Show Enrolled View */}
                 {existingRegistration ? (
                     <div className="space-y-4">
-                        <div className="bg-emerald-950/40 border-2 border-emerald-500 p-4">
+                        <div className="bg-emerald-50 border-2 border-emerald-600 p-4 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="material-symbols-outlined text-emerald-400 text-xl">verified</span>
-                                <span className="text-emerald-400 font-black text-sm uppercase tracking-wider">
+                                <span className="material-symbols-outlined text-emerald-700 text-xl">verified</span>
+                                <span className="text-emerald-800 font-display-md text-sm uppercase tracking-wider">
                                     YOU HAVE JOINED THIS HACKATHON
                                 </span>
                             </div>
-                            <p className="text-xs text-zinc-300 leading-relaxed">
+                            <p className="text-xs text-emerald-950 font-body-md font-bold leading-relaxed">
                                 Your enrollment credentials and squad clearance are officially recorded in the CodeSrijan Mainframe.
                             </p>
                         </div>
 
                         {/* Clearance Info Card */}
-                        <div className="bg-[#090e1c] border-2 border-zinc-700 p-4 space-y-2.5 text-xs">
-                            <div className="flex justify-between items-center pb-2 border-b border-zinc-800">
-                                <span className="text-zinc-400 uppercase text-[10px] font-bold">Clearance Status</span>
-                                <span className={`px-2 py-0.5 font-bold uppercase text-[10px] ${
+                        <div className="bg-surface border-2 border-stark-black p-4 space-y-2.5 text-xs shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
+                            <div className="flex justify-between items-center pb-2 border-b-2 border-stark-black/15">
+                                <span className="text-zinc-600 uppercase text-[10px] font-label-bold">Clearance Status</span>
+                                <span className={`px-2.5 py-1 font-bold uppercase text-[10px] border border-stark-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] ${
                                     isPaymentPending 
-                                        ? 'bg-amber-400 text-black animate-pulse' 
+                                        ? 'bg-amber-300 text-black animate-pulse' 
                                         : existingRegistration?.paymentStatus === 'approved' || !isPaid
-                                            ? 'bg-emerald-400 text-black'
-                                            : 'bg-red-400 text-black'
+                                            ? 'bg-emerald-300 text-black' 
+                                            : 'bg-red-300 text-black'
                                 }`}>
                                     {isPaymentPending 
                                         ? 'PAYMENT UNDER REVIEW' 
@@ -231,29 +234,29 @@ function HackathonRegistrationPage() {
                             </div>
 
                             <div className="flex justify-between items-center">
-                                <span className="text-zinc-400 uppercase text-[10px]">Enrollment Type</span>
-                                <span className="text-white font-bold uppercase text-[11px]">
+                                <span className="text-zinc-600 uppercase text-[10px] font-label-bold">Enrollment Type</span>
+                                <span className="text-stark-black font-bold uppercase text-[11px]">
                                     {existingRegistration.teamId ? `Squad Mode (${existingRegistration.teamId})` : 'Solo Operative'}
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center">
-                                <span className="text-zinc-400 uppercase text-[10px]">Institution</span>
-                                <span className="text-zinc-200 font-bold text-[11px] truncate max-w-[200px]">
+                                <span className="text-zinc-600 uppercase text-[10px] font-label-bold">Institution</span>
+                                <span className="text-stark-black font-bold text-[11px] truncate max-w-[200px]">
                                     {existingRegistration.college || 'Verified Institute'}
                                 </span>
                             </div>
 
                             <div className="flex justify-between items-center">
-                                <span className="text-zinc-400 uppercase text-[10px]">Specialization</span>
-                                <span className="text-zinc-200 font-bold text-[11px]">
+                                <span className="text-zinc-600 uppercase text-[10px] font-label-bold">Specialization</span>
+                                <span className="text-stark-black font-bold text-[11px]">
                                     {existingRegistration.branch || 'CSE'} • Year {existingRegistration.year || '4'}
                                 </span>
                             </div>
 
-                            <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
-                                <span className="text-zinc-400 uppercase text-[10px]">Enrolled Timestamp</span>
-                                <span className="text-zinc-400 font-mono text-[10px]">
+                            <div className="flex justify-between items-center pt-2 border-t-2 border-stark-black/15">
+                                <span className="text-zinc-600 uppercase text-[10px] font-label-bold">Enrolled Timestamp</span>
+                                <span className="text-zinc-700 font-mono text-[10px]">
                                     {existingRegistration.createdAt ? new Date(existingRegistration.createdAt).toLocaleString() : 'Active'}
                                 </span>
                             </div>
@@ -261,35 +264,35 @@ function HackathonRegistrationPage() {
 
                         {/* Hackathon Status & Withdrawal Rules */}
                         {hasStarted ? (
-                            <div className="bg-red-950/40 border-2 border-red-500 p-3.5 text-xs text-red-300">
-                                <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-red-400">
+                            <div className="bg-red-50 border-2 border-red-600 p-3.5 text-xs text-red-950 font-label-bold uppercase">
+                                <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-red-800">
                                     <span className="material-symbols-outlined text-sm">lock</span> Tournament In Progress
                                 </div>
-                                Hackathon tournament has commenced. Roster and event entry are cryptographically locked. Operatives cannot leave an ongoing arena.
+                                Hackathon tournament has commenced. Roster and event entry are locked.
                             </div>
                         ) : isPaymentPending ? (
-                            <div className="bg-amber-950/40 border-2 border-amber-500 p-3.5 text-xs text-amber-300 space-y-2">
-                                <div className="flex items-center gap-1.5 font-bold uppercase text-amber-400">
+                            <div className="bg-amber-50 border-2 border-amber-600 p-3.5 text-xs text-amber-950 space-y-2">
+                                <div className="flex items-center gap-1.5 font-bold uppercase text-amber-800 font-label-bold">
                                     <span className="material-symbols-outlined text-sm">schedule</span> Payment Audit In Progress
                                 </div>
-                                <p className="text-[11px] leading-relaxed">
-                                    Your payment proof is currently under review by administrators. You cannot leave the hackathon directly while audit is pending. You may request a refund / cashback to cancel your registration.
+                                <p className="text-[11px] leading-relaxed font-body-md font-bold">
+                                    Your payment proof is under review. You may request a refund / cashback to cancel your registration.
                                 </p>
                                 <button
                                     onClick={() => setShowRefundModal(true)}
-                                    className="w-full mt-2 bg-amber-400 hover:bg-amber-300 text-black font-black uppercase text-xs py-2 px-3 border border-black transition-colors"
+                                    className="w-full mt-2 bg-amber-400 hover:bg-amber-300 text-black font-label-bold uppercase text-xs py-2 px-3 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-colors"
                                 >
                                     Request Refund / Cashback →
                                 </button>
                             </div>
                         ) : (
-                            <div className="bg-zinc-900 border border-zinc-800 p-3.5 space-y-2 text-xs">
-                                <div className="text-zinc-400 text-[11px]">
+                            <div className="bg-surface-container border-2 border-stark-black p-3.5 space-y-2 text-xs">
+                                <div className="text-zinc-700 text-[11px] font-body-md font-bold">
                                     Hackathon has not started yet. You may withdraw from this arena at any time prior to commencement.
                                 </div>
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
-                                    className="w-full bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white border-2 border-red-500 font-black uppercase text-xs py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                    className="w-full bg-red-100 hover:bg-red-500 hover:text-white text-red-700 border-2 border-red-600 font-label-bold uppercase text-xs py-2 px-3 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                                 >
                                     <span className="material-symbols-outlined text-sm">logout</span> Withdraw From Hackathon
                                 </button>
@@ -301,14 +304,14 @@ function HackathonRegistrationPage() {
                             {isPaid && existingRegistration?.paymentStatus === 'pending_proof' ? (
                                 <button
                                     onClick={() => navigate({ to: '/payment', search: { hackathonId: id } as any })}
-                                    className="w-full bg-electric-blue hover:bg-white text-black font-black uppercase text-xs py-3 px-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] transition-all"
+                                    className="w-full bg-electric-blue hover:bg-black text-pure-white font-label-bold uppercase text-xs py-3.5 px-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] transition-all hover:-translate-y-0.5"
                                 >
                                     Complete Payment Clearance →
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => navigate({ to: '/dashboard' })}
-                                    className="w-full bg-white hover:bg-electric-blue hover:text-white text-black font-black uppercase text-xs py-3 px-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] transition-all"
+                                    className="w-full bg-white hover:bg-electric-blue hover:text-white text-black font-label-bold uppercase text-xs py-3.5 px-4 border-2 border-black shadow-[4px_4px_0px_0px_#000] transition-all hover:-translate-y-0.5"
                                 >
                                     Enter Operative Workspace →
                                 </button>
@@ -316,11 +319,11 @@ function HackathonRegistrationPage() {
                         </div>
                     </div>
                 ) : success ? (
-                    <div className="bg-electric-blue/10 p-6 border-l-4 border-electric-blue space-y-4">
-                        <h3 className="text-electric-blue font-bold uppercase mb-2 flex items-center gap-2">
+                    <div className="bg-emerald-50 p-6 border-l-4 border-emerald-600 space-y-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        <h3 className="text-emerald-800 font-display-md text-base uppercase mb-2 flex items-center gap-2">
                             <span className="material-symbols-outlined text-base">task_alt</span> Enrollment Initiated
                         </h3>
-                        <p className="text-sm text-zinc-300">
+                        <p className="text-xs sm:text-sm text-zinc-800 font-body-md font-bold">
                             {isPaid 
                                 ? "Your squad roster is now locked in the mainframe. Complete your payment proof submission to clear your entry." 
                                 : "Your registration has been logged into the CodeSrijan Mainframe. You may now form or join a squad."}
@@ -329,14 +332,14 @@ function HackathonRegistrationPage() {
                             {isPaid ? (
                                 <button
                                     onClick={() => navigate({ to: '/payment', search: { hackathonId: id } as any })}
-                                    className="font-mono text-sm uppercase px-5 py-2.5 bg-electric-blue text-black font-black hover:bg-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                                    className="font-label-bold text-xs uppercase px-5 py-3 bg-electric-blue text-pure-white border-2 border-black hover:bg-black transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                                 >
                                     Proceed to Payment Clearance →
                                 </button>
                             ) : (
                                 <button
                                     onClick={() => navigate({ to: '/dashboard' })}
-                                    className="font-mono text-sm uppercase px-5 py-2.5 bg-white text-black font-bold hover:bg-electric-blue hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
+                                    className="font-label-bold text-xs uppercase px-5 py-3 bg-white text-black border-2 border-black hover:bg-electric-blue hover:text-white transition-colors shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer"
                                 >
                                     Enter Dashboard
                                 </button>
@@ -345,27 +348,27 @@ function HackathonRegistrationPage() {
                     </div>
                 ) : (
                     <div>
-                        {/* Squad Roster Notice (Allows 1+ operatives) */}
-                        <div className="bg-[#090e1c] border border-electric-blue/30 p-3 mb-5 text-xs flex items-center justify-between">
+                        {/* Squad Roster Notice */}
+                        <div className="bg-surface-container-low border-2 border-stark-black p-3 mb-5 text-xs flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-electric-blue text-base">groups</span>
                                 <div>
-                                    <span className="text-white font-bold uppercase block text-[11px]">
+                                    <span className="text-stark-black font-label-bold uppercase block text-[11px]">
                                         {hasSquad ? "Squad Registration Mode" : "Solo Operative Mode"}
                                     </span>
-                                    <span className="text-zinc-400 text-[10px]">
+                                    <span className="text-zinc-600 text-[10px] font-mono">
                                         {hasSquad ? "Roster ready (1 to 6 operatives supported)" : "Individual hacker entry verified"}
                                     </span>
                                 </div>
                             </div>
-                            <span className="px-2 py-0.5 bg-electric-blue/20 text-electric-blue border border-electric-blue/40 font-bold text-[10px] uppercase">
+                            <span className="px-2 py-0.5 bg-electric-blue text-pure-white border border-stark-black font-bold text-[10px] uppercase shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
                                 {hasSquad ? "1+ Operatives Valid" : "Solo Valid"}
                             </span>
                         </div>
 
                         {isPaid && (
-                            <div className="bg-amber-500/10 border-2 border-amber-500/80 p-3.5 mb-5 text-xs text-amber-300">
-                                <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-amber-400">
+                            <div className="bg-amber-50 border-2 border-amber-600 p-3.5 mb-5 text-xs text-amber-950 font-body-md font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                <div className="flex items-center gap-1.5 font-bold uppercase mb-1 text-amber-800 font-label-bold">
                                     <span className="material-symbols-outlined text-sm">payments</span> Paid Hackathon Notice
                                 </div>
                                 Entry fee: ₹{hackathon?.fee} ({hackathon?.feeBasis?.replace(/_/g, ' ')}). Registration will lock your squad roster and require payment receipt verification.
@@ -373,22 +376,22 @@ function HackathonRegistrationPage() {
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {statusLoading && <div className="text-electric-blue text-xs animate-pulse">Checking event status...</div>}
+                            {statusLoading && <div className="text-electric-blue text-xs font-bold animate-pulse">Checking event status...</div>}
                             
                             {isClosed && !statusLoading && (
-                                <div className="bg-red-500/10 border-l-4 border-red-500 p-3 mb-4">
-                                    <h3 className="text-red-500 font-bold uppercase text-xs mb-1">Registration Closed</h3>
-                                    <p className="text-xs text-zinc-300">Registration is currently closed for this event (Status: {hackathonStatus}).</p>
+                                <div className="bg-red-50 border-2 border-red-600 p-3 mb-4 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                    <h3 className="text-red-700 font-label-bold uppercase text-xs mb-1">Registration Closed</h3>
+                                    <p className="text-xs text-red-950 font-body-md font-bold">Registration is currently closed for this event (Status: {hackathonStatus}).</p>
                                 </div>
                             )}
 
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">Hackathon ID</label>
-                                <input type="text" disabled className="w-full bg-[#080d19] border-2 border-zinc-800 p-2.5 text-zinc-500 text-xs cursor-not-allowed font-mono" value={id} />
+                                <label className="text-xs font-label-bold uppercase tracking-wider text-zinc-700">Hackathon ID</label>
+                                <input type="text" disabled className="w-full bg-surface-container-high border-2 border-zinc-400 p-3 text-zinc-700 text-xs cursor-not-allowed font-mono font-bold" value={id} />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <label className="text-xs font-label-bold uppercase tracking-wider text-stark-black flex items-center gap-1.5">
                                     <span className="material-symbols-outlined text-xs text-electric-blue">school</span> Academic Institution
                                 </label>
                                 <input 
@@ -396,20 +399,20 @@ function HackathonRegistrationPage() {
                                     disabled={!!isClosed || statusLoading} 
                                     required 
                                     placeholder="e.g. Stanford University / JUET"
-                                    className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
                                     value={college} 
                                     onChange={(e) => setCollege(e.target.value)} 
                                 />
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <label className="text-xs font-label-bold uppercase tracking-wider text-stark-black flex items-center gap-1.5">
                                     <span className="material-symbols-outlined text-xs text-electric-blue">code</span> Branch Specialization
                                 </label>
                                 <select 
                                     disabled={!!isClosed || statusLoading} 
                                     required 
-                                    className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
                                     value={branch} 
                                     onChange={(e) => setBranch(e.target.value)}
                                 >
@@ -426,13 +429,13 @@ function HackathonRegistrationPage() {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                                <label className="text-xs font-label-bold uppercase tracking-wider text-stark-black flex items-center gap-1.5">
                                     <span className="material-symbols-outlined text-xs text-electric-blue">calendar_today</span> Academic Year
                                 </label>
                                 <select 
                                     disabled={!!isClosed || statusLoading} 
                                     required 
-                                    className="w-full bg-[#080d19] border-2 border-zinc-700 p-2.5 text-white text-xs focus:border-electric-blue focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                    className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
                                     value={year} 
                                     onChange={(e) => setYear(e.target.value)}
                                 >
@@ -446,8 +449,8 @@ function HackathonRegistrationPage() {
                             </div>
 
                             {error && (
-                                <div className="bg-red-500/10 border-l-4 border-red-500 p-3 text-red-400 font-mono text-xs flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-sm text-red-500">error</span>
+                                <div className="bg-red-50 border-2 border-red-600 p-3 text-red-700 font-mono text-xs flex items-center gap-2 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] font-bold">
+                                    <span className="material-symbols-outlined text-sm text-red-600">error</span>
                                     <span>[ERROR] {error}</span>
                                 </div>
                             )}
@@ -455,7 +458,7 @@ function HackathonRegistrationPage() {
                             <button
                                 type="submit"
                                 disabled={loading || !college || !branch || !year || !!isClosed || statusLoading}
-                                className="w-full bg-electric-blue text-black font-black uppercase tracking-widest py-3.5 px-4 text-xs border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-white hover:text-black hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2 cursor-pointer"
+                                className="w-full bg-electric-blue text-pure-white font-label-bold uppercase tracking-wider py-4 px-4 text-xs sm:text-sm border-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4 cursor-pointer"
                             >
                                 {loading ? 'Transmitting...' : (isClosed ? 'Registration Closed' : 'Confirm Enrollment')}
                             </button>
@@ -463,87 +466,72 @@ function HackathonRegistrationPage() {
                     </div>
                 )}
 
-                {/* Neo-Brutalist Leave Confirmation Modal */}
+                {/* Modals for Leave and Refund */}
                 {showLeaveConfirm && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-                        <div className="bg-[#0b101d] border-4 border-red-600 p-6 max-w-md w-full shadow-[8px_8px_0px_0px_#FF0000]">
-                            <div className="flex items-center gap-2 text-red-500 mb-3 font-black text-sm uppercase">
-                                <span className="material-symbols-outlined text-2xl">warning</span>
-                                CONFIRM HACKATHON WITHDRAWAL
-                            </div>
-                            <p className="text-zinc-300 text-xs leading-relaxed mb-4">
-                                Are you sure you want to withdraw from <span className="text-white font-bold">{hackathon?.name || id}</span>? Your squad entry clearance will be revoked.
+                    <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white border-4 border-black p-6 max-w-sm w-full space-y-4 text-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                            <h3 className="font-display-lg uppercase text-lg text-red-600 flex items-center gap-2">
+                                <span className="material-symbols-outlined">warning</span> Confirm Withdrawal
+                            </h3>
+                            <p className="text-xs text-zinc-700 font-body-md font-bold">
+                                Are you sure you want to withdraw from this hackathon? Your registration slot will be relinquished immediately.
                             </p>
-                            <div className="flex gap-3 justify-end">
+                            <div className="flex gap-2">
                                 <button
                                     onClick={() => setShowLeaveConfirm(false)}
-                                    className="px-4 py-2 border-2 border-zinc-700 hover:border-white text-zinc-300 hover:text-white font-bold text-xs uppercase cursor-pointer"
+                                    className="flex-1 py-2 border-2 border-black font-label-bold text-xs uppercase hover:bg-zinc-100"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleLeaveHackathon}
                                     disabled={leaving}
-                                    className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase border-2 border-black cursor-pointer"
+                                    className="flex-1 py-2 bg-red-600 text-white border-2 border-black font-label-bold text-xs uppercase hover:bg-red-700"
                                 >
-                                    {leaving ? 'Withdrawing...' : 'Confirm Withdrawal'}
+                                    {leaving ? 'Processing...' : 'Withdraw'}
                                 </button>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Neo-Brutalist Refund Request Modal */}
                 {showRefundModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-                        <div className="bg-[#0b101d] border-4 border-amber-500 p-6 max-w-md w-full shadow-[8px_8px_0px_0px_#FFAA00]">
-                            <div className="flex items-center gap-2 text-amber-400 mb-2 font-black text-sm uppercase">
-                                <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
-                                REQUEST REFUND / CASHBACK
-                            </div>
-                            <p className="text-zinc-300 text-xs leading-relaxed mb-4">
-                                Enter your UPI ID and reason for withdrawal. Administrators will audit your transaction and process your refund within 24-48 hours.
+                    <div className="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white border-4 border-black p-6 max-w-sm w-full space-y-4 text-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                            <h3 className="font-display-lg uppercase text-lg text-amber-600 flex items-center gap-2">
+                                <span className="material-symbols-outlined">payments</span> Refund Request
+                            </h3>
+                            <p className="text-xs text-zinc-700 font-body-md font-bold">
+                                Enter your UPI ID and reason for cashback review.
                             </p>
-                            <form onSubmit={handleRefundRequest} className="space-y-3">
-                                <div>
-                                    <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Beneficiary UPI ID</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        placeholder="e.g. operative@okhdfcbank"
-                                        value={refundUpi}
-                                        onChange={(e) => setRefundUpi(e.target.value)}
-                                        className="w-full bg-[#080d19] border-2 border-zinc-700 p-2 text-xs text-white focus:border-amber-400 focus:outline-none"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Reason for Withdrawal</label>
-                                    <textarea
-                                        required
-                                        rows={2}
-                                        placeholder="e.g. Scheduling conflict, squad roster changed"
-                                        value={refundReason}
-                                        onChange={(e) => setRefundReason(e.target.value)}
-                                        className="w-full bg-[#080d19] border-2 border-zinc-700 p-2 text-xs text-white focus:border-amber-400 focus:outline-none"
-                                    />
-                                </div>
-                                <div className="flex gap-3 justify-end pt-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowRefundModal(false)}
-                                        className="px-4 py-2 border-2 border-zinc-700 hover:border-white text-zinc-300 hover:text-white font-bold text-xs uppercase cursor-pointer"
-                                    >
-                                        Abort
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={submittingRefund}
-                                        className="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase border-2 border-black cursor-pointer"
-                                    >
-                                        {submittingRefund ? 'Submitting...' : 'Dispatch Refund Request'}
-                                    </button>
-                                </div>
-                            </form>
+                            <input
+                                type="text"
+                                placeholder="UPI ID (e.g. user@okhdfcbank)"
+                                value={refundUpi}
+                                onChange={e => setRefundUpi(e.target.value)}
+                                className="w-full border-2 border-black p-2 text-xs font-mono"
+                            />
+                            <textarea
+                                placeholder="Reason for refund..."
+                                value={refundReason}
+                                onChange={e => setRefundReason(e.target.value)}
+                                className="w-full border-2 border-black p-2 text-xs font-mono h-20"
+                            />
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowRefundModal(false)}
+                                    className="flex-1 py-2 border-2 border-black font-label-bold text-xs uppercase hover:bg-zinc-100"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleRefundRequest}
+                                    disabled={submittingRefund || !refundUpi.trim()}
+                                    className="flex-1 py-2 bg-amber-500 text-black border-2 border-black font-label-bold text-xs uppercase hover:bg-amber-400"
+                                >
+                                    {submittingRefund ? 'Sending...' : 'Request'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

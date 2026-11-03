@@ -30,6 +30,8 @@ function RecruitmentMatrix() {
   const [operativeDossier, setOperativeDossier] = useState<any | null>(null);
   const [dossierLoading, setDossierLoading] = useState(false);
   const [friendActionLoading, setFriendActionLoading] = useState<string | null>(null);
+  const [requestedTeamIds, setRequestedTeamIds] = useState<Set<string>>(new Set());
+  const [teamCodeInput, setTeamCodeInput] = useState("");
 
   // Admin view state
   const [adminSearch, setAdminSearch] = useState("");
@@ -173,17 +175,13 @@ function RecruitmentMatrix() {
     setErrorMsg("");
     const formData = new FormData(e.currentTarget);
     const name = formData.get("name") as string;
+    const description = (formData.get("description") as string) || "";
     
-    if (!selectedHackathonId) {
-      setErrorMsg("You must select a hackathon to form a squad for.");
-      setLoading(false);
-      return;
-    }
-
     try {
       if (!currentUser) return;
-      await createTeam(name, currentUser.id, selectedHackathonId, "");
-      navigate({ to: "/dashboard" });
+      await createTeam(name, currentUser.id, selectedHackathonId || "", "");
+      toast.success(`Squad "${name}" successfully deployed!`);
+      navigate({ to: "/workspace" });
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to create squad.");
     } finally {
@@ -192,18 +190,17 @@ function RecruitmentMatrix() {
   };
 
   const handleRequestJoin = async (teamId: string) => {
+    // Instant optimistic feedback
+    setRequestedTeamIds(prev => new Set([...prev, teamId]));
+    toast.success("Join signature transmitted! Await Squad Leader approval.");
+
     try {
-      setLoading(true);
-      setErrorMsg("");
       const token = localStorage.getItem("codesrijan_auth_token");
       await axios.post(`${API_URL}/teams/${teamId}/request`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast("Join signature transmitted! Await Squad Leader approval.");
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || err.message || "Failed to transmit request.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -241,17 +238,45 @@ function RecruitmentMatrix() {
     }
   };
 
+  const handleDirectChat = async (targetUserId: string) => {
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.post(`${API_URL}/conversations/direct`, { targetUserId }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.id) {
+        navigate({ to: "/chat", search: { conv: res.data.id } as any });
+      } else {
+        navigate({ to: "/chat" });
+      }
+    } catch (err: any) {
+      navigate({ to: "/chat" });
+    }
+  };
+
   const handleToggleFriend = async (userId: string) => {
+    // Fast Optimistic local update
+    if (currentUser) {
+      const friendsList = Array.isArray((currentUser as any).friends) ? [...(currentUser as any).friends] : [];
+      const isAlreadyFriend = friendsList.includes(userId);
+      if (isAlreadyFriend) {
+        (currentUser as any).friends = friendsList.filter(id => id !== userId);
+      } else {
+        (currentUser as any).friends = [...friendsList, userId];
+      }
+    }
+
     try {
       setFriendActionLoading(userId);
       const token = localStorage.getItem("codesrijan_auth_token");
       const res = await axios.post(`${API_URL}/users/${userId}/friend`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(res.data.isFriend ? "Operative added to comrade network!" : "Operative removed from comrades.");
-      if (refetchData) await refetchData();
+      toast.success(res.data.isFriend ? "Comrade linked!" : "Comrade unlinked.");
+      // Fire background refetch without blocking UI
+      if (refetchData) void refetchData();
       if (selectedOperativeId === userId) {
-        handleOpenDossier(userId);
+        void handleOpenDossier(userId);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to toggle comrade status.");
@@ -762,12 +787,14 @@ function RecruitmentMatrix() {
             >
               FIND
             </button>
-            <button
-              onClick={() => setActiveTab('join')}
-              className={`flex-1 md:w-32 px-4 py-2 transition-all border-2 cursor-pointer ${activeTab === 'join' ? 'bg-electric-blue text-pure-white border-stark-black brutal-shadow' : 'bg-surface text-ink-black border-transparent hover:border-ink-black hover:-translate-y-1'}`}
-            >
-              JOIN
-            </button>
+            {!hasSquad && (
+              <button
+                onClick={() => setActiveTab('join')}
+                className={`flex-1 md:w-32 px-4 py-2 transition-all border-2 cursor-pointer ${activeTab === 'join' ? 'bg-electric-blue text-pure-white border-stark-black brutal-shadow' : 'bg-surface text-ink-black border-transparent hover:border-ink-black hover:-translate-y-1'}`}
+              >
+                JOIN
+              </button>
+            )}
             <button
               onClick={() => setActiveTab('create')}
               className={`flex-1 md:w-32 px-4 py-2 transition-all border-2 cursor-pointer ${activeTab === 'create' ? 'bg-electric-blue text-pure-white border-stark-black brutal-shadow' : 'bg-surface text-ink-black border-transparent hover:border-ink-black hover:-translate-y-1'}`}
@@ -890,7 +917,8 @@ function RecruitmentMatrix() {
                     const slotting = getOperativeSlotting(user);
                     const skills = getOperativeSkills(user, slotting);
                     const isFriend = Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(user.id);
-                    const isFreeAgent = !user.teamId;
+                    const candidateTeam = teams.find(t => t.id === user.teamId || t.memberIds?.includes(user.id));
+                    const isFreeAgent = !candidateTeam;
 
                     return (
                       <article
@@ -903,10 +931,10 @@ function RecruitmentMatrix() {
                             <span className="px-2 py-0.5 bg-stark-black text-white font-mono text-[10px] font-bold uppercase tracking-wider brutal-border">
                               {slotting}
                             </span>
-                            <span className={`px-2 py-0.5 font-bold text-[10px] uppercase brutal-border ${
-                              isFreeAgent ? 'bg-emerald-400 text-black' : 'bg-zinc-200 text-zinc-700'
+                            <span className={`px-2 py-0.5 font-bold text-[10px] uppercase brutal-border max-w-[150px] truncate ${
+                              isFreeAgent ? 'bg-emerald-400 text-black' : 'bg-amber-300 text-stark-black'
                             }`}>
-                              {isFreeAgent ? 'FREE AGENT' : 'ASSIGNED'}
+                              {isFreeAgent ? 'FREE AGENT' : `IN SQUAD: ${candidateTeam.name}`}
                             </span>
                           </div>
 
@@ -948,26 +976,35 @@ function RecruitmentMatrix() {
 
                         {/* Interactive Action Buttons */}
                         <div className="flex flex-col gap-2 pt-3 border-t-2 border-stark-black">
-                          <div className="flex gap-2">
+                          <div className="grid grid-cols-3 gap-1.5">
                             <button
                               onClick={() => handleOpenDossier(user.id)}
-                              className="flex-1 bg-surface-container hover:bg-zinc-200 text-stark-black text-[11px] font-bold uppercase py-2 px-2 brutal-border transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                              className="bg-surface-container hover:bg-zinc-200 text-stark-black text-[10px] font-bold uppercase py-2 px-1 brutal-border transition-colors flex items-center justify-center gap-0.5 cursor-pointer"
+                              title="View Operative Dossier"
                             >
-                              <span className="material-symbols-outlined text-sm">visibility</span> View Dossier
+                              <span className="material-symbols-outlined text-xs">visibility</span> Dossier
+                            </button>
+                            <button
+                              onClick={() => handleDirectChat(user.id)}
+                              className="bg-pure-white hover:bg-electric-blue hover:text-white text-electric-blue text-[10px] font-bold uppercase py-2 px-1 brutal-border transition-colors flex items-center justify-center gap-0.5 cursor-pointer shadow-[1px_1px_0px_#000]"
+                              title="Direct Message Operative"
+                            >
+                              <span className="material-symbols-outlined text-xs">chat</span> Message
                             </button>
                             <button
                               onClick={() => handleToggleFriend(user.id)}
                               disabled={friendActionLoading === user.id}
-                              className={`flex-1 text-[11px] font-bold uppercase py-2 px-2 brutal-border transition-colors flex items-center justify-center gap-1 cursor-pointer ${
+                              className={`text-[10px] font-bold uppercase py-2 px-1 brutal-border transition-colors flex items-center justify-center gap-0.5 cursor-pointer ${
                                 isFriend
                                   ? 'bg-emerald-400 text-black hover:bg-emerald-300'
                                   : 'bg-white hover:bg-amber-100 text-black'
                               }`}
+                              title={isFriend ? 'Comrade Linked' : 'Add to Comrades'}
                             >
-                              <span className="material-symbols-outlined text-sm">
+                              <span className="material-symbols-outlined text-xs">
                                 {isFriend ? 'check_circle' : 'person_add'}
                               </span>
-                              {friendActionLoading === user.id ? 'Saving...' : (isFriend ? 'Comrades' : 'Add Friend')}
+                              {friendActionLoading === user.id ? '...' : (isFriend ? 'Comrade' : '+ Friend')}
                             </button>
                           </div>
 
@@ -1015,10 +1052,14 @@ function RecruitmentMatrix() {
                           </div>
                           <button
                             onClick={() => handleRequestJoin(team.id)}
-                            disabled={loading}
-                            className="w-full bg-electric-blue hover:bg-stark-black text-white text-xs font-black uppercase py-2.5 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors cursor-pointer"
+                            disabled={loading || requestedTeamIds.has(team.id)}
+                            className={`w-full text-xs font-black uppercase py-2.5 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors cursor-pointer ${
+                              requestedTeamIds.has(team.id)
+                                ? 'bg-emerald-400 text-black cursor-default'
+                                : 'bg-electric-blue hover:bg-stark-black text-white'
+                            }`}
                           >
-                            Transmit Join Signature
+                            {requestedTeamIds.has(team.id) ? '✓ REQUEST TRANSMITTED' : 'Transmit Join Signature'}
                           </button>
                         </article>
                       ))
@@ -1030,64 +1071,92 @@ function RecruitmentMatrix() {
           )}
 
           {activeTab === 'join' && (
-            <section className="max-w-xl mx-auto w-full bg-surface brutal-border brutal-shadow p-8">
-              <h2 className="font-headline-md uppercase mb-2">Connect to Matrix</h2>
-              <p className="font-body-md text-text-muted mb-6">Enter the exact Squad Authorization Code provided by the team leader.</p>
-              <form onSubmit={handleJoinByCode} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-bold uppercase">Squad Code (Terminal ID)</label>
-                  <input name="teamCode" type="text" className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none uppercase" required placeholder="t-178..." />
+            <section className="max-w-xl mx-auto w-full bg-pure-white brutal-border brutal-shadow p-8">
+              <h2 className="font-headline-md uppercase text-2xl mb-2 text-ink-black">Connect to Squad</h2>
+              <p className="font-body-md text-xs text-text-muted mb-6">
+                Enter the exact Squad Code (e.g. <span className="font-mono font-bold text-electric-blue">t-1793...</span>) provided by your Squad Leader.
+              </p>
+
+              {hasSquad ? (
+                <div className="p-6 bg-amber-50 border-2 border-amber-600 text-amber-950 font-label-bold uppercase brutal-border mb-4">
+                  ⚠️ You are currently an active operative in squad: <strong>{currentTeam?.name || currentUser.teamId}</strong>.
+                  <br/><br/>
+                  To join another squad, please depart from your existing squad in the <Link to="/workspace" className="underline text-electric-blue font-bold">Workspace</Link> first.
                 </div>
-                <button disabled={loading || hasSquad} type="submit" className="mt-4 bg-ink-black text-pure-white font-label-bold px-6 py-4 brutal-border brutal-shadow-hover transition-all disabled:opacity-50 cursor-pointer">
-                  {loading ? 'AUTHENTICATING...' : 'JOIN SQUAD'}
-                </button>
-              </form>
+              ) : (
+                <form onSubmit={handleJoinByCode} className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-bold uppercase text-xs text-stark-black">Squad Authorization Code</label>
+                    <input 
+                      name="teamCode" 
+                      type="text" 
+                      value={teamCodeInput}
+                      onChange={e => setTeamCodeInput(e.target.value)}
+                      className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none uppercase font-bold text-xs" 
+                      required 
+                      placeholder="Paste Squad Code (e.g. t-1793...)" 
+                    />
+                  </div>
+                  <button 
+                    disabled={loading || hasSquad || !teamCodeInput.trim()} 
+                    type="submit" 
+                    className="mt-4 bg-electric-blue text-pure-white font-label-bold px-6 py-4 brutal-border brutal-shadow hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 cursor-pointer uppercase text-xs sm:text-sm"
+                  >
+                    {loading ? 'AUTHENTICATING...' : 'JOIN SQUAD WITH CODE →'}
+                  </button>
+                </form>
+              )}
             </section>
           )}
 
           {activeTab === 'create' && (
-            <section className="max-w-2xl mx-auto w-full bg-surface brutal-border brutal-shadow p-8">
-              <h2 className="font-headline-md uppercase mb-2">Initialize New Squad</h2>
-              <p className="font-body-md text-text-muted mb-6">You will automatically be locked in as the designated Team Leader.</p>
+            <section className="max-w-2xl mx-auto w-full bg-pure-white brutal-border brutal-shadow p-8">
+              <h2 className="font-headline-md uppercase text-2xl mb-2 text-ink-black">Initialize New Squad</h2>
+              <p className="font-body-md text-xs text-text-muted mb-6">
+                You will automatically be designated as the Team Leader. You can create an independent squad now and enroll in hackathons anytime.
+              </p>
               
-              {!registrations || registrations.length === 0 ? (
-                <div className="p-6 bg-red-500/10 text-red-500 font-label-bold uppercase brutal-border mb-4">
-                  ERR: YOU MUST REGISTER FOR A HACKATHON BEFORE FORMING A SQUAD. 
+              {hasSquad ? (
+                <div className="p-6 bg-amber-50 border-2 border-amber-600 text-amber-950 font-label-bold uppercase brutal-border mb-4">
+                  ⚠️ You are already the leader or member of squad: <strong>{currentTeam?.name || currentUser.teamId}</strong>.
                   <br/><br/>
-                  <Link to="/hackathons" className="underline hover:text-red-400">View available hackathons</Link>
+                  <Link to="/workspace" className="underline text-electric-blue font-bold">Go to Squad Workspace →</Link>
                 </div>
               ) : (
-              <form onSubmit={handleCreateSquad} className="flex flex-col gap-6">
+                <form onSubmit={handleCreateSquad} className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-bold uppercase text-xs text-stark-black">
+                      Target Hackathon (Optional)
+                    </label>
+                    <select 
+                      className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none text-xs" 
+                      value={selectedHackathonId} 
+                      onChange={(e) => setSelectedHackathonId(e.target.value)}
+                    >
+                      <option value="">No Hackathon Yet (Form Independent Squad / Enroll Later)</option>
+                      {genuineHackathons.map((h: any) => (
+                        <option key={h.id} value={h.id}>
+                          {h.name || h.title || h.id}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] font-mono text-zinc-600">
+                      You can form your squad now and link it to any hackathon later!
+                    </span>
+                  </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-bold uppercase">Target Hackathon</label>
-                  <select 
-                    className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" 
-                    value={selectedHackathonId} 
-                    onChange={(e) => setSelectedHackathonId(e.target.value)}
-                    required
-                  >
-                    <option value="">Select a Hackathon</option>
-                    {registrations.map((reg: any) => (
-                      <option key={reg.hackathonId} value={reg.hackathonId}>
-                        {hackathons.find(h => h.id === reg.hackathonId)?.name || reg.hackathonId}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-bold uppercase">Squad Designation</label>
-                  <input name="name" type="text" className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" required placeholder="Cyber Punks" />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="font-label-bold uppercase">Operation Parameters (Description)</label>
-                  <textarea name="description" rows={4} className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none" placeholder="We are building an AI-orchestrated blockchain app..." />
-                </div>
-                <button disabled={loading || hasSquad} type="submit" className="md:self-end bg-electric-blue text-pure-white font-label-bold px-8 py-4 brutal-border brutal-shadow-hover transition-all disabled:opacity-50 cursor-pointer">
-                  {loading ? 'DEPLOYING SQUAD...' : 'DEPLOY SQUAD'}
-                </button>
-              </form>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-bold uppercase text-xs text-stark-black">Squad Designation (Name) *</label>
+                    <input name="name" type="text" className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none text-xs font-bold" required placeholder="Cyber Punks" />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-label-bold uppercase text-xs text-stark-black">Operation Parameters (Description)</label>
+                    <textarea name="description" rows={4} className="bg-surface-container py-3 px-4 font-code-snippet brutal-border focus:ring-2 focus:outline-none text-xs" placeholder="We are building an innovative AI application..." />
+                  </div>
+                  <button disabled={loading || hasSquad} type="submit" className="md:self-end bg-electric-blue text-pure-white font-label-bold px-8 py-4 brutal-border brutal-shadow hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 cursor-pointer uppercase text-xs sm:text-sm">
+                    {loading ? 'DEPLOYING SQUAD...' : 'DEPLOY SQUAD →'}
+                  </button>
+                </form>
               )}
             </section>
           )}
@@ -1258,12 +1327,23 @@ function RecruitmentMatrix() {
                     <button
                       onClick={() => handleToggleFriend(operativeDossier.id)}
                       disabled={friendActionLoading === operativeDossier.id}
-                      className="flex-1 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[130px]"
+                      className="flex-1 py-2.5 px-3 bg-amber-400 hover:bg-amber-300 text-black text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[110px]"
                     >
                       <span className="material-symbols-outlined text-sm">
                         {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'check_circle' : 'person_add'}
                       </span>
                       {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(operativeDossier.id) ? 'Friends ✓' : 'Add Friend +'}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedOperativeId(null);
+                        handleDirectChat(operativeDossier.id);
+                      }}
+                      className="flex-1 py-2.5 px-3 bg-pure-white hover:bg-electric-blue hover:text-white text-electric-blue text-xs font-black uppercase border-2 border-stark-black transition-colors flex items-center justify-center gap-1.5 cursor-pointer min-w-[110px]"
+                    >
+                      <span className="material-symbols-outlined text-sm">chat</span>
+                      Message
                     </button>
 
                     {currentUser?.role === 'admin' ? (

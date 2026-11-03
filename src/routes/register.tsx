@@ -59,6 +59,16 @@ function RegisterPage() {
             return;
         }
 
+        const cleanHandle = handle.trim().replace(/^@/, '');
+        if (cleanHandle && /\s/.test(cleanHandle)) {
+            setErrorMsg("Hacker handle cannot contain spaces. Use underscores or hyphens (e.g. phantom_coder).");
+            return;
+        }
+        if (cleanHandle && !/^[a-zA-Z0-9_-]+$/.test(cleanHandle)) {
+            setErrorMsg("Hacker handle can only contain letters, numbers, underscores, and hyphens.");
+            return;
+        }
+
         setLoading(true);
         try {
             const fullName = lastName.trim() ? `${name.trim()} ${lastName.trim()}` : name.trim();
@@ -72,7 +82,7 @@ function RegisterPage() {
                 college: college.trim(),
                 branch,
                 year,
-                ...(handle.trim() ? { handle: handle.trim().replace(/^@/, '') } : {})
+                ...(cleanHandle ? { handle: cleanHandle.toLowerCase().replace(/\s+/g, '_') } : {})
             });
             // Navigate to OTP verification screen WITHOUT exposing tokens or raw otp parameters
             navigate({
@@ -173,11 +183,18 @@ function RegisterPage() {
                                     id="reg-handle"
                                     type="text"
                                     value={handle}
-                                    onChange={(e) => setHandle(e.target.value)}
+                                    onChange={(e) => {
+                                        // Auto-sanitize: convert spaces to underscores and lowercase
+                                        const val = e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+                                        setHandle(val);
+                                    }}
                                     placeholder="phantom_coder"
                                     className="w-full bg-transparent py-3 px-4 font-code-snippet text-stark-black focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue"
                                 />
                             </div>
+                            <span className="text-[11px] font-mono text-zinc-600">
+                                ℹ️ No spaces allowed. Lowercase letters, numbers, underscores, and hyphens only (e.g. phantom_coder).
+                            </span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -194,36 +194,35 @@ function OTPVerification() {
     const isCodeComplete = code.every((digit) => digit.length === 1);
 
     return (
-        <div className="min-h-screen bg-[#0B0F14] text-[#F4F7FB] flex items-center justify-center p-4 sm:p-8 md:p-10 relative overflow-hidden">
-            {/* Ambient Background Glows */}
-            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[350px] bg-[#7C3AED]/10 blur-[130px] rounded-full pointer-events-none" />
-            <div className="absolute bottom-10 left-10 w-[350px] h-[250px] bg-[#22D3EE]/5 blur-[120px] rounded-full pointer-events-none" />
+        <div className="min-h-screen bg-surface-container-lowest bg-pattern flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+            {/* Decorative blurred background elements */}
+            <div className="absolute top-0 right-1/4 w-[600px] h-[300px] bg-electric-blue opacity-10 transform rotate-12 blur-3xl pointer-events-none" />
 
-            <div className="w-full max-w-md bg-[#121A26] border border-[#223249] rounded-2xl shadow-2xl relative z-10 flex flex-col overflow-hidden my-6">
+            <div className="w-full max-w-lg bg-pure-white brutal-border brutal-shadow-lg relative z-10 flex flex-col my-8">
                 {/* Header Ribbon */}
-                <div className="bg-[#182334] border-b border-[#223249] px-6 py-5 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-[#F4F7FB]">
-                        <span className="material-symbols-outlined text-[#7C3AED]">mark_email_unread</span>
+                <div className="bg-electric-blue border-b-2 border-stark-black px-6 py-5 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-pure-white font-headline-md italic uppercase text-base sm:text-lg">
+                        <span className="material-symbols-outlined">mark_email_unread</span>
                         Email Verification
                     </div>
-                    <span className="text-xs font-mono px-2 py-0.5 rounded bg-[#223249] text-[#22D3EE] font-semibold">
+                    <span className="text-xs font-mono px-2.5 py-1 bg-pure-white text-stark-black font-bold uppercase border-2 border-stark-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                         OTP Security
                     </span>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 sm:p-8 flex flex-col items-center">
-                    <div className="w-14 h-14 rounded-2xl bg-[#7C3AED]/15 border border-[#7C3AED]/30 flex items-center justify-center mb-5 text-[#7C3AED]">
+                <div className="p-6 sm:p-8 flex flex-col items-center bg-pure-white">
+                    <div className="w-14 h-14 bg-surface-container border-2 border-stark-black flex items-center justify-center mb-5 text-electric-blue shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                         <span className="material-symbols-outlined text-3xl">verified_user</span>
                     </div>
 
-                    <h1 className="text-2xl font-extrabold text-[#F4F7FB] text-center mb-2 tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl font-display-lg uppercase text-stark-black text-center mb-2 tracking-tight">
                         Verify Your Email
                     </h1>
 
-                    <p className="text-sm text-[#A9B5C5] text-center mb-6 leading-relaxed max-w-sm">
+                    <p className="text-xs sm:text-sm text-on-surface-variant text-center mb-6 leading-relaxed max-w-sm font-body-md font-bold uppercase tracking-wider">
                         Enter the 6-digit confirmation code dispatched to{" "}
-                        <strong className="text-[#F4F7FB] font-semibold">
+                        <strong className="text-electric-blue font-black underline">
                             {formatMaskedEmail(userEmail)}
                         </strong>.
                     </p>
@@ -232,7 +231,7 @@ function OTPVerification() {
                     {errorMsg && (
                         <div
                             role="alert"
-                            className="bg-[#F87171]/10 border border-[#F87171] text-[#F87171] p-3.5 rounded-xl mb-6 w-full flex items-start gap-2.5 text-xs sm:text-sm font-medium leading-relaxed"
+                            className="bg-error text-pure-white p-3.5 mb-6 w-full flex items-start gap-2.5 text-xs sm:text-sm font-label-bold uppercase brutal-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                         >
                             <span className="material-symbols-outlined text-lg flex-shrink-0 mt-0.5">error</span>
                             <span>{errorMsg}</span>
@@ -243,7 +242,7 @@ function OTPVerification() {
                     {successMsg && (
                         <div
                             role="status"
-                            className="bg-[#22C55E]/10 border border-[#22C55E] text-[#22C55E] p-3.5 rounded-xl mb-6 w-full flex items-start gap-2.5 text-xs sm:text-sm font-medium leading-relaxed"
+                            className="bg-success text-pure-white p-3.5 mb-6 w-full flex items-start gap-2.5 text-xs sm:text-sm font-label-bold uppercase brutal-border shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
                         >
                             <span className="material-symbols-outlined text-lg flex-shrink-0 mt-0.5">check_circle</span>
                             <span>{successMsg}</span>
@@ -271,13 +270,13 @@ function OTPVerification() {
                                         inputs.current[idx] = el;
                                     }}
                                     disabled={loading || isLocked}
-                                    className={`w-11 h-14 sm:w-12 sm:h-14 bg-[#182334] text-center text-xl sm:text-2xl font-mono font-bold text-[#F4F7FB] rounded-xl border transition-all focus:outline-none focus:ring-2 focus:ring-[#7C3AED]/40 disabled:opacity-50 ${
-                                        val ? "border-[#7C3AED] bg-[#182334]/90" : "border-[#223249] focus:border-[#7C3AED]"
+                                    className={`w-11 h-14 sm:w-12 sm:h-16 bg-surface text-center text-xl sm:text-2xl font-code-snippet font-black text-stark-black brutal-border focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform disabled:opacity-50 ${
+                                        val ? "border-electric-blue bg-pure-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" : "border-stark-black"
                                     }`}
                                 />
                             ))}
                         </div>
-                        <p className="text-[11px] text-[#64748B] text-center mt-2.5">
+                        <p className="text-[11px] font-mono text-zinc-600 text-center mt-2.5">
                             Tip: You can paste the complete 6-digit code directly into any box.
                         </p>
                     </div>
@@ -287,10 +286,10 @@ function OTPVerification() {
                         type="button"
                         onClick={() => handleSubmit()}
                         disabled={loading || !isCodeComplete || isLocked}
-                        className={`w-full py-3.5 px-6 font-bold rounded-xl min-h-[48px] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#7C3AED]/25 cursor-pointer ${
+                        className={`w-full py-4 px-6 font-label-bold uppercase text-sm sm:text-base brutal-border brutal-shadow flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                             loading || !isCodeComplete || isLocked
-                                ? "bg-[#223249] text-[#64748B] cursor-not-allowed shadow-none"
-                                : "bg-[#7C3AED] hover:bg-[#6D28D9] text-[#F4F7FB] active:scale-[0.99]"
+                                ? "bg-surface-container-high text-text-muted border-zinc-400 shadow-none cursor-not-allowed"
+                                : "bg-electric-blue hover:bg-black text-pure-white hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
                         }`}
                     >
                         {loading ? (
@@ -307,15 +306,15 @@ function OTPVerification() {
                     </button>
 
                     {/* Resend Action with Server-Synchronized Countdown */}
-                    <div className="mt-6 flex flex-col items-center gap-3 w-full border-t border-[#223249] pt-5">
+                    <div className="mt-6 flex flex-col items-center gap-3 w-full border-t-2 border-stark-black/15 pt-5">
                         <button
                             type="button"
                             onClick={handleResendCode}
                             disabled={countdown > 0 || resending || loading}
-                            className={`text-xs sm:text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed ${
+                            className={`text-xs sm:text-sm font-label-bold uppercase transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-not-allowed ${
                                 countdown > 0 || resending
-                                    ? "text-[#64748B]"
-                                    : "text-[#22D3EE] hover:text-white"
+                                    ? "text-zinc-400"
+                                    : "text-ink-black hover:text-electric-blue"
                             }`}
                         >
                             <span className="material-symbols-outlined text-base">
@@ -333,7 +332,7 @@ function OTPVerification() {
                         {/* Change Email Option */}
                         <Link
                             to="/register"
-                            className="text-xs text-[#A9B5C5] hover:text-[#F4F7FB] underline underline-offset-4 transition-colors"
+                            className="text-xs font-mono font-bold uppercase text-zinc-600 hover:text-electric-blue underline underline-offset-4 transition-colors"
                         >
                             Incorrect email address? Change email
                         </Link>

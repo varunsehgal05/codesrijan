@@ -580,7 +580,6 @@ function DashboardPage() {
                         <div className="bg-surface-container-highest brutal-border brutal-shadow p-6 flex-grow">
                             <h2 className="font-label-bold uppercase mb-4 text-ink-black">Secure Comm Links</h2>
                             <ul className="space-y-3 font-label-bold uppercase">
-                                <li><Link to="/workspace" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">terminal</span> Operative Workspace (HUD)</Link></li>
                                 <li><a href="/profile" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">person</span> Personal Profile</a></li>
                                 <li><a href="/certificates" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">workspace_premium</span> Certificates</a></li>
                                 <li><a href="/ai-assistant" className="flex items-center gap-2 p-3 bg-white border-2 border-ink-black hover:bg-electric-blue hover:text-white transition-colors brutal-hover"><span className="material-symbols-outlined text-sm">smart_toy</span> Oracle Support</a></li>

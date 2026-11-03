@@ -35,7 +35,7 @@ function LeaderboardPage() {
   const [leaderboardItems, setLeaderboardItems] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedHackathonId, setSelectedHackathonId] = useState<string>("ALL");
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string>("");
   const [expandedTeam, setExpandedTeam] = useState<string | null>(null);
 
   const [selectedOperativeId, setSelectedOperativeId] = useState<string | null>(null);
@@ -216,16 +216,6 @@ function LeaderboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-200">
-            <button
-              onClick={() => setSelectedHackathonId("ALL")}
-              className={`px-3.5 py-1.5 font-label-bold text-xs uppercase border-2 transition-all cursor-pointer ${
-                selectedHackathonId === "ALL"
-                  ? "bg-electric-blue text-pure-white border-stark-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                  : "bg-surface-container text-stark-black border-stark-black hover:bg-zinc-100"
-              }`}
-            >
-              ★ ALL HACKATHONS
-            </button>
             {genuineHackathons.map(h => {
               const isSelected = selectedHackathonId === h.id;
               const isLive = h.status === 'live' || h.status === 'active';

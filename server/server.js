@@ -411,7 +411,8 @@ const rotateVerification = async (userId, tokenHash) => {
 
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { name, email, password, college, branch, year } = req.body;
+        const { name, email, password, college, branch, year, handle } = req.body;
+        const cleanHandle = handle ? String(handle).trim().replace(/^@/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '') : String(name || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
         
         // Strict input validation
         if (!name || !String(name).trim()) {
@@ -480,6 +481,7 @@ app.post('/api/auth/register', async (req, res) => {
             email: normalizedEmail,
             passwordHash,
             role: 'student',
+            handle: cleanHandle,
             college: college || '',
             branch: branch || '',
             year: year || '',
@@ -528,10 +530,40 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.put('/api/users/profile', requireAuth, async (req, res) => {
     try {
-        const { bio, techStack } = req.body;
+        const {
+            name, handle, college, branch, year, bio, techStack,
+            skills, specialization, github, linkedin, portfolio,
+            phone, mobile, recruitmentStatus
+        } = req.body;
+
+        const updateFields = {};
+        if (typeof name === 'string' && name.trim()) updateFields.name = name.trim();
+        if (typeof handle === 'string' && handle.trim()) {
+            const clean = handle.trim().replace(/^@/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+            if (clean) updateFields.handle = clean;
+        }
+        if (typeof college === 'string') updateFields.college = college.trim();
+        if (typeof branch === 'string') updateFields.branch = branch.trim();
+        if (typeof year === 'string') updateFields.year = year.trim();
+        if (typeof bio === 'string') updateFields.bio = bio.trim();
+        if (Array.isArray(techStack)) updateFields.techStack = techStack;
+        if (Array.isArray(skills)) updateFields.skills = skills;
+        if (typeof specialization === 'string') updateFields.specialization = specialization.trim();
+        if (typeof github === 'string') updateFields.github = github.trim();
+        if (typeof linkedin === 'string') updateFields.linkedin = linkedin.trim();
+        if (typeof portfolio === 'string') updateFields.portfolio = portfolio.trim();
+        if (typeof phone === 'string' || typeof mobile === 'string') {
+            const ph = (phone || mobile || '').trim();
+            updateFields.phone = ph;
+            updateFields.mobile = ph;
+        }
+        if (['looking_for_team', 'open_to_invites', 'in_team', 'not_available'].includes(recruitmentStatus)) {
+            updateFields.recruitmentStatus = recruitmentStatus;
+        }
+
         const user = await User.findOneAndUpdate(
             { id: req.user.id },
-            { bio, techStack },
+            { $set: updateFields },
             { returnDocument: 'after' }
         );
         res.json(user);
@@ -4147,12 +4179,9 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
                 convObj = await Conversation.create({
                     id: cid,
                     type: 'support',
-                    participantIds: [tk.userId, req.user.id],
-                    teamId: req.user.teamId || undefined
+                    participantIds: [tk.userId],
+                    teamId: tk.teamId || undefined
                 }).catch(() => {});
-            } else if (!convObj.participantIds?.includes(req.user.id)) {
-                convObj.participantIds.push(req.user.id);
-                await convObj.save().catch(() => {});
             }
             const msgExists = await Message.exists({ conversationId: cid });
             if (!msgExists) {
@@ -4165,13 +4194,7 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
             }
         }
 
-        let query = {
-            $or: [
-                { participantIds: userId },
-                { teamId: { $in: teamIds } }
-            ]
-        };
-        
+        let query;
         if (req.user.role === 'admin') {
             query = {
                 $or: [
@@ -4181,10 +4204,15 @@ app.get('/api/conversations', requireAuth, async (req, res) => {
                 ]
             };
         } else {
-            const userSupportConvIds = activeTickets.map(t => t.conversationId).filter(Boolean);
-            if (userSupportConvIds.length > 0) {
-                query.$or.push({ id: { $in: userSupportConvIds } });
-            }
+            // Non-admin student: ONLY see direct/team chats AND their own explicitly filed support tickets
+            const userSupportConvIds = activeTickets.filter(t => t.userId === req.user.id).map(t => t.conversationId).filter(Boolean);
+            query = {
+                $or: [
+                    { participantIds: userId, type: { $ne: 'support' } },
+                    { teamId: { $in: teamIds }, type: 'team' },
+                    ...(userSupportConvIds.length > 0 ? [{ id: { $in: userSupportConvIds }, type: 'support' }] : [])
+                ]
+            };
         }
 
         const conversations = await Conversation.find(query).sort({ updatedAt: -1 });
