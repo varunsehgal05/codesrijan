@@ -164,7 +164,7 @@ import { FAQ, Gallery } from './models/tertiary.js';
 import { installRolePortals } from './role-portals.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
-import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail, sendTeammateJoinedEmail, sendTeamLeaderNewMemberEmail } from './services/email.js';
+import { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendPaymentReviewNotification, sendPaymentRejectionEmail, sendPaymentApprovalEmail, sendTeammateJoinedEmail, sendTeamLeaderNewMemberEmail, sendRoleAssignmentEmail } from './services/email.js';
 import { validatePaymentProofFile, uploadProofToGridFS, deleteGridFSProof, getGridFSProofStream, getStorageStats } from './services/storage.js';
 import { handleAIChat, handleAIFallback } from './services/srijanbot.js';
 import { detectProhibitedContent, handleContentModerationIncident } from './services/moderation.js';
@@ -2368,42 +2368,83 @@ app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (re
 });
 
 app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
-    const team = await Team.findOne({ id: req.params.id });
-    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
-    if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ message: "Only leaders can authorize final submission." });
-    }
+    try {
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+        if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ message: "Command Directive: Only squad leaders can trigger payload transmission." });
+        }
 
-    // Check hackathon submission deadline
-    if (team.hackathonId) {
-        const hackathon = await Hackathon.findOne({ id: team.hackathonId });
-        if (hackathon) {
-            if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
-                return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
-            }
-            if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
-                return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
+        // Prevent duplicate submissions atomically
+        if (team.isSubmitted) {
+            return res.status(409).json({ message: "Payload already locked. Final submission already recorded." });
+        }
+
+        const existingSubmission = await Submission.findOne({ teamId: team.id });
+        if (existingSubmission) {
+            return res.status(409).json({ message: "A submission already exists for this squad in the evaluation ledger." });
+        }
+
+        // Check hackathon submission deadline
+        if (team.hackathonId) {
+            const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+            if (hackathon) {
+                if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
+                    return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
+                }
+                if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
+                    return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
+                }
             }
         }
-    }
-    
-    team.isSubmitted = true;
-    team.status = 'submitted';
-    await team.save();
-    
-    const submission = new Submission({
-        id: `sub-${Date.now()}`,
-        teamId: team.id,
-        hackathonId: team.hackathonId,
-        projectTitle: team.name,
-        description: team.description || "Final submission",
-        repositoryUrl: team.githubLink,
-        demoUrl: team.demoLink,
-        submittedAt: new Date()
-    });
-    await submission.save();
 
-    res.json({ message: "Final submission successful.", team });
+        const { description, technologies, githubLink, figmaLink, demoLink, demoVideoUrl } = req.body || {};
+
+        // Atomic update on team to prevent concurrent race conditions
+        const updatedTeam = await Team.findOneAndUpdate(
+            { id: team.id, isSubmitted: { $ne: true } },
+            {
+                $set: {
+                    isSubmitted: true,
+                    status: 'submitted',
+                    githubLink: githubLink || team.githubLink,
+                    figmaLink: figmaLink || team.figmaLink,
+                    demoLink: demoLink || team.demoLink,
+                    description: description || team.description
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!updatedTeam) {
+            return res.status(409).json({ message: "Payload already submitted concurrently." });
+        }
+
+        const submission = new Submission({
+            id: `sub-${Date.now()}`,
+            teamId: team.id,
+            hackathonId: team.hackathonId,
+            projectId: team.problemStatementId || team.problemId,
+            submittedBy: req.user.id,
+            version: 1,
+            projectTitle: team.name,
+            description: description || team.description || "Final submission",
+            technologies: Array.isArray(technologies) ? technologies : (typeof technologies === 'string' ? technologies.split(',').map(s => s.trim()).filter(Boolean) : []),
+            githubUrl: githubLink || team.githubLink || team.repositoryUrl,
+            figmaUrl: figmaLink || team.figmaLink,
+            liveDemoUrl: demoLink || team.demoLink || team.demoUrl,
+            demoVideoUrl: demoVideoUrl || "",
+            status: 'locked',
+            lockedAt: new Date(),
+            submittedAt: new Date()
+        });
+        await submission.save();
+
+        res.json({ message: "Final submission successful.", team: updatedTeam, submission });
+    } catch (e) {
+        console.error("Submission processing error:", e);
+        res.status(500).json({ message: "Failed to process project submission: " + e.message });
+    }
 });
 
 // Admin Team Management
@@ -3630,12 +3671,22 @@ app.post('/api/admin/users', requireAuth, requireRole(['admin']), async (req, re
 app.put('/api/admin/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
         const { name, role, status, teamId } = req.body;
+        const existing = await User.findOne({ id: req.params.id }).lean();
+        const oldRole = existing?.role;
+
         // Map status cleanly to real mongo enums if necessary, or just save generic strings
         const updated = await User.findOneAndUpdate(
             { id: req.params.id },
             { name, role, accountStatus: status === 'Active' ? 'active' : 'suspended', teamId },
             { returnDocument: 'after' }
         );
+
+        // When a user is assigned a mentor, judge, or admin role (or role has changed), dispatch notification email
+        if (updated && updated.email && role && role !== oldRole && ['mentor', 'judge', 'admin'].includes(role)) {
+            sendRoleAssignmentEmail(updated.email, updated.name || updated.email, role, req.user?.name || 'CodeSrijan Administrator')
+                .catch(err => console.error('[ROLE EMAIL DISPATCH ERROR]', err.message));
+        }
+
         res.json(updated);
     } catch (e) {
         res.status(500).json({ message: "Failed to modify user profile." });
@@ -3994,44 +4045,6 @@ app.delete('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student'])
     res.json({ message: "Task eradicated." });
 });
 
-app.post('/api/teams/:id/submit', requireAuth, requireRole(['student']), async (req, res) => {
-    const team = await Team.findOne({ id: req.params.id });
-    if (!team) return res.status(404).json({ message: "Squad matrix missing." });
-    if (team.leaderId !== req.user.id) return res.status(403).json({ message: "Command Directive: Only squad leaders can trigger payload transmission." });
-    if (team.isSubmitted) return res.status(400).json({ message: "Payload already locked." });
-
-    const { description, technologies, githubLink, figmaLink, demoLink, demoVideoUrl } = req.body;
-
-    team.isSubmitted = true;
-    team.githubLink = githubLink || team.githubLink;
-    team.figmaLink = figmaLink || team.figmaLink;
-    team.demoLink = demoLink || team.demoLink;
-    team.description = description || team.description;
-    await team.save();
-
-    // Create the actual submission record
-    const submission = new Submission({
-        id: `sub-${Date.now()}`,
-        hackathonId: team.hackathonId,
-        projectId: team.problemStatementId,
-        teamId: team.id,
-        submittedBy: req.user.id,
-        version: 1,
-        projectTitle: team.name,
-        description: description,
-        technologies: technologies || [],
-        githubUrl: team.githubLink || team.repositoryUrl,
-        figmaUrl: team.figmaLink,
-        liveDemoUrl: team.demoLink || team.demoUrl,
-        demoVideoUrl: demoVideoUrl,
-        status: 'locked',
-        lockedAt: new Date()
-    });
-    await submission.save();
-
-    res.json(team);
-});
-
 // Admin Submissions Route
 app.get('/api/admin/submissions', requireAuth, requireRole(['admin']), async (req, res) => {
     const submissions = await Submission.find().sort({ createdAt: -1 });
@@ -4298,7 +4311,16 @@ app.get('/api/conversations/:id', requireAuth, async (req, res) => {
 
         if (!conv) return res.status(404).json({ message: "Conversation not found." });
 
-        if (req.user.role !== 'admin' && !conv.participantIds?.includes(req.user.id) && !(conv.teamId && await Team.exists({ id: conv.teamId, memberIds: req.user.id }))) return res.status(403).json({ message: 'Access Denied.' });
+        if (req.user.role !== 'admin') {
+            if (conv.type === 'support') {
+                const ticket = await SupportTicket.findOne({ conversationId: conv.id });
+                if (ticket && ticket.userId !== req.user.id) {
+                    return res.status(403).json({ message: 'Access Denied. Support ticket belongs to another operative.' });
+                }
+            } else if (!conv.participantIds?.includes(req.user.id) && !(conv.teamId && await Team.exists({ id: conv.teamId, memberIds: req.user.id }))) {
+                return res.status(403).json({ message: 'Access Denied.' });
+            }
+        }
         const convObj = conv.toObject();
         if (conv.type === 'direct') {
             const otherUserId = conv.participantIds.find(id => id !== req.user.id);

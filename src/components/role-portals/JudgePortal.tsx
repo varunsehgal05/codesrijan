@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { API_BASE } from "../../lib/utils";
+import { API_BASE, getAuthHeaders } from "../../lib/utils";
 import {
   Portal,
   Metrics,
@@ -94,7 +94,7 @@ export function JudgePortal() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get<Dashboard>(`${API_BASE}/judge/dashboard`);
+      const response = await axios.get<Dashboard>(`${API_BASE}/judge/dashboard`, getAuthHeaders());
       setData(response.data);
     } catch (e) {
       setError(apiError(e));
@@ -310,6 +310,7 @@ function EvaluationWorkspace({ submissionId, back }: { submissionId: string; bac
     try {
       const response = await axios.get<Detail>(
         `${API_BASE}/judge/submissions/${encodeURIComponent(submissionId)}`,
+        getAuthHeaders(),
       );
       const d = response.data;
       d.rubric.criteria = d.rubric.criteria.map((c) => ({ ...c, minScore: c.minScore ?? 0 }));
@@ -422,6 +423,7 @@ function EvaluationWorkspace({ submissionId, back }: { submissionId: string; bac
           improvements,
           status,
         },
+        getAuthHeaders(),
       );
       setSaved(
         status === "draft"

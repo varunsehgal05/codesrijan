@@ -154,7 +154,13 @@ function ChatDashboard() {
       }
 
       if (convList.length > 0 && !activeConv && !targetConvId) {
-        setActiveConv(convList[0]);
+        const firstPermitted = convList.find((c: any) => {
+          if (c.type === 'support' && currentUser?.role !== 'admin') {
+            return c.supportTicket?.userId === currentUser?.id;
+          }
+          return true;
+        });
+        if (firstPermitted) setActiveConv(firstPermitted);
       }
     } catch (e) {
       console.error("Failed to load conversations");
@@ -288,6 +294,14 @@ function ChatDashboard() {
   };
 
   const filteredConversations = conversations.filter(c => {
+    // SECURITY & PRIVACY: Non-admin users must NEVER see tickets filed by other students
+    if (c.type === 'support' && currentUser?.role !== 'admin') {
+      const ticketOwnerId = c.supportTicket?.userId;
+      if (ticketOwnerId && ticketOwnerId !== currentUser?.id) {
+        return false;
+      }
+    }
+
     if (filterMode !== 'all' && c.type !== filterMode) return false;
     
     if (searchConvQuery) {

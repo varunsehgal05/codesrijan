@@ -20,6 +20,7 @@ function LoginPage() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     const [errorMsg, setErrorMsg] = useState("");
     const [loading, setLoading] = useState(false);
@@ -115,14 +116,24 @@ function LoginPage() {
                                 <label className="font-label-bold text-stark-black uppercase">Operation Password</label>
                                 <Link to="/auth/forgot-password" className="font-label-mono-sm text-electric-blue hover:underline uppercase">Forgot?</Link>
                             </div>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••••••"
-                                className="w-full bg-surface py-4 px-4 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••••••"
+                                    className="w-full bg-surface py-4 px-4 pr-12 font-code-snippet text-stark-black brutal-border brutal-shadow-hover focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue focus:-translate-y-1 transition-transform"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-gray hover:text-electric-blue flex items-center justify-center p-1"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                >
+                                    <span className="material-symbols-outlined text-xl">{showPassword ? 'visibility_off' : 'visibility'}</span>
+                                </button>
+                            </div>
                         </div>
 
                         <button disabled={loading} type="submit" className={`mt-4 w-full bg-stark-black text-pure-white py-5 font-headline-md italic uppercase brutal-border brutal-shadow-lg transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-wait' : 'hover:bg-electric-blue hover:-translate-y-2 hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'}`}>

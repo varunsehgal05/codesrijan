@@ -2,7 +2,7 @@ import { Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import axios from "axios";
 import { useAppStore } from "../../lib/store";
-import { API_BASE } from "../../lib/utils";
+import { API_BASE, getAuthHeaders } from "../../lib/utils";
 import { roleHome } from "../../lib/role-home";
 
 export const panel = "border-2 border-black bg-white p-4 sm:p-6 shadow-[4px_4px_0_#000]";
@@ -184,7 +184,7 @@ export function Notifications() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get(`${API_BASE}/notifications`);
+      const response = await axios.get(`${API_BASE}/notifications`, getAuthHeaders());
       setItems(Array.isArray(response.data) ? response.data : response.data.notifications || []);
     } catch (e) {
       setError(apiError(e));
@@ -214,7 +214,7 @@ export function Notifications() {
               className={`${action} mt-3`}
               onClick={async () => {
                 try {
-                  await axios.patch(`${API_BASE}/notifications/${item.id}/read`);
+                  await axios.patch(`${API_BASE}/notifications/${item.id}/read`, {}, getAuthHeaders());
                   await load();
                 } catch (e) {
                   setError(apiError(e));

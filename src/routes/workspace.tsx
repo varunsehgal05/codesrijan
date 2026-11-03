@@ -21,6 +21,7 @@ function WorkspaceHUD() {
   const [isSavingLinks, setIsSavingLinks] = useState(false);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [submissionForm, setSubmissionForm] = useState({
     description: "",
     technologies: "",
@@ -275,7 +276,8 @@ function WorkspaceHUD() {
       return;
     }
 
-    if (!confirm("ABSOLUTE WARNING: Transmitting final payload permanently LOCKS this workspace. No operatives may leave, and tasks cannot be altered. Initiate sequence?")) return;
+    if (isSubmitLoading) return;
+    setIsSubmitLoading(true);
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -292,7 +294,11 @@ function WorkspaceHUD() {
       setIsSubmitting(false);
       await refetchData();
       toast.success("Final Payload transmitted! Squad workspace locked for evaluation.");
-    } catch (e: any) { toast.error(e.response?.data?.message || "Transmission completely denied by server."); }
+    } catch (e: any) { 
+      toast.error(e.response?.data?.message || "Transmission completely denied by server."); 
+    } finally {
+      setIsSubmitLoading(false);
+    }
   };
 
   const kanbanColumns = ['todo', 'in-progress', 'review', 'completed'];
@@ -1011,8 +1017,28 @@ function WorkspaceHUD() {
                 </div>
 
                 <div className="flex gap-4 mt-2">
-                  <button type="submit" className="flex-1 bg-error text-white font-bold py-3.5 text-base sm:text-lg border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer uppercase">CONFIRM & SUBMIT PROJECT</button>
-                  <button type="button" onClick={() => setIsSubmitting(false)} className="bg-zinc-300 text-black font-bold py-3.5 px-6 border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer">CANCEL</button>
+                  <button 
+                    type="submit" 
+                    disabled={isSubmitLoading}
+                    className={`flex-1 bg-error text-white font-bold py-3.5 text-base sm:text-lg border-2 border-black hover:-translate-y-1 brutal-shadow uppercase flex items-center justify-center gap-3 transition-all ${isSubmitLoading ? 'opacity-70 cursor-wait' : 'cursor-pointer'}`}
+                  >
+                    {isSubmitLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        TRANSMITTING & LOCKING PAYLOAD...
+                      </>
+                    ) : (
+                      'CONFIRM & SUBMIT PROJECT'
+                    )}
+                  </button>
+                  <button 
+                    type="button" 
+                    disabled={isSubmitLoading}
+                    onClick={() => setIsSubmitting(false)} 
+                    className="bg-zinc-300 text-black font-bold py-3.5 px-6 border-2 border-black hover:-translate-y-1 brutal-shadow cursor-pointer disabled:opacity-50"
+                  >
+                    CANCEL
+                  </button>
                 </div>
               </form>
             </div>

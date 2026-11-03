@@ -32,6 +32,8 @@ function RecruitmentMatrix() {
   const [friendActionLoading, setFriendActionLoading] = useState<string | null>(null);
   const [requestedTeamIds, setRequestedTeamIds] = useState<Set<string>>(new Set());
   const [teamCodeInput, setTeamCodeInput] = useState("");
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [requestActionLoading, setRequestActionLoading] = useState<string | null>(null);
 
   // Admin view state
   const [adminSearch, setAdminSearch] = useState("");
@@ -282,6 +284,40 @@ function RecruitmentMatrix() {
       toast.error(err.response?.data?.message || "Failed to toggle comrade status.");
     } finally {
       setFriendActionLoading(null);
+    }
+  };
+
+  const fetchPendingRequests = async () => {
+    if (!currentUser?.teamId) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const res = await axios.get(`${API_URL}/teams/requests/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setPendingRequests(Array.isArray(res.data) ? res.data : []);
+    } catch {}
+  };
+
+  useEffect(() => {
+    if (currentUser?.teamId) {
+      void fetchPendingRequests();
+    }
+  }, [currentUser?.teamId]);
+
+  const handleRequestDecision = async (requestId: string, action: 'accept' | 'reject') => {
+    try {
+      setRequestActionLoading(requestId);
+      const token = localStorage.getItem("codesrijan_auth_token");
+      await axios.post(`${API_URL}/teams/requests/${requestId}/${action}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(action === 'accept' ? "Operative enlisted into squad!" : "Join signature declined.");
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+      if (refetchData) void refetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || `Failed to ${action} request.`);
+    } finally {
+      setRequestActionLoading(null);
     }
   };
 
@@ -818,6 +854,90 @@ function RecruitmentMatrix() {
         {isTeamLeader && (
           <div className="p-6 bg-electric-blue text-pure-white font-label-bold uppercase brutal-border brutal-shadow mb-4">
             SQUAD LEADER ACTIVE. YOU MAY RECRUIT FREE HACKERS FROM THE MARKETPLACE.
+          </div>
+        )}
+
+        {/* Incoming Squad Signatures Hub */}
+        {isTeamLeader && pendingRequests.length > 0 && (
+          <div className="bg-pure-white border-4 border-black brutal-shadow p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4 border-b-2 border-black pb-3">
+              <span className="material-symbols-outlined text-electric-blue text-2xl">pending_actions</span>
+              <h3 className="font-headline-md uppercase text-xl text-stark-black">
+                INCOMING SQUAD JOIN SIGNATURES ({pendingRequests.length})
+              </h3>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {pendingRequests.map((req: any) => {
+                const requester = users.find(u => u.id === req.userId);
+                return (
+                  <div key={req.id} className="border-2 border-black p-4 bg-surface-container flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <strong className="text-sm font-bold uppercase">{requester?.name || req.userId}</strong>
+                        <span className="font-mono text-[10px] bg-yellow-200 border border-black px-1.5 py-0.5">PENDING APPROVAL</span>
+                      </div>
+                      <p className="text-xs text-zinc-600 mt-1">{requester?.email || "No email listed"}</p>
+                      {requester?.college && <p className="text-[11px] text-zinc-500 font-mono mt-0.5">{requester.college} · {requester.branch || "CSE"}</p>}
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t border-black/20">
+                      <button
+                        onClick={() => handleRequestDecision(req.id, 'accept')}
+                        disabled={requestActionLoading === req.id}
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black font-bold text-xs uppercase py-2 border-2 border-black cursor-pointer shadow-[2px_2px_0px_#000]"
+                      >
+                        {requestActionLoading === req.id ? 'ENLISTING...' : '✓ ACCEPT OPERATIVE'}
+                      </button>
+                      <button
+                        onClick={() => handleRequestDecision(req.id, 'reject')}
+                        disabled={requestActionLoading === req.id}
+                        className="bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs uppercase py-2 px-4 border-2 border-black cursor-pointer shadow-[2px_2px_0px_#000]"
+                      >
+                        DECLINE
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Network Comrades Quick Hub */}
+        {Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.length > 0 && (
+          <div className="bg-pure-white border-4 border-black brutal-shadow p-5 mb-6">
+            <div className="flex items-center justify-between border-b-2 border-black pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-500">handshake</span>
+                <h3 className="font-headline-md uppercase text-lg text-stark-black">
+                  YOUR NETWORK COMRADES ({(currentUser as any).friends.length})
+                </h3>
+              </div>
+              <span className="font-mono text-xs text-zinc-500">1-click direct dispatch</span>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {(currentUser as any).friends.map((friendId: string) => {
+                const friend = users.find(u => u.id === friendId);
+                if (!friend) return null;
+                const friendTeam = teams.find(t => t.id === friend.teamId);
+                return (
+                  <div key={friendId} className="border-2 border-black bg-surface p-2.5 flex items-center gap-3">
+                    <div>
+                      <strong className="text-xs font-bold block">{friend.name}</strong>
+                      <span className="text-[10px] text-zinc-500 font-mono">
+                        {friendTeam ? `Squad: ${friendTeam.name}` : 'Free Agent'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => handleDirectChat(friendId)}
+                      className="bg-black text-white hover:bg-electric-blue text-[10px] font-bold px-2 py-1 border border-black cursor-pointer uppercase flex items-center gap-1"
+                    >
+                      <span className="material-symbols-outlined text-xs">chat</span>
+                      Comms
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

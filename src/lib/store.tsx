@@ -273,68 +273,81 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         try {
             const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
             const token = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
-            let nextUser = null;
-            if (token) {
-                try {
-                    const meRes = await axios.get(`${API_URL}/auth/me`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        timeout: 8000
-                    });
-                    nextUser = meRes.data.user;
-                    setCachedUser(nextUser);
-                } catch (e: any) {
-                    if (e.response?.status === 401 || e.response?.status === 403) {
-                        localStorage.removeItem("codesrijan_auth_token");
-                        setCachedUser(null);
-                    }
-                }
-            }
+            const authHeader = token ? { headers: { Authorization: `Bearer ${token}` }, timeout: 6000 } : { timeout: 6000 };
 
-            let teamTasks = [];
-            if (nextUser && nextUser.teamId && token) {
-                try {
-                    const taskRes = await axios.get(`${API_URL}/teams/${nextUser.teamId}/tasks`, {
-                        headers: { Authorization: `Bearer ${token}` },
-                        timeout: 8000
-                    });
-                    teamTasks = taskRes.data;
-                } catch (e) {
-                    // Task fetch failed (ignoring for partial loading)
-                }
-            }
-
-            const studentRegPromise = token && nextUser?.role === 'student'
-                ? axios.get(`${API_URL}/student/registrations`, { headers: { Authorization: `Bearer ${token}` }, timeout: 8000 }).catch(() => ({ data: [] }))
-                : Promise.resolve({ data: [] });
-
-            const hackathonsPromise = token
-                ? axios.get(`${API_URL}/hackathons`, { headers: { Authorization: `Bearer ${token}` }, timeout: 8000 }).catch(() => ({ data: [] }))
-                : axios.get(`${API_URL}/hackathons`, { timeout: 8000 }).catch(() => ({ data: [] }));
-
-            const [usersRes, teamsRes, problemsRes, hackathonsRes, regRes, evalRes] = await Promise.all([
-                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/users`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                nextUser?.role === 'admin' || nextUser?.role === 'student' ? axios.get(`${API_URL}/teams`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
-                axios.get(`${API_URL}/problems`, { timeout: 8000 }).catch(() => ({ data: [] })),
-                hackathonsPromise,
-                studentRegPromise,
-                nextUser?.role === 'admin' ? axios.get(`${API_URL}/evaluations`, { timeout: 8000 }).catch(() => ({ data: [] })) : Promise.resolve({ data: [] })
+            // Fire main core endpoints in parallel for maximum performance
+            const [meRes, usersRes, teamsRes, problemsRes, hackathonsRes] = await Promise.allSettled([
+                token ? axios.get(`${API_URL}/auth/me`, authHeader) : Promise.reject(new Error("No token")),
+                axios.get(`${API_URL}/users`, { timeout: 6000 }),
+                axios.get(`${API_URL}/teams`, { timeout: 6000 }),
+                axios.get(`${API_URL}/problems`, { timeout: 6000 }),
+                axios.get(`${API_URL}/hackathons`, authHeader)
             ]);
 
+            let nextUser = null;
+            if (meRes.status === 'fulfilled' && meRes.value.data?.user) {
+                nextUser = meRes.value.data.user;
+                setCachedUser(nextUser);
+            } else if (meRes.status === 'rejected' && token) {
+                const err = meRes.reason;
+                if (err?.response?.status === 401 || err?.response?.status === 403) {
+                    localStorage.removeItem("codesrijan_auth_token");
+                    setCachedUser(null);
+                }
+            }
+
+            const usersData = usersRes.status === 'fulfilled' ? usersRes.value.data : [];
+            const teamsData = teamsRes.status === 'fulfilled' ? teamsRes.value.data : [];
+            const problemsData = problemsRes.status === 'fulfilled' ? problemsRes.value.data : [];
+            const hackathonsData = hackathonsRes.status === 'fulfilled' ? hackathonsRes.value.data : [];
+
+            // Secondary role-specific parallel fetches
+            const secondaryPromises: Promise<any>[] = [];
+            
+            // Team tasks
+            if (nextUser?.teamId && token) {
+                secondaryPromises.push(
+                    axios.get(`${API_URL}/teams/${nextUser.teamId}/tasks`, authHeader).catch(() => ({ data: [] }))
+                );
+            } else {
+                secondaryPromises.push(Promise.resolve({ data: [] }));
+            }
+
+            // Student registrations
+            if (token && nextUser?.role === 'student') {
+                secondaryPromises.push(
+                    axios.get(`${API_URL}/student/registrations`, authHeader).catch(() => ({ data: [] }))
+                );
+            } else {
+                secondaryPromises.push(Promise.resolve({ data: [] }));
+            }
+
+            // Admin evaluations
+            if (token && nextUser?.role === 'admin') {
+                secondaryPromises.push(
+                    axios.get(`${API_URL}/evaluations`, authHeader).catch(() => ({ data: [] }))
+                );
+            } else {
+                secondaryPromises.push(Promise.resolve({ data: [] }));
+            }
+
+            const [tasksRes, regRes, evalRes] = await Promise.all(secondaryPromises);
+
             persistCache({
-                users: usersRes.data,
-                teams: teamsRes.data,
-                problems: problemsRes.data,
-                hackathons: hackathonsRes.data
+                users: usersData.length ? usersData : undefined,
+                teams: teamsData.length ? teamsData : undefined,
+                problems: problemsData.length ? problemsData : undefined,
+                hackathons: hackathonsData.length ? hackathonsData : undefined
             });
 
             setState(prev => ({
                 ...prev,
-                users: usersRes.data || prev.users,
-                teams: teamsRes.data || prev.teams,
-                problems: problemsRes.data || prev.problems,
-                hackathons: hackathonsRes.data || prev.hackathons,
+                users: usersData.length ? usersData : prev.users,
+                teams: teamsData.length ? teamsData : prev.teams,
+                problems: problemsData.length ? problemsData : prev.problems,
+                hackathons: hackathonsData.length ? hackathonsData : prev.hackathons,
                 registrations: regRes.data || prev.registrations,
-                tasks: teamTasks,
+                tasks: tasksRes.data || prev.tasks,
                 evaluations: evalRes.data || prev.evaluations,
                 ...(nextUser ? { currentUser: nextUser } : (token ? {} : { currentUser: null })),
                 isLoaded: true
@@ -496,7 +509,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         socket.disconnect();
         setCachedUser(null);
         setState(prev => ({ ...prev, currentUser: null }));
-        localStorage.removeItem("codesrijan_auth_token");
+        try {
+            localStorage.removeItem("codesrijan_auth_token");
+            localStorage.removeItem("codesrijan_cached_user");
+            sessionStorage.clear();
+        } catch {}
+        if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+        }
     };
 
     const createTeam = async (name: string, leaderId: string, hackathonId: string, problemStatementId: string) => {
@@ -514,9 +534,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 headers: { Authorization: `Bearer ${token}` }
             });
             await refetchData();
-            // Re-sync current user via the `/auth/me` pipeline
-            const meRes = await axios.get(`${API_URL}/auth/me`);
-            setState(prev => ({ ...prev, currentUser: meRes.data.user }));
         } catch (e: any) {
             console.error("Create Team Error:", e.response?.data || e);
             throw e;

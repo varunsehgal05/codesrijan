@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { API_BASE } from "../../lib/utils";
+import { API_BASE, getAuthHeaders } from "../../lib/utils";
 import {
   Portal,
   Metrics,
@@ -88,7 +88,7 @@ export function MentorPortal() {
     setLoading(true);
     setError("");
     try {
-      const response = await axios.get<Dashboard>(`${API_BASE}/mentor/dashboard`);
+      const response = await axios.get<Dashboard>(`${API_BASE}/mentor/dashboard`, getAuthHeaders());
       setData(response.data);
     } catch (e) {
       setError(apiError(e));
@@ -335,6 +335,7 @@ function SquadDetails({
     try {
       const response = await axios.get(
         `${API_BASE}/mentor/teams/${encodeURIComponent(team.id)}/notes`,
+        getAuthHeaders(),
       );
       setNotes(response.data);
     } catch (e) {
@@ -419,9 +420,11 @@ function SquadDetails({
             setBusy(true);
             setError("");
             try {
-              await axios.post(`${API_BASE}/mentor/teams/${encodeURIComponent(team.id)}/notes`, {
-                notes: note.trim(),
-              });
+              await axios.post(
+                `${API_BASE}/mentor/teams/${encodeURIComponent(team.id)}/notes`,
+                { notes: note.trim() },
+                getAuthHeaders(),
+              );
               setNote("");
               await load();
             } catch (err) {
@@ -470,6 +473,7 @@ function GuidanceCard({
       await axios.post(
         `${API_BASE}/mentor/requests/${encodeURIComponent(r.id)}/${verb}`,
         verb === "respond" ? { message: message.trim() } : {},
+        getAuthHeaders(),
       );
       setMessage("");
       await reload();

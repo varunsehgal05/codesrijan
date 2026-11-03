@@ -28,9 +28,31 @@ function Page7() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Profile Form States
-  const [name, setName] = useState(currentUser?.name || "");
-  const [handle, setHandle] = useState((currentUser as any)?.handle || "");
+  // Profile Form States with robust pre-population fallbacks
+  const getInitialName = () => {
+    if (!currentUser) return "";
+    const anyUser = currentUser as any;
+    if (currentUser.name) return currentUser.name;
+    if (anyUser.fullName) return anyUser.fullName;
+    if (anyUser.firstName) return `${anyUser.firstName} ${anyUser.lastName || ''}`.trim();
+    if (currentUser.email) return currentUser.email.split('@')[0];
+    return "";
+  };
+
+  const getInitialHandle = () => {
+    if (!currentUser) return "";
+    const anyUser = currentUser as any;
+    if (anyUser.handle) return anyUser.handle;
+    if (anyUser.hackerHandle) return anyUser.hackerHandle;
+    if (anyUser.username) return anyUser.username;
+    const n = getInitialName();
+    if (n) return n.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+    if (currentUser.email) return currentUser.email.split('@')[0].toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    return "";
+  };
+
+  const [name, setName] = useState(getInitialName);
+  const [handle, setHandle] = useState(getInitialHandle);
   const [college, setCollege] = useState(currentUser?.college || "");
   const [branch, setBranch] = useState((currentUser as any)?.branch || "CSE");
   const [year, setYear] = useState((currentUser as any)?.year || "4th Year");
@@ -48,18 +70,21 @@ function Page7() {
   // Synchronize form when currentUser changes or toggling edit mode
   useEffect(() => {
     if (currentUser) {
-      setName(currentUser.name || "");
-      setHandle((currentUser as any).handle || "");
-      setCollege(currentUser.college || "");
+      const uName = getInitialName();
+      const uHandle = getInitialHandle();
+
+      setName(uName);
+      setHandle(uHandle);
+      setCollege(currentUser.college || (currentUser as any).institution || "");
       setBranch((currentUser as any).branch || "CSE");
       setYear((currentUser as any).year || "4th Year");
       setBio(currentUser.bio || "");
       setTechStack(currentUser.techStack?.join(", ") || "");
       setSpecialization((currentUser as any).specialization || "FULLSTACK");
       setMobile((currentUser as any).mobile || (currentUser as any).phone || "");
-      setGithub((currentUser as any).github || "");
-      setLinkedin((currentUser as any).linkedin || "");
-      setPortfolio((currentUser as any).portfolio || "");
+      setGithub((currentUser as any).github || (currentUser as any).githubUrl || "");
+      setLinkedin((currentUser as any).linkedin || (currentUser as any).linkedinUrl || "");
+      setPortfolio((currentUser as any).portfolio || (currentUser as any).portfolioUrl || "");
       setRecruitmentStatus((currentUser as any).recruitmentStatus || "open");
     }
   }, [currentUser, isEditing]);

@@ -8,6 +8,8 @@ const maskEmail = (email) => {
     return `${user.slice(0, 2)}***@${domain}`;
 };
 
+const escapeHtml = (str) => String(str || '').replace(/[&<>'"]/g, (tag) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+
 // Singleton Transporter Cache
 let transporterInstance = null;
 let customTransporter = null;
@@ -635,3 +637,96 @@ export const sendTeamLeaderNewMemberEmail = async (to, leaderName, teamName, mem
     }
 };
 
+
+export const sendRoleAssignmentEmail = async (to, name, role, assignedBy = 'CodeSrijan Administrator') => {
+    const roleTitles = {
+        admin: 'SYSTEM ADMINISTRATOR & COMMAND CLEARANCE',
+        mentor: 'TECHNICAL MENTOR & SQUAD GUIDANCE OFFICER',
+        judge: 'EVALUATION MAGISTRATE & JURY CLEARANCE',
+        student: 'ACTIVE HACKER / SQUAD OPERATIVE'
+    };
+
+    const roleUrls = {
+        admin: 'https://codesrijan-nine.vercel.app/admin',
+        mentor: 'https://codesrijan-nine.vercel.app/mentor-command-center',
+        judge: 'https://codesrijan-nine.vercel.app/judge-command-center',
+        student: 'https://codesrijan-nine.vercel.app/dashboard'
+    };
+
+    const portalUrl = roleUrls[role] || 'https://codesrijan-nine.vercel.app/dashboard';
+    const roleTitle = roleTitles[role] || (role ? role.toUpperCase() : 'CLEARANCE UPDATE');
+
+    const htmlContent = `
+        <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #050505; font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 40px 20px;">
+            <tr>
+                <td align="center">
+                    <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #0D1117; border: 4px solid #00F0FF; box-shadow: 10px 10px 0px 0px #00F0FF; padding: 0;">
+                        <tr>
+                            <td style="background-color: #00F0FF; padding: 25px 30px; border-bottom: 4px solid #000000;">
+                                <h1 style="margin: 0; color: #000000; font-size: 26px; font-weight: 900; letter-spacing: -1px; text-transform: uppercase;">
+                                    CODESRIJAN // CLEARANCE ELEVATION
+                                </h1>
+                                <div style="color: #000000; font-family: monospace; font-size: 13px; font-weight: 700; margin-top: 5px;">
+                                    OFFICIAL ROLE PROMOTION NOTICE
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 35px 30px; color: #E6EDF3;">
+                                <p style="font-size: 16px; line-height: 1.6; margin: 0 0 20px 0; color: #FFFFFF;">
+                                    Greetings <strong style="color: #00F0FF;">${escapeHtml(name)}</strong>,
+                                </p>
+                                <p style="font-size: 15px; line-height: 1.6; margin: 0 0 25px 0; color: #8B949E;">
+                                    Your security clearance and access level on the CodeSrijan Platform have been updated by <strong>${escapeHtml(assignedBy)}</strong>.
+                                </p>
+                                <div style="background-color: #161B22; border: 2px dashed #00F0FF; padding: 20px; margin-bottom: 30px; text-align: center;">
+                                    <div style="font-family: monospace; font-size: 12px; color: #8B949E; text-transform: uppercase; margin-bottom: 8px;">ASSIGNED ACCESS CLEARANCE</div>
+                                    <div style="font-size: 20px; font-weight: 900; color: #00F0FF; letter-spacing: 1px;">
+                                        ${escapeHtml(roleTitle)}
+                                    </div>
+                                    <div style="margin-top: 10px; font-size: 13px; color: #58A6FF; font-family: monospace;">
+                                        Role Key: [ ${escapeHtml(role ? role.toUpperCase() : '')} ]
+                                    </div>
+                                </div>
+                                <p style="font-size: 14px; line-height: 1.6; margin: 0 0 30px 0; color: #E6EDF3;">
+                                    You can now access your dedicated Command Center and execute privileged role operations across the platform.
+                                </p>
+                                <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="${portalUrl}" style="display: inline-block; background-color: #00F0FF; color: #000000; text-decoration: none; font-size: 16px; font-weight: 900; padding: 16px 36px; border: 3px solid #000000; box-shadow: 6px 6px 0px 0px #FFFFFF; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                ENTER COMMAND PORTAL &rarr;
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="background-color: #050505; border-top: 2px solid #30363D; padding: 20px 30px; text-align: center;">
+                                <p style="margin: 0; font-family: monospace; font-size: 11px; color: #484F58;">
+                                    CodeSrijan Security Framework &bull; Cryptographically Verified Operations
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    `;
+
+    const transporter = getTransporter();
+    if (!transporter) return { success: false, error: 'Email service unconfigured' };
+    try {
+        const info = await transporter.sendMail({
+            from: getSenderIdentity(),
+            to,
+            subject: `CodeSrijan [ROLE ASSIGNMENT: ${roleTitle}]`,
+            html: htmlContent
+        });
+        return { success: true, messageId: info.messageId };
+    } catch (e) {
+        console.error('[ROLE EMAIL ERROR]', e.message);
+        return { success: false, error: e.message };
+    }
+};

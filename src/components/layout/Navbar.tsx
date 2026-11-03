@@ -31,7 +31,7 @@ export function Navbar() {
                     <Link to="/hackathons" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                         <span className="material-symbols-outlined text-sm">trophy</span> Hackathons
                     </Link>
-                    {!isJudge && (
+                    {(isStudent || isAdmin) && (
                         <Link to="/problems" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                             Problems
                         </Link>
@@ -46,9 +46,11 @@ export function Navbar() {
                             Sponsors
                         </Link>
                     )}
-                    <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
-                        Leaderboard
-                    </Link>
+                    {(isStudent || isAdmin || isJudge) && (
+                        <Link to="/leaderboard" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
+                            Leaderboard
+                        </Link>
+                    )}
                     <Link to="/announcements" className={linkClasses} activeProps={{ className: activeClasses }} onClick={() => isMobile && toggleMobileMenu()}>
                         Announcements
                     </Link>
@@ -137,7 +139,7 @@ export function Navbar() {
                             )}
                             {/* Dashboard button for students and admins; Logout button for judges and mentors */}
                             {currentUser.role !== 'judge' && currentUser.role !== 'mentor' ? (
-                                <Link to={roleHome(currentUser?.role)} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
+                                <Link to="/dashboard" className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-2 lg:px-5 lg:py-2.5 brutal-border brutal-shadow brutal-hover brutal-active transition-all duration-200 whitespace-nowrap">
                                     Go to Dashboard
                                 </Link>
                             ) : (
@@ -203,7 +205,7 @@ export function Navbar() {
                                     </Link>
                                 )}
                                 {currentUser.role !== 'judge' && currentUser.role !== 'mentor' ? (
-                                    <Link to={roleHome(currentUser?.role)} onClick={toggleMobileMenu} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center">
+                                    <Link to="/dashboard" onClick={toggleMobileMenu} className="bg-ink-black text-surface-bright font-button-text text-button-text px-4 py-3 brutal-border brutal-shadow text-center">
                                         Go to Dashboard
                                     </Link>
                                 ) : (
