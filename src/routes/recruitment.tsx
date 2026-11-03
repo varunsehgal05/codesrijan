@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useAppStore } from "../lib/store";
 import axios from "axios";
 import { toast } from "react-hot-toast";

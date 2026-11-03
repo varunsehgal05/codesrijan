@@ -567,7 +567,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const assignProblem = async (teamId: string, problemId: string) => {
         try {
-            await axios.post(`${API_URL}/teams/${teamId}/problem`, { problemId });
+            const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
+            const token = rawToken?.trim();
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
+            await axios.post(`${API_URL}/teams/${teamId}/problem`, { problemId }, { headers });
+            setState(prev => ({
+                ...prev,
+                teams: prev.teams.map(t => t.id === teamId ? { ...t, problemId, problemStatementId: problemId } : t)
+            }));
             await refetchData();
         } catch (e: any) {
             console.error("Assign Problem Error:", e);
@@ -577,8 +584,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     const submitProject = async (teamId: string, repositoryUrl: string, demoUrl: string) => {
         try {
+            const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
+            const token = rawToken?.trim();
+            const headers = token ? { Authorization: `Bearer ${token}` } : {};
             // Include placeholder description and title for now 
-            await axios.post(`${API_URL}/submissions`, { teamId, repositoryUrl, demoUrl, description: "Final submission", projectTitle: "Hackathon Entry" });
+            await axios.post(`${API_URL}/submissions`, { teamId, repositoryUrl, demoUrl, description: "Final submission", projectTitle: "Hackathon Entry" }, { headers });
             await refetchData();
         } catch (e) { console.error("Submit Project Error:", e); }
     };

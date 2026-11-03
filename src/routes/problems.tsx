@@ -105,33 +105,46 @@ function ProblemsPage() {
 
   const userTeam = teams.find(t => t.id === currentUser?.teamId);
 
-  const selectProblem = async (problemId: string) => {
+  const [isLocking, setIsLocking] = useState(false);
+
+  const selectProblem = (problemId: string) => {
+    const targetProb = problems.find(p => (p.id && p.id === problemId) || (p._id && p._id === problemId));
+    setInspectingProblem(targetProb || { id: problemId, title: "Directive Dossier", description: "Operational directive inspection payload." });
+  };
+
+  const handleLockAndSend = async (problem: any) => {
     if (!currentUser) {
       navigate({ to: '/login' });
       return;
     }
-    const targetProb = problems.find(p => (p.id && p.id === problemId) || (p._id && p._id === problemId));
-    if (currentUser.role === 'admin') {
-      setInspectingProblem(targetProb || { id: problemId, title: "Directive Dossier", description: "Operational directive inspection payload." });
-      return;
-    }
     if (!userTeam) {
-      toast.error("You must join or create a squad before selecting a problem statement.");
+      toast.error("You must join or create a squad before locking a directive.");
+      navigate({ to: '/recruitment' });
       return;
     }
     if (userTeam.leaderId !== currentUser.id) {
-      toast.error("Only squad leaders can deploy the problem selection directive.");
+      toast.error("Only Squad Leaders can lock track directives for the squad.");
       return;
     }
-    if (userTeam.problemId) {
+    const probId = problem.id || problem._id;
+    const activeId = userTeam.problemId || userTeam.problemStatementId;
+    if (activeId === probId) {
+      navigate({ to: '/workspace' });
+      return;
+    }
+    if (activeId) {
       if (!confirm("Your squad already has an active tracking vector. Switching vectors will overwrite your objective. Proceed?")) return;
     }
+    setIsLocking(true);
     try {
-      await assignProblem(userTeam.id, problemId);
-      toast.success("Problem Statement Locked. Return to Dashboard workspace to begin.");
-      window.location.reload();
+      await assignProblem(userTeam.id, probId);
+      toast.success(`Directive "${problem.title}" locked! Objective deployed to Squad Workspace.`);
+      setInspectingProblem(null);
+      navigate({ to: '/workspace' });
     } catch (e: any) {
-      toast.error(e.response?.data?.message || e.message || "Failed to select problem.");
+      toast.error(e.response?.data?.message || e.message || "Failed to lock directive.");
+    } finally {
+      setIsLocking(false);
     }
   };
 
@@ -665,15 +678,49 @@ function ProblemsPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="pt-4 border-t-2 border-stark-black flex justify-between items-center">
-                <span className="text-[10px] text-zinc-500 uppercase font-bold">Admin Clearance Confirmed</span>
-                <Link
-                  to="/admin/problems"
-                  className="px-4 py-2 bg-black hover:bg-electric-blue text-white font-bold text-xs uppercase border border-black flex items-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-sm">settings</span>
-                  Manage in Admin Problems Console ↗
-                </Link>
+              <div className="pt-4 border-t-2 border-stark-black flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                {currentUser?.role === 'admin' ? (
+                  <>
+                    <span className="text-[10px] text-zinc-500 uppercase font-bold">Admin Clearance Confirmed</span>
+                    <Link
+                      to="/admin/problems"
+                      className="px-4 py-2.5 bg-black hover:bg-electric-blue text-white font-bold text-xs uppercase border-2 border-black flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#000]"
+                    >
+                      <span className="material-symbols-outlined text-sm">settings</span>
+                      Manage in Admin Problems Console ↗
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs">
+                      {userTeam ? (
+                        <span className="font-mono text-zinc-700">
+                          Squad: <strong className="text-black uppercase">{userTeam.name}</strong> ({userTeam.leaderId === currentUser?.id ? 'Leader Clearance' : 'Member'})
+                        </span>
+                      ) : (
+                        <span className="font-mono text-amber-700 font-bold">⚠️ No Squad Active — Join squad to lock</span>
+                      )}
+                    </div>
+                    {userTeam && (userTeam.problemId === inspectingProblem.id || userTeam.problemStatementId === inspectingProblem.id || userTeam.problemId === inspectingProblem._id || userTeam.problemStatementId === inspectingProblem._id) ? (
+                      <button
+                        onClick={() => { setInspectingProblem(null); navigate({ to: '/workspace' }); }}
+                        className="px-5 py-3 bg-emerald-500 text-black font-black text-xs uppercase border-2 border-black flex items-center justify-center gap-2 shadow-[3px_3px_0px_#000] cursor-pointer hover:bg-emerald-400"
+                      >
+                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                        ✓ ACTIVE LOCKED TRACK (GO TO WORKSPACE →)
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleLockAndSend(inspectingProblem)}
+                        disabled={isLocking}
+                        className="px-5 py-3 bg-electric-blue hover:bg-black text-white font-black text-xs uppercase border-2 border-black flex items-center justify-center gap-2 shadow-[3px_3px_0px_#000] cursor-pointer hover:shadow-none transition-all disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-sm">lock</span>
+                        {isLocking ? 'LOCKING TRACK DIRECTIVE...' : '🔒 LOCK & SEND TO WORKSPACE →'}
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
           </div>

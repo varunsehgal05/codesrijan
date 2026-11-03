@@ -3,7 +3,7 @@ import { useAppStore } from "../lib/store";
 import { useRouterState, useNavigate } from "@tanstack/react-router";
 import { toast } from "react-hot-toast";
 
-const INACTIVITY_LIMIT_MS = 15 * 60 * 1000; // 15 minutes for comfortable grading/mentoring
+const INACTIVITY_LIMIT_MS = 60 * 60 * 1000; // 60 minutes comfortable grading // 15 minutes for comfortable grading/mentoring
 const WARNING_BEFORE_MS = 60 * 1000; // 1 minute warning before logout
 
 export function AutoLogoutManager() {

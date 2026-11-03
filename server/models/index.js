@@ -204,6 +204,7 @@ const teamSchema = new mongoose.Schema({
     leaderId: String,
     memberIds: [String],
     problemStatementId: String,
+    problemId: String,
     maxMembers: Number,
     recruitmentOpen: Boolean,
     status: { type: String, enum: ['forming', 'active', 'verified', 'submitted', 'disqualified', 'completed'], default: 'forming' },

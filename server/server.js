@@ -3011,7 +3011,7 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
 // SUBMISSIONS & WORKSPACE
 app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async (req, res) => {
     const { problemId } = req.body;
-    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId }, { returnDocument: 'after' });
+    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId, problemId }, { returnDocument: 'after' });
     if (!team) return res.status(403).json({ message: "Only team leaders can select a problem statement." });
     res.json(team);
 });

@@ -139,11 +139,11 @@ export function NotificationBell() {
     };
 
     useEffect(() => {
-        if (!currentUser) return;
+        if (!currentUser?.id) return;
         fetchNotifications();
         const interval = setInterval(fetchNotifications, 15000);
         return () => clearInterval(interval);
-    }, [currentUser]);
+    }, [currentUser?.id]);
 
     const handleMarkAsRead = async (id: string) => {
         try {

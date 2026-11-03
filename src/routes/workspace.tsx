@@ -70,9 +70,10 @@ function WorkspaceHUD() {
   const isPaymentPending = isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected;
 
   // Resolve problem statement track
+  const activeProblemId = userTeam?.problemStatementId || userTeam?.problemId;
   const currentProblem = useMemo(() => {
-    return (problems || []).find((p: any) => p.id === userTeam?.problemId);
-  }, [problems, userTeam?.problemId]);
+    return (problems || []).find((p: any) => p.id === activeProblemId || p._id === activeProblemId);
+  }, [problems, activeProblemId]);
 
   // Squad operatives resolution
   const teamMemberIds = userTeam?.memberIds || userTeam?.members || [];
@@ -307,7 +308,7 @@ function WorkspaceHUD() {
   // Project Readiness Gauge calculation
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
-  const hasTrack = Boolean(userTeam.problemId);
+  const hasTrack = Boolean(activeProblemId);
   const hasLinks = Boolean(githubLink || figmaLink || demoLink);
   
   let readinessScore = 0;
@@ -472,15 +473,15 @@ function WorkspaceHUD() {
                 )}
               </div>
               <h3 className="font-display-sm text-base uppercase text-ink-black font-bold line-clamp-2">
-                {currentProblem?.title || userTeam.problemId || "No Problem Statement Selected"}
+                {currentProblem?.title || activeProblemId || "No Problem Statement Selected"}
               </h3>
               {currentProblem && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-[10px] font-mono bg-zinc-200 px-2 py-0.5 uppercase font-bold text-zinc-700">
-                    {currentProblem.category}
+                    {currentProblem.category || currentProblem.domain || "DIRECTIVE"}
                   </span>
                   <span className="text-[10px] font-mono bg-electric-blue/20 text-electric-blue px-2 py-0.5 uppercase font-bold">
-                    {currentProblem.difficulty}
+                    {currentProblem.difficulty || "STANDARD"}
                   </span>
                 </div>
               )}
