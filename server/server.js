@@ -160,7 +160,7 @@ app.use(verifyAppCheck);
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask, MentorRequest } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
-import { FAQ, Gallery } from './models/tertiary.js';
+import { FAQ, Gallery, MentorSession } from './models/tertiary.js';
 import { installRolePortals } from './role-portals.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
@@ -3117,6 +3117,72 @@ app.post('/api/admin/submissions/test-submission', requireAuth, requireRole(['ad
 });
 
 installRolePortals(app, logAdminActivity);
+
+// --- DIRECT MENTOR GUIDANCE & NOTES RESILIENCE ---
+app.get('/api/mentor/teams/:id/notes', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const notes = await MentorSession.find({
+            teamId: req.params.id,
+            title: 'Private mentor note'
+        }).sort({ createdAt: -1 }).lean();
+        res.json(notes || []);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch squad notes: " + e.message });
+    }
+});
+
+app.post('/api/mentor/teams/:id/notes', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const team = await Team.findOne({ id: req.params.id }).lean();
+        if (!team) return res.status(404).json({ message: "Squad not found." });
+        const noteText = typeof req.body.notes === 'string' ? req.body.notes.trim() : '';
+        if (!noteText || noteText.length > 5000) {
+            return res.status(400).json({ message: "Note must be between 1 and 5000 characters." });
+        }
+        const noteId = `note-${crypto.randomUUID()}`;
+        const newNote = await MentorSession.create({
+            id: noteId,
+            mentorId: req.user.id,
+            teamId: team.id,
+            hackathonId: team.hackathonId || '',
+            title: 'Private mentor note',
+            notes: noteText,
+            status: 'completed'
+        });
+        res.status(201).json(newNote);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to save private note: " + e.message });
+    }
+});
+
+app.post('/api/mentor/requests/:id/respond', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const request = await MentorRequest.findOne({ id: req.params.id });
+        if (!request) return res.status(404).json({ message: "Guidance request not found." });
+        const msg = req.body.message ?? req.body.notes ?? '';
+        if (!msg || typeof msg !== 'string' || !msg.trim()) {
+            return res.status(400).json({ message: "Response message is required." });
+        }
+        const respItem = {
+            id: `resp-${crypto.randomUUID()}`,
+            authorId: req.user.id,
+            message: msg.trim(),
+            createdAt: new Date()
+        };
+        request.responses = request.responses || [];
+        request.responses.push(respItem);
+        request.status = 'accepted';
+        request.mentorId = request.mentorId || req.user.id;
+        request.acceptedAt = request.acceptedAt || new Date();
+        if (req.body.meetLink && /^https:\/\//i.test(req.body.meetLink)) {
+            request.meetLink = req.body.meetLink;
+        }
+        await request.save();
+        res.json(request);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to post guidance response: " + e.message });
+    }
+});
 
 // EVALUATIONS (JUDGE/ADMIN)
 

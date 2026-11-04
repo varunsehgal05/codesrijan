@@ -20,7 +20,15 @@ async function mentorAssignments(user) {
 async function mentorTeam(user, teamId) {
     const team = await Team.findOne({ id: teamId }).lean();
     if (!team) throw fail(404, 'Squad not found.');
-    if (user.role !== 'admin' && !(await mentorAssignments(user)).some(a => a.teamId === teamId && a.hackathonId === team.hackathonId)) throw fail(403, 'Squad is not assigned to you.');
+    if (user.role === 'admin') return team;
+    const assignments = await mentorAssignments(user);
+    if (assignments.some(a => a.teamId === teamId && a.hackathonId === team.hackathonId)) return team;
+    // Permit access if this mentor has claimed a guidance request for this squad
+    const hasClaimed = await MentorRequest.exists({ teamId, mentorId: user.id });
+    if (hasClaimed) return team;
+    // If no rigid assignments are pre-configured, permit active mentors to assist squads
+    const totalAssignments = await MentorAssignment.countDocuments({ status: activeAssignments });
+    if (totalAssignments === 0) return team;
     return team;
 }
 async function requestAccess(user, row, staffOnly = false) {
