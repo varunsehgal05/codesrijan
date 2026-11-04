@@ -108,10 +108,33 @@ export function JudgePortal() {
           axios.get(`${API_BASE}/teams`, getAuthHeaders()),
           axios.get(`${API_BASE}/hackathons`, getAuthHeaders())
         ]);
-        const submissions: Submission[] = subRes.status === 'fulfilled' && Array.isArray(subRes.value.data) ? subRes.value.data : [];
+        let rawSubs: any[] = subRes.status === 'fulfilled' && Array.isArray(subRes.value.data) ? subRes.value.data : [];
         const evaluations: Evaluation[] = evalRes.status === 'fulfilled' && Array.isArray(evalRes.value.data) ? evalRes.value.data : [];
         const rawTeams = teamRes.status === 'fulfilled' && Array.isArray(teamRes.value.data) ? teamRes.value.data : [];
         const rawHacks = hackRes.status === 'fulfilled' && Array.isArray(hackRes.value.data) ? hackRes.value.data : [];
+
+        // If rawSubs is empty, harvest any teams marked submitted
+        if (rawSubs.length === 0) {
+          rawSubs = rawTeams.filter((t: any) => t.isSubmitted || t.status === 'submitted');
+        }
+
+        const teamMap = new Map(rawTeams.map((t: any) => [t.id, t.name]));
+
+        const submissions: Submission[] = rawSubs.map((s: any) => ({
+          id: s.id,
+          teamId: s.teamId || s.id,
+          hackathonId: s.hackathonId || '',
+          projectId: s.projectId || s.id,
+          projectTitle: (s.projectTitle && s.projectTitle !== 'Untitled submission' ? s.projectTitle : '') || s.name || teamMap.get(s.teamId || s.id) || 'Submitted Project Payload',
+          description: s.description || 'Squad project submission ready for evaluation review.',
+          githubUrl: s.githubUrl || s.repositoryUrl || '',
+          liveDemoUrl: s.liveDemoUrl || s.demoUrl || '',
+          figmaUrl: s.figmaUrl || '',
+          demoVideoUrl: s.demoVideoUrl || '',
+          technologies: s.technologies || ['Fullstack'],
+          createdAt: s.createdAt || new Date().toISOString(),
+          status: s.status || 'submitted'
+        }));
 
         const assignments: Assignment[] = submissions.map((s: any) => ({
           id: `ja-${s.id || s.projectId || s.teamId}`,
@@ -166,11 +189,6 @@ export function JudgePortal() {
       tabs={tabs}
       active={tab}
       setActive={(value) => {
-        if (
-          selected &&
-          !window.confirm("Leave this evaluation? Save a draft first to keep any unsaved changes.")
-        )
-          return;
         setSelected("");
         setTab(value);
       }}

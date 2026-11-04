@@ -93,10 +93,16 @@ export function MentorPortal() {
     } catch (e: any) {
       // Resilient fallback: assemble dashboard from available live endpoints
       try {
-        const [teamRes] = await Promise.allSettled([
-          axios.get(`${API_BASE}/teams`, getAuthHeaders())
+        const [teamRes, reqRes, hackRes] = await Promise.allSettled([
+          axios.get(`${API_BASE}/teams`, getAuthHeaders()),
+          axios.get(`${API_BASE}/mentor/requests/all`, getAuthHeaders()),
+          axios.get(`${API_BASE}/hackathons`, getAuthHeaders())
         ]);
         const rawTeams = teamRes.status === 'fulfilled' && Array.isArray(teamRes.value.data) ? teamRes.value.data : [];
+        const rawRequests = reqRes.status === 'fulfilled' && Array.isArray(reqRes.value.data) ? reqRes.value.data : [];
+        const rawHacks = hackRes.status === 'fulfilled' && Array.isArray(hackRes.value.data) ? hackRes.value.data : [];
+        const hackMap = new Map(rawHacks.map((h: any) => [h.id, h.name || h.title]));
+
         setData({
           teams: rawTeams.map((t: any) => ({
             id: t.id,
@@ -106,19 +112,19 @@ export function MentorPortal() {
             status: t.status || 'forming',
             memberIds: t.memberIds || [],
             members: [],
-            hackathon: { id: t.hackathonId, name: t.hackathonId },
+            hackathon: { id: t.hackathonId, name: hackMap.get(t.hackathonId) || t.hackathonId },
             tasks: [],
             submission: null
           })),
-          requests: [],
+          requests: rawRequests,
           sessions: [],
           assignments: [],
           notifications: [],
           metrics: {
             assignedSquads: rawTeams.length,
-            pendingRequests: 0,
-            openRequests: 0,
-            resolvedRequests: 0,
+            pendingRequests: rawRequests.filter((r: any) => r.status === 'pending').length,
+            openRequests: rawRequests.filter((r: any) => ['pending', 'accepted'].includes(r.status)).length,
+            resolvedRequests: rawRequests.filter((r: any) => r.status === 'resolved').length,
             unreadNotifications: 0
           }
         });
