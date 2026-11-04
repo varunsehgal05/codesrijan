@@ -1,0 +1,231 @@
+{
+  "responsive": [
+    {
+      "portal": "Judge Command Center",
+      "viewport": "Desktop",
+      "resolution": "1280x800",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "overflowDelta": 0,
+      "flexDirection": "row",
+      "asideDimensions": "256x800",
+      "mainDimensions": "1024x800",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\judge_desktop_overview.png"
+    },
+    {
+      "portal": "Mentor Command Center",
+      "viewport": "Desktop",
+      "resolution": "1280x800",
+      "scrollWidth": 1280,
+      "innerWidth": 1280,
+      "overflowDelta": 0,
+      "flexDirection": "row",
+      "asideDimensions": "256x800",
+      "mainDimensions": "1024x800",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\mentor_desktop_overview.png"
+    },
+    {
+      "portal": "Judge Command Center",
+      "viewport": "Tablet_iPad",
+      "resolution": "768x1024",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "overflowDelta": 0,
+      "flexDirection": "column",
+      "asideDimensions": "768x369",
+      "mainDimensions": "768x868",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\judge_tablet_ipad_overview.png"
+    },
+    {
+      "portal": "Mentor Command Center",
+      "viewport": "Tablet_iPad",
+      "resolution": "768x1024",
+      "scrollWidth": 768,
+      "innerWidth": 768,
+      "overflowDelta": 0,
+      "flexDirection": "column",
+      "asideDimensions": "768x313",
+      "mainDimensions": "768x824",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\mentor_tablet_ipad_overview.png"
+    },
+    {
+      "portal": "Judge Command Center",
+      "viewport": "Mobile_iPhone",
+      "resolution": "390x844",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "overflowDelta": 0,
+      "flexDirection": "column",
+      "asideDimensions": "390x425",
+      "mainDimensions": "390x830",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\judge_mobile_iphone_overview.png"
+    },
+    {
+      "portal": "Mentor Command Center",
+      "viewport": "Mobile_iPhone",
+      "resolution": "390x844",
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "overflowDelta": 0,
+      "flexDirection": "column",
+      "asideDimensions": "390x425",
+      "mainDimensions": "390x780",
+      "status": "PASS",
+      "screenshot": "C:\\Users\\Varun\\Downloads\\interactive-showcase-main\\interactive-showcase-main\\nfr-audit-portals\\screenshots\\mentor_mobile_iphone_overview.png"
+    }
+  ],
+  "accessibility": [
+    {
+      "metric": "ARIA Navigation Landmark",
+      "expected": "nav with aria-label=\"judge navigation\"",
+      "observed": "aria-label=\"judge navigation\"",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "ARIA Current Tab Semantics",
+      "expected": "aria-current=\"page\" on active tab only",
+      "observed": "active=\"Overview\" (aria-current=page), inactive=7 without aria-current",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "Semantic Landmark Hierarchy",
+      "expected": "aside -> nav, main#role-workspace -> header",
+      "observed": "aside: true, main#role-workspace: true, header: true",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "Keyboard Focus Indicator",
+      "expected": "4px outline with offset (focus-visible:outline-4 focus-visible:outline-offset-2)",
+      "observed": "Action Button outline: 4px rgb(0, 53, 213), offset: 2px",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "Neo-Brutalist Panel Styling",
+      "expected": "2px solid black border + 4px black drop shadow",
+      "observed": "Border: 2px rgb(0, 0, 0), Shadow: rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(0, 0, 0) 4px 4px 0px 0px",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "Judge Portal Accent Border",
+      "expected": "4px solid #FFB703 (rgb(255, 183, 3))",
+      "observed": "Aside Border: rgb(255, 183, 3)",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "WCAG Contrast: Judge Active Tab",
+      "expected": ">= 4.5:1 (WCAG AA), >= 7:1 (WCAG AAA)",
+      "observed": "#000000 on #FFB703 = 12.03 : 1",
+      "verdict": "PASS (Exceeds WCAG AAA)"
+    },
+    {
+      "metric": "WCAG Contrast: Mentor Active Tab",
+      "expected": ">= 4.5:1 (WCAG AA), >= 7:1 (WCAG AAA)",
+      "observed": "#000000 on #00E676 = 12.58 : 1",
+      "verdict": "PASS (Exceeds WCAG AAA)"
+    },
+    {
+      "metric": "WCAG Contrast: Sidebar Navigation & Labels",
+      "expected": ">= 4.5:1 (WCAG AA), >= 7:1 (WCAG AAA)",
+      "observed": "#FFFFFF on #000000 = 21.00 : 1 (Max Theoretical)",
+      "verdict": "PASS (Exceeds WCAG AAA)"
+    },
+    {
+      "metric": "WCAG Contrast: Metric Panels & Cards",
+      "expected": ">= 4.5:1 (WCAG AA), >= 7:1 (WCAG AAA)",
+      "observed": "#000000 on #FFFFFF = 21.00 : 1 (Max Theoretical)",
+      "verdict": "PASS (Exceeds WCAG AAA)"
+    },
+    {
+      "metric": "Mentor Portal Accent Border",
+      "expected": "4px solid #00E676 (rgb(0, 230, 118))",
+      "observed": "Aside Border: rgb(0, 230, 118)",
+      "verdict": "PASS"
+    },
+    {
+      "metric": "Mentor Navigation Landmark Label",
+      "expected": "nav with aria-label=\"mentor navigation\"",
+      "observed": "aria-label=\"mentor navigation\"",
+      "verdict": "PASS"
+    }
+  ],
+  "sessionLifecycle": [
+    {
+      "component": "Instant Logout",
+      "metric": "JWT Auth Token Purge",
+      "expected": "localStorage.getItem(\"codesrijan_auth_token\") === null",
+      "observed": "Purged (null)",
+      "verdict": "PASS"
+    },
+    {
+      "component": "Instant Logout",
+      "metric": "Cached User Data Purge",
+      "expected": "localStorage.getItem(\"codesrijan_user\") === null",
+      "observed": "Purged (null)",
+      "verdict": "PASS"
+    },
+    {
+      "component": "Instant Logout",
+      "metric": "SessionStorage Sanitation",
+      "expected": "sessionStorage.length === 0",
+      "observed": "sessionStorage.length = 0",
+      "verdict": "PASS"
+    },
+    {
+      "component": "Instant Logout",
+      "metric": "Window Hard Navigation Dispatch",
+      "expected": "window.location.replace(\"/login\") invoked immediately on click",
+      "observed": "window.location.replace(\"/login\") dispatched synchronously upon token purge",
+      "verdict": "PASS"
+    },
+    {
+      "component": "PortalGuard Security Gate",
+      "metric": "Unauthenticated Access Prevention",
+      "expected": "Immediate redirection to /login without displaying portal workspace",
+      "observed": "Navigating to /judge-command-center redirected to https://codesrijan-nine.vercel.app/judge-command-center",
+      "verdict": "FAIL"
+    },
+    {
+      "component": "AutoLogoutManager",
+      "metric": "Inactivity Threshold Configuration",
+      "expected": "60 minutes (60 * 60 * 1000 ms = 3,600,000 ms)",
+      "observed": "60 * 60 * 1000",
+      "verdict": "PASS"
+    },
+    {
+      "component": "AutoLogoutManager",
+      "metric": "Warning Notification Threshold",
+      "expected": "1 minute warning before expiry (60 * 1000 ms = 60,000 ms)",
+      "observed": "60 * 1000",
+      "verdict": "PASS"
+    },
+    {
+      "component": "AutoLogoutManager",
+      "metric": "Monitored User Activity Events",
+      "expected": "[\"mousemove\", \"mousedown\", \"keydown\", \"touchstart\", \"scroll\", \"click\"]",
+      "observed": "[\"mousemove\", \"mousedown\", \"keydown\", \"touchstart\", \"scroll\", \"click\"]",
+      "verdict": "PASS"
+    },
+    {
+      "component": "AutoLogoutManager",
+      "metric": "Inactivity Warning Dialog UI",
+      "expected": "\"Inactivity Warning\" banner with \"Stay Logged In\" interactive reset button",
+      "observed": "Warning Header: true, Reset Button: true",
+      "verdict": "PASS"
+    },
+    {
+      "component": "AutoLogoutManager",
+      "metric": "Session Expiry Execution",
+      "expected": "logout() invocation + redirection to /login",
+      "observed": "logout() present: true, toast message: \"Session expired: Logged out due to 15 minutes of inactivity.\"",
+      "verdict": "PASS"
+    }
+  ],
+  "observations": [
+    "Observation in AutoLogoutManager.tsx: While INACTIVITY_LIMIT_MS is accurately configured to 60 minutes (60 * 60 * 1000 ms), the error toast copy currently reads \"Logged out due to 15 minutes of inactivity.\" Recommend updating string copy to \"60 minutes\" for consistency."
+  ]
+}
