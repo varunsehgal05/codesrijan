@@ -516,6 +516,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         setState(prev => ({ ...prev, currentUser: null }));
         try {
             localStorage.removeItem("codesrijan_auth_token");
+            localStorage.removeItem("codesrijan_user");
             localStorage.removeItem("codesrijan_cached_user");
             sessionStorage.clear();
         } catch {}

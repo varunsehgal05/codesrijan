@@ -3184,6 +3184,37 @@ app.post('/api/mentor/requests/:id/respond', requireAuth, requireRole(['mentor',
     }
 });
 
+app.post('/api/mentor/requests/:id/resolve', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const request = await MentorRequest.findOne({ id: req.params.id });
+        if (!request) return res.status(404).json({ message: "Guidance request not found." });
+        request.status = 'resolved';
+        request.resolvedAt = new Date();
+        request.resolvedBy = req.user.id;
+        await request.save();
+        res.json(request);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to resolve guidance request: " + e.message });
+    }
+});
+
+app.post('/api/mentor/requests/:id/reopen', requireAuth, requireRole(['mentor', 'admin', 'student']), async (req, res) => {
+    try {
+        const request = await MentorRequest.findOne({ id: req.params.id });
+        if (!request) return res.status(404).json({ message: "Guidance request not found." });
+        if (request.status !== 'resolved') {
+            return res.status(409).json({ message: "Only resolved requests can be reopened." });
+        }
+        request.status = 'accepted';
+        request.reopenedAt = new Date();
+        request.reopenedBy = req.user.id;
+        await request.save();
+        res.json(request);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to reopen guidance request: " + e.message });
+    }
+});
+
 // --- DIRECT ADMIN ROLE ASSIGNMENTS & RUBRIC RESILIENCE ---
 app.get('/api/admin/judge-assignments', requireAuth, requireRole(['admin']), async (req, res) => {
     try {
