@@ -164,14 +164,14 @@ export function JudgePortal() {
   const evaluationFor = (submission: Submission) =>
     data?.evaluations.find(
       (e) =>
-        e.assignmentId ===
-          data.assignments.find(
-            (a) => a.projectId === submission.projectId && a.hackathonId === submission.hackathonId,
-          )?.id ||
-        (e.teamId === submission.teamId &&
-          data.assignments.some(
-            (a) => a.id === e.assignmentId && a.hackathonId === submission.hackathonId,
-          )),
+        (e.submissionId && submission.id && e.submissionId === submission.id) ||
+        (e.teamId && submission.teamId && e.teamId === submission.teamId) ||
+        (e.projectId && submission.projectId && e.projectId === submission.projectId) ||
+        (e.assignmentId &&
+          e.assignmentId ===
+            data.assignments.find(
+              (a) => Boolean(submission.projectId) && a.projectId === submission.projectId && a.hackathonId === submission.hackathonId,
+            )?.id)
     );
   const submissions =
     data?.submissions.filter((s) =>
@@ -388,7 +388,11 @@ function EvaluationWorkspace({ submissionId, back }: { submissionId: string; bac
         if (!sub) throw new Error("Assigned submission payload not found.");
 
         const team = teams.find((t: any) => t.id === sub.teamId);
-        const ev = evaluations.find(e => e.submissionId === sub.id || e.projectId === sub.projectId || e.teamId === sub.teamId);
+        const ev = evaluations.find(e => 
+          (Boolean(sub.id) && Boolean(e.submissionId) && e.submissionId === sub.id) || 
+          (Boolean(sub.teamId) && Boolean(e.teamId) && e.teamId === sub.teamId) ||
+          (Boolean(sub.projectId) && Boolean(e.projectId) && e.projectId === sub.projectId)
+        );
 
         const defaultCriteria: Criterion[] = [
           { id: "crit-exec", name: "Technical Execution & Architecture", minScore: 0, maxScore: 30, weight: 30, description: "Code quality, stability, test coverage." },

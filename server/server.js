@@ -3411,6 +3411,111 @@ app.get('/api/mentor/dashboard', requireAuth, requireRole(['mentor', 'admin']), 
 });
 
 // EVALUATIONS (JUDGE/ADMIN)
+app.post('/api/evaluations', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    try {
+        const { submissionId, teamId, projectId, scores, comments, strengths, improvements, status = 'draft', totalScore } = req.body || {};
+        let submission = null;
+        if (submissionId) submission = await Submission.findOne({ id: submissionId }).lean();
+        if (!submission && teamId) submission = await Submission.findOne({ teamId }).lean();
+        if (!submission && projectId) submission = await Submission.findOne({ projectId }).lean();
+
+        const targetTeamId = submission?.teamId || teamId;
+        const targetHackathonId = submission?.hackathonId || req.body.hackathonId;
+        const targetProjectId = submission?.projectId || projectId || targetTeamId;
+        const targetSubId = submission?.id || submissionId;
+
+        let existing = await Evaluation.findOne({
+            judgeId: req.user.id,
+            $or: [
+                ...(targetSubId ? [{ submissionId: targetSubId }] : []),
+                ...(targetTeamId ? [{ teamId: targetTeamId }] : [])
+            ]
+        });
+
+        if (existing && existing.status === 'submitted' && status !== 'draft') {
+            return res.status(409).json({ message: "Evaluation is submitted and locked. An administrator must reopen it." });
+        }
+
+        const calculatedScore = totalScore ?? (Array.isArray(scores) ? scores.reduce((sum, s) => sum + (Number(s.score) || 0), 0) : 0);
+        const evalId = existing?.id || `evl-${Date.now()}`;
+
+        const payload = {
+            id: evalId,
+            judgeId: req.user.id,
+            submissionId: targetSubId,
+            teamId: targetTeamId,
+            projectId: targetProjectId,
+            hackathonId: targetHackathonId,
+            scores: Array.isArray(scores) ? scores : [],
+            totalScore: calculatedScore,
+            comments: comments || '',
+            strengths: strengths || '',
+            improvements: improvements || '',
+            status: status === 'submitted' ? 'submitted' : 'draft',
+            submittedAt: status === 'submitted' ? new Date() : null,
+            updatedAt: new Date()
+        };
+
+        const result = await Evaluation.findOneAndUpdate(
+            { id: evalId },
+            { $set: payload, $setOnInsert: { createdAt: new Date() } },
+            { upsert: true, returnDocument: 'after' }
+        );
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to save evaluation: " + e.message });
+    }
+});
+
+app.put('/api/judge/submissions/:id/evaluation', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    try {
+        const submission = await Submission.findOne({ id: req.params.id }).lean() || await Submission.findOne({ teamId: req.params.id }).lean();
+        const { scores, comments, strengths, improvements, status = 'draft', totalScore } = req.body || {};
+        const targetTeamId = submission?.teamId || req.params.id;
+        const targetSubId = submission?.id || req.params.id;
+
+        let existing = await Evaluation.findOne({
+            judgeId: req.user.id,
+            $or: [
+                { submissionId: targetSubId },
+                { teamId: targetTeamId }
+            ]
+        });
+
+        if (existing && existing.status === 'submitted') {
+            return res.status(409).json({ message: "Evaluation is submitted and locked. An administrator must reopen it." });
+        }
+
+        const calculatedScore = totalScore ?? (Array.isArray(scores) ? scores.reduce((sum, s) => sum + (Number(s.score) || 0), 0) : 0);
+        const evalId = existing?.id || `evl-${Date.now()}`;
+
+        const payload = {
+            id: evalId,
+            judgeId: req.user.id,
+            submissionId: targetSubId,
+            teamId: targetTeamId,
+            projectId: submission?.projectId || targetTeamId,
+            hackathonId: submission?.hackathonId,
+            scores: Array.isArray(scores) ? scores : [],
+            totalScore: calculatedScore,
+            comments: comments || '',
+            strengths: strengths || '',
+            improvements: improvements || '',
+            status: status === 'submitted' ? 'submitted' : 'draft',
+            submittedAt: status === 'submitted' ? new Date() : null,
+            updatedAt: new Date()
+        };
+
+        const result = await Evaluation.findOneAndUpdate(
+            { id: evalId },
+            { $set: payload, $setOnInsert: { createdAt: new Date() } },
+            { upsert: true, returnDocument: 'after' }
+        );
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update evaluation: " + e.message });
+    }
+});
 
 
 
