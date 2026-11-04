@@ -93,7 +93,7 @@ export function AutoLogoutManager() {
                     warningToastIdRef.current = null;
                 }
                 logout();
-                toast.error("Session expired: Logged out due to 15 minutes of inactivity.", {
+                toast.error("Session expired: Logged out due to 60 minutes of inactivity.", {
                     duration: 6000
                 });
                 const isAdmin = routerState.location.pathname.startsWith("/admin");
