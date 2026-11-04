@@ -160,7 +160,7 @@ app.use(verifyAppCheck);
 // --- Schemas (Imported from modular directory) ---
 import { User, Team, ProblemStatement, Hackathon, Registration, Submission, Project, Evaluation, TeamJoinRequest, TeamInvitation, RecruitmentProfile, Certificate, ProjectTask, MentorRequest } from './models/index.js';
 import { Announcement, CalendarEvent, Sponsor, ActivityLog, SystemSetting, Conversation, Message, SupportTicket, Notification } from './models/secondary.js';
-import { FAQ, Gallery, MentorSession } from './models/tertiary.js';
+import { FAQ, Gallery, MentorSession, MentorAssignment, JudgeAssignment, EvaluationCriteria } from './models/tertiary.js';
 import { installRolePortals } from './role-portals.js';
 import { Session, EmailVerification, PasswordResetToken, SecurityEvent } from './models/auth.js';
 import { requireAuth, requireRole, resolveOptionalUser } from './middleware/auth.js';
@@ -3181,6 +3181,201 @@ app.post('/api/mentor/requests/:id/respond', requireAuth, requireRole(['mentor',
         res.json(request);
     } catch (e) {
         res.status(500).json({ message: "Failed to post guidance response: " + e.message });
+    }
+});
+
+// --- DIRECT ADMIN ROLE ASSIGNMENTS & RUBRIC RESILIENCE ---
+app.get('/api/admin/judge-assignments', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const rows = await JudgeAssignment.find().lean();
+        res.json(rows || []);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch judge assignments: " + e.message });
+    }
+});
+
+app.post('/api/admin/judge-assignments', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { judgeId, hackathonId, projectId, teamId } = req.body || {};
+        const targetProjectId = projectId || teamId;
+        if (!judgeId || !hackathonId || !targetProjectId) {
+            return res.status(400).json({ message: "judgeId, hackathonId, and projectId are required." });
+        }
+        const id = `judge-assignment-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const row = await JudgeAssignment.create({
+            id,
+            judgeId,
+            hackathonId,
+            projectId: targetProjectId,
+            teamId: teamId || targetProjectId,
+            assignedBy: req.user.id,
+            status: 'assigned',
+            assignedAt: new Date()
+        });
+        res.status(201).json(row);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create judge assignment: " + e.message });
+    }
+});
+
+app.delete('/api/admin/judge-assignments/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const row = await JudgeAssignment.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: { status: 'reassigned' } },
+            { returnDocument: 'after' }
+        );
+        res.json(row || { message: "Assignment deleted." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete judge assignment: " + e.message });
+    }
+});
+
+app.get('/api/admin/mentor-assignments', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const rows = await MentorAssignment.find().lean();
+        res.json(rows || []);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch mentor assignments: " + e.message });
+    }
+});
+
+app.post('/api/admin/mentor-assignments', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { mentorId, hackathonId, teamId } = req.body || {};
+        if (!mentorId || !hackathonId || !teamId) {
+            return res.status(400).json({ message: "mentorId, hackathonId, and teamId are required." });
+        }
+        const id = `mentor-assignment-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        const row = await MentorAssignment.create({
+            id,
+            mentorId,
+            hackathonId,
+            teamId,
+            assignedBy: req.user.id,
+            status: 'assigned',
+            assignedAt: new Date()
+        });
+        res.status(201).json(row);
+    } catch (e) {
+        res.status(500).json({ message: "Failed to create mentor assignment: " + e.message });
+    }
+});
+
+app.delete('/api/admin/mentor-assignments/:id', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const row = await MentorAssignment.findOneAndUpdate(
+            { id: req.params.id },
+            { $set: { status: 'reassigned' } },
+            { returnDocument: 'after' }
+        );
+        res.json(row || { message: "Assignment deleted." });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to delete mentor assignment: " + e.message });
+    }
+});
+
+app.get('/api/admin/hackathons/:id/rubric', requireAuth, requireRole(['admin', 'judge']), async (req, res) => {
+    try {
+        const criteria = await EvaluationCriteria.find({ hackathonId: req.params.id, isActive: true }).sort({ order: 1 }).lean();
+        if (criteria.length) {
+            return res.json({ criteria, roundingDecimals: 2, mandatoryFeedback: true });
+        }
+        const defaults = [
+            { id: `crit-${req.params.id}-tech`, hackathonId: req.params.id, name: "Technical Execution & Architecture", minScore: 0, maxScore: 30, weight: 30, order: 0, isActive: true },
+            { id: `crit-${req.params.id}-inno`, hackathonId: req.params.id, name: "Innovation & Originality", minScore: 0, maxScore: 30, weight: 30, order: 1, isActive: true },
+            { id: `crit-${req.params.id}-impact`, hackathonId: req.params.id, name: "Practical Impact & Real-World Usability", minScore: 0, maxScore: 20, weight: 20, order: 2, isActive: true },
+            { id: `crit-${req.params.id}-pitch`, hackathonId: req.params.id, name: "Presentation & Delivery", minScore: 0, maxScore: 20, weight: 20, order: 3, isActive: true }
+        ];
+        res.json({ criteria: defaults, roundingDecimals: 2, mandatoryFeedback: true });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to fetch rubric: " + e.message });
+    }
+});
+
+app.put('/api/admin/hackathons/:id/rubric', requireAuth, requireRole(['admin']), async (req, res) => {
+    try {
+        const { criteria } = req.body || {};
+        if (!Array.isArray(criteria) || !criteria.length) {
+            return res.status(400).json({ message: "Criteria array is required." });
+        }
+        await EvaluationCriteria.deleteMany({ hackathonId: req.params.id });
+        const saved = await EvaluationCriteria.insertMany(criteria.map((c, i) => ({
+            id: c.id || `crit-${Date.now()}-${i}`,
+            hackathonId: req.params.id,
+            name: c.name,
+            description: c.description || '',
+            minScore: c.minScore ?? 0,
+            maxScore: c.maxScore || 10,
+            weight: c.weight || (100 / criteria.length),
+            order: i,
+            isActive: true
+        })));
+        res.json({ criteria: saved, roundingDecimals: 2, mandatoryFeedback: true });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to update rubric: " + e.message });
+    }
+});
+
+// --- DIRECT COMPOSITE ROLE PORTAL DASHBOARDS ---
+app.get('/api/judge/dashboard', requireAuth, requireRole(['judge', 'admin']), async (req, res) => {
+    try {
+        const [submissions, assignments, evaluations, teams, hackathons] = await Promise.all([
+            Submission.find().sort({ createdAt: -1 }).lean(),
+            JudgeAssignment.find(req.user.role === 'admin' ? {} : { judgeId: req.user.id, status: { $ne: 'reassigned' } }).lean(),
+            Evaluation.find(req.user.role === 'admin' ? {} : { judgeId: req.user.id }).lean(),
+            Team.find().select('-adminNote').lean(),
+            Hackathon.find().select('id name title evaluationDeadline').lean()
+        ]);
+        const submittedSubs = submissions.filter(s => s.status === 'submitted' || s.status === 'locked');
+        const drafts = evaluations.filter(e => e.status === 'draft').length;
+        const submitted = evaluations.filter(e => e.status === 'submitted').length;
+        res.json({
+            submissions: submittedSubs.length ? submittedSubs : submissions,
+            assignments,
+            evaluations,
+            teams,
+            hackathons,
+            metrics: {
+                totalAssigned: assignments.length || submittedSubs.length,
+                pendingEvaluations: Math.max(0, (assignments.length || submittedSubs.length) - submitted),
+                draftEvaluations: drafts,
+                submittedEvaluations: submitted
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to load judge dashboard: " + e.message });
+    }
+});
+
+app.get('/api/mentor/dashboard', requireAuth, requireRole(['mentor', 'admin']), async (req, res) => {
+    try {
+        const [teams, requests, sessions, assignments, hackathons] = await Promise.all([
+            Team.find().select('-adminNote').lean(),
+            MentorRequest.find().sort({ createdAt: -1 }).lean(),
+            MentorSession.find(req.user.role === 'admin' ? {} : { mentorId: req.user.id }).lean(),
+            MentorAssignment.find(req.user.role === 'admin' ? {} : { mentorId: req.user.id, status: { $ne: 'reassigned' } }).lean(),
+            Hackathon.find().select('id name title').lean()
+        ]);
+        const openRequests = requests.filter(r => ['pending', 'accepted'].includes(r.status)).length;
+        const pendingRequests = requests.filter(r => r.status === 'pending').length;
+        const resolvedRequests = requests.filter(r => r.status === 'resolved').length;
+        res.json({
+            teams,
+            requests,
+            sessions,
+            assignments,
+            hackathons,
+            metrics: {
+                assignedSquads: assignments.length || teams.length,
+                openRequests,
+                pendingRequests,
+                resolvedRequests,
+                unreadNotifications: 0
+            }
+        });
+    } catch (e) {
+        res.status(500).json({ message: "Failed to load mentor dashboard: " + e.message });
     }
 });
 

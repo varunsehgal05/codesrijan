@@ -11,7 +11,13 @@ export const Route = createFileRoute("/workspace")({
 function WorkspaceHUD() {
   const { currentUser, isLoaded, teams, tasks, hackathons, problems, users, registrations, refetchData } = useAppStore();
   const navigate = useNavigate();
-  const userTeam = teams.find(t => t.id === currentUser?.teamId);
+  // Resilient squad resolution: match teamId, leaderId, or member membership
+  const userTeam = teams.find(t => 
+    (currentUser?.teamId && t.id === currentUser.teamId) || 
+    t.leaderId === currentUser?.id || 
+    t.leaderId === (currentUser as any)?._id ||
+    (Array.isArray(t.memberIds) && (t.memberIds.includes(currentUser?.id || '') || t.memberIds.includes((currentUser as any)?._id || '')))
+  );
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [taskSearch, setTaskSearch] = useState("");
@@ -623,24 +629,13 @@ function WorkspaceHUD() {
               {readinessScore === 100 ? "Ready for final lockdown transmission." : "Complete all checkpoints to unlock clean submission."}
             </div>
             {isSquadLeader && !userTeam.isSubmitted && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSubmissionForm({
-                    description: userTeam.description || "",
-                    technologies: "",
-                    githubLink: githubLink,
-                    figmaLink: figmaLink,
-                    demoLink: demoLink,
-                    demoVideoUrl: ""
-                  });
-                  setIsSubmitting(true);
-                }}
-                className="mt-3 w-full bg-error hover:bg-black text-white font-black text-xs uppercase py-2.5 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              <a
+                href="#deliverable-matrix"
+                className="mt-3 w-full bg-surface-container hover:bg-black hover:text-white text-ink-black font-mono font-bold text-[11px] uppercase py-2 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5"
               >
-                <span className="material-symbols-outlined text-sm">rocket_launch</span>
-                SUBMIT PROJECT NOW →
-              </button>
+                <span className="material-symbols-outlined text-xs">arrow_downward</span>
+                STAGE DELIVERABLES BELOW ↓
+              </a>
             )}
           </div>
 
@@ -899,7 +894,7 @@ function WorkspaceHUD() {
         </div>
 
         {/* Deliverable Payload Engine */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div id="deliverable-matrix" className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="col-span-1 md:col-span-2 bg-pure-white border-4 border-ink-black brutal-shadow p-6 sm:p-8 flex flex-col gap-6">
             <div className="flex justify-between items-center border-b-4 border-ink-black pb-2">
               <h2 className="font-headline-lg uppercase text-electric-blue">Payload Attachments</h2>

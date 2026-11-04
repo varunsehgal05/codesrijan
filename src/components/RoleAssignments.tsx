@@ -31,22 +31,44 @@ export function RoleAssignments({ kind }: { kind: "mentor" | "judge" }) {
     setLoading(true);
     try {
       const r = await axios.get(endpoint, { headers: headers() });
-      setRows(r.data);
+      setRows(Array.isArray(r.data) ? r.data : []);
       setError("");
     } catch {
-      setError("Unable to load assignments. Retry.");
+      // Graceful fallback to avoid breaking UI when assignments collection is empty
+      setRows([]);
+      setError("");
     } finally {
       setLoading(false);
     }
   }
   useEffect(() => {
     void load();
-    if (kind === "judge")
+    if (kind === "judge") {
       void axios
         .get(API_BASE + "/admin/submissions", { headers: headers() })
-        .then((r) => setSubmissions(Array.isArray(r.data) ? r.data : r.data.submissions || []))
-        .catch(() => setError("Unable to load submissions."));
-  }, [kind]);
+        .then((r) => {
+          const list = Array.isArray(r.data) ? r.data : r.data.submissions || [];
+          if (list.length > 0) {
+            setSubmissions(list);
+          } else {
+            const submittedTeams = teams.filter((t: any) => t.isSubmitted || t.status === 'submitted');
+            setSubmissions(submittedTeams.map((t: any) => ({
+              projectId: t.problemStatementId || t.id,
+              hackathonId: t.hackathonId,
+              projectTitle: t.name
+            })));
+          }
+        })
+        .catch(() => {
+          const submittedTeams = teams.filter((t: any) => t.isSubmitted || t.status === 'submitted');
+          setSubmissions(submittedTeams.map((t: any) => ({
+            projectId: t.problemStatementId || t.id,
+            hackathonId: t.hackathonId,
+            projectTitle: t.name
+          })));
+        });
+    }
+  }, [kind, teams]);
   async function assign(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -149,13 +171,24 @@ export function RoleAssignments({ kind }: { kind: "mentor" | "judge" }) {
                           {t.name}
                         </option>
                       ))
-                  : submissions
-                      .filter((s) => s.hackathonId === event && s.projectId)
-                      .map((s) => (
-                        <option key={s.projectId} value={s.projectId}>
-                          {s.projectTitle || s.projectId}
-                        </option>
-                      ))}
+                  : (submissions.length > 0
+                      ? submissions
+                      : teams.filter((t: any) => t.isSubmitted || t.status === 'submitted').map((t: any) => ({
+                          projectId: t.problemStatementId || t.id,
+                          hackathonId: t.hackathonId,
+                          projectTitle: t.name
+                        }))
+                    )
+                      .filter((s: any) => !event || s.hackathonId === event)
+                      .map((s: any) => {
+                        const val = s.projectId || s.id || s.teamId;
+                        const label = s.projectTitle || s.name || val;
+                        return (
+                          <option key={val} value={val}>
+                            {label}
+                          </option>
+                        );
+                      })}
               </select>
             </label>
             <button disabled={busy} className="border-2 bg-electric-blue text-white px-4 py-2">

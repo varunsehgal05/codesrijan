@@ -183,8 +183,19 @@ function RegisterPage() {
                                     id="reg-handle"
                                     type="text"
                                     value={handle}
+                                    onKeyDown={(e) => {
+                                        if (e.key === ' ' || e.code === 'Space') {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    onPaste={(e) => {
+                                        e.preventDefault();
+                                        const pasted = e.clipboardData.getData('text');
+                                        const clean = pasted.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+                                        setHandle(clean);
+                                    }}
                                     onChange={(e) => {
-                                        // Auto-sanitize: convert spaces to underscores and lowercase
+                                        // Strictly eliminate spaces and enforce URL-safe lowercase handle
                                         const val = e.target.value.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
                                         setHandle(val);
                                     }}
@@ -192,9 +203,23 @@ function RegisterPage() {
                                     className="w-full bg-transparent py-3 px-4 font-code-snippet text-stark-black focus:outline-none focus:ring-2 focus:ring-electric-blue focus:border-electric-blue"
                                 />
                             </div>
-                            <span className="text-[11px] font-mono text-zinc-600">
-                                ℹ️ No spaces allowed. Lowercase letters, numbers, underscores, and hyphens only (e.g. phantom_coder).
-                            </span>
+                            <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-mono text-zinc-600">
+                                    ℹ️ No spaces allowed. Letters, numbers, underscores, and hyphens only.
+                                </span>
+                                {name.trim() && !handle && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const suggested = `${name.trim()}${lastName.trim() ? '_' + lastName.trim() : ''}`.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+                                            setHandle(suggested);
+                                        }}
+                                        className="text-[11px] font-mono font-bold text-electric-blue hover:underline cursor-pointer"
+                                    >
+                                        Auto-fill @{name.trim().toLowerCase()}{lastName.trim() ? '_' + lastName.trim().toLowerCase() : ''}
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
