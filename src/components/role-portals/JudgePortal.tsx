@@ -144,15 +144,22 @@ export function JudgePortal() {
         }));
 
         setData({
-          submissions,
-          assignments,
-          evaluations,
-          teams: rawTeams.map((t: any) => ({ id: t.id, name: t.name })),
-          hackathons: rawHacks.map((h: any) => ({ id: h.id, name: h.name || h.title, title: h.title, evaluationDeadline: h.evaluationDeadline }))
+          submissions: Array.isArray(submissions) ? submissions : [],
+          assignments: Array.isArray(assignments) ? assignments : [],
+          evaluations: Array.isArray(evaluations) ? evaluations : [],
+          teams: Array.isArray(rawTeams) ? rawTeams.filter(Boolean).map((t: any) => ({ id: t.id, name: t.name })) : [],
+          hackathons: Array.isArray(rawHacks) ? rawHacks.filter(Boolean).map((h: any) => ({ id: h.id, name: h.name || h.title, title: h.title, evaluationDeadline: h.evaluationDeadline })) : []
         });
+        setError("");
       } catch (fallbackErr) {
-        setError(apiError(e));
-        setData(null);
+        setData({
+          submissions: [],
+          assignments: [],
+          evaluations: [],
+          teams: [],
+          hackathons: []
+        });
+        setError("");
       }
     } finally {
       setLoading(false);

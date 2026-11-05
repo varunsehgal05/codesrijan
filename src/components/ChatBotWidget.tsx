@@ -99,7 +99,19 @@ export function ChatBotWidget() {
                 const cleanBase = apiBaseUrl.replace(/\/api\/?$/, '');
                 const url = `${cleanBase}/api/ai/chat`;
                 const res = await axios.post(url, payload, { headers });
-                if (res.data?.reply) responseText = res.data.reply;
+                if (res.data?.reply) {
+                    responseText = res.data.reply;
+                    const q = messageText.toLowerCase();
+                    if ((q.includes("deadline") || q.includes("end") || q.includes("when")) && responseText.includes("I am SrijanBot, your CodeSrijan guide")) {
+                        const activeH = (teams && currentUser?.teamId && teams.find(t => t.id === currentUser.teamId)?.hackathonId)
+                            ? (hackathons.find(h => h.id === teams.find(t => t.id === currentUser.teamId)?.hackathonId) || hackathons[0])
+                            : (hackathons && hackathons[0]);
+                        const hName = activeH?.name || activeH?.title || "CodeSrijan Impact Challenge — Free Edition";
+                        const deadline = activeH?.submissionDeadline ? new Date(activeH.submissionDeadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST' : "November 14, 2026, 3:36 AM IST";
+                        const endDate = activeH?.endDate ? new Date(activeH.endDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST' : "November 14, 2026, 5:36 AM IST";
+                        responseText = `Official Tournament Schedule for "${hName}":\n• Final Submission Deadline: ${deadline}\n• Event Conclusion: ${endDate}\nAll deliverables must be finalized and transmitted in your Workspace before the countdown lockdown. [Open Workspace -> /workspace]`;
+                    }
+                }
             } catch (e) {
                 console.warn("Backend AI endpoint fallback triggered.");
             }

@@ -132,6 +132,20 @@ export interface Team {
     isTest?: boolean;
 }
 
+export function resolveUserTeam(teams: Team[] | undefined | null, currentUser: User | undefined | null): Team | undefined {
+    if (!currentUser || !Array.isArray(teams)) return undefined;
+    const uid = currentUser.id || currentUser._id;
+    return teams.find(t => 
+        Boolean(t) && (
+            (currentUser.teamId && t.id === currentUser.teamId) || 
+            (uid && t.leaderId === uid) || 
+            (uid && (t as any)._id === currentUser.teamId) ||
+            (Array.isArray(t.memberIds) && Boolean(uid) && t.memberIds.includes(uid!)) ||
+            (Array.isArray(t.members) && Boolean(uid) && t.members.includes(uid!))
+        )
+    );
+}
+
 export interface Problem {
     id: string;
     title: string;
@@ -343,16 +357,26 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
                 hackathons: hackathonsData.length ? hackathonsData : undefined
             });
 
+            const finalTeams = teamsData.length ? teamsData : prev.teams;
+            let syncUser = nextUser ? nextUser : (token ? prev.currentUser : null);
+            if (syncUser) {
+                const resolvedTeam = resolveUserTeam(finalTeams, syncUser);
+                if (resolvedTeam && (!syncUser.teamId || syncUser.teamId !== resolvedTeam.id)) {
+                    syncUser = { ...syncUser, teamId: resolvedTeam.id };
+                    setCachedUser(syncUser);
+                }
+            }
+
             setState(prev => ({
                 ...prev,
                 users: usersData.length ? usersData : prev.users,
-                teams: teamsData.length ? teamsData : prev.teams,
+                teams: finalTeams,
                 problems: problemsData.length ? problemsData : prev.problems,
                 hackathons: hackathonsData.length ? hackathonsData : prev.hackathons,
                 registrations: regRes.data || prev.registrations,
                 tasks: tasksRes.data || prev.tasks,
                 evaluations: evalRes.data || prev.evaluations,
-                ...(nextUser ? { currentUser: nextUser } : (token ? {} : { currentUser: null })),
+                currentUser: syncUser,
                 isLoaded: true
             }));
         } catch (e) {

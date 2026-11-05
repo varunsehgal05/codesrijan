@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -23,7 +23,7 @@ export const Route = createFileRoute("/profile")({
 function Page7() {
   const { currentUser, teams, registrations, hackathons, isLoaded, refetchData } = useAppStore();
   const userName = currentUser?.name || "Hacker";
-  const currentTeam = teams.find(t => t.id === currentUser?.teamId);
+  const currentTeam = resolveUserTeam(teams, currentUser);
   
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);

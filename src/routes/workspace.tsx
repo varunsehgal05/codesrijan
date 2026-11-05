@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -12,12 +12,7 @@ function WorkspaceHUD() {
   const { currentUser, isLoaded, teams, tasks, hackathons, problems, users, registrations, refetchData } = useAppStore();
   const navigate = useNavigate();
   // Resilient squad resolution: match teamId, leaderId, or member membership
-  const userTeam = teams.find(t => 
-    (currentUser?.teamId && t.id === currentUser.teamId) || 
-    t.leaderId === currentUser?.id || 
-    t.leaderId === (currentUser as any)?._id ||
-    (Array.isArray(t.memberIds) && (t.memberIds.includes(currentUser?.id || '') || t.memberIds.includes((currentUser as any)?._id || '')))
-  );
+  const userTeam = resolveUserTeam(teams, currentUser);
 
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [taskSearch, setTaskSearch] = useState("");

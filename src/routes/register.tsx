@@ -59,19 +59,13 @@ function RegisterPage() {
             return;
         }
 
-        const cleanHandle = handle.trim().replace(/^@/, '');
-        if (cleanHandle && /\s/.test(cleanHandle)) {
-            setErrorMsg("Hacker handle cannot contain spaces. Use underscores or hyphens (e.g. phantom_coder).");
-            return;
-        }
-        if (cleanHandle && !/^[a-zA-Z0-9_-]+$/.test(cleanHandle)) {
-            setErrorMsg("Hacker handle can only contain letters, numbers, underscores, and hyphens.");
-            return;
-        }
+        // Strictly sanitize handle - eliminate spaces, enforce lowercase URL-safe handle
+        const cleanHandle = (handle || '').trim().replace(/^@/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
+        const fullName = lastName.trim() ? `${name.trim()} ${lastName.trim()}` : name.trim();
+        const finalHandle = cleanHandle || fullName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '');
 
         setLoading(true);
         try {
-            const fullName = lastName.trim() ? `${name.trim()} ${lastName.trim()}` : name.trim();
             const resData = await register({
                 id: "", // Managed explicitly by backend now
                 name: fullName,
@@ -82,7 +76,7 @@ function RegisterPage() {
                 college: college.trim(),
                 branch,
                 year,
-                ...(cleanHandle ? { handle: cleanHandle.toLowerCase().replace(/\s+/g, '_') } : {})
+                handle: finalHandle
             });
             // Navigate to OTP verification screen WITHOUT exposing tokens or raw otp parameters
             navigate({

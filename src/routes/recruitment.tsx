@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -50,19 +50,20 @@ function RecruitmentMatrix() {
 
   // Filtered teams for Admin view - declared unconditionally before any early returns
   const genuineHackathons = useMemo(() => {
-    return safeHackathons.filter(h => !h.isTest && !h.id.toLowerCase().startsWith('qa-') && !h.id.toLowerCase().startsWith('qa_'));
+    return safeHackathons.filter(h => Boolean(h) && !h.isTest && Boolean(h.id) && !String(h.id).toLowerCase().startsWith('qa-') && !String(h.id).toLowerCase().startsWith('qa_'));
   }, [safeHackathons]);
 
   const adminFilteredTeams = useMemo(() => {
     return safeTeams.filter(team => {
+      if (!team) return false;
       const q = adminSearch.toLowerCase().trim();
       const matchesSearch = !q || 
         team.name?.toLowerCase().includes(q) || 
         team.id?.toLowerCase().includes(q) ||
-        (team.memberIds || []).some(mid => {
-          const u = safeUsers.find(user => user.id === mid);
+        (Array.isArray(team.memberIds) && team.memberIds.some(mid => {
+          const u = safeUsers.find(user => user && user.id === mid);
           return u?.name?.toLowerCase().includes(q) || u?.email?.toLowerCase().includes(q);
-        });
+        }));
 
       const teamHackathon = team.hackathonId || (team as any).lockedForHackathonId;
       const matchesHackathon = adminHackathonFilter === "ALL" || teamHackathon === adminHackathonFilter;
@@ -72,9 +73,9 @@ function RecruitmentMatrix() {
     });
   }, [safeTeams, safeUsers, adminSearch, adminHackathonFilter, adminStatusFilter]);
 
-  const hasSquad = !!currentUser?.teamId;
-  const currentTeam = safeTeams.find(t => t.id === currentUser?.teamId);
-  const isTeamLeader = !!(currentTeam && currentUser && currentTeam.leaderId === currentUser.id);
+  const currentTeam = resolveUserTeam(safeTeams, currentUser);
+  const hasSquad = !!currentTeam;
+  const isTeamLeader = !!(currentTeam && currentUser && (currentTeam.leaderId === currentUser.id || currentTeam.leaderId === (currentUser as any)._id));
 
   // Modal States (replacing window.prompt and window.confirm)
   const [disqualifyTarget, setDisqualifyTarget] = useState<{ id: string; name: string } | null>(null);
@@ -869,7 +870,7 @@ function RecruitmentMatrix() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {pendingRequests.map((req: any) => {
-                const requester = safeUsers.find(u => u.id === req.userId);
+                const requester = safeUsers.find(u => u && (u.id === req.userId || (u as any)._id === req.userId));
                 return (
                   <div key={req.id} className="border-2 border-black p-4 bg-surface-container flex flex-col justify-between gap-3">
                     <div>
@@ -917,9 +918,9 @@ function RecruitmentMatrix() {
             </div>
             <div className="flex flex-wrap gap-3">
               {(currentUser as any).friends.map((friendId: string) => {
-                const friend = safeUsers.find(u => u.id === friendId);
+                const friend = safeUsers.find(u => u && (u.id === friendId || (u as any)._id === friendId));
                 if (!friend) return null;
-                const friendTeam = safeTeams.find(t => t.id === friend.teamId);
+                const friendTeam = resolveUserTeam(safeTeams, friend);
                 return (
                   <div key={friendId} className="border-2 border-black bg-surface p-2.5 flex items-center gap-3">
                     <div>
@@ -1038,7 +1039,7 @@ function RecruitmentMatrix() {
                     const slotting = getOperativeSlotting(user);
                     const skills = getOperativeSkills(user, slotting);
                     const isFriend = Array.isArray((currentUser as any)?.friends) && (currentUser as any).friends.includes(user.id);
-                    const candidateTeam = safeTeams.find(t => t.id === user.teamId || t.memberIds?.includes(user.id));
+                    const candidateTeam = safeTeams.find(t => t && (t.id === user.teamId || (Array.isArray(t.memberIds) && t.memberIds.includes(user.id))));
                     const isFreeAgent = !candidateTeam;
 
                     return (
@@ -1055,7 +1056,7 @@ function RecruitmentMatrix() {
                             <span className={`px-2 py-0.5 font-bold text-[10px] uppercase brutal-border max-w-[150px] truncate ${
                               isFreeAgent ? 'bg-emerald-400 text-black' : 'bg-amber-300 text-stark-black'
                             }`}>
-                              {isFreeAgent ? 'FREE AGENT' : `IN SQUAD: ${candidateTeam.name}`}
+                              {isFreeAgent ? 'FREE AGENT' : `IN SQUAD: ${candidateTeam?.name || 'Assigned'}`}
                             </span>
                           </div>
 
@@ -1153,12 +1154,12 @@ function RecruitmentMatrix() {
                     Available Open Squads Seeking Operatives
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {safeTeams.filter(t => t.memberIds && t.memberIds.length < 4).length === 0 ? (
+                    {safeTeams.filter(t => t && Array.isArray(t.memberIds) && t.memberIds.length < 4).length === 0 ? (
                       <div className="col-span-full text-center bg-pure-white brutal-border p-8">
                         <p className="font-mono text-zinc-500 text-xs">All deployed squads are currently full.</p>
                       </div>
                     ) : (
-                      safeTeams.filter(t => t.memberIds && t.memberIds.length < 4).map((team) => (
+                      safeTeams.filter(t => t && Array.isArray(t.memberIds) && t.memberIds.length < 4).map((team) => (
                         <article key={team.id} className="bg-pure-white brutal-border brutal-shadow p-5 flex flex-col justify-between gap-4">
                           <div>
                             <div className="flex justify-between items-start gap-2 mb-2">

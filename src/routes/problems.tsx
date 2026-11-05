@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -103,7 +103,7 @@ function ProblemsPage() {
     fetchProblems();
   }, [currentHackathon?.id, API_URL]);
 
-  const userTeam = teams.find(t => t.id === currentUser?.teamId);
+  const userTeam = resolveUserTeam(teams, currentUser);
 
   const [isLocking, setIsLocking] = useState(false);
 

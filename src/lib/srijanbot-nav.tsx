@@ -124,11 +124,22 @@ export function parseSrijanBotMessageNodes(
 
     while ((match = buttonRegex.exec(text)) !== null) {
         if (match.index > lastIndex) {
-            parts.push(
-                <span key={`txt-${lastIndex}`} className="whitespace-pre-wrap">
-                    {text.substring(lastIndex, match.index)}
-                </span>
-            );
+            let beforeText = text.substring(lastIndex, match.index);
+            if (/^\s*,\s*/.test(beforeText)) {
+                beforeText = beforeText.replace(/^\s*,\s*/, ' ');
+            }
+            if (beforeText.endsWith(', ')) {
+                beforeText = beforeText.slice(0, -2);
+            } else if (beforeText.endsWith(',')) {
+                beforeText = beforeText.slice(0, -1);
+            }
+            if (beforeText.trim()) {
+                parts.push(
+                    <span key={`txt-${lastIndex}`} className="whitespace-pre-wrap">
+                        {beforeText}
+                    </span>
+                );
+            }
         }
 
         const rawContent = (match[1] || "").trim();
@@ -208,11 +219,17 @@ export function parseSrijanBotMessageNodes(
     }
 
     if (lastIndex < text.length) {
-        parts.push(
-            <span key={`txt-end-${lastIndex}`} className="whitespace-pre-wrap">
-                {text.substring(lastIndex)}
-            </span>
-        );
+        let remaining = text.substring(lastIndex);
+        if (/^\s*,\s*/.test(remaining)) {
+            remaining = remaining.replace(/^\s*,\s*/, ' ');
+        }
+        if (remaining.trim()) {
+            parts.push(
+                <span key={`txt-end-${lastIndex}`} className="whitespace-pre-wrap">
+                    {remaining}
+                </span>
+            );
+        }
     }
 
     return parts.length > 0 ? parts : text;

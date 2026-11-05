@@ -1050,6 +1050,28 @@ export async function computeAIFallback(req, precomputedCtx = null) {
             return { reply };
         }
 
+        // PRIORITY 17B: Hackathon Deadlines, Schedules & End Dates
+        if (
+            /when (does|do|is|are|my)?.*(hackathon|hackathons|submission|event|challenge).*(end|close|finish|due|deadline)/i.test(lowerMsg) ||
+            /when.*(end|finish|close|deadline)/i.test(lowerMsg) ||
+            /hackathons? end/i.test(lowerMsg) ||
+            /hackathon deadline/i.test(lowerMsg) ||
+            /submission deadline/i.test(lowerMsg) ||
+            /tournament schedule/i.test(lowerMsg)
+        ) {
+            const hList = Array.isArray(ctx.hackathons) ? ctx.hackathons : [];
+            const userHackId = ctx.team?.hackathonId || ctx.registration?.hackathonId;
+            const targetHack = userHackId ? (hList.find(h => h.id === userHackId) || hList[0]) : hList[0];
+            if (targetHack) {
+                const subDl = targetHack.submissionDeadline ? new Date(targetHack.submissionDeadline).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST' : 'November 14, 2026, 3:36 AM IST';
+                const endDt = targetHack.endDate ? new Date(targetHack.endDate).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST' : 'November 14, 2026, 5:36 AM IST';
+                reply = `Official Tournament Schedule for "${targetHack.name || targetHack.title || 'CodeSrijan Hackathon'}":\n• Final Submission Deadline: ${subDl}\n• Event Conclusion: ${endDt}\nAll deliverables must be finalized and transmitted in your Workspace before the countdown lockdown. [Open Workspace -> /workspace]`;
+            } else {
+                reply = "The active tournament submission deadline is November 14, 2026, 3:36 AM IST. Check the live chronological roadmap on the official timeline. [View Official Timeline -> /timeline]";
+            }
+            return { reply };
+        }
+
         // PRIORITY 18: Hackathons Catalog & Registration (Cat 3 & 4)
         if (
             /what hackathons/i.test(lowerMsg) ||

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { useAppStore, type User } from "../lib/store";
+import { useAppStore, resolveUserTeam, type User } from "../lib/store";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 
@@ -41,7 +41,7 @@ function Page6() {
     }
   }, [currentUser, API_URL]);
 
-  const currentTeam = currentUser?.teamId ? teams.find(t => t.id === currentUser.teamId) : null;
+  const currentTeam = resolveUserTeam(teams, currentUser) || null;
   const teamMembers = currentTeam ? (currentTeam.members || currentTeam.memberIds || []).map(userId => users.find(u => u.id === userId)).filter((member): member is User => member !== undefined) : [];
 
   const handleCreateTeam = (e: React.FormEvent) => {

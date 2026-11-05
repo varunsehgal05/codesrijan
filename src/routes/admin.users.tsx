@@ -317,8 +317,8 @@ function AdminUsers() {
             {/* Header Panel */}
             <div className="bg-pure-white p-6 brutal-border brutal-shadow flex justify-between items-center z-10 relative">
                 <div>
-                    <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none bg-electric-blue text-pure-white px-2 py-1 inline-block transform -skew-x-6">
-                        USERS & SQUADS
+                    <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none">
+                        USERS & <span className="text-electric-blue">SQUADS</span>
                     </h2>
                     <p className="font-body-md text-on-surface-variant mt-2 font-bold tracking-widest text-sm uppercase">
                         Directory and Recruitment Status
@@ -401,7 +401,7 @@ function AdminUsers() {
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Squad</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-r-2 border-electric-blue border-b-4">Role Focus</th>
                             <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue">Status</th>
-                            <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue border-l-2 bg-electric-blue text-pure-white text-center min-w-[180px]">Actions</th>
+                            <th className="p-4 font-label-bold uppercase tracking-widest border-b-4 border-electric-blue text-center min-w-[180px]">Actions</th>
                         </tr>
                     </thead>
                     <tbody>

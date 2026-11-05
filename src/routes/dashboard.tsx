@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -18,7 +18,7 @@ function DashboardPage() {
         navigate({ to: '/login' });
     };
 
-    const userTeam = teams.find(t => t.id === currentUser?.teamId);
+    const userTeam = resolveUserTeam(teams, currentUser);
 
     // Resolve targeted hackathon: Prioritize user's enrolled hackathon, then active event
     const activeEvent = useMemo(() => {
