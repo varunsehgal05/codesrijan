@@ -48,7 +48,8 @@ function WorkspaceHUD() {
     currentUser && userTeam && (
       userTeam.leaderId === currentUser.id ||
       userTeam.leaderId === (currentUser as any)._id ||
-      (Array.isArray(userTeam.memberIds) && userTeam.memberIds[0] === currentUser.id) ||
+      userTeam.leaderId === (currentUser as any).email ||
+      (Array.isArray(userTeam.memberIds) && (userTeam.memberIds[0] === currentUser.id || userTeam.memberIds[0] === (currentUser as any)._id)) ||
       (Array.isArray(userTeam.memberIds) && userTeam.memberIds.length === 1) ||
       (!userTeam.leaderId)
     )
@@ -788,10 +789,10 @@ function WorkspaceHUD() {
                             setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: col });
                             setIsCreating(true);
                           }}
-                          className="w-5 h-5 bg-white text-black hover:bg-yellow-300 font-black rounded flex items-center justify-center text-xs border border-black cursor-pointer shadow-[1px_1px_0px_#000]"
+                          className="px-2 py-0.5 bg-white text-black hover:bg-yellow-300 font-black text-xs border border-black cursor-pointer shadow-[1px_1px_0px_#000] uppercase font-mono"
                           title={`Add objective directly to ${columnLabels[idx]}`}
                         >
-                          +
+                          + ADD
                         </button>
                       )}
                     </div>
@@ -799,8 +800,20 @@ function WorkspaceHUD() {
 
                   <div className="flex-grow p-3 space-y-3 overflow-y-auto max-h-[500px]">
                     {tasksInCol.length === 0 ? (
-                      <div className="h-32 border-2 border-dashed border-zinc-300 flex items-center justify-center p-4 text-center">
-                        <span className="text-[11px] font-mono text-zinc-400 uppercase">NO ACTIVE OBJECTIVES</span>
+                      <div className="h-32 border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center p-4 text-center gap-2">
+                        <span className="text-[11px] font-mono text-zinc-400 uppercase font-bold">NO ACTIVE OBJECTIVES</span>
+                        {!userTeam.isSubmitted && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: col });
+                              setIsCreating(true);
+                            }}
+                            className="bg-black hover:bg-electric-blue text-white font-mono text-[10px] font-bold uppercase px-2.5 py-1 border border-black cursor-pointer shadow-[1px_1px_0px_#000]"
+                          >
+                            + ADD OBJECTIVE
+                          </button>
+                        )}
                       </div>
                     ) : (
                       tasksInCol.map(task => (

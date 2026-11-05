@@ -44,9 +44,9 @@ function RecruitmentMatrix() {
   const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
   const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
-  const safeUsers = Array.isArray(users) ? users : [];
-  const safeTeams = Array.isArray(teams) ? teams : [];
-  const safeHackathons = Array.isArray(hackathons) ? hackathons : [];
+  const safeUsers = useMemo(() => (Array.isArray(users) ? users : []).filter(Boolean), [users]);
+  const safeTeams = useMemo(() => (Array.isArray(teams) ? teams : []).filter(Boolean), [teams]);
+  const safeHackathons = useMemo(() => (Array.isArray(hackathons) ? hackathons : []).filter(Boolean), [hackathons]);
 
   // Filtered teams for Admin view - declared unconditionally before any early returns
   const genuineHackathons = useMemo(() => {
@@ -344,6 +344,7 @@ function RecruitmentMatrix() {
   };
 
   const getOperativeSlotting = (user: any) => {
+    if (!user) return 'FULLSTACK';
     if (user.specialization) return user.specialization;
     const email = (user.email || '').toLowerCase();
     const name = (user.name || '').toLowerCase();
@@ -357,6 +358,7 @@ function RecruitmentMatrix() {
   };
 
   const getOperativeSkills = (user: any, slotting: string) => {
+    if (!user) return ['TypeScript', 'Fullstack Web'];
     if (user.techStack && user.techStack.length > 0) return user.techStack;
     if (slotting === 'UI/UX DESIGN') return ['Figma', 'Design Systems', 'Tailwind', 'Wireframing'];
     if (slotting === 'FRONTEND') return ['React', 'TypeScript', 'Next.js', 'CSS Architecture'];
@@ -1007,7 +1009,8 @@ function RecruitmentMatrix() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(() => {
                   const candidatePool = safeUsers.filter(u => {
-                    if (u.role !== 'student' || (currentUser?.id && u.id === currentUser.id)) return false;
+                    if (!u || !u.id) return false;
+                    if (u.role !== 'student' || (currentUser?.id && (u.id === currentUser.id || (u as any)._id === currentUser.id))) return false;
                     const slotting = getOperativeSlotting(u);
                     const skills = getOperativeSkills(u, slotting);
 
