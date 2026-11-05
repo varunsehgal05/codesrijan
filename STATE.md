@@ -22,6 +22,34 @@
 
 ---
 
+
+## 2.1 Workspace Task Modal Controls, Pre-Commencement Lock & Animations (Commit fb3b9ed)
+1. **Create / Edit Task Modal Controls & Resiliency (`src/routes/workspace.tsx`)**:
+   - Resolved Cancel and Save Task responsiveness issues:
+     - Backdrop click dismiss (`handleCloseTaskModal`) on outer container.
+     - Global `Escape` key listener instantly closes any active modal.
+     - Dedicated top-right Neo-Brutalist close (`✕`) button.
+     - Replaced free-text Assignee input with a smart dropdown pre-populated from squad operatives (`teamMembers`) + "Unassigned" default option.
+     - Added dedicated [Edit] button on each Kanban task card to open the `EDIT TASK` modal with existing task title, description, priority, column, and assignee prefilled.
+     - Decoupled Kanban board operations from project submission: squads can continuously manage, create, move, and edit tasks throughout the event.
+
+2. **Pre-Commencement Hackathon Submission Lock (`workspace.tsx` & `server/server.js`)**:
+   - Frontend: If the active hackathon has not officially commenced (`startDate > Date.now()` or status is `upcoming`):
+     - Displays stark Neo-Brutalist status banner: `🔒 TOURNAMENT NOT COMMENCED: Deliverable submissions unlock automatically once the hackathon officially commences on [Date/Time IST]`.
+     - Final submit button is locked and disabled: `🔒 SUBMISSION LOCKED`.
+   - Backend (`server/server.js`): In `POST /api/teams/:id/submit`, verifies hackathon start date and rejects pre-commencement submissions with HTTP 400: `"Submissions are locked. The hackathon tournament has not officially commenced yet."`.
+
+3. **Fluid Neo-Brutalist Modal Animations & Backdrop Blur (`src/styles.css`)**:
+   - Created reusable `.modal-backdrop-animate` (smooth 0.2s fade-in) and `.modal-content-animate` (0.25s spring scale pop-in).
+   - Upgraded all modal overlays across the platform with `backdrop-blur-sm`:
+     - Workspace: Create Task / Edit Task modal
+     - Workspace: Final Transmission / Submission modal
+     - Workspace: SOS Mentor Dispatch modal
+     - Workspace: Track Dossier modal
+     - Workspace: Squad Withdrawal modal
+     - Dashboard: Operative Expulsion / Purge modal
+     - Admin: Payment Verification & Audit modals
+
 ## 2. Key Polish Items Delivered & Verified (Commit `927b97d`)
 
 1. **Login Page Show Password Toggle (`src/routes/login.tsx`)**:
