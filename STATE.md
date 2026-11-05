@@ -172,6 +172,19 @@ Designed for technical mentors to guide assigned hackathon squads, resolve block
 
 ---
 
+
+8. **Squad Lifecycle Governance, Responsive Workspace, Submission Sync & Custom Modals (2026-11-05 — Commit 032e73f)**:
+   - **Kick Notification & Custom Modal (Image 1)**: Replaced native browser confirm with custom neo-brutalist expulsion modal in dashboard; persistent notification dispatched to kicked operative.
+   - **Hackathon Participation Rules**: Leader-only team registration; 1 active hackathon limit; squad dissolution blocked during active hackathon; rosters locked during active hackathon.
+   - **Recruitment Badges**: Added 'IN HACKATHON // CANNOT JOIN' badge on recruitment page; disabled invites when either party is deployed.
+   - **Certificates Page Cleanup (Image 2)**: Removed redundant claim/verify cards.
+   - **Admin Payments Modal**: High-fidelity neo-brutalist approval modal for Verify and Clear.
+   - **Hackathon Withdrawal & Refunds**: Leader-only withdrawal with automatic UPI refund claim routing to admin ledger.
+   - **Locked Track Dossier**: Detailed track specifications preview and complete dossier modal in workspace.
+   - **Responsive Workspace Kanban (Image 3)**: Mobile (1 col), iPad/Tablet (2 cols), Desktop (4 cols) responsive grid.
+   - **Submission Sync & Fix for Image 4**: Auto-fetch existing submission on mount, prefill deliverable links, allow leader updates before deadline without HTTP 409 conflict.
+   - **SrijanBot AI Intelligence**: Direct IST schedule answers for 'when my hackathons end?'.
+
 ## 3. Deployment & Release Instructions
 1. Commit all modified files and push to both `main` and `master`:
    ```bash
