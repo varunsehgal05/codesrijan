@@ -75,6 +75,7 @@ function AdminPaymentsPage() {
     }, [registrations, searchQuery]);
     
     // Modals
+    const [confirmingApproveReg, setConfirmingApproveReg] = useState<PaymentRegistration | null>(null);
     const [activeReceipt, setActiveReceipt] = useState<{ url: string; utr: string; regId: string; reg: PaymentRegistration } | null>(null);
     const [receiptBlobUrl, setReceiptBlobUrl] = useState<string | null>(null);
     const [receiptViewTab, setReceiptViewTab] = useState<'visual' | 'voucher' | 'raw'>('visual');
@@ -188,9 +189,11 @@ function AdminPaymentsPage() {
         fetchPayments();
     }, [filter]);
 
-    const handleApprove = async (reg: PaymentRegistration) => {
-        if (!confirm(`Confirm approval of payment for ${reg.teamName || reg.userId}? Amount: ₹${reg.feeAmount}`)) return;
+    const handleApprove = (reg: PaymentRegistration) => {
+        setConfirmingApproveReg(reg);
+    };
 
+    const executeApprove = async (reg: PaymentRegistration) => {
         setProcessingId(reg.id);
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
@@ -201,7 +204,8 @@ function AdminPaymentsPage() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            toast.success(`Payment verified! Squad clearance granted.`);
+            toast.success(`Payment verified! Squad clearance granted for ${reg.teamName || reg.userId}.`);
+            setConfirmingApproveReg(null);
             fetchPayments();
         } catch (err: unknown) {
             const msg = axios.isAxiosError(err) ? err.response?.data?.message : undefined;
@@ -1067,6 +1071,98 @@ function AdminPaymentsPage() {
                                     </button>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Neo-Brutalist Verification Confirmation Modal */}
+            {confirmingApproveReg && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm font-mono">
+                    <div className="bg-zinc-950 border-4 border-emerald-400 max-w-lg w-full p-6 sm:p-8 space-y-5 text-white shadow-[12px_12px_0px_0px_#34D399] relative">
+                        {/* Header Banner */}
+                        <div className="border-b-2 border-zinc-800 pb-3">
+                            <span className="bg-emerald-400 text-black px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider mb-2 inline-block">
+                                PAYMENT AUDIT // SQUAD CLEARANCE
+                            </span>
+                            <h3 className="font-headline-md text-xl uppercase font-black tracking-tight text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-emerald-400 text-2xl">verified</span>
+                                Authorize & Clear Registration
+                            </h3>
+                            <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                                Review transaction details before granting official hackathon entry clearance to this squad.
+                            </p>
+                        </div>
+
+                        {/* Summary Card */}
+                        <div className="bg-zinc-900 border-2 border-zinc-700 p-4 space-y-2.5 text-xs">
+                            <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
+                                <span className="text-zinc-400 uppercase text-[11px]">Squad Matrix:</span>
+                                <span className="font-bold text-emerald-400 text-sm uppercase">
+                                    {confirmingApproveReg.teamName || 'Solo Operative'}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-zinc-400 uppercase text-[11px]">Primary Operative:</span>
+                                <span className="font-bold text-white">
+                                    {confirmingApproveReg.userName || confirmingApproveReg.userId}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-zinc-400 uppercase text-[11px]">Hackathon Sector:</span>
+                                <span className="font-bold text-zinc-300 font-mono text-[11px]">
+                                    {confirmingApproveReg.hackathonId}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-zinc-400 uppercase text-[11px]">Clearance Fee:</span>
+                                <span className="font-black text-emerald-400 text-base font-mono">
+                                    ₹{confirmingApproveReg.feeAmount}
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center border-t border-zinc-800 pt-2">
+                                <span className="text-zinc-400 uppercase text-[11px]">Transaction UTR:</span>
+                                <span className="font-mono text-zinc-200 font-bold bg-black px-2 py-0.5 border border-zinc-800 text-[11px]">
+                                    {confirmingApproveReg.transactionReference || confirmingApproveReg.paymentDetails?.utr || 'DIRECT VERIFICATION'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-3 bg-emerald-950/40 border-2 border-emerald-500/40 text-[11px] text-emerald-300 flex items-start gap-2">
+                            <span className="material-symbols-outlined text-sm shrink-0 mt-0.5">info</span>
+                            <span>
+                                Confirming will immediately mark payment as <strong>VERIFIED</strong>, unlock the squad's Kanban workspace, and issue tournament admittance.
+                            </span>
+                        </div>
+
+                        {/* Modal Action Buttons */}
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => setConfirmingApproveReg(null)}
+                                disabled={processingId === confirmingApproveReg.id}
+                                className="px-5 py-2.5 bg-zinc-900 border-2 border-zinc-700 text-zinc-300 hover:bg-zinc-800 font-bold uppercase text-xs cursor-pointer transition-all"
+                            >
+                                Abort
+                            </button>
+                            <button
+                                type="button"
+                                disabled={processingId === confirmingApproveReg.id}
+                                onClick={() => executeApprove(confirmingApproveReg)}
+                                className="px-6 py-2.5 bg-emerald-400 hover:bg-emerald-300 text-black font-black uppercase text-xs border-2 border-black shadow-[4px_4px_0px_0px_#000000] cursor-pointer transition-all flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                                {processingId === confirmingApproveReg.id ? (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                                        VERIFYING...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                                        CONFIRM & CLEAR PAYMENT
+                                    </>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>

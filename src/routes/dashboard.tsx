@@ -34,6 +34,13 @@ function DashboardPage() {
     const [teamRequests, setTeamRequests] = useState<any[]>([]);
     const [showDissolveModal, setShowDissolveModal] = useState(false);
     const [dissolving, setDissolving] = useState(false);
+    const [kickTarget, setKickTarget] = useState<{ id: string; name: string } | null>(null);
+    const [kicking, setKicking] = useState(false);
+
+    const isInHackathon = !!(userTeam?.hackathonId || (registrations || []).some((r: any) => 
+        (r.teamId === userTeam?.id || (userTeam?.id && r.userId === currentUser?.id)) && 
+        ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'].includes(r.status)
+    ));
 
     useEffect(() => {
         if (userTeam?.leaderId === currentUser?.id) {
@@ -47,7 +54,7 @@ function DashboardPage() {
     }, [userTeam, currentUser]);
 
     const handleKickUser = async (userId: string) => {
-        if (!confirm("Are you sure you want to kick this operative?")) return;
+        setKicking(true);
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
             const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
@@ -55,8 +62,14 @@ function DashboardPage() {
             await axios.post(`${BASE}/teams/${userTeam?.id}/kick`, { userId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+            toast.success("Operative purged from squad. Expulsion notice dispatched.");
+            setKickTarget(null);
             window.location.reload();
-        } catch (e: any) { toast.error(e.response?.data?.message || "Failed to kick."); }
+        } catch (e: any) { 
+            toast.error(e.response?.data?.message || "Failed to kick operative."); 
+        } finally {
+            setKicking(false);
+        }
     };
 
     const handleLeaveTeam = async () => {
@@ -476,9 +489,20 @@ function DashboardPage() {
                                 <div className="space-y-4">
                                     <div className="bg-error/20 p-4 border-2 border-error">
                                         <h3 className="font-label-bold uppercase text-error mb-2 border-b-2 border-error pb-1">Extreme Measures</h3>
-                                        <button onClick={() => setShowDissolveModal(true)} className="bg-error text-white font-label-bold px-4 py-3 text-xs brutal-hover w-full uppercase transition-transform hover:-translate-y-1 block max-w-sm cursor-pointer shadow-[3px_3px_0px_0px_#000000]">
-                                            DISSOLVE SQUAD ENTIRELY
-                                        </button>
+                                        {isInHackathon ? (
+                                            <div className="space-y-2">
+                                                <button disabled className="bg-zinc-400 text-zinc-700 font-label-bold px-4 py-3 text-xs w-full uppercase block max-w-sm cursor-not-allowed border-2 border-zinc-600 opacity-80">
+                                                    🔒 DISSOLVE SQUAD (LOCKED IN HACKATHON)
+                                                </button>
+                                                <p className="text-[11px] font-mono text-error font-bold leading-tight">
+                                                    ⚠️ Squad is actively deployed in a hackathon arena. You must withdraw from the hackathon before dissolving the squad.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <button onClick={() => setShowDissolveModal(true)} className="bg-error text-white font-label-bold px-4 py-3 text-xs brutal-hover w-full uppercase transition-transform hover:-translate-y-1 block max-w-sm cursor-pointer shadow-[3px_3px_0px_0px_#000000]">
+                                                DISSOLVE SQUAD ENTIRELY
+                                            </button>
+                                        )}
                                     </div>
 
                                     {/* Members roster */}
@@ -491,7 +515,12 @@ function DashboardPage() {
                                                     <div key={mId} className="flex justify-between items-center bg-white p-2 border border-ink-black">
                                                         <span className="font-label-bold uppercase">{u ? u.name : mId} {userTeam.leaderId === mId && <span className="text-electric-blue text-xs ml-2">(LEADER)</span>}</span>
                                                         {userTeam.leaderId !== mId && (
-                                                            <button onClick={() => handleKickUser(mId)} className="bg-error text-white font-label-bold px-3 py-1 text-xs brutal-hover">KICK</button>
+                                                            <button 
+                                                                onClick={() => setKickTarget({ id: mId, name: u ? u.name : mId })} 
+                                                                className="bg-error text-white font-label-bold px-3 py-1 text-xs brutal-hover cursor-pointer"
+                                                            >
+                                                                KICK
+                                                            </button>
                                                         )}
                                                     </div>
                                                 );
@@ -662,6 +691,68 @@ function DashboardPage() {
                                     <>
                                         <span className="material-symbols-outlined text-sm">delete_forever</span>
                                         CONFIRM DISSOLUTION
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Neo-Brutalist Expulsion / Kick Operative Confirmation Modal */}
+            {kickTarget && (
+                <div 
+                    onClick={(e) => { if (e.target === e.currentTarget && !kicking) setKickTarget(null); }}
+                    className="fixed inset-0 bg-stark-black/85 z-[100] flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+                >
+                    <div className="bg-pure-white brutal-border border-4 border-error shadow-[10px_10px_0px_0px_#FF0033] w-full max-w-md p-6 sm:p-8 flex flex-col gap-5 relative">
+                        {/* Header Banner */}
+                        <div className="bg-error text-white p-3 brutal-border flex items-center gap-3">
+                            <span className="material-symbols-outlined text-2xl animate-pulse">person_remove</span>
+                            <div>
+                                <h3 className="font-headline-md text-base uppercase font-black tracking-tight">EXPULSION PROTOCOL // SQUAD PURGE</h3>
+                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Squad Member Removal</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 text-xs leading-relaxed text-stark-black">
+                            <p className="font-bold text-sm">
+                                Are you sure you want to kick this operative from your squad?
+                            </p>
+                            <div className="bg-zinc-100 border-2 border-stark-black p-3 font-black text-sm uppercase text-error tracking-wider flex items-center justify-between">
+                                <span>{kickTarget.name}</span>
+                                <span className="bg-stark-black text-white text-[10px] px-2 py-0.5">ID: {kickTarget.id}</span>
+                            </div>
+                            <div className="bg-rose-50 border-2 border-error p-3 space-y-1 text-rose-900 font-bold text-[11px]">
+                                <p>• The operative will lose instant access to the squad workspace and deliverables.</p>
+                                <p>• An official expulsion notification will be dispatched to their notification matrix.</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-3 border-t-2 border-stark-black">
+                            <button
+                                type="button"
+                                onClick={() => setKickTarget(null)}
+                                disabled={kicking}
+                                className="px-5 py-2.5 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 text-xs cursor-pointer transition-all shadow-[2px_2px_0px_0px_#000000]"
+                            >
+                                CANCEL
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleKickUser(kickTarget.id)}
+                                disabled={kicking}
+                                className="px-6 py-2.5 border-2 border-stark-black font-label-bold uppercase bg-error text-white hover:bg-black text-xs cursor-pointer transition-all shadow-[4px_4px_0px_0px_#000000] flex items-center justify-center gap-2"
+                            >
+                                {kicking ? (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                                        PURGING...
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined text-sm">person_remove</span>
+                                        CONFIRM EXPULSION
                                     </>
                                 )}
                             </button>

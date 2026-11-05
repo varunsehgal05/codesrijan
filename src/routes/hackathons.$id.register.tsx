@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useParams, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { useAppStore } from "../lib/store";
+import { useAppStore, resolveUserTeam } from "../lib/store";
 import { toast } from "react-hot-toast";
 
 export const Route = createFileRoute("/hackathons/$id/register")({
@@ -11,7 +11,7 @@ export const Route = createFileRoute("/hackathons/$id/register")({
 function HackathonRegistrationPage() {
     const { id } = Route.useParams();
     const navigate = useNavigate();
-    const { currentUser, isLoaded } = useAppStore();
+    const { currentUser, isLoaded, teams, registrations, refetchData } = useAppStore();
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -33,6 +33,28 @@ function HackathonRegistrationPage() {
     const [submittingRefund, setSubmittingRefund] = useState(false);
 
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+
+    // Squad and Leadership Resolution
+    const userTeam = useMemo(() => resolveUserTeam(teams, currentUser), [teams, currentUser]);
+    const hasSquad = Boolean(userTeam);
+    const isSquadLeader = Boolean(
+        userTeam && currentUser && (
+            userTeam.leaderId === currentUser.id ||
+            userTeam.leaderId === (currentUser as any)._id ||
+            userTeam.leaderId === (currentUser as any).email ||
+            (!userTeam.leaderId && Array.isArray(userTeam.memberIds) && userTeam.memberIds[0] === currentUser.id)
+        )
+    );
+    const isSquadMemberOnly = hasSquad && !isSquadLeader;
+
+    // 1-Hackathon Limit Enforcement
+    const otherActiveRegistration = useMemo(() => {
+        return (registrations || []).find((r: any) => 
+            r.hackathonId !== id &&
+            (r.userId === currentUser?.id || (userTeam && r.teamId === userTeam.id)) &&
+            ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'].includes(r.status)
+        );
+    }, [registrations, id, currentUser, userTeam]);
 
     const fetchMyReg = async () => {
         try {
@@ -125,12 +147,18 @@ function HackathonRegistrationPage() {
         try {
             setLeaving(true);
             const token = localStorage.getItem("codesrijan_auth_token");
-            const res = await axios.post(`${API_URL}/hackathons/${id}/leave`, {}, {
+            const res = await axios.post(`${API_URL}/hackathons/${id}/leave`, {
+                reason: refundReason || "Squad departure prior to tournament commencement",
+                refundUpi: refundUpi || ""
+            }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success(res.data.message || "Successfully withdrawn from hackathon.");
             setShowLeaveConfirm(false);
             setExistingRegistration(null);
+            setRefundReason("");
+            setRefundUpi("");
+            if (refetchData) await refetchData();
         } catch (err: any) {
             toast.error(err.response?.data?.message || "Failed to leave hackathon.");
         } finally {
@@ -166,8 +194,6 @@ function HackathonRegistrationPage() {
     };
 
     if (!currentUser) return <div className="min-h-screen bg-background" />;
-
-    const hasSquad = !!(currentUser as any)?.teamId;
 
     return (
         <div className="min-h-screen bg-surface-container-lowest bg-pattern text-stark-black flex items-center justify-center p-4 sm:p-6 font-mono relative overflow-hidden">
@@ -270,6 +296,15 @@ function HackathonRegistrationPage() {
                                 </div>
                                 Hackathon tournament has commenced. Roster and event entry are locked.
                             </div>
+                        ) : isSquadMemberOnly ? (
+                            <div className="bg-zinc-100 border-2 border-zinc-400 p-3.5 space-y-1 text-xs">
+                                <div className="flex items-center gap-1.5 font-bold uppercase text-zinc-900 font-label-bold">
+                                    <span className="material-symbols-outlined text-sm">shield</span> Enrolled With Squad
+                                </div>
+                                <p className="text-zinc-700 text-[11px] font-body-md font-bold">
+                                    You are enrolled as an operative in squad <strong>{userTeam?.name}</strong>. Only the Squad Leader ({userTeam?.leaderName || 'Leader'}) can manage withdrawal or refund requests.
+                                </p>
+                            </div>
                         ) : isPaymentPending ? (
                             <div className="bg-amber-50 border-2 border-amber-600 p-3.5 text-xs text-amber-950 space-y-2">
                                 <div className="flex items-center gap-1.5 font-bold uppercase text-amber-800 font-label-bold">
@@ -288,7 +323,7 @@ function HackathonRegistrationPage() {
                         ) : (
                             <div className="bg-surface-container border-2 border-stark-black p-3.5 space-y-2 text-xs">
                                 <div className="text-zinc-700 text-[11px] font-body-md font-bold">
-                                    Hackathon has not started yet. You may withdraw from this arena at any time prior to commencement.
+                                    Hackathon has not started yet. Squad Leader may withdraw from this arena at any time prior to commencement.
                                 </div>
                                 <button
                                     onClick={() => setShowLeaveConfirm(true)}
@@ -375,6 +410,28 @@ function HackathonRegistrationPage() {
                             </div>
                         )}
 
+                        {isSquadMemberOnly && (
+                            <div className="bg-rose-50 border-4 border-rose-600 p-4 mb-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                <div className="flex items-center gap-2 text-rose-800 font-label-bold text-xs uppercase mb-1">
+                                    <span className="material-symbols-outlined text-sm">lock</span> SQUAD LEADER AUTHORIZATION REQUIRED
+                                </div>
+                                <p className="text-xs text-rose-950 font-mono leading-relaxed">
+                                    You are enlisted in squad <strong>{userTeam?.name}</strong>. Only the designated Squad Leader ({userTeam?.leaderName || 'Leader'}) can enroll the squad into this event. Squad operatives cannot apply or join independently.
+                                </p>
+                            </div>
+                        )}
+
+                        {otherActiveRegistration && (
+                            <div className="bg-amber-50 border-4 border-amber-600 p-4 mb-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                                <div className="flex items-center gap-2 text-amber-900 font-label-bold text-xs uppercase mb-1">
+                                    <span className="material-symbols-outlined text-sm">warning</span> 1-HACKATHON PARTICIPATION LIMIT
+                                </div>
+                                <p className="text-xs text-amber-950 font-mono leading-relaxed">
+                                    You or your squad are already actively participating in another hackathon. Platform policy allows participation in only 1 active hackathon at a time. Withdraw from your active event before registering for a new one.
+                                </p>
+                            </div>
+                        )}
+
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {statusLoading && <div className="text-electric-blue text-xs font-bold animate-pulse">Checking event status...</div>}
                             
@@ -396,7 +453,7 @@ function HackathonRegistrationPage() {
                                 </label>
                                 <input 
                                     type="text" 
-                                    disabled={!!isClosed || statusLoading} 
+                                    disabled={!!isClosed || statusLoading || isSquadMemberOnly || Boolean(otherActiveRegistration)} 
                                     required 
                                     placeholder="e.g. Stanford University / JUET"
                                     className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
@@ -410,7 +467,7 @@ function HackathonRegistrationPage() {
                                     <span className="material-symbols-outlined text-xs text-electric-blue">code</span> Branch Specialization
                                 </label>
                                 <select 
-                                    disabled={!!isClosed || statusLoading} 
+                                    disabled={!!isClosed || statusLoading || isSquadMemberOnly || Boolean(otherActiveRegistration)} 
                                     required 
                                     className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
                                     value={branch} 
@@ -433,7 +490,7 @@ function HackathonRegistrationPage() {
                                     <span className="material-symbols-outlined text-xs text-electric-blue">calendar_today</span> Academic Year
                                 </label>
                                 <select 
-                                    disabled={!!isClosed || statusLoading} 
+                                    disabled={!!isClosed || statusLoading || isSquadMemberOnly || Boolean(otherActiveRegistration)} 
                                     required 
                                     className="w-full bg-white border-2 border-stark-black p-3 text-stark-black text-xs font-code-snippet focus:border-electric-blue focus:ring-2 focus:ring-electric-blue focus:outline-none transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" 
                                     value={year} 
@@ -457,10 +514,10 @@ function HackathonRegistrationPage() {
 
                             <button
                                 type="submit"
-                                disabled={loading || !college || !branch || !year || !!isClosed || statusLoading}
+                                disabled={loading || !college || !branch || !year || !!isClosed || statusLoading || isSquadMemberOnly || Boolean(otherActiveRegistration)}
                                 className="w-full bg-electric-blue text-pure-white font-label-bold uppercase tracking-wider py-4 px-4 text-xs sm:text-sm border-2 border-stark-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:bg-black hover:text-white hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-4 cursor-pointer"
                             >
-                                {loading ? 'Transmitting...' : (isClosed ? 'Registration Closed' : 'Confirm Enrollment')}
+                                {loading ? 'Transmitting...' : isSquadMemberOnly ? '🔒 Leader Clearance Required' : otherActiveRegistration ? '⚠️ 1 Hackathon Limit Active' : (isClosed ? 'Registration Closed' : 'Confirm Enrollment')}
                             </button>
                         </form>
                     </div>
@@ -476,6 +533,27 @@ function HackathonRegistrationPage() {
                             <p className="text-xs text-zinc-700 font-body-md font-bold">
                                 Are you sure you want to withdraw from this hackathon? Your registration slot will be relinquished immediately.
                             </p>
+                            {isPaid && (
+                                <div className="space-y-2 pt-2 border-t-2 border-zinc-200">
+                                    <div className="bg-amber-100 p-2 text-[10px] font-mono text-amber-900 border border-amber-300">
+                                        💰 Paid Event (₹{hackathon?.fee || 0}): A refund ticket will be dispatched to the admin payment ledger.
+                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Your UPI ID for refund (e.g. user@okhdfcbank)"
+                                        value={refundUpi}
+                                        onChange={e => setRefundUpi(e.target.value)}
+                                        className="w-full border-2 border-black p-2 text-xs font-mono"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Reason for withdrawal..."
+                                        value={refundReason}
+                                        onChange={e => setRefundReason(e.target.value)}
+                                        className="w-full border-2 border-black p-2 text-xs font-mono"
+                                    />
+                                </div>
+                            )}
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => setShowLeaveConfirm(false)}

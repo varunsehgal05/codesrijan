@@ -1051,6 +1051,15 @@ function RecruitmentMatrix() {
                     const candidateTeam = safeTeams.find(t => t && (t.id === user.teamId || (Array.isArray(t.memberIds) && t.memberIds.includes(user.id))));
                     const isFreeAgent = !candidateTeam;
 
+                    const isCandidateInHackathon = (registrations || []).some((r: any) => 
+                      (r.userId === user.id || (user.teamId && r.teamId === user.teamId)) && 
+                      ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'].includes(r.status)
+                    );
+                    const isMyTeamInHackathon = !!(currentTeam?.hackathonId || (registrations || []).some((r: any) => 
+                      r.teamId === currentUser?.teamId && 
+                      ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'].includes(r.status)
+                    ));
+
                     return (
                       <article
                         key={user.id}
@@ -1058,15 +1067,21 @@ function RecruitmentMatrix() {
                       >
                         {/* Header & Badges */}
                         <div>
-                          <div className="flex justify-between items-start gap-2 mb-3">
+                          <div className="flex flex-wrap justify-between items-start gap-2 mb-3">
                             <span className="px-2 py-0.5 bg-stark-black text-white font-mono text-[10px] font-bold uppercase tracking-wider brutal-border">
                               {slotting}
                             </span>
-                            <span className={`px-2 py-0.5 font-bold text-[10px] uppercase brutal-border max-w-[150px] truncate ${
-                              isFreeAgent ? 'bg-emerald-400 text-black' : 'bg-amber-300 text-stark-black'
-                            }`}>
-                              {isFreeAgent ? 'FREE AGENT' : `IN SQUAD: ${candidateTeam?.name || 'Assigned'}`}
-                            </span>
+                            {isCandidateInHackathon ? (
+                              <span className="px-2 py-0.5 font-bold text-[10px] uppercase brutal-border bg-rose-600 text-white border border-black shadow-[1px_1px_0px_#000]">
+                                🔒 IN HACKATHON // CANNOT JOIN
+                              </span>
+                            ) : (
+                              <span className={`px-2 py-0.5 font-bold text-[10px] uppercase brutal-border max-w-[150px] truncate ${
+                                isFreeAgent ? 'bg-emerald-400 text-black' : 'bg-amber-300 text-stark-black'
+                              }`}>
+                                {isFreeAgent ? 'FREE AGENT' : `IN SQUAD: ${candidateTeam?.name || 'Assigned'}`}
+                              </span>
+                            )}
                           </div>
 
                           <div className="flex items-center gap-3">
@@ -1139,14 +1154,28 @@ function RecruitmentMatrix() {
                             </button>
                           </div>
 
-                          {isTeamLeader && isFreeAgent && (
-                            <button
-                              onClick={() => handleInvite(user.id)}
-                              disabled={loading}
-                              className="w-full bg-electric-blue hover:bg-stark-black hover:text-white text-white text-xs font-black uppercase py-2 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                            >
-                              <span className="material-symbols-outlined text-sm">send</span> Dispatch Squad Invite
-                            </button>
+                          {isTeamLeader && (
+                            isMyTeamInHackathon ? (
+                              <div className="w-full bg-zinc-200 text-zinc-600 text-[10px] font-bold uppercase py-1.5 px-2 border border-zinc-400 text-center">
+                                🔒 Squad Roster Locked (Active in Hackathon)
+                              </div>
+                            ) : isCandidateInHackathon ? (
+                              <div className="w-full bg-rose-100 text-rose-800 text-[10px] font-bold uppercase py-1.5 px-2 border border-rose-300 text-center">
+                                ⚠️ In Hackathon (Cannot Join Squad)
+                              </div>
+                            ) : isFreeAgent ? (
+                              <button
+                                onClick={() => handleInvite(user.id)}
+                                disabled={loading}
+                                className="w-full bg-electric-blue hover:bg-stark-black hover:text-white text-white text-xs font-black uppercase py-2 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                              >
+                                <span className="material-symbols-outlined text-sm">send</span> Dispatch Squad Invite
+                              </button>
+                            ) : (
+                              <div className="w-full bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase py-1.5 px-2 border border-zinc-300 text-center">
+                                Enlisted with {candidateTeam?.name || 'Another Squad'}
+                              </div>
+                            )
                           )}
                         </div>
                       </article>
@@ -1168,32 +1197,53 @@ function RecruitmentMatrix() {
                         <p className="font-mono text-zinc-500 text-xs">All deployed squads are currently full.</p>
                       </div>
                     ) : (
-                      safeTeams.filter(t => t && Array.isArray(t.memberIds) && t.memberIds.length < 4).map((team) => (
-                        <article key={team.id} className="bg-pure-white brutal-border brutal-shadow p-5 flex flex-col justify-between gap-4">
-                          <div>
-                            <div className="flex justify-between items-start gap-2 mb-2">
-                              <h4 className="font-headline-md uppercase text-xl truncate font-black">{team.name}</h4>
-                              <span className="bg-stark-black text-pure-white px-2 py-0.5 font-mono text-[10px] font-bold brutal-border">
-                                {team.memberIds.length} / 4 SLOTS
-                              </span>
+                      safeTeams.filter(t => t && Array.isArray(t.memberIds) && t.memberIds.length < 4).map((team) => {
+                        const isTeamInHackathon = team.isLocked || !!team.hackathonId || (registrations || []).some((r: any) => 
+                          r.teamId === team.id && 
+                          ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'].includes(r.status)
+                        );
+
+                        return (
+                          <article key={team.id} className="bg-pure-white brutal-border brutal-shadow p-5 flex flex-col justify-between gap-4">
+                            <div>
+                              <div className="flex justify-between items-start gap-2 mb-2">
+                                <h4 className="font-headline-md uppercase text-xl truncate font-black">{team.name}</h4>
+                                <span className="bg-stark-black text-pure-white px-2 py-0.5 font-mono text-[10px] font-bold brutal-border">
+                                  {team.memberIds.length} / 4 SLOTS
+                                </span>
+                              </div>
+                              <p className="text-xs text-zinc-600 line-clamp-2 min-h-[32px]">
+                                {team.description || "Deploying custom tech stack for massive disruption."}
+                              </p>
+                              {isTeamInHackathon && (
+                                <span className="inline-block mt-2 bg-rose-100 text-rose-800 text-[10px] font-bold uppercase px-2 py-0.5 border border-rose-300">
+                                  🔒 Roster Locked in Hackathon
+                                </span>
+                              )}
                             </div>
-                            <p className="text-xs text-zinc-600 line-clamp-2 min-h-[32px]">
-                              {team.description || "Deploying custom tech stack for massive disruption."}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => handleRequestJoin(team.id)}
-                            disabled={loading || requestedTeamIds.has(team.id)}
-                            className={`w-full text-xs font-black uppercase py-2.5 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors cursor-pointer ${
-                              requestedTeamIds.has(team.id)
-                                ? 'bg-emerald-400 text-black cursor-default'
-                                : 'bg-electric-blue hover:bg-stark-black text-white'
-                            }`}
-                          >
-                            {requestedTeamIds.has(team.id) ? '✓ REQUEST TRANSMITTED' : 'Transmit Join Signature'}
-                          </button>
-                        </article>
-                      ))
+                            {isTeamInHackathon ? (
+                              <button
+                                disabled
+                                className="w-full text-xs font-black uppercase py-2.5 px-3 brutal-border bg-zinc-200 text-zinc-500 cursor-not-allowed"
+                              >
+                                🔒 Roster Locked
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleRequestJoin(team.id)}
+                                disabled={loading || requestedTeamIds.has(team.id)}
+                                className={`w-full text-xs font-black uppercase py-2.5 px-3 brutal-border shadow-[2px_2px_0px_0px_#000] transition-colors cursor-pointer ${
+                                  requestedTeamIds.has(team.id)
+                                    ? 'bg-emerald-400 text-black cursor-default'
+                                    : 'bg-electric-blue hover:bg-stark-black text-white'
+                                }`}
+                              >
+                                {requestedTeamIds.has(team.id) ? '✓ REQUEST TRANSMITTED' : 'Transmit Join Signature'}
+                              </button>
+                            )}
+                          </article>
+                        );
+                      })
                     )}
                   </div>
                 </div>

@@ -1145,10 +1145,32 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
             return res.status(403).json({ message: "Your identity matrix is unverified. Validate email to unlock registrations." });
         }
 
-        // 4. Check for Existing Registration
+        // 4. Check for Existing Registration & 1 Active Hackathon Limit
         const existingReg = await Registration.findOne({ hackathonId, userId });
         if (existingReg) {
             return res.status(409).json({ message: "Duplicate record: This operative is already registered for this event.", registration: existingReg });
+        }
+
+        // Enforce 1 active hackathon at a time limit
+        const activeOtherReg = await Registration.findOne({
+            hackathonId: { $ne: hackathonId },
+            $or: [
+                { userId: req.user.id },
+                { 'rosterMembers.userId': req.user.id },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
+            ],
+            status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+        });
+        if (activeOtherReg) {
+            const otherHack = await Hackathon.findOne({ id: activeOtherReg.hackathonId });
+            return res.status(400).json({ 
+                message: `You can only participate in 1 hackathon at a time. Currently registered for "${otherHack?.name || activeOtherReg.hackathonId}". Complete or withdraw from that hackathon first.` 
+            });
+        }
+
+        // If operative is enlisted in a squad, they cannot register solo; only squad leader can register squad
+        if (req.user.teamId && type !== 'team') {
+            return res.status(403).json({ message: "Operative is enlisted in a squad. Only the designated Squad Leader is authorized to register the squad for this event." });
         }
 
         // 5. Handle Team vs Solo Registration
@@ -1295,6 +1317,11 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
         });
 
         await registration.save();
+        if (targetTeam) {
+            targetTeam.isLocked = true;
+            targetTeam.hackathonId = hackathonId;
+            await targetTeam.save();
+        }
         res.json({ success: true, registration });
     } catch (e) {
         if (e.code === 11000) {
@@ -1551,12 +1578,13 @@ app.post('/api/hackathons/:id/request-refund', requireAuth, requireRole(['studen
 });
 
 // LEAVE / WITHDRAW FROM HACKATHON
-app.post('/api/hackathons/:id/leave', requireAuth, requireRole(['student']), async (req, res) => {
+app.post('/api/hackathons/:id/leave', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     try {
         const hackathonId = req.params.id;
+        const { reason, refundUpi } = req.body || {};
         const hackathon = await Hackathon.findOne({ id: hackathonId });
 
-        if (hackathon) {
+        if (hackathon && req.user.role !== 'admin') {
             const hasStarted = (hackathon.status === 'live' || hackathon.status === 'active' || hackathon.status === 'ongoing' || hackathon.status === 'submission_open' || hackathon.status === 'completed') || 
                                (hackathon.startDate && new Date() >= new Date(hackathon.startDate));
             if (hasStarted) {
@@ -1577,24 +1605,60 @@ app.post('/api/hackathons/:id/leave', requireAuth, requireRole(['student']), asy
             return res.status(404).json({ message: "No active enrollment found for this event." });
         }
 
-        // Check if payment is under review
-        if (reg.paymentStatus === 'payment_under_review') {
-            return res.status(400).json({ message: "Payment proof is currently undergoing audit review. You cannot leave directly. Please submit a refund request if you wish to withdraw." });
+        // Check if registration belongs to a squad: Only Squad Leader can withdraw!
+        const resolvedTeamId = reg.teamId || req.user.teamId;
+        if (resolvedTeamId) {
+            const team = await Team.findOne({ id: resolvedTeamId });
+            if (team && team.leaderId !== req.user.id && req.user.role !== 'admin') {
+                return res.status(403).json({ message: "Clearance Denied: Only the Squad Leader is authorized to withdraw the squad from this hackathon." });
+            }
         }
 
-        // Delete or mark registration as withdrawn
-        await Registration.deleteOne({ id: reg.id });
+        // Check if event was paid or fee was recorded: automatically convert to refund request for Admin
+        const isPaid = (reg.feeAmount && reg.feeAmount > 0) || reg.paymentStatus === 'verified' || reg.paymentStatus === 'payment_under_review' || reg.paymentStatus === 'pending_verification';
+        if (isPaid) {
+            reg.status = 'withdrawn';
+            reg.refundRequested = true;
+            reg.refundReason = reason || 'Squad Leader withdrew squad from hackathon arena.';
+            reg.refundUpi = refundUpi || reg.paymentDetails?.upiId || '';
+            reg.refundRequestedAt = new Date();
+            await reg.save();
 
-        // If user was in a squad locked to this hackathon, unlock squad if no other hackathon binding
-        if (req.user.teamId) {
-            const team = await Team.findOne({ id: req.user.teamId });
-            if (team && team.hackathonId === hackathonId) {
+            // Notify all admins of the squad withdrawal & refund claim
+            const admins = await User.find({ role: 'admin' });
+            for (const admin of admins) {
+                await Notification.create({
+                    id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+                    userId: admin.id,
+                    type: 'admin_message',
+                    title: '💸 Squad Withdrawal & Refund Request',
+                    message: `Squad Leader ${req.user.name} withdrew from "${hackathon?.name || hackathonId}". Refund amount: ₹${reg.feeAmount}. Reason: ${reg.refundReason}`,
+                    referenceType: 'registration',
+                    referenceId: reg.id,
+                    isRead: false
+                }).catch(() => {});
+            }
+        } else {
+            // Free event: delete registration
+            await Registration.deleteOne({ id: reg.id });
+        }
+
+        // Unlock squad so operatives can manage their roster or dissolve squad
+        if (resolvedTeamId) {
+            const team = await Team.findOne({ id: resolvedTeamId });
+            if (team) {
                 team.isLocked = false;
+                team.hackathonId = null;
                 await team.save();
             }
         }
 
-        res.json({ message: "Successfully withdrawn from hackathon arena." });
+        res.json({ 
+            message: isPaid 
+                ? "Squad withdrawn successfully. Refund claim routed to Admin payment ledger." 
+                : "Squad withdrawn successfully from hackathon.",
+            isRefund: isPaid
+        });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -2286,8 +2350,19 @@ app.post('/api/teams/join', requireAuth, requireRole(['student', 'admin']), asyn
     if (!team) {
         return res.status(404).json({ message: "Invalid Squad Code." });
     }
-    if (team.isLocked) {
+    const activeTeamReg = await Registration.findOne({
+        teamId: team.id,
+        status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+    });
+    if (team.isLocked || team.hackathonId || activeTeamReg) {
         return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. Direct join is blocked." });
+    }
+    const activeUserReg = await Registration.findOne({
+        userId: req.user.id,
+        status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+    });
+    if (activeUserReg) {
+        return res.status(403).json({ message: "You are actively participating in a hackathon and cannot join another squad." });
     }
     const hackathon = await Hackathon.findOne({ id: team.hackathonId });
     const maxAllowed = hackathon ? hackathon.maxTeamSize || 4 : 4;
@@ -2326,7 +2401,15 @@ app.post('/api/teams/leave', requireAuth, requireRole(['student']), async (req, 
 app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team) return res.status(404).json({ message: "Squad matrix missing." });
-    if (team.isLocked) return res.status(403).json({ message: 'Squad roster is locked for an active hackathon registration.' });
+    
+    const activeTeamReg = await Registration.findOne({
+        teamId: team.id,
+        status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+    });
+    if (team.isLocked || team.hackathonId || activeTeamReg) {
+        return res.status(403).json({ message: "Cannot dissolve squad while participating in an active hackathon. Withdraw from the hackathon first." });
+    }
+
     if (team.leaderId !== req.user.id && req.user.role !== 'admin') {
         return res.status(403).json({ message: "Security Action Blocked: Only leaders possess authorization to dissolve the squad." });
     }
@@ -2382,14 +2465,47 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin'])
             return res.status(403).json({ message: "Command Directive: Only squad leaders can trigger payload transmission." });
         }
 
-        // Prevent duplicate submissions atomically
-        if (team.isSubmitted) {
-            return res.status(409).json({ message: "Payload already locked. Final submission already recorded." });
-        }
-
+        // Check if submission already exists: Allow Leader to update deliverables before deadline
         const existingSubmission = await Submission.findOne({ teamId: team.id });
         if (existingSubmission) {
-            return res.status(409).json({ message: "A submission already exists for this squad in the evaluation ledger." });
+            // Check hackathon submission deadline
+            if (team.hackathonId) {
+                const hackathon = await Hackathon.findOne({ id: team.hackathonId });
+                if (hackathon) {
+                    if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
+                        return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
+                    }
+                    if (hackathon.submissionDeadline && new Date() > new Date(hackathon.submissionDeadline)) {
+                        return res.status(403).json({ message: "Submission deadline has elapsed. Late submissions are not accepted." });
+                    }
+                }
+            }
+
+            const { description, technologies, githubLink, figmaLink, demoLink, demoVideoUrl } = req.body || {};
+            existingSubmission.description = description || existingSubmission.description;
+            if (technologies) {
+                existingSubmission.technologies = Array.isArray(technologies) ? technologies : (typeof technologies === 'string' ? technologies.split(',').map(s => s.trim()).filter(Boolean) : existingSubmission.technologies);
+            }
+            if (githubLink) existingSubmission.githubUrl = githubLink;
+            if (figmaLink) existingSubmission.figmaUrl = figmaLink;
+            if (demoLink) existingSubmission.liveDemoUrl = demoLink;
+            if (demoVideoUrl) existingSubmission.demoVideoUrl = demoVideoUrl;
+            existingSubmission.updatedAt = new Date();
+            await existingSubmission.save();
+
+            team.isSubmitted = true;
+            team.status = 'submitted';
+            if (githubLink) team.githubLink = githubLink;
+            if (figmaLink) team.figmaLink = figmaLink;
+            if (demoLink) team.demoLink = demoLink;
+            if (description) team.description = description;
+            await team.save();
+
+            return res.json({ 
+                message: "Squad project payload updated and secured in evaluation ledger.", 
+                team, 
+                submission: existingSubmission 
+            });
         }
 
         // Check hackathon submission deadline
@@ -2451,6 +2567,18 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin'])
     } catch (e) {
         console.error("Submission processing error:", e);
         res.status(500).json({ message: "Failed to process project submission: " + e.message });
+    }
+});
+
+app.get('/api/teams/:id/submission', requireAuth, async (req, res) => {
+    try {
+        const team = await Team.findOne({ id: req.params.id });
+        if (!team) return res.status(404).json({ message: "Squad matrix missing." });
+        const submission = await Submission.findOne({ teamId: team.id });
+        if (!submission) return res.status(404).json({ message: "No submission recorded for squad." });
+        res.json(submission);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
@@ -2705,7 +2833,11 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
         if (!team || team.leaderId !== req.user.id) {
             return res.status(403).json({ message: "Only squad leaders can transmit invitations." });
         }
-        if (team.isLocked) {
+        const activeTeamReg = await Registration.findOne({
+            teamId: team.id,
+            status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+        });
+        if (team.isLocked || team.hackathonId || activeTeamReg) {
             return res.status(403).json({ message: "Squad roster is locked for an active hackathon registration. No new invitations can be dispatched." });
         }
 
@@ -2718,6 +2850,17 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
         );
         if (!receiver) return res.status(404).json({ message: "Operative not found." });
         if (receiver.teamId) return res.status(400).json({ message: "Operative is already aligned with a squad." });
+
+        const receiverInHackathon = await Registration.findOne({
+            $or: [
+                { userId: receiver.id },
+                ...(receiver.teamId ? [{ teamId: receiver.teamId }] : [])
+            ],
+            status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+        });
+        if (receiverInHackathon) {
+            return res.status(400).json({ message: "Operative is actively participating in a hackathon and cannot join another squad." });
+        }
 
         const existingInvite = await TeamInvitation.findOne({ teamId: team.id, receiverId: receiver.id, status: 'pending' });
         if (existingInvite) return res.status(400).json({ message: "Invitation already dispatched." });
@@ -2732,7 +2875,7 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
         
         const notification = new Notification({
             id: `notif-${Date.now()}`,
-            userId: receiverId,
+            userId: receiver.id,
             title: 'Squad Invitation',
             message: `You have been invited to join the squad (${team.name}).`,
             type: 'team_invite',
@@ -2828,6 +2971,22 @@ app.post('/api/teams/:id/request', requireAuth, requireRole(['student', 'admin']
         if (!team) return res.status(404).json({ message: "Squad not found." });
         if (req.user.teamId) return res.status(400).json({ message: "You are already bound to a squad." });
         if (team.memberIds.length >= 4) return res.status(403).json({ message: "Squad slots full." });
+
+        const activeTeamReg = await Registration.findOne({
+            teamId: team.id,
+            status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+        });
+        if (team.isLocked || team.hackathonId || activeTeamReg) {
+            return res.status(403).json({ message: "Cannot request to join: This squad is actively participating in a hackathon with locked rosters." });
+        }
+
+        const activeUserReg = await Registration.findOne({
+            userId: req.user.id,
+            status: { $in: ['registered', 'confirmed', 'active', 'payment_under_review', 'verified', 'awaiting_payment_proof'] }
+        });
+        if (activeUserReg) {
+            return res.status(403).json({ message: "Cannot request to join: You are actively participating in a hackathon." });
+        }
 
         const existing = await TeamJoinRequest.findOne({ teamId: team.id, userId: req.user.id, status: 'pending' });
         if (existing) return res.status(400).json({ message: "Join signature already deployed." });
@@ -3012,7 +3171,22 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
         await team.save();
         await User.findOneAndUpdate({ id: userId }, { teamId: null });
 
-        res.json({ message: "Operative purged from squad." });
+        // Dispatch official expulsion notification to the removed operative
+        const kickNotification = new Notification({
+            id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+            userId: userId,
+            title: 'Squad Expulsion Notice',
+            message: `You have been removed from squad "${team.name}" by the Squad Leader.`,
+            type: 'warning',
+            referenceType: 'team',
+            referenceId: team.id,
+            isRead: false,
+            read: false,
+            createdAt: new Date()
+        });
+        await kickNotification.save();
+
+        res.json({ message: "Operative purged from squad.", notification: kickNotification });
     } catch (e) { res.status(500).json({ error: e.message }) }
 });
 // SUBMISSIONS & WORKSPACE

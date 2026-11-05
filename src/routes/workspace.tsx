@@ -23,6 +23,13 @@ function WorkspaceHUD() {
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+  const [existingSubmission, setExistingSubmission] = useState<any>(null);
+  const [showTrackDossier, setShowTrackDossier] = useState(false);
+  const [showWorkspaceWithdrawModal, setShowWorkspaceWithdrawModal] = useState(false);
+  const [withdrawReason, setWithdrawReason] = useState("");
+  const [withdrawUpi, setWithdrawUpi] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+
   const [submissionForm, setSubmissionForm] = useState({
     description: "",
     technologies: "",
@@ -42,6 +49,9 @@ function WorkspaceHUD() {
   const [activeMentorRequests, setActiveMentorRequests] = useState<any[]>([]);
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
+
+  // Unified submission state
+  const isSubmitted = Boolean(userTeam?.isSubmitted || existingSubmission);
 
   // Resolve active hackathon & payment clearance status
   const isSquadLeader = Boolean(
@@ -105,9 +115,64 @@ function WorkspaceHUD() {
     }
   };
 
+  const fetchSubmission = async () => {
+    if (!userTeam) return;
+    try {
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      const res = await axios.get(`${BASE}/teams/${userTeam.id}/submission`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data) {
+        setExistingSubmission(res.data);
+        if (res.data.githubLink) setGithubLink(res.data.githubLink);
+        if (res.data.figmaLink) setFigmaLink(res.data.figmaLink);
+        if (res.data.demoLink) setDemoLink(res.data.demoLink);
+        setSubmissionForm(prev => ({
+          ...prev,
+          description: res.data.description || userTeam.description || prev.description,
+          technologies: Array.isArray(res.data.technologies) ? res.data.technologies.join(', ') : (res.data.technologies || prev.technologies),
+          githubLink: res.data.githubLink || prev.githubLink,
+          figmaLink: res.data.figmaLink || prev.figmaLink,
+          demoLink: res.data.demoLink || prev.demoLink,
+          demoVideoUrl: res.data.demoVideoUrl || prev.demoVideoUrl
+        }));
+      }
+    } catch (e) {
+      // No existing submission yet
+    }
+  };
+
   useEffect(() => {
-    if (userTeam) fetchMentorRequests();
-  }, [userTeam]);
+    if (userTeam) {
+      void fetchMentorRequests();
+      void fetchSubmission();
+    }
+  }, [userTeam?.id]);
+
+  const handleWorkspaceWithdraw = async () => {
+    if (!activeEvent) return;
+    try {
+      setIsWithdrawing(true);
+      const token = localStorage.getItem("codesrijan_auth_token");
+      const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+      const res = await axios.post(`${BASE}/hackathons/${activeEvent.id}/leave`, {
+        reason: withdrawReason || "Squad voluntary withdrawal from workspace HUD",
+        refundUpi: withdrawUpi || ""
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success(res.data.message || "Squad successfully withdrawn from hackathon.");
+      setShowWorkspaceWithdrawModal(false);
+      setWithdrawReason("");
+      setWithdrawUpi("");
+      await refetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to withdraw squad from hackathon.");
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
 
   const handleMentorRequest = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +255,7 @@ function WorkspaceHUD() {
       toast.error("Please enter an objective title.");
       return;
     }
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -218,7 +283,7 @@ function WorkspaceHUD() {
   const handleQuickTaskCreate = async (e: React.FormEvent, status: string = 'todo') => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -233,7 +298,7 @@ function WorkspaceHUD() {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -247,7 +312,7 @@ function WorkspaceHUD() {
   };
 
   const moveTaskRelative = async (taskId: string, currentStatus: string, direction: 'prev' | 'next') => {
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     const currentIndex = kanbanColumns.indexOf(currentStatus);
     if (currentIndex === -1) return;
     const targetIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
@@ -257,7 +322,7 @@ function WorkspaceHUD() {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     if (!confirm("Are you sure you want to delete this objective?")) return;
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -272,7 +337,7 @@ function WorkspaceHUD() {
   };
 
   const handleSaveLinks = async () => {
-    if (userTeam.isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
+    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     setIsSavingLinks(true);
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -336,7 +401,8 @@ function WorkspaceHUD() {
       );
       setIsSubmitting(false);
       await refetchData();
-      toast.success("Final Payload transmitted! Squad workspace locked for evaluation.");
+      await fetchSubmission();
+      toast.success(existingSubmission ? "Project deliverables successfully updated!" : "Final Payload transmitted! Squad workspace locked for evaluation.");
     } catch (e: any) { 
       toast.error(e.response?.data?.message || "Transmission completely denied by server."); 
     } finally {
@@ -351,13 +417,14 @@ function WorkspaceHUD() {
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
   const hasTrack = Boolean(activeProblemId);
-  const hasLinks = Boolean(githubLink || figmaLink || demoLink);
+  const hasLinks = Boolean(githubLink || figmaLink || demoLink || isSubmitted);
   
   let readinessScore = 0;
   if (userTeam) readinessScore += 25;
   if (hasTrack) readinessScore += 25;
   if (isPaymentVerified) readinessScore += 25;
-  if (hasLinks) readinessScore += 25;
+  if (hasLinks || isSubmitted) readinessScore += 25;
+  if (isSubmitted) readinessScore = 100;
 
   // Filter tasks if search is active
   const filteredTasks = taskSearch.trim() 
@@ -396,7 +463,7 @@ function WorkspaceHUD() {
           <div className="flex flex-col items-start md:items-end gap-2 mt-6 md:mt-0">
             <span className="font-label-bold uppercase text-zinc-600 text-xs">Framework Status</span>
             <div className="flex gap-3 items-center flex-wrap">
-              {userTeam.isSubmitted ? (
+              {isSubmitted ? (
                 <span className="bg-emerald-500 text-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
                   <span className="material-symbols-outlined text-sm">lock</span> PAYLOAD DELIVERED
                 </span>
@@ -404,6 +471,16 @@ function WorkspaceHUD() {
                 <span className="bg-amber-400 text-black px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
                   <span className="material-symbols-outlined text-sm">shield</span> SYSTEMS UNLOCKED
                 </span>
+              )}
+              {isSquadLeader && activeEvent && !isSubmitted && (
+                <button 
+                  type="button" 
+                  onClick={() => setShowWorkspaceWithdrawModal(true)} 
+                  className="bg-rose-100 hover:bg-rose-600 hover:text-white text-rose-800 px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-wider flex items-center gap-1.5 border-2 border-rose-600 brutal-shadow-sm transition-colors cursor-pointer"
+                  title="Withdraw squad from active hackathon"
+                >
+                  <span className="material-symbols-outlined text-sm">logout</span> WITHDRAW FROM EVENT
+                </button>
               )}
               <button 
                 onClick={() => setIsRequestingMentor(true)} 
@@ -445,15 +522,23 @@ function WorkspaceHUD() {
               </span>
             </div>
           </div>
+          {activeEvent && (
+            <div className="bg-amber-100 border border-amber-400 p-2 text-[10px] font-mono text-amber-900 font-bold max-w-sm">
+              🔒 ROSTER LOCKED IN HACKATHON: Roster modifications and invites are locked while deployed in {activeEvent.name || 'Hackathon'}.
+            </div>
+          )}
           <button
             type="button"
+            disabled={Boolean(activeEvent)}
             onClick={() => {
               navigator.clipboard.writeText(userTeam.id);
               toast.success("Squad Code copied to clipboard! Teammates can enter this in Recruitment > Join.");
             }}
-            className="bg-electric-blue hover:bg-stark-black text-white font-mono text-xs font-bold uppercase px-5 py-3 border-2 border-black shadow-[3px_3px_0_#000] hover:-translate-y-0.5 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+            className={`font-mono text-xs font-bold uppercase px-5 py-3 border-2 border-black shadow-[3px_3px_0_#000] flex items-center gap-2 shrink-0 ${
+              activeEvent ? 'bg-zinc-200 text-zinc-500 cursor-not-allowed' : 'bg-electric-blue hover:bg-stark-black text-white hover:-translate-y-0.5 transition-all cursor-pointer'
+            }`}
           >
-            <span className="material-symbols-outlined text-sm">content_copy</span> COPY SQUAD CODE
+            <span className="material-symbols-outlined text-sm">content_copy</span> {activeEvent ? "ROSTER LOCKED" : "COPY SQUAD CODE"}
           </button>
         </div>
 
@@ -507,7 +592,7 @@ function WorkspaceHUD() {
           <div className="border-2 border-ink-black p-4 bg-surface-container-lowest flex flex-col justify-between">
             <div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">LOCKED TRACK</span>
+                <span className="text-[10px] font-mono font-bold uppercase text-zinc-600">LOCKED TRACK DOSSIER</span>
                 {hasTrack ? (
                   <span className="bg-success text-white text-[9px] font-mono font-bold px-2 py-0.5 uppercase">LOCKED</span>
                 ) : (
@@ -517,18 +602,41 @@ function WorkspaceHUD() {
               <h3 className="font-display-sm text-base uppercase text-ink-black font-bold line-clamp-2">
                 {currentProblem?.title || activeProblemId || "No Problem Statement Selected"}
               </h3>
-              {currentProblem && (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-[10px] font-mono bg-zinc-200 px-2 py-0.5 uppercase font-bold text-zinc-700">
-                    {currentProblem.category || currentProblem.domain || "DIRECTIVE"}
-                  </span>
-                  <span className="text-[10px] font-mono bg-electric-blue/20 text-electric-blue px-2 py-0.5 uppercase font-bold">
-                    {currentProblem.difficulty || "STANDARD"}
-                  </span>
+              {currentProblem ? (
+                <div className="space-y-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-mono bg-zinc-200 px-2 py-0.5 uppercase font-bold text-zinc-700">
+                      {currentProblem.category || currentProblem.domain || "DIRECTIVE"}
+                    </span>
+                    <span className="text-[10px] font-mono bg-electric-blue/20 text-electric-blue px-2 py-0.5 uppercase font-bold">
+                      {currentProblem.difficulty || "STANDARD"}
+                    </span>
+                    {currentProblem.id && (
+                      <span className="text-[10px] font-mono text-zinc-500 font-bold">
+                        ID: {currentProblem.id}
+                      </span>
+                    )}
+                  </div>
+                  {currentProblem.description && (
+                    <p className="text-[11px] font-mono text-zinc-600 line-clamp-3 leading-relaxed">
+                      {currentProblem.description}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowTrackDossier(true)}
+                    className="w-full bg-surface hover:bg-black hover:text-white text-ink-black font-mono font-bold text-[10px] uppercase py-1.5 px-2 border border-black shadow-[1px_1px_0px_#000] transition-colors flex items-center justify-center gap-1 cursor-pointer mt-1"
+                  >
+                    <span className="material-symbols-outlined text-xs">visibility</span> VIEW FULL TRACK DOSSIER ↗
+                  </button>
                 </div>
+              ) : (
+                <p className="text-[11px] font-mono text-zinc-500 mt-2">
+                  Select a challenge track to align your deliverables with specific rubric criteria.
+                </p>
               )}
             </div>
-            {!userTeam.isSubmitted && (
+            {!isSubmitted && (
               <Link to="/problems" className="mt-4 text-xs font-mono font-bold uppercase text-electric-blue hover:underline flex items-center gap-1">
                 {hasTrack ? "Browse / Switch Tracks →" : "Select Track In Catalog →"}
               </Link>
@@ -548,7 +656,7 @@ function WorkspaceHUD() {
                 {teamMembers.map((member: any) => {
                   const isLeader = member.id === userTeam.leaderId;
                   const isCurrentUserLeader = userTeam.leaderId === currentUser?.id;
-                  const canTransfer = isCurrentUserLeader && !isLeader && !userTeam.isSubmitted;
+                  const canTransfer = isCurrentUserLeader && !isLeader && !isSubmitted;
                   return (
                     <div key={member.id} className="flex items-center justify-between text-xs font-mono bg-white p-2 border border-zinc-300 gap-2">
                       <div className="flex items-center gap-2 truncate">
@@ -615,16 +723,16 @@ function WorkspaceHUD() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>4. Deliverables Staged</span>
-                  <span className={hasLinks ? "text-success font-bold" : "text-amber-500 font-bold"}>
-                    {hasLinks ? "✓ ATTACHED" : "○ EMPTY"}
+                  <span className={isSubmitted ? "text-success font-bold" : hasLinks ? "text-success font-bold" : "text-amber-500 font-bold"}>
+                    {isSubmitted ? "✓ DELIVERED" : hasLinks ? "✓ ATTACHED" : "○ EMPTY"}
                   </span>
                 </div>
               </div>
             </div>
             <div className="text-[10px] font-mono text-zinc-500 mt-2">
-              {readinessScore === 100 ? "Ready for final lockdown transmission." : "Complete all checkpoints to unlock clean submission."}
+              {isSubmitted ? "Project successfully transmitted and locked for judging." : readinessScore === 100 ? "Ready for final lockdown transmission." : "Complete all checkpoints to unlock clean submission."}
             </div>
-            {isSquadLeader && !userTeam.isSubmitted && (
+            {isSquadLeader && !isSubmitted && (
               <a
                 href="#deliverable-matrix"
                 className="mt-3 w-full bg-surface-container hover:bg-black hover:text-white text-ink-black font-mono font-bold text-[11px] uppercase py-2 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5"
@@ -680,7 +788,7 @@ function WorkspaceHUD() {
                   <button onClick={() => setTaskSearch("")} className="absolute right-2 top-1.5 text-xs text-zinc-500 hover:text-black">✕</button>
                 )}
               </div>
-              {!userTeam.isSubmitted && (
+              {!isSubmitted && (
                 <button onClick={() => setIsCreating(true)} className="bg-electric-blue text-white font-bold py-2 px-4 border-2 border-black hover:-translate-y-0.5 brutal-shadow transition-transform text-xs uppercase shrink-0">
                   + CREATE TASK
                 </button>
@@ -771,18 +879,18 @@ function WorkspaceHUD() {
               </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {kanbanColumns.map((col, idx) => {
               const tasksInCol = filteredTasks.filter(t => t.status === col);
               return (
-                <div key={col} className={`bg-surface-container border-4 ${col === 'completed' && userTeam.isSubmitted ? 'border-success' : 'border-ink-black'} min-h-[440px] flex flex-col brutal-shadow-sm`}>
-                  <div className={`p-3 font-label-bold uppercase text-center border-b-4 tracking-wider flex items-center justify-between px-4 ${(col === 'completed' || userTeam.isSubmitted) ? 'bg-ink-black text-pure-white border-ink-black' : 'bg-electric-blue text-pure-white border-ink-black'}`}>
+                <div key={col} className={`bg-surface-container border-4 ${col === 'completed' && isSubmitted ? 'border-success' : 'border-ink-black'} min-h-[440px] flex flex-col brutal-shadow-sm`}>
+                  <div className={`p-3 font-label-bold uppercase text-center border-b-4 tracking-wider flex items-center justify-between px-4 ${(col === 'completed' || isSubmitted) ? 'bg-ink-black text-pure-white border-ink-black' : 'bg-electric-blue text-pure-white border-ink-black'}`}>
                     <span className="text-xs">{columnLabels[idx]}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-mono bg-black/30 text-white px-2 py-0.5 rounded-full font-bold">
                         {tasksInCol.length}
                       </span>
-                      {!userTeam.isSubmitted && (
+                      {!isSubmitted && (
                         <button
                           type="button"
                           onClick={() => {
@@ -802,7 +910,7 @@ function WorkspaceHUD() {
                     {tasksInCol.length === 0 ? (
                       <div className="h-32 border-2 border-dashed border-zinc-300 flex flex-col items-center justify-center p-4 text-center gap-2">
                         <span className="text-[11px] font-mono text-zinc-400 uppercase font-bold">NO ACTIVE OBJECTIVES</span>
-                        {!userTeam.isSubmitted && (
+                        {!isSubmitted && (
                           <button
                             type="button"
                             onClick={() => {
@@ -831,7 +939,7 @@ function WorkspaceHUD() {
                                   {task.priority}
                                 </span>
                               )}
-                              {!userTeam.isSubmitted && (
+                              {!isSubmitted && (
                                 <button onClick={() => deleteTask(task.id)} className="text-error hover:bg-error/10 p-0.5 ml-1" title="Delete Task">
                                   <span className="material-symbols-outlined text-xs">delete</span>
                                 </button>
@@ -845,7 +953,7 @@ function WorkspaceHUD() {
                           )}
 
                           {/* Quick Nudge Arrows & Select Status Controls */}
-                          {!userTeam.isSubmitted && (
+                          {!isSubmitted && (
                             <div className="flex items-center gap-1.5 pt-2 border-t border-zinc-200 mt-2">
                               {idx > 0 && (
                                 <button
@@ -881,7 +989,7 @@ function WorkspaceHUD() {
                     )}
                   </div>
 
-                  {col === 'todo' && !userTeam.isSubmitted && (
+                  {col === 'todo' && !isSubmitted && (
                     <form onSubmit={(e) => handleQuickTaskCreate(e, 'todo')} className="p-3 border-t-4 border-ink-black bg-white flex gap-2">
                       <input
                         type="text"
@@ -929,7 +1037,7 @@ function WorkspaceHUD() {
                   )}
                 </div>
                 <input
-                  disabled={userTeam.isSubmitted}
+                  disabled={isSubmitted}
                   type="text"
                   value={githubLink}
                   onChange={e => setGithubLink(e.target.value)}
@@ -956,7 +1064,7 @@ function WorkspaceHUD() {
                   )}
                 </div>
                 <input
-                  disabled={userTeam.isSubmitted}
+                  disabled={isSubmitted}
                   type="text"
                   value={figmaLink}
                   onChange={e => setFigmaLink(e.target.value)}
@@ -983,7 +1091,7 @@ function WorkspaceHUD() {
                   )}
                 </div>
                 <input
-                  disabled={userTeam.isSubmitted}
+                  disabled={isSubmitted}
                   type="text"
                   value={demoLink}
                   onChange={e => setDemoLink(e.target.value)}
@@ -994,7 +1102,7 @@ function WorkspaceHUD() {
 
             </div>
 
-            {!userTeam.isSubmitted && (
+            {!isSubmitted && (
               <div className="flex items-center gap-4 pt-2">
                 <button
                   onClick={handleSaveLinks}
@@ -1010,8 +1118,8 @@ function WorkspaceHUD() {
           </div>
 
           {/* Lockdown / Submission Portal */}
-          <div className={`col-span-1 border-4 brutal-shadow p-6 sm:p-8 flex flex-col items-center justify-center text-center ${userTeam.isSubmitted ? 'bg-emerald-600 border-black text-white' : 'bg-pure-white border-black text-ink-black'}`}>
-            {!userTeam.isSubmitted ? (
+          <div className={`col-span-1 border-4 brutal-shadow p-6 sm:p-8 flex flex-col items-center justify-center text-center ${isSubmitted ? 'bg-emerald-600 border-black text-white' : 'bg-pure-white border-black text-ink-black'}`}>
+            {!isSubmitted ? (
               <>
                 <span className="material-symbols-outlined text-rose-600 text-6xl mb-4 animate-pulse">crisis_alert</span>
                 <h3 className="font-display-lg uppercase text-rose-600 text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[280px]">SUBMIT YOUR PROJECT</h3>
@@ -1058,7 +1166,28 @@ function WorkspaceHUD() {
               <>
                 <span className="material-symbols-outlined text-white text-6xl mb-4">gpp_good</span>
                 <h3 className="font-display-lg uppercase text-white text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">PROJECT SUBMITTED</h3>
-                <p className="font-mono text-xs text-white/90">Your squad project is under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
+                <p className="font-mono text-xs text-white/90 mb-4 leading-relaxed">
+                  Your squad project deliverables are registered in the evaluation ledger. Awaiting Evaluation Engine review.
+                </p>
+                {isSquadLeader && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSubmissionForm({
+                        description: existingSubmission?.description || userTeam.description || "",
+                        technologies: Array.isArray(existingSubmission?.technologies) ? existingSubmission.technologies.join(', ') : (existingSubmission?.technologies || ""),
+                        githubLink: existingSubmission?.githubLink || githubLink,
+                        figmaLink: existingSubmission?.figmaLink || figmaLink,
+                        demoLink: existingSubmission?.demoLink || demoLink,
+                        demoVideoUrl: existingSubmission?.demoVideoUrl || ""
+                      });
+                      setIsSubmitting(true);
+                    }}
+                    className="bg-black hover:bg-white hover:text-black text-white font-label-bold uppercase text-xs py-3 px-5 border-2 border-white transition-all shadow-[2px_2px_0px_#000] cursor-pointer"
+                  >
+                    UPDATE DELIVERABLES ↗
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -1068,9 +1197,13 @@ function WorkspaceHUD() {
         {isSubmitting && (
           <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white border-4 border-black brutal-shadow max-w-3xl w-full p-6 sm:p-8 my-8">
-              <h3 className="font-display-lg text-3xl sm:text-4xl uppercase mb-4 text-stark-black border-l-8 border-success pl-4">FINAL TRANSMISSION</h3>
+              <h3 className="font-display-lg text-3xl sm:text-4xl uppercase mb-4 text-stark-black border-l-8 border-success pl-4">
+                {isSubmitted ? "UPDATE DELIVERABLES TRANSMISSION" : "FINAL TRANSMISSION"}
+              </h3>
               <p className="font-code-snippet text-on-surface-variant mb-6 uppercase tracking-widest text-xs">
-                Prepare your payload for evaluation. This action is irreversible. Provide detailed context for the judges.
+                {isSubmitted 
+                  ? "Modify and synchronize your payload before evaluation locks." 
+                  : "Prepare your payload for evaluation. This action is irreversible. Provide detailed context for the judges."}
               </p>
               <form onSubmit={handleFinalSubmit} className="flex flex-col gap-5">
                 
@@ -1105,7 +1238,7 @@ function WorkspaceHUD() {
 
                 <div className="bg-warning/20 border-2 border-warning p-3 mt-1">
                   <p className="font-code-snippet text-[11px] text-ink-black font-bold uppercase">
-                    CRITICAL CONFIRMATION: Are you sure? You can submit only ONCE. Once submitted, your squad workspace, links, and codebase are permanently locked for judging.
+                    CRITICAL CONFIRMATION: Are you sure? Once submitted, your squad workspace, links, and codebase are locked for judging.
                   </p>
                 </div>
 
@@ -1118,10 +1251,10 @@ function WorkspaceHUD() {
                     {isSubmitLoading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        TRANSMITTING & LOCKING PAYLOAD...
+                        TRANSMITTING & SYNCHRONIZING PAYLOAD...
                       </>
                     ) : (
-                      'CONFIRM & SUBMIT PROJECT'
+                      isSubmitted ? 'SAVE & UPDATE DELIVERABLES' : 'CONFIRM & SUBMIT PROJECT'
                     )}
                   </button>
                   <button 
@@ -1134,6 +1267,135 @@ function WorkspaceHUD() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Track Dossier Modal */}
+        {showTrackDossier && currentProblem && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white border-4 border-black brutal-shadow max-w-2xl w-full p-6 sm:p-8 my-8 space-y-4">
+              <div className="flex justify-between items-start gap-4 border-b-2 border-black pb-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-electric-blue text-white text-[10px] font-mono font-bold px-2 py-0.5 uppercase">
+                      {currentProblem.category || currentProblem.domain || "TRACK"}
+                    </span>
+                    <span className="bg-zinc-200 text-black text-[10px] font-mono font-bold px-2 py-0.5 uppercase">
+                      {currentProblem.difficulty || "STANDARD"}
+                    </span>
+                  </div>
+                  <h2 className="font-display-lg text-2xl uppercase font-black text-ink-black">
+                    {currentProblem.title}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowTrackDossier(false)}
+                  className="p-1 border border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto space-y-4 text-xs font-mono pr-2">
+                <div>
+                  <h4 className="font-bold uppercase text-zinc-800 mb-1">Description & Operational Context</h4>
+                  <p className="text-zinc-700 whitespace-pre-wrap leading-relaxed bg-surface-container p-3 border border-zinc-300">
+                    {currentProblem.fullDescription || currentProblem.description || "No full description provided."}
+                  </p>
+                </div>
+
+                {Array.isArray(currentProblem.requirements) && currentProblem.requirements.length > 0 && (
+                  <div>
+                    <h4 className="font-bold uppercase text-zinc-800 mb-1">Core Deliverable Requirements</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                      {currentProblem.requirements.map((req: string, i: number) => (
+                        <li key={i}>{req}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {Array.isArray(currentProblem.constraints) && currentProblem.constraints.length > 0 && (
+                  <div>
+                    <h4 className="font-bold uppercase text-zinc-800 mb-1">System Constraints & Boundaries</h4>
+                    <ul className="list-disc pl-5 space-y-1 text-zinc-700">
+                      {currentProblem.constraints.map((c: string, i: number) => (
+                        <li key={i}>{c}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t-2 border-black">
+                {!isSubmitted && (
+                  <Link
+                    to="/problems"
+                    className="px-4 py-2 bg-white text-black font-bold uppercase border-2 border-black hover:bg-zinc-100"
+                  >
+                    Switch Track
+                  </Link>
+                )}
+                <button
+                  onClick={() => setShowTrackDossier(false)}
+                  className="px-4 py-2 bg-electric-blue text-white font-bold uppercase border-2 border-black hover:bg-black shadow-[2px_2px_0px_#000]"
+                >
+                  Close Dossier
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Workspace Withdrawal Modal */}
+        {showWorkspaceWithdrawModal && activeEvent && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-white border-4 border-black brutal-shadow max-w-md w-full p-6 space-y-4">
+              <h3 className="font-display-lg uppercase text-xl text-rose-600 flex items-center gap-2">
+                <span className="material-symbols-outlined">warning</span> WITHDRAW SQUAD FROM EVENT
+              </h3>
+              <p className="text-xs text-zinc-800 font-body-md font-bold leading-relaxed">
+                Are you sure you want to withdraw squad <strong>{userTeam.name}</strong> from <strong>{activeEvent.name || activeEvent.id}</strong>? Your squad roster will be unlocked and participation relinquished.
+              </p>
+              {isPaidEvent && (
+                <div className="space-y-2 pt-2 border-t-2 border-zinc-200">
+                  <div className="bg-amber-100 p-2 text-[10px] font-mono text-amber-900 border border-amber-300 font-bold">
+                    💰 Paid Event (Fee: ₹{feeAmount}): Submitting withdrawal queues a refund claim directly to Admin Payments.
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Your UPI ID for refund (e.g. name@okhdfcbank)"
+                    value={withdrawUpi}
+                    onChange={e => setWithdrawUpi(e.target.value)}
+                    className="w-full border-2 border-black p-2 text-xs font-mono"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Reason for withdrawal..."
+                    value={withdrawReason}
+                    onChange={e => setWithdrawReason(e.target.value)}
+                    className="w-full border-2 border-black p-2 text-xs font-mono"
+                  />
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowWorkspaceWithdrawModal(false)}
+                  className="flex-1 py-2.5 border-2 border-black font-label-bold text-xs uppercase hover:bg-zinc-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleWorkspaceWithdraw}
+                  disabled={isWithdrawing}
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white border-2 border-black font-label-bold text-xs uppercase cursor-pointer disabled:opacity-50"
+                >
+                  {isWithdrawing ? 'Withdrawing...' : 'Confirm Withdrawal'}
+                </button>
+              </div>
             </div>
           </div>
         )}

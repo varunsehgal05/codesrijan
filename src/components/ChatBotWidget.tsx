@@ -102,7 +102,7 @@ export function ChatBotWidget() {
                 if (res.data?.reply) {
                     responseText = res.data.reply;
                     const q = messageText.toLowerCase();
-                    if ((q.includes("deadline") || q.includes("end") || q.includes("when")) && responseText.includes("I am SrijanBot, your CodeSrijan guide")) {
+                    if ((q.includes("deadline") || q.includes("end") || q.includes("when")) && (responseText.includes("I am SrijanBot") || (!responseText.includes("Deadline") && !responseText.includes("IST")))) {
                         const activeH = (teams && currentUser?.teamId && teams.find(t => t.id === currentUser.teamId)?.hackathonId)
                             ? (hackathons.find(h => h.id === teams.find(t => t.id === currentUser.teamId)?.hackathonId) || hackathons[0])
                             : (hackathons && hackathons[0]);
