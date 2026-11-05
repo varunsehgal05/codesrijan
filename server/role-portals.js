@@ -52,14 +52,19 @@ async function judgeAssignments(user) {
     return JudgeAssignment.find(user.role === 'admin' ? { status: activeAssignments } : { judgeId: { $in: await staffIds(user, Judge) }, status: activeAssignments }).lean();
 }
 async function evaluationScope(user, assignments) {
-    const submissions = assignments.length ? await Submission.find(submissionScope(assignments)).select('teamId hackathonId').lean() : [];
-    return { judgeId: user.id, $or: [{ assignmentId: { $in: assignments.map(a => a.id) } }, ...submissions.map(s => ({ teamId: s.teamId, hackathonId: s.hackathonId, assignmentId: { $in: [null, ''] } }))] };
+    const submissions = assignments.length ? await Submission.find(submissionScope(assignments)).select('id teamId hackathonId').lean() : [];
+    return { judgeId: user.id, $or: [{ assignmentId: { $in: assignments.map(a => a.id) } }, ...submissions.map(s => ({ $or: [{ submissionId: s.id }, { teamId: s.teamId, hackathonId: s.hackathonId }] }))] };
 }
-const submissionScope = assignments => ({ $or: assignments.map(a => ({ projectId: a.projectId, hackathonId: a.hackathonId })) });
+const submissionScope = assignments => ({
+    $or: assignments.map(a => ({
+        hackathonId: a.hackathonId,
+        $or: [{ projectId: a.projectId }, { id: a.projectId }]
+    }))
+});
 async function judgeSubmission(user, submissionId) {
     const submission = await Submission.findOne({ id: submissionId, status: { $in: ['submitted', 'locked'] } }).lean();
     if (!submission) throw fail(404, 'Submitted project not found.');
-    const assignment = (await judgeAssignments(user)).find(a => a.projectId === submission.projectId && a.hackathonId === submission.hackathonId);
+    const assignment = (await judgeAssignments(user)).find(a => (a.projectId === submission.projectId || a.projectId === submission.id) && a.hackathonId === submission.hackathonId);
     if (!assignment) throw fail(403, 'Submission is not assigned to you.');
     return { submission, assignment };
 }
@@ -111,8 +116,11 @@ export function installRolePortals(app, audit) {
             const userId = req.body[`${kind}Id`], hackathonId = req.body.hackathonId;
             if (typeof userId !== 'string' || typeof hackathonId !== 'string' || !(await User.exists({ id: userId, role: kind, accountStatus: 'active' })) || !(await Hackathon.exists({ id: hackathonId }))) throw fail(400, 'An active role account and event are required.');
             const targetKey = kind === 'mentor' ? 'teamId' : 'projectId', targetId = req.body[targetKey];
-            const Target = kind === 'mentor' ? Team : Project;
-            if (typeof targetId !== 'string' || !(await Target.exists({ id: targetId, hackathonId }))) throw fail(400, 'Target must belong to the event.');
+            if (kind === 'mentor') {
+                if (typeof targetId !== 'string' || !(await Team.exists({ id: targetId, hackathonId }))) throw fail(400, 'Target must belong to the event.');
+            } else {
+                if (typeof targetId !== 'string' || (!(await Project.exists({ id: targetId, hackathonId })) && !(await Submission.exists({ id: targetId, hackathonId })))) throw fail(400, 'Target must belong to the event.');
+            }
             const key = { [`${kind}Id`]: userId, hackathonId, [targetKey]: targetId };
             const row = await Model.findOneAndUpdate(key, { $set: { assignedBy: req.user.id, status: 'assigned', ...(kind === 'judge' ? { assignedAt: new Date() } : {}) }, $setOnInsert: { id: `${kind}-assignment-${crypto.createHash('sha256').update(JSON.stringify(key)).digest('hex').slice(0, 32)}` } }, { upsert: true, returnDocument: 'after', runValidators: true });
             await req.roleAudit({ action: `${kind.toUpperCase()}_ASSIGNED`, entityType: 'ASSIGNMENT', entityId: row.id, description: 'Role assignment configured.' }); res.status(201).json(row);
@@ -238,7 +246,7 @@ export function installRolePortals(app, audit) {
         let submission;
         if (typeof (req.body.submissionId || req.body.id) === 'string') submission = await Submission.findOne({ id: req.body.submissionId || req.body.id }).lean();
         else if (typeof (req.params.teamId || req.body.teamId) === 'string') submission = await Submission.findOne({ teamId: req.params.teamId || req.body.teamId, ...(typeof req.body.hackathonId === 'string' ? { hackathonId: req.body.hackathonId } : {}) }).sort({ createdAt: -1 }).lean();
-        else if (typeof req.body.projectId === 'string') submission = await Submission.findOne({ projectId: req.body.projectId }).sort({ createdAt: -1 }).lean();
+        else if (typeof req.body.projectId === 'string') submission = await Submission.findOne({ $or: [{ projectId: req.body.projectId }, { id: req.body.projectId }] }).sort({ createdAt: -1 }).lean();
         if (!submission) throw fail(400, 'A submitted project is required.');
         return saveEvaluation(req, res, submission.id);
     });
