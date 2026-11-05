@@ -41,3 +41,4 @@ This empirical audit validates the unified Neo-Brutalist design of `/admin/users
 |:---|:---|:---|:---|:---|
 | **DEF-03B** | "Unable to load assignments. Retry." in Admin Assignments | HIGH | `src/components/RoleAssignments.tsx` | **CLOSED (Verified)** |
 | **DEF-07** | Jarring skewed blue title & mismatched table header in `/admin/users` | LOW | `src/routes/admin.users.tsx` | **CLOSED (Verified)** |
+

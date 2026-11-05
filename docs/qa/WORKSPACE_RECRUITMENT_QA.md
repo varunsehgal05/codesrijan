@@ -72,3 +72,4 @@ This empirical audit validates the resolution of the TanStack router error bound
 |:---|:---|:---|:---|:---|
 | **DEF-04** | TanStack Router Error Boundary crash on `/recruitment` | CRITICAL | `src/routes/recruitment.tsx` | **CLOSED (Verified)** |
 | **DEF-05** | Workspace squad loss after submission, missing controls & modal | HIGH | `src/routes/workspace.tsx`, `store.tsx` | **CLOSED (Verified)** |
+

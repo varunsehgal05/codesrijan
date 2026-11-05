@@ -51,3 +51,4 @@ This empirical audit validates the resolution of SrijanBot's schedule intelligen
 | ID | Description | Severity | Fix Location | Status |
 |:---|:---|:---|:---|:---|
 | **DEF-06** | SrijanBot schedule parsing failure & stray comma punctuation | MEDIUM | `server/services/srijanbot.js`, `ChatBotWidget.tsx`, `srijanbot-nav.tsx` | **CLOSED (Verified)** |
+

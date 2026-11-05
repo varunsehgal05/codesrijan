@@ -397,11 +397,11 @@ function WorkspaceHUD() {
             <span className="font-label-bold uppercase text-zinc-600 text-xs">Framework Status</span>
             <div className="flex gap-3 items-center flex-wrap">
               {userTeam.isSubmitted ? (
-                <span className="bg-success text-pure-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-success brutal-shadow-sm">
+                <span className="bg-emerald-500 text-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
                   <span className="material-symbols-outlined text-sm">lock</span> PAYLOAD DELIVERED
                 </span>
               ) : (
-                <span className="bg-warning text-ink-black px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-ink-black brutal-shadow-sm">
+                <span className="bg-amber-400 text-black px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
                   <span className="material-symbols-outlined text-sm">shield</span> SYSTEMS UNLOCKED
                 </span>
               )}
@@ -1010,11 +1010,11 @@ function WorkspaceHUD() {
           </div>
 
           {/* Lockdown / Submission Portal */}
-          <div className={`col-span-1 border-4 brutal-shadow p-6 sm:p-8 flex flex-col items-center justify-center text-center ${userTeam.isSubmitted ? 'bg-success border-success text-pure-white' : 'bg-pure-white border-error text-ink-black'}`}>
+          <div className={`col-span-1 border-4 brutal-shadow p-6 sm:p-8 flex flex-col items-center justify-center text-center ${userTeam.isSubmitted ? 'bg-emerald-600 border-black text-white' : 'bg-pure-white border-black text-ink-black'}`}>
             {!userTeam.isSubmitted ? (
               <>
-                <span className="material-symbols-outlined text-error text-6xl mb-4 animate-pulse">crisis_alert</span>
-                <h3 className="font-display-lg uppercase text-error text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[280px]">SUBMIT YOUR PROJECT</h3>
+                <span className="material-symbols-outlined text-rose-600 text-6xl mb-4 animate-pulse">crisis_alert</span>
+                <h3 className="font-display-lg uppercase text-rose-600 text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[280px]">SUBMIT YOUR PROJECT</h3>
                 <p className="font-mono text-xs mb-6 px-2 opacity-80 leading-relaxed">
                   Execute this action ONLY when your squad has finalized structural construction. Submitting locks your project links permanently for evaluation.
                 </p>
@@ -1048,7 +1048,7 @@ function WorkspaceHUD() {
                       });
                       setIsSubmitting(true);
                     }}
-                    className="bg-error text-pure-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-error brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
+                    className="bg-rose-600 hover:bg-black text-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-black brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                   >
                     SUBMIT YOUR PROJECT
                   </button>
@@ -1056,9 +1056,9 @@ function WorkspaceHUD() {
               </>
             ) : (
               <>
-                <span className="material-symbols-outlined text-pure-white text-6xl mb-4">gpp_good</span>
-                <h3 className="font-display-lg uppercase text-pure-white text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">PROJECT SUBMITTED</h3>
-                <p className="font-mono text-xs text-pure-white/90">Your squad project is under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
+                <span className="material-symbols-outlined text-white text-6xl mb-4">gpp_good</span>
+                <h3 className="font-display-lg uppercase text-white text-3xl md:text-2xl mb-3 leading-none mx-auto max-w-[250px]">PROJECT SUBMITTED</h3>
+                <p className="font-mono text-xs text-white/90">Your squad project is under strict immutability. Awaiting internal Evaluation Engine overrides.</p>
               </>
             )}
           </div>

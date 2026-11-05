@@ -65,3 +65,4 @@
   `• Final Submission Deadline: 14 Nov 2026, 3:36 am IST`
   `• Event Conclusion: 14 Nov 2026, 5:36 am IST`
   Rendered clean navigation button without stray commas.
+

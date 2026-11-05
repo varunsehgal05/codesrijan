@@ -74,7 +74,7 @@ export function PortalGuard({ role, children }: { role: "mentor" | "judge"; chil
     );
   }
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (currentUser.role !== role) return <Navigate to={roleHome(currentUser.role)} replace />;
+  if (currentUser.role !== role && currentUser.role !== "admin") return <Navigate to={roleHome(currentUser.role)} replace />;
   return children;
 }
 export function Portal({

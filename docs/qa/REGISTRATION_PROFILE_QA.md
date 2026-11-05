@@ -73,3 +73,4 @@ This empirical audit validates the resolution of the critical registration handl
 |:---|:---|:---|:---|:---|
 | **DEF-01** | Handle allowed spaces & button stuck on "GENERATING..." | HIGH | `src/routes/register.tsx` | **CLOSED (Verified)** |
 | **DEF-02** | Profile edit required re-entering name and handle | MEDIUM | `src/routes/profile.tsx` | **CLOSED (Verified)** |
+

@@ -16,6 +16,11 @@ export const Route = createFileRoute("/recruitment")({
 function RecruitmentMatrix() {
   const { currentUser, teams, users, refetchData, createTeam, hackathons, registrations, isLoaded } = useAppStore();
   const navigate = useNavigate();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // Student view state
   const [activeTab, setActiveTab] = useState<'find' | 'join' | 'create'>('find');
@@ -369,7 +374,7 @@ function RecruitmentMatrix() {
   };
 
   // Instant Loading Skeleton (after all hooks are called)
-  if (!isLoaded) {
+  if (!isMounted || !isLoaded) {
     return (
       <div className="min-h-screen bg-background text-on-background flex flex-col items-center justify-center p-8">
         <div className="w-12 h-12 border-4 border-stark-black border-t-electric-blue rounded-full animate-spin mb-4"></div>
@@ -625,12 +630,13 @@ function RecruitmentMatrix() {
                         </p>
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                          {memberList.map(member => {
-                            const isLeader = member.id === team.leaderId;
+                          {memberList.map((member: any) => {
+                            const memberId = String(member.id || member._id || '');
+                            const isLeader = memberId === String(team.leaderId);
                             return (
                               <div 
-                                key={member.id} 
-                                onClick={() => handleOpenDossier(member.id)}
+                                key={memberId || Math.random()} 
+                                onClick={() => memberId && handleOpenDossier(memberId)}
                                 className="bg-surface-container border-2 border-stark-black p-3 flex flex-col justify-between relative group hover:border-electric-blue transition-colors cursor-pointer hover:shadow-[3px_3px_0px_0px_#000]"
                               >
                                 <div className="flex items-start gap-2.5">
@@ -654,7 +660,7 @@ function RecruitmentMatrix() {
                                       {member.email}
                                     </p>
                                     <span className="font-mono text-[9px] text-zinc-400 block truncate mt-1">
-                                      ID: {member.id.substring(0, 10)}
+                                      ID: {memberId.substring(0, 10)}
                                     </span>
                                   </div>
                                 </div>
@@ -663,7 +669,7 @@ function RecruitmentMatrix() {
                                   type="button"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    handleOpenDossier(member.id);
+                                    if (memberId) handleOpenDossier(memberId);
                                   }}
                                   className="mt-2.5 pt-2 border-t border-zinc-300 text-[10px] font-bold text-electric-blue hover:text-stark-black uppercase flex items-center justify-between w-full"
                                 >

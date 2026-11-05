@@ -242,23 +242,38 @@ const AppStoreContext = createContext<StoreContextType | null>(null);
 
 export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const [state, setState] = useState<StoreState>(() => {
-        const cachedUser = getCachedUser();
-        const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
-        const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
-        const cachedPlatform = typeof window !== 'undefined' ? getCachedState() : {};
         return {
-            currentUser: storedToken ? cachedUser : null,
-            users: Array.isArray(cachedPlatform.users) ? cachedPlatform.users : [],
-            teams: Array.isArray(cachedPlatform.teams) ? cachedPlatform.teams : [],
-            problems: Array.isArray(cachedPlatform.problems) ? cachedPlatform.problems : [],
-            hackathons: Array.isArray(cachedPlatform.hackathons) ? cachedPlatform.hackathons : [],
+            currentUser: null,
+            users: [],
+            teams: [],
+            problems: [],
+            hackathons: [],
             chatMessages: [],
             registrations: [],
             tasks: [],
             evaluations: [],
-            isLoaded: storedToken ? !!cachedUser : true
+            isLoaded: false
         };
     });
+
+    useEffect(() => {
+        const cachedUser = typeof window !== 'undefined' ? getCachedUser() : null;
+        const rawToken = typeof localStorage !== 'undefined' ? localStorage.getItem("codesrijan_auth_token") : null;
+        const storedToken = (rawToken && rawToken.trim() && rawToken !== 'null' && rawToken !== 'undefined') ? rawToken.trim() : null;
+        const cachedPlatform = typeof window !== 'undefined' ? getCachedState() : {};
+
+        setState(prev => ({
+            ...prev,
+            currentUser: storedToken ? cachedUser : null,
+            users: Array.isArray(cachedPlatform.users) ? cachedPlatform.users : prev.users,
+            teams: Array.isArray(cachedPlatform.teams) ? cachedPlatform.teams : prev.teams,
+            problems: Array.isArray(cachedPlatform.problems) ? cachedPlatform.problems : prev.problems,
+            hackathons: Array.isArray(cachedPlatform.hackathons) ? cachedPlatform.hackathons : prev.hackathons,
+            isLoaded: storedToken ? !!cachedUser : true
+        }));
+
+        void refetchData();
+    }, []);
 
     useEffect(() => {
         if (state.currentUser?.id) socket.connect();

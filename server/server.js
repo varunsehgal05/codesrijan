@@ -2210,9 +2210,16 @@ app.get('/api/problems/:id', async (req, res) => {
     res.json(problem);
 });
 
-// --- USER DIRECTORY (ADMIN ONLY) ---
-app.get('/api/users', requireAuth, requireRole(['admin']), async (req, res) => {
-    const users = await User.find().select('-passwordHash');
+// --- USER DIRECTORY (ADMIN FULL, AUTHENTICATED STUDENTS SANITIZED DIRECTORY) ---
+app.get('/api/users', requireAuth, async (req, res) => {
+    if (req.user && req.user.role === 'admin') {
+        const users = await User.find().select('-passwordHash');
+        return res.json(users);
+    }
+    // Return sanitized student directory for recruitment matrix / team builder
+    const users = await User.find({ role: 'student' })
+        .select('id name email role college branch year specialization bio techStack skills githubUrl linkedinUrl profilePicture teamId friends isTest')
+        .lean();
     res.json(users);
 });
 
@@ -3011,7 +3018,16 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
 // SUBMISSIONS & WORKSPACE
 app.post('/api/teams/:id/problem', requireAuth, requireRole(['student']), async (req, res) => {
     const { problemId } = req.body;
-    const team = await Team.findOneAndUpdate({ id: req.params.id, leaderId: req.user.id }, { problemStatementId: problemId, problemId }, { returnDocument: 'after' });
+    const uid = req.user.id || req.user._id;
+    const team = await Team.findOneAndUpdate({
+        id: req.params.id,
+        $or: [
+            { leaderId: req.user.id },
+            { leaderId: String(req.user._id || '') },
+            { leaderId: req.user.email },
+            { memberIds: req.user.id }
+        ]
+    }, { problemStatementId: problemId, problemId }, { returnDocument: 'after' });
     if (!team) return res.status(403).json({ message: "Only team leaders can select a problem statement." });
     res.json(team);
 });
@@ -3700,10 +3716,6 @@ app.post('/api/problems', requireAuth, requireRole(['admin']), async (req, res) 
 });
 
 // USERS
-app.get('/api/users', requireAuth, requireRole(['admin']), async (req, res) => {
-    const users = await User.find();
-    res.json(users);
-});
 app.patch('/api/users/:id', requireAuth, requireRole(['admin']), async (req, res) => {
     const user = await User.findOneAndUpdate({ id: req.params.id }, req.body, { returnDocument: 'after' });
     res.json(user);

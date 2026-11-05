@@ -104,6 +104,16 @@ function ProblemsPage() {
   }, [currentHackathon?.id, API_URL]);
 
   const userTeam = resolveUserTeam(teams, currentUser);
+  const isSquadLeader = Boolean(
+    currentUser && userTeam && (
+      userTeam.leaderId === currentUser.id ||
+      userTeam.leaderId === (currentUser as any)._id ||
+      userTeam.leaderId === (currentUser as any).email ||
+      (Array.isArray(userTeam.memberIds) && (userTeam.memberIds[0] === currentUser.id || userTeam.memberIds[0] === (currentUser as any)._id)) ||
+      (Array.isArray(userTeam.memberIds) && userTeam.memberIds.length === 1) ||
+      (!userTeam.leaderId)
+    )
+  );
 
   const [isLocking, setIsLocking] = useState(false);
 
@@ -122,7 +132,7 @@ function ProblemsPage() {
       navigate({ to: '/recruitment' });
       return;
     }
-    if (userTeam.leaderId !== currentUser.id) {
+    if (!isSquadLeader) {
       toast.error("Only Squad Leaders can lock track directives for the squad.");
       return;
     }
@@ -597,7 +607,7 @@ function ProblemsPage() {
               <div className="flex justify-between items-start border-b-2 border-stark-black pb-4">
                 <div>
                   <span className="bg-cyan-400 text-black px-2 py-0.5 text-[10px] font-bold uppercase border border-black">
-                    ADMIN DIRECTIVE INSPECTION
+                    {currentUser?.role === 'admin' ? 'ADMIN DIRECTIVE INSPECTION' : 'TRACK DIRECTIVE DOSSIER'}
                   </span>
                   <h3 className="font-headline-md text-xl uppercase font-bold text-stark-black mt-1">
                     {inspectingProblem.title}
@@ -695,7 +705,7 @@ function ProblemsPage() {
                     <div className="text-xs">
                       {userTeam ? (
                         <span className="font-mono text-zinc-700">
-                          Squad: <strong className="text-black uppercase">{userTeam.name}</strong> ({userTeam.leaderId === currentUser?.id ? 'Leader Clearance' : 'Member'})
+                          Squad: <strong className="text-black uppercase">{userTeam.name}</strong> ({isSquadLeader ? 'Leader Clearance' : 'Member'})
                         </span>
                       ) : (
                         <span className="font-mono text-amber-700 font-bold">⚠️ No Squad Active — Join squad to lock</span>
