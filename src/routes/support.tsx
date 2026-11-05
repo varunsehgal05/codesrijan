@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useAppStore } from "../lib/store";
 import { toast } from "react-hot-toast";
@@ -21,26 +21,15 @@ interface Ticket {
   createdAt: string;
 }
 
-interface MessageItem {
-  id: string;
-  conversationId: string;
-  senderId: string;
-  message: string;
-  createdAt: string;
-}
-
 function SupportPage() {
   const { currentUser, users, isLoaded } = useAppStore();
+  const navigate = useNavigate();
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<MessageItem[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messagesLoading, setMessagesLoading] = useState(false);
-  const [sendingMessage, setSendingMessage] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("active");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   // New Ticket Form State
@@ -49,8 +38,6 @@ function SupportPage() {
   const [description, setDescription] = useState("");
   const [affectedPage, setAffectedPage] = useState("");
   const [priority, setPriority] = useState("normal");
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
   const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -67,9 +54,6 @@ function SupportPage() {
       });
       const data = Array.isArray(res.data) ? res.data : [];
       setTickets(data);
-      if (data.length > 0 && !selectedTicketId) {
-        setSelectedTicketId(data[0].id);
-      }
     } catch (e) {
       console.error("Failed to fetch tickets", e);
     }
@@ -78,72 +62,11 @@ function SupportPage() {
   useEffect(() => {
     if (currentUser) {
       fetchTickets();
-      const interval = setInterval(fetchTickets, 12000);
+      const interval = setInterval(fetchTickets, 10000);
       return () => clearInterval(interval);
     }
     return undefined;
   }, [currentUser]);
-
-  const selectedTicket = tickets.find(t => t.id === selectedTicketId) || null;
-
-  // Fetch messages for selected ticket's conversation
-  const fetchMessages = async (convId?: string) => {
-    const targetConvId = convId || selectedTicket?.conversationId;
-    if (!targetConvId) {
-      setMessages([]);
-      return;
-    }
-    try {
-      setMessagesLoading(true);
-      const token = localStorage.getItem("codesrijan_auth_token");
-      const res = await axios.get(`${BASE}/conversations/${targetConvId}/messages`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setMessages(Array.isArray(res.data) ? res.data : []);
-    } catch (e) {
-      console.error("Failed to fetch ticket messages", e);
-    } finally {
-      setMessagesLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedTicket?.conversationId) {
-      fetchMessages(selectedTicket.conversationId);
-      const msgInterval = setInterval(() => {
-        fetchMessages(selectedTicket.conversationId);
-      }, 5000);
-      return () => clearInterval(msgInterval);
-    } else {
-      setMessages([]);
-    }
-    return undefined;
-  }, [selectedTicketId]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }, [messages]);
-
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!newMessage.trim() || !selectedTicket?.conversationId) return;
-
-    try {
-      setSendingMessage(true);
-      const token = localStorage.getItem("codesrijan_auth_token");
-      await axios.post(`${BASE}/conversations/${selectedTicket.conversationId}/messages`, {
-        message: newMessage.trim()
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setNewMessage("");
-      await fetchMessages(selectedTicket.conversationId);
-    } catch (e: any) {
-      toast.error(e.response?.data?.message || "Failed to transmit message.");
-    } finally {
-      setSendingMessage(false);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,14 +82,19 @@ function SupportPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success("🎫 Support ticket thread initialized successfully.");
+      toast.success("🎫 Support ticket registered. Routing to Comms channel...");
       setIsFormOpen(false);
       setSubject("");
       setDescription("");
       setAffectedPage("");
       await fetchTickets();
-      if (res.data?.id) {
-        setSelectedTicketId(res.data.id);
+      
+      const newTicket = res.data;
+      if (newTicket?.id) {
+        navigate({ 
+          to: "/chat", 
+          search: { ticketId: newTicket.id, conv: newTicket.conversationId } 
+        });
       }
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Failed to submit ticket.");
@@ -184,36 +112,11 @@ function SupportPage() {
       await axios.patch(endpoint, { status: nextStatus }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Ticket marked as ${nextStatus.toUpperCase().replace('_', ' ')}`);
+      toast.success(`Ticket status updated to ${nextStatus.toUpperCase().replace('_', ' ')}`);
       await fetchTickets();
     } catch (e: any) {
       toast.error(e.response?.data?.message || "Failed to update ticket status.");
     }
-  };
-
-  const handleCopyTranscript = () => {
-    if (!selectedTicket) return;
-    const authorUser = users.find(u => u.id === selectedTicket.userId);
-    let transcript = `=== CODESRIJAN DISCORD TICKET TRANSCRIPT ===\n`;
-    transcript += `Ticket ID: #${selectedTicket.id}\n`;
-    transcript += `Subject: ${selectedTicket.subject}\n`;
-    transcript += `Author: ${authorUser ? authorUser.name : selectedTicket.userId} (${authorUser?.email || 'N/A'})\n`;
-    transcript += `Category: ${selectedTicket.category}\n`;
-    transcript += `Priority: ${selectedTicket.priority}\n`;
-    transcript += `Status: ${selectedTicket.status}\n`;
-    transcript += `Created: ${new Date(selectedTicket.createdAt).toLocaleString()}\n`;
-    transcript += `Affected Page: ${selectedTicket.affectedPage || 'N/A'}\n`;
-    transcript += `-------------------------------------------\n\n`;
-    transcript += `[INITIAL DISPATCH]:\n${selectedTicket.description}\n\n`;
-    transcript += `[THREAD MESSAGES]:\n`;
-    messages.forEach(m => {
-      const sender = users.find(u => u.id === m.senderId);
-      const name = sender ? sender.name : (m.senderId === currentUser?.id ? 'You' : 'Staff');
-      transcript += `[${new Date(m.createdAt).toLocaleTimeString()}] ${name}: ${m.message}\n`;
-    });
-
-    navigator.clipboard.writeText(transcript);
-    toast.success("📋 Complete ticket transcript copied to clipboard!");
   };
 
   if (!isLoaded && typeof window !== 'undefined' && localStorage.getItem("codesrijan_auth_token")) {
@@ -234,7 +137,7 @@ function SupportPage() {
           <span className="material-symbols-outlined text-5xl text-error mb-4">lock</span>
           <h2 className="font-display-lg text-2xl uppercase text-stark-black">AUTHENTICATION REQUIRED</h2>
           <p className="font-code-snippet text-xs text-on-surface-variant mt-2 uppercase tracking-widest">
-            Please log in to access the Discord Support Transmission Channels.
+            Please log in to access the Support Ticket Matrix.
           </p>
           <Link to="/login" className="mt-6 inline-block bg-stark-black text-pure-white px-6 py-3 font-label-bold uppercase brutal-border hover:bg-electric-blue transition-all">
             ACCESS GATEWAY ↗
@@ -257,27 +160,45 @@ function SupportPage() {
 
     const normalizedStatus = (t.status || 'open').toLowerCase().replace(/[\s-]+/g, '_');
     let matchesStatus = true;
-    if (statusFilter === 'active') {
-      matchesStatus = normalizedStatus === 'open' || normalizedStatus === 'in_progress';
+    if (statusFilter === 'open') {
+      matchesStatus = normalizedStatus === 'open';
+    } else if (statusFilter === 'in_progress') {
+      matchesStatus = normalizedStatus === 'in_progress';
+    } else if (statusFilter === 'resolved') {
+      matchesStatus = normalizedStatus === 'resolved';
     } else if (statusFilter === 'closed') {
-      matchesStatus = normalizedStatus === 'closed' || normalizedStatus === 'resolved';
+      matchesStatus = normalizedStatus === 'closed';
     }
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
+  // Metrics
+  const totalCount = tickets.length;
+  const openCount = tickets.filter(t => (t.status || 'open').toLowerCase() === 'open').length;
+  const inProgressCount = tickets.filter(t => (t.status || '').toLowerCase().replace(/[\s-]+/g, '_') === 'in_progress').length;
+  const resolvedCount = tickets.filter(t => ['resolved', 'closed'].includes((t.status || '').toLowerCase())).length;
+
   const getStatusBadge = (status: string) => {
     const s = (status || 'open').toLowerCase().replace(/[\s-]+/g, '_');
     if (s === 'in_progress') {
-      return <span className="bg-[#FEF08A] text-[#854D0E] border border-stark-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">⚡ IN PROGRESS</span>;
+      return <span className="bg-[#FEF08A] text-[#854D0E] border-2 border-black px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_#000]">⚡ IN PROGRESS</span>;
     }
     if (s === 'resolved') {
-      return <span className="bg-[#DCFCE7] text-[#166534] border border-stark-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">✓ RESOLVED</span>;
+      return <span className="bg-[#DCFCE7] text-[#166534] border-2 border-black px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_#000]">✓ RESOLVED</span>;
     }
     if (s === 'closed') {
-      return <span className="bg-[#E5E7EB] text-[#1F2937] border border-stark-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">✕ CLOSED</span>;
+      return <span className="bg-[#E5E7EB] text-[#1F2937] border-2 border-black px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_#000]">✕ CLOSED</span>;
     }
-    return <span className="bg-[#FEE2E2] text-[#991B1B] border border-stark-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">● OPEN</span>;
+    return <span className="bg-[#FEE2E2] text-[#991B1B] border-2 border-black px-2.5 py-1 text-xs font-mono font-bold uppercase shadow-[1px_1px_0px_#000]">● OPEN</span>;
+  };
+
+  const getPriorityBadge = (p: string) => {
+    const pr = (p || 'normal').toLowerCase();
+    if (pr === 'critical') return <span className="bg-rose-600 text-white border border-black px-2 py-0.5 text-[10px] font-mono font-black uppercase">CRITICAL</span>;
+    if (pr === 'high') return <span className="bg-amber-400 text-black border border-black px-2 py-0.5 text-[10px] font-mono font-black uppercase">HIGH</span>;
+    if (pr === 'low') return <span className="bg-zinc-200 text-zinc-700 border border-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">LOW</span>;
+    return <span className="bg-blue-100 text-blue-900 border border-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase">NORMAL</span>;
   };
 
   const getCategoryIcon = (cat: string) => {
@@ -292,514 +213,395 @@ function SupportPage() {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-6">
+    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 flex flex-col gap-6 font-mono">
       
-      {/* Discord Server Header */}
-      <div className="bg-pure-white p-6 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Top Header Banner */}
+      <div className="bg-pure-white p-6 sm:p-8 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-[#5865F2] text-pure-white border-2 border-stark-black flex items-center justify-center font-black text-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            #
+          <div className="w-14 h-14 bg-[#5865F2] text-pure-white border-4 border-stark-black flex items-center justify-center font-black text-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <span className="material-symbols-outlined text-3xl">headset_mic</span>
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-display-lg text-headline-xl uppercase text-stark-black tracking-tight leading-none">
-                DISCORD TICKET BOT
+              <h2 className="font-display-lg text-2xl sm:text-3xl uppercase text-stark-black font-black tracking-tight">
+                SUPPORT TICKET MATRIX
               </h2>
               <span className="bg-[#5865F2] text-pure-white font-mono text-[10px] font-bold px-2 py-0.5 border border-stark-black">
-                BOT VERIFIED
+                LIVE DISPATCH
               </span>
             </div>
-            <p className="font-code-snippet text-xs text-on-surface-variant mt-1.5 uppercase tracking-widest">
-              {currentUser.role === 'admin' ? 'Global Support Dispatch Directorate' : 'Real-Time Helpdesk & Issue Channels'}
+            <p className="font-code-snippet text-xs text-on-surface-variant mt-1 uppercase tracking-widest">
+              {currentUser.role === 'admin' ? 'Global Support Dispatch Directorate' : 'Technical Inquiries & Admin Resolution Ledger'}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {currentUser.role === 'admin' ? (
+          {currentUser.role === 'admin' && (
             <Link
               to="/admin/support"
-              className="bg-electric-blue text-pure-white px-5 py-3 font-label-bold uppercase brutal-border hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 text-xs"
+              className="bg-zinc-100 text-black px-5 py-3 font-label-bold uppercase border-2 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 text-xs"
             >
-              <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
-              ADMIN CONSOLE ↗
+              <span className="material-symbols-outlined text-base">admin_panel_settings</span>
+              ADMIN DIRECTIVE ↗
             </Link>
-          ) : (
-            <button
-              onClick={() => setIsFormOpen(!isFormOpen)}
-              className="bg-[#5865F2] text-pure-white px-6 py-3 font-label-bold uppercase border-2 border-stark-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer text-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">add_circle</span>
-              {isFormOpen ? 'CANCEL' : 'TALK TO ADMIN'}
-            </button>
           )}
+          <button
+            onClick={() => setIsFormOpen(!isFormOpen)}
+            className="bg-[#5865F2] hover:bg-black text-white px-6 py-3 font-label-bold uppercase border-2 border-black hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all flex items-center gap-2 cursor-pointer text-xs"
+          >
+            <span className="material-symbols-outlined text-base">{isFormOpen ? 'close' : 'add_circle'}</span>
+            {isFormOpen ? 'CLOSE FORM' : 'TALK TO ADMIN / NEW TICKET'}
+          </button>
         </div>
       </div>
 
-      {/* Main Discord App Layout (Sidebar + Thread Channel) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 brutal-border shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-pure-white min-h-[640px] overflow-hidden">
-        
-        {/* Left Discord Sidebar (Channels & Tickets) */}
-        <div className="lg:col-span-4 border-b-2 lg:border-b-0 lg:border-r-2 border-stark-black bg-[#2F3136] text-pure-white flex flex-col">
-          
-          {/* Channel Search & Filter */}
-          <div className="p-4 border-b-2 border-stark-black bg-[#202225] flex flex-col gap-3">
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-3 top-2.5 text-zinc-400 text-sm">search</span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Find or start a conversation..."
-                className="w-full bg-[#1e1f22] border border-zinc-700 text-xs font-mono text-white pl-9 pr-3 py-2 rounded focus:outline-none focus:border-[#5865F2]"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setStatusFilter("active")}
-                className={`flex-1 py-1 text-[11px] font-mono font-bold uppercase rounded transition-colors ${statusFilter === 'active' ? 'bg-[#5865F2] text-white' : 'bg-[#35373C] text-zinc-300 hover:bg-[#3c3e44]'}`}
-              >
-                Active
-              </button>
-              <button
-                onClick={() => setStatusFilter("closed")}
-                className={`flex-1 py-1 text-[11px] font-mono font-bold uppercase rounded transition-colors ${statusFilter === 'closed' ? 'bg-[#5865F2] text-white' : 'bg-[#35373C] text-zinc-300 hover:bg-[#3c3e44]'}`}
-              >
-                Resolved
-              </button>
-              <button
-                onClick={() => setStatusFilter("all")}
-                className={`flex-1 py-1 text-[11px] font-mono font-bold uppercase rounded transition-colors ${statusFilter === 'all' ? 'bg-[#5865F2] text-white' : 'bg-[#35373C] text-zinc-300 hover:bg-[#3c3e44]'}`}
-              >
-                All
-              </button>
-            </div>
+      {/* Ticket Metrics Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-white border-4 border-black p-4 brutal-shadow flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-zinc-500 font-bold block">ALL TICKETS</span>
+            <span className="text-2xl font-black">{totalCount}</span>
           </div>
-
-          {/* Ticket Channels List */}
-          <div className="flex-1 overflow-y-auto max-h-[580px] p-2 space-y-1">
-            <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-zinc-400 flex justify-between items-center">
-              <span>SUPPORT CHANNELS ({filteredTickets.length})</span>
-              <span className="text-zinc-500 text-[10px]">{statusFilter.toUpperCase()}</span>
-            </div>
-
-            {filteredTickets.length === 0 ? (
-              <div className="p-8 text-center font-mono text-xs text-zinc-400 uppercase">
-                No ticket channels found.
-              </div>
-            ) : (
-              filteredTickets.map(t => {
-                const isSelected = t.id === selectedTicketId;
-                const author = users.find(u => u.id === t.userId);
-                const isClosed = t.status === 'closed' || t.status === 'resolved';
-
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setSelectedTicketId(t.id)}
-                    className={`w-full text-left p-3 rounded transition-all cursor-pointer flex flex-col gap-1.5 ${
-                      isSelected 
-                        ? 'bg-[#3C3F45] text-white border-l-4 border-[#5865F2] shadow-sm' 
-                        : 'hover:bg-[#35373C] text-zinc-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-1.5 overflow-hidden">
-                        <span className="text-[#5865F2] font-black text-sm">#</span>
-                        <span className="font-mono text-xs font-bold truncate">
-                          ticket-{t.id.slice(-6)}
-                        </span>
-                      </div>
-                      <span className={`text-[9px] font-mono uppercase px-1.5 py-0.2 rounded font-bold ${
-                        isClosed ? 'bg-zinc-700 text-zinc-300' : 'bg-red-900/60 text-red-200 border border-red-700'
-                      }`}>
-                        {t.status || 'open'}
-                      </span>
-                    </div>
-
-                    <div className="text-xs font-semibold text-zinc-200 truncate">
-                      {t.subject}
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
-                      <span className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-[12px]">{getCategoryIcon(t.category)}</span>
-                        {t.category}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <Link 
-                          to="/chat"
-                          search={{ conv: t.conversationId }}
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[#00E5FF] hover:underline"
-                        >
-                          Open Comms
-                        </Link>
-                        {currentUser.role === 'admin' && (
-                          <Link 
-                            to="/admin/support"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-amber-400 hover:underline"
-                          >
-                            Manage
-                          </Link>
-                        )}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })
-            )}
-          </div>
+          <span className="material-symbols-outlined text-3xl text-zinc-400">inventory_2</span>
         </div>
-
-        {/* Right Discord Channel Thread View */}
-        <div className="lg:col-span-8 bg-[#36393F] text-zinc-100 flex flex-col justify-between">
-          
-          {selectedTicket ? (
-            <>
-              {/* Channel Thread Header */}
-              <div className="p-4 bg-[#2F3136] border-b-2 border-stark-black flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div className="flex items-center gap-2 overflow-hidden">
-                  <span className="text-[#5865F2] font-black text-xl">#</span>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-white text-base truncate">
-                        ticket-{selectedTicket.id.slice(-6)}: {selectedTicket.subject}
-                      </h3>
-                      {getStatusBadge(selectedTicket.status)}
-                      <span className="bg-zinc-800 text-zinc-300 text-[10px] font-mono px-2 py-0.5 rounded border border-zinc-700 uppercase">
-                        PRIORITY: {selectedTicket.priority}
-                      </span>
-                    </div>
-                    {selectedTicket.affectedPage && (
-                      <div className="text-[11px] font-mono text-zinc-400 mt-0.5">
-                        Route: <span className="text-[#00E5FF]">{selectedTicket.affectedPage}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Quick Action Toolbar */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <button
-                    onClick={handleCopyTranscript}
-                    title="Export transcript to clipboard"
-                    className="bg-[#202225] hover:bg-black text-zinc-200 px-3 py-1.5 rounded border border-zinc-700 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">content_copy</span>
-                    Transcript
-                  </button>
-
-                  <Link
-                    to="/chat"
-                    search={{ conv: selectedTicket.conversationId }}
-                    className="bg-[#202225] hover:bg-electric-blue hover:text-white text-zinc-200 px-3 py-1.5 rounded border border-zinc-700 text-xs font-mono font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-sm">forum</span>
-                    Open Comms
-                  </Link>
-
-                  {/* Status Toggle Buttons */}
-                  {selectedTicket.status !== 'resolved' && selectedTicket.status !== 'closed' ? (
-                    <>
-                      {selectedTicket.status !== 'in_progress' && (
-                        <button
-                          onClick={() => handleStatusChange(selectedTicket.id, 'in_progress')}
-                          className="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-sm">bolt</span>
-                          In Progress
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleStatusChange(selectedTicket.id, 'resolved')}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">check_circle</span>
-                        Resolve
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(selectedTicket.id, 'closed')}
-                        className="bg-red-700 hover:bg-red-600 text-white px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                      >
-                        <span className="material-symbols-outlined text-sm">lock</span>
-                        Close
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={() => handleStatusChange(selectedTicket.id, 'open')}
-                      className="bg-[#5865F2] hover:bg-[#4752c4] text-white px-3 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-sm">refresh</span>
-                      Reopen Ticket
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Chat & Thread Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[460px]">
-                
-                {/* Discord Bot Welcome Embed Card */}
-                <div className="border-l-4 border-[#5865F2] bg-[#2F3136] p-4 rounded-r shadow-md space-y-3 font-sans">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-[#5865F2] text-white flex items-center justify-center font-bold text-xs">
-                      🤖
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-white text-sm">CodeSrijan Ticket Bot</span>
-                        <span className="bg-[#5865F2] text-white text-[9px] font-bold px-1 rounded uppercase">BOT</span>
-                        <span className="text-zinc-400 text-xs font-mono">
-                          {new Date(selectedTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      <div className="text-xs text-zinc-400 font-mono">
-                        Support Intake Protocol Initiated
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#202225] p-3 rounded border border-zinc-700/60">
-                    <h4 className="font-bold text-white text-sm mb-1">{selectedTicket.subject}</h4>
-                    <p className="text-zinc-300 text-xs whitespace-pre-wrap leading-relaxed">{selectedTicket.description}</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono pt-1 border-t border-zinc-700/50">
-                    <div>
-                      <span className="text-zinc-400 block text-[10px] uppercase">Category</span>
-                      <span className="font-bold text-white capitalize">{selectedTicket.category.replace('_', ' ')}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400 block text-[10px] uppercase">Priority</span>
-                      <span className="font-bold text-[#FFD700] uppercase">{selectedTicket.priority}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400 block text-[10px] uppercase">Ticket Ref</span>
-                      <span className="text-zinc-200">#{selectedTicket.id.slice(-8)}</span>
-                    </div>
-                    <div>
-                      <span className="text-zinc-400 block text-[10px] uppercase">Operative</span>
-                      <span className="text-zinc-200 truncate block">
-                        {users.find(u => u.id === selectedTicket.userId)?.name || selectedTicket.userId.slice(-6)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Conversation Stream */}
-                {messagesLoading && messages.length === 0 ? (
-                  <div className="text-center py-6 font-mono text-zinc-400 text-xs">
-                    Loading channel transmission history...
-                  </div>
-                ) : (
-                  messages.map(msg => {
-                    const sender = users.find(u => u.id === msg.senderId);
-                    const isCurrentUser = msg.senderId === currentUser.id;
-                    const isAdmin = sender?.role === 'admin';
-
-                    return (
-                      <div key={msg.id} className="flex items-start gap-3 group hover:bg-[#32353B] -mx-4 px-4 py-2 rounded transition-colors">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs uppercase border ${
-                          isAdmin 
-                            ? 'bg-red-600 text-white border-red-400' 
-                            : isCurrentUser 
-                              ? 'bg-electric-blue text-white border-cyan-300' 
-                              : 'bg-zinc-700 text-zinc-200 border-zinc-600'
-                        }`}>
-                          {sender ? sender.name.substring(0, 2).toUpperCase() : 'OP'}
-                        </div>
-
-                        <div className="flex-1 overflow-hidden">
-                          <div className="flex items-center gap-2">
-                            <span className={`font-bold text-sm ${isAdmin ? 'text-red-400' : isCurrentUser ? 'text-[#00E5FF]' : 'text-zinc-200'}`}>
-                              {sender ? sender.name : (isCurrentUser ? 'You' : 'Operative')}
-                            </span>
-                            {isAdmin && (
-                              <span className="bg-red-950 text-red-300 border border-red-700 text-[9px] font-bold px-1.5 rounded uppercase">
-                                STAFF
-                              </span>
-                            )}
-                            <span className="text-zinc-400 text-[11px] font-mono">
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-
-                          <div className="text-zinc-200 text-sm mt-0.5 whitespace-pre-wrap leading-relaxed">
-                            {msg.message}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Message Reply Box */}
-              <div className="p-4 bg-[#2F3136] border-t-2 border-stark-black">
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2 bg-[#40444B] rounded px-3 py-2 border border-zinc-700 focus-within:border-[#5865F2]">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={e => setNewMessage(e.target.value)}
-                    placeholder={`Reply to #ticket-${selectedTicket.id.slice(-6)}...`}
-                    disabled={sendingMessage}
-                    className="flex-1 bg-transparent text-white font-sans text-sm focus:outline-none placeholder-zinc-400"
-                  />
-                  <button
-                    type="submit"
-                    disabled={sendingMessage || !newMessage.trim()}
-                    className="bg-[#5865F2] hover:bg-[#4752c4] disabled:opacity-40 text-white px-4 py-1.5 rounded text-xs font-mono font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                  >
-                    <span>{sendingMessage ? 'SENDING...' : 'SEND'}</span>
-                    <span className="material-symbols-outlined text-sm">send</span>
-                  </button>
-                </form>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-[#202225] flex items-center justify-center text-zinc-400 mb-4 border border-zinc-700">
-                <span className="material-symbols-outlined text-3xl">forum</span>
-              </div>
-              <h3 className="font-bold text-xl text-white">Select a Support Ticket</h3>
-              <p className="font-mono text-xs text-zinc-400 mt-2 max-w-sm">
-                Choose a channel from the sidebar to view transmission logs, or click "➕ Open New Ticket" to file an issue.
-              </p>
-            </div>
-          )}
+        <div className="bg-rose-50 border-4 border-black p-4 brutal-shadow flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-rose-800 font-bold block">OPEN / ACTIVE</span>
+            <span className="text-2xl font-black text-rose-700">{openCount}</span>
+          </div>
+          <span className="material-symbols-outlined text-3xl text-rose-500">pending</span>
+        </div>
+        <div className="bg-amber-50 border-4 border-black p-4 brutal-shadow flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-amber-800 font-bold block">IN PROGRESS</span>
+            <span className="text-2xl font-black text-amber-800">{inProgressCount}</span>
+          </div>
+          <span className="material-symbols-outlined text-3xl text-amber-500">bolt</span>
+        </div>
+        <div className="bg-emerald-50 border-4 border-black p-4 brutal-shadow flex items-center justify-between">
+          <div>
+            <span className="text-[10px] font-mono uppercase text-emerald-800 font-bold block">RESOLVED</span>
+            <span className="text-2xl font-black text-emerald-700">{resolvedCount}</span>
+          </div>
+          <span className="material-symbols-outlined text-3xl text-emerald-500">check_circle</span>
         </div>
       </div>
 
-      {/* Discord Style New Ticket Intake Modal */}
-      {isFormOpen && currentUser.role !== 'admin' && (
+      {/* New Ticket Form Modal */}
+      {isFormOpen && (
         <div 
-          onClick={(e) => { if (e.target === e.currentTarget) setIsFormOpen(false); }}
-          className="fixed inset-0 bg-stark-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-xs"
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate font-mono"
+          onClick={() => setIsFormOpen(false)}
         >
-          <div className="bg-pure-white brutal-border shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="bg-[#5865F2] text-pure-white p-4 border-b-4 border-stark-black flex justify-between items-center">
+          <div 
+            className="bg-white border-4 border-black brutal-shadow max-w-xl w-full p-6 sm:p-8 modal-content-animate relative max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-5">
               <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined">confirmation_number</span>
-                <h3 className="font-headline-md uppercase tracking-wider text-lg">OPEN SUPPORT TICKET CHANNEL</h3>
+                <span className="material-symbols-outlined text-2xl text-[#5865F2]">add_comment</span>
+                <h3 className="font-display-lg text-2xl uppercase font-black text-black">
+                  DISPATCH SUPPORT TICKET
+                </h3>
               </div>
-              <button onClick={() => setIsFormOpen(false)} className="text-pure-white hover:text-black transition-colors cursor-pointer">
-                <span className="material-symbols-outlined text-2xl">close</span>
+              <button
+                type="button"
+                onClick={() => setIsFormOpen(false)}
+                className="p-1.5 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
-              
-              {/* Category Card Selector (Discord Style) */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-xs">
               <div>
-                <label className="font-label-bold uppercase text-xs tracking-widest block mb-2">Select Issue Department</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'bug_report', label: 'Bug Report', icon: 'bug_report' },
-                    { id: 'payment', label: 'Payment / UPI', icon: 'payments' },
-                    { id: 'squad', label: 'Squad / Team', icon: 'groups' },
-                    { id: 'general', label: 'General / Query', icon: 'chat' },
-                  ].map(cat => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setCategory(cat.id)}
-                      className={`p-3 text-left border-2 border-stark-black flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
-                        category === cat.id 
-                          ? 'bg-[#5865F2] text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' 
-                          : 'bg-surface-bright text-stark-black hover:bg-zinc-100'
-                      }`}
-                    >
-                      <span className="material-symbols-outlined text-xl">{cat.icon}</span>
-                      <span className="font-mono text-xs font-bold uppercase">{cat.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subject Payload */}
-              <div className="flex flex-col gap-1.5">
-                <label className="font-label-bold uppercase text-xs tracking-widest">Ticket Subject / Title</label>
+                <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                  Ticket Subject / Title *
+                </label>
                 <input
-                  type="text"
                   required
+                  autoFocus
+                  placeholder="e.g. UPI Verification Pending for Team Alpha"
                   value={subject}
                   onChange={e => setSubject(e.target.value)}
-                  placeholder="e.g., Cannot upload payment receipt / Squad member missing"
-                  className="bg-pure-white border-2 border-stark-black p-3 font-mono text-sm focus:outline-none focus:border-[#5865F2]"
+                  className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-bold uppercase text-xs tracking-widest">Priority Clearance</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                    Category
+                  </label>
                   <select
-                    value={priority}
-                    onChange={e => setPriority(e.target.value)}
-                    className="bg-pure-white border-2 border-stark-black p-3 font-mono text-sm uppercase focus:outline-none"
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
                   >
-                    <option value="low">Low (General guidance)</option>
-                    <option value="normal">Normal (Standard inquiry)</option>
-                    <option value="high">High (Hindering tournament progress)</option>
-                    <option value="critical">Critical (Hard blocker / submission failure)</option>
+                    <option value="general">General Support</option>
+                    <option value="payment">Payment & Refunds</option>
+                    <option value="bug_report">Bug Report</option>
+                    <option value="squad">Squad Management</option>
+                    <option value="system">System / Access</option>
+                    <option value="feature_request">Feature Request</option>
                   </select>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-label-bold uppercase text-xs tracking-widest">Affected Route / Page</label>
-                  <input
-                    type="text"
-                    value={affectedPage}
-                    onChange={e => setAffectedPage(e.target.value)}
-                    placeholder="e.g. /workspace, /hackathons, /payment"
-                    className="bg-pure-white border-2 border-stark-black p-3 font-mono text-sm focus:outline-none focus:border-[#5865F2]"
-                  />
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                    Priority
+                  </label>
+                  <select
+                    value={priority}
+                    onChange={e => setPriority(e.target.value)}
+                    className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
+                  >
+                    <option value="low">Low Priority</option>
+                    <option value="normal">Normal Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="critical">Critical Priority</option>
+                  </select>
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="flex flex-col gap-1.5">
-                <label className="font-label-bold uppercase text-xs tracking-widest">Issue Description & Evidence</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Detail the exact sequence of events, errors encountered, or assistance required..."
-                  className="bg-pure-white border-2 border-stark-black p-3 font-mono text-sm focus:outline-none focus:border-[#5865F2]"
+              <div>
+                <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                  Affected URL / Portal (Optional)
+                </label>
+                <input
+                  placeholder="e.g. /workspace, /payment, /dashboard"
+                  value={affectedPage}
+                  onChange={e => setAffectedPage(e.target.value)}
+                  className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
                 />
               </div>
 
-              <div className="bg-[#FEF08A] border-2 border-stark-black p-3 font-mono text-xs flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-900">info</span>
-                <span>Opening this ticket automatically establishes an official Discord channel for you and tournament administrators.</span>
+              <div>
+                <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                  Reason for Inquiry / Technical Details *
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Describe your issue with steps to reproduce or transaction reference..."
+                  value={description}
+                  onChange={e => setDescription(e.target.value)}
+                  className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-[#5865F2]"
+                />
               </div>
 
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsFormOpen(false)}
-                  className="px-5 py-3 border-2 border-stark-black font-label-bold uppercase bg-surface-bright hover:bg-zinc-200 transition-colors cursor-pointer text-xs"
-                >
-                  Cancel
-                </button>
+              <div className="flex gap-4 mt-3 pt-4 border-t-2 border-zinc-200">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-6 py-3 border-2 border-stark-black font-label-bold uppercase bg-[#5865F2] text-pure-white hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all cursor-pointer flex items-center gap-2 text-xs"
+                  className="flex-1 bg-[#5865F2] hover:bg-black text-white font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
-                  <span className="material-symbols-outlined text-sm">{loading ? 'sync' : 'bolt'}</span>
-                  <span>{loading ? 'CREATING CHANNEL...' : 'CREATE TICKET CHANNEL'}</span>
+                  {loading ? (
+                    <>
+                      <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                      DISPATCHING TICKET...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-sm">send</span>
+                      TRANSMIT TICKET & OPEN CHAT
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => setIsFormOpen(false)}
+                  className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs"
+                >
+                  CANCEL
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Filter and Search Bar */}
+      <div className="bg-pure-white border-4 border-black p-4 sm:p-5 brutal-shadow flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+        
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {[
+            { id: 'all', label: 'ALL TICKETS' },
+            { id: 'open', label: '● OPEN' },
+            { id: 'in_progress', label: '⚡ IN PROGRESS' },
+            { id: 'resolved', label: '✓ RESOLVED' },
+            { id: 'closed', label: '✕ CLOSED' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setStatusFilter(tab.id)}
+              className={`px-3.5 py-2 font-mono text-xs font-bold uppercase border-2 border-black transition-all cursor-pointer ${
+                statusFilter === tab.id
+                  ? 'bg-black text-white shadow-[2px_2px_0px_#000]'
+                  : 'bg-zinc-100 hover:bg-zinc-200 text-black'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search & Category Filter */}
+        <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
+          <select
+            value={categoryFilter}
+            onChange={e => setCategoryFilter(e.target.value)}
+            className="border-2 border-black px-3 py-2 text-xs font-mono bg-white outline-none uppercase font-bold shrink-0"
+          >
+            <option value="all">ALL CATEGORIES</option>
+            <option value="general">GENERAL</option>
+            <option value="payment">PAYMENTS</option>
+            <option value="bug_report">BUG REPORTS</option>
+            <option value="squad">SQUAD OPS</option>
+            <option value="system">SYSTEM</option>
+            <option value="feature_request">FEATURE REQ</option>
+          </select>
+
+          <div className="relative flex-grow min-w-[200px]">
+            <span className="material-symbols-outlined absolute left-3 top-2.5 text-zinc-400 text-sm">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Filter by subject or ID..."
+              className="w-full border-2 border-black pl-9 pr-3 py-2 text-xs font-mono outline-none focus:border-[#5865F2]"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-2.5 text-xs text-zinc-500 hover:text-black">✕</button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Ticket Ledger Cards */}
+      <div className="space-y-4">
+        {filteredTickets.length === 0 ? (
+          <div className="bg-pure-white border-4 border-black p-12 text-center brutal-shadow space-y-3">
+            <span className="material-symbols-outlined text-5xl text-zinc-400">inbox</span>
+            <h3 className="font-display-md text-xl uppercase font-black text-zinc-700">NO SUPPORT TICKETS FOUND</h3>
+            <p className="text-xs text-zinc-500 font-mono">
+              {searchQuery || categoryFilter !== 'all' || statusFilter !== 'all'
+                ? 'No tickets match your active filter criteria.'
+                : 'You have not submitted any technical support tickets yet.'}
+            </p>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="mt-2 inline-flex items-center gap-2 bg-[#5865F2] hover:bg-black text-white font-mono text-xs uppercase px-5 py-2.5 border-2 border-black shadow-[2px_2px_0px_#000]"
+            >
+              <span className="material-symbols-outlined text-sm">add_circle</span>
+              Open First Support Ticket
+            </button>
+          </div>
+        ) : (
+          filteredTickets.map(ticket => {
+            const author = users.find(u => u.id === ticket.userId);
+            const isResolvedOrClosed = ['resolved', 'closed'].includes((ticket.status || '').toLowerCase());
+
+            return (
+              <div 
+                key={ticket.id} 
+                className="bg-pure-white border-4 border-black brutal-shadow p-6 sm:p-7 flex flex-col gap-4 hover:-translate-y-0.5 transition-transform"
+              >
+                {/* Card Header */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b-2 border-black pb-3">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <span className="bg-stark-black text-white text-xs font-mono font-bold px-2 py-0.5">
+                      #{ticket.id}
+                    </span>
+                    <span className="bg-zinc-100 text-zinc-800 border border-black text-[11px] font-mono font-bold px-2 py-0.5 uppercase flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">{getCategoryIcon(ticket.category)}</span>
+                      {ticket.category.replace(/_/g, ' ')}
+                    </span>
+                    {getPriorityBadge(ticket.priority)}
+                    {getStatusBadge(ticket.status)}
+                  </div>
+
+                  <span className="text-[11px] font-mono text-zinc-500 font-bold shrink-0">
+                    {new Date(ticket.createdAt).toLocaleString('en-IN', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short'
+                    })}
+                  </span>
+                </div>
+
+                {/* Card Body */}
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="font-display-md text-lg sm:text-xl font-black uppercase text-black">
+                      {ticket.subject}
+                    </h3>
+                    {ticket.affectedPage && (
+                      <span className="bg-zinc-100 border border-zinc-400 text-zinc-700 text-[10px] font-mono px-2 py-0.5 shrink-0 uppercase">
+                        Vector: {ticket.affectedPage}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Reason for Opening Ticket */}
+                  <div className="bg-surface-container p-3.5 border-2 border-zinc-300 text-xs font-mono text-zinc-800 leading-relaxed whitespace-pre-wrap">
+                    <span className="text-[10px] font-bold text-zinc-500 uppercase block mb-1">
+                      Reason for Inquiry / Technical Scope:
+                    </span>
+                    {ticket.description}
+                  </div>
+
+                  {currentUser.role === 'admin' && author && (
+                    <div className="text-[11px] font-mono text-zinc-600 flex items-center gap-2">
+                      <span className="material-symbols-outlined text-xs">person</span>
+                      Operative: <strong className="text-black">{author.name}</strong> ({author.email || author.id})
+                    </div>
+                  )}
+                </div>
+
+                {/* Card Action Controls */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t-2 border-zinc-200">
+                  <div className="text-[11px] font-mono text-zinc-500">
+                    Live chat synchronized in Comms channel
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {isResolvedOrClosed ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange(ticket.id, 'open')}
+                        className="bg-zinc-200 hover:bg-zinc-300 text-black border-2 border-black font-mono text-xs uppercase px-3 py-2 cursor-pointer font-bold shadow-[2px_2px_0px_#000]"
+                      >
+                        Reopen Ticket
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusChange(ticket.id, 'resolved')}
+                        className="bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border-2 border-emerald-600 font-mono text-xs uppercase px-3 py-2 cursor-pointer font-bold shadow-[2px_2px_0px_#000]"
+                      >
+                        Mark Resolved ✓
+                      </button>
+                    )}
+
+                    <Link
+                      to="/chat"
+                      search={{ ticketId: ticket.id, conv: ticket.conversationId }}
+                      className="bg-electric-blue hover:bg-black text-white border-2 border-black font-mono text-xs uppercase px-5 py-2 cursor-pointer font-bold shadow-[3px_3px_0px_#000] hover:shadow-none transition-all flex items-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm">forum</span>
+                      OPEN CHAT IN COMMS →
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
     </div>
   );
 }

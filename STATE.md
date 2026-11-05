@@ -23,6 +23,41 @@
 ---
 
 
+
+## 2.2 Support/Comms Separation, Task Modal Overhaul & Withdrawal Polish (Commit 56f082e)
+1. **Guidance Request Reopen Auth Fix (`src/routes/workspace.tsx`)**:
+   - Added `Authorization: Bearer <token>` to `POST /api/mentor/requests/:id/reopen`.
+   - Polished guidance requests card: clean Neo-Brutalist borders, status badges, Google Meet links, and mentor advice blocks.
+
+2. **Withdrawal & Refund Claim Status Banner (`src/routes/workspace.tsx`)**:
+   - When a squad withdraws (`reg.status === 'withdrawn'` or `refundRequested`), the workspace no longer shows "Payment Required (₹100)".
+   - Instead, displays `⚠️ WITHDRAWAL & REFUND CLAIM QUEUED — PENDING CLEARANCE` with refund destination UPI and administrative queue status.
+   - Mission Readiness Checkpoint 3 displays `⏳ WITHDRAWN`.
+
+3. **Complete Rewrite of Create / Edit Task Modal (`src/routes/workspace.tsx`)**:
+   - Clean, decoupled modal with dedicated `taskModalForm` state (`title`, `description`, `priority`, `status`, `assignedTo`, `dueDate`).
+   - Loading indicator with `SAVING OBJECTIVE...` spinner.
+   - Dedicated top-right close button (`✕`), backdrop click dismiss, and `Escape` listener.
+   - Assignee selection dropdown directly from squad operatives (`teamMembers`).
+
+4. **Dynamic Mission Readiness Action Button (`src/routes/workspace.tsx`)**:
+   - When deliverables are unstaged: `[ ↓ STAGE DELIVERABLES BELOW ↓ ]` (smoothly scrolls and focuses the repository URL input).
+   - When deliverables are staged: `[ 🚀 TRANSMIT FINAL PAYLOAD ↗ ]` (launches final submission modal).
+   - When submitted: `[ ✓ PAYLOAD SECURED IN EVALUATION LEDGER ]`.
+
+5. **Support vs. Comms Chat Separation (`src/routes/support.tsx` & `src/routes/chat.tsx`)**:
+   - Support (`/support`) refactored into a full-width Support Ticket Hub ledger:
+     - Metrics strip (Total, Open, In Progress, Resolved).
+     - Filter by status tabs and categories.
+     - Full ticket cards showing Ticket ID, Subject, Category, Priority, Status, and Reason for Inquiry.
+     - Direct CTA: `[ OPEN CHAT IN COMMS → ]` linking to `/chat?ticketId=...`.
+   - Comms (`/chat`):
+     - Displays comprehensive header banner showing Ticket Subject, Query Reason, Category, Priority, and Status.
+
+6. **Canonical Judge & Mentor Accounts Seeded (`server/server.js`)**:
+   - Judge: `judge@codesrijan.com` / `JudgePassword2026!` (Role: `judge`)
+   - Mentor: `mentor@codesrijan.com` / `MentorPassword2026!` (Role: `mentor`)
+
 ## 2.1 Workspace Task Modal Controls, Pre-Commencement Lock & Animations (Commit fb3b9ed)
 1. **Create / Edit Task Modal Controls & Resiliency (`src/routes/workspace.tsx`)**:
    - Resolved Cancel and Save Task responsiveness issues:

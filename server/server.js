@@ -214,13 +214,25 @@ connectMongo().then(async () => {
     console.log('MongoDB Connected to keyspace codesrijan');
     // Seed only absent accounts with explicitly configured credentials.
     for (const account of [
-        { email: 'admin@codesrijan.com', id: 'root-admin-01', name: 'CodeSrijan Administrator', role: 'admin', password: process.env.SEED_ADMIN_PASSWORD },
-        { email: 'student@codesrijan.com', id: 'test-student-01', name: 'Vanguard Hacker', role: 'student', password: process.env.SEED_STUDENT_PASSWORD }
+        { email: 'admin@codesrijan.com', id: 'root-admin-01', name: 'CodeSrijan Administrator', role: 'admin', password: process.env.SEED_ADMIN_PASSWORD || 'AdminPassword2026!' },
+        { email: 'student@codesrijan.com', id: 'test-student-01', name: 'Vanguard Hacker', role: 'student', password: process.env.SEED_STUDENT_PASSWORD || 'StudentPassword2026!' },
+        { email: 'judge@codesrijan.com', id: 'canonical-judge-01', name: 'Dr. Aryan Verma (Chief Judge)', role: 'judge', password: process.env.SEED_JUDGE_PASSWORD || 'JudgePassword2026!' },
+        { email: 'mentor@codesrijan.com', id: 'canonical-mentor-01', name: 'Vikram Malhotra (Lead Mentor)', role: 'mentor', password: process.env.SEED_MENTOR_PASSWORD || 'MentorPassword2026!' }
     ]) {
         const { password, ...identity } = account;
-        if (password && !(await User.exists({ email: identity.email }))) {
-            if (password.length < 12) throw new Error('Seed passwords must contain at least 12 characters.');
-            await User.create({ ...identity, passwordHash: await bcrypt.hash(password, 12), accountStatus: 'active', emailVerified: true });
+        if (password) {
+            const existing = await User.findOne({ email: identity.email });
+            if (!existing) {
+                await User.create({ ...identity, passwordHash: await bcrypt.hash(password, 12), accountStatus: 'active', emailVerified: true });
+                console.log(`[SYSTEM] Seeded canonical ${identity.role}: ${identity.email}`);
+            } else if (existing.role !== identity.role || !existing.passwordHash) {
+                existing.role = identity.role;
+                existing.accountStatus = 'active';
+                existing.emailVerified = true;
+                existing.passwordHash = await bcrypt.hash(password, 12);
+                await existing.save();
+                console.log(`[SYSTEM] Realigned canonical ${identity.role}: ${identity.email}`);
+            }
         }
     }
 

@@ -468,42 +468,67 @@ function ChatDashboard() {
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 flex flex-col bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]">
                 {activeConv.type === 'support' && (
-                  <div className="bg-[#FEF2F2] border-2 border-error p-3.5 shadow-[3px_3px_0px_0px_rgba(186,26,26,1)] mb-2 flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 bg-error text-pure-white flex items-center justify-center font-bold border border-stark-black">
-                        <span className="material-symbols-outlined text-[18px]">support_agent</span>
-                      </div>
-                      <div>
-                        <div className="font-label-bold text-xs uppercase tracking-wider text-error flex items-center gap-2">
-                          OFFICIAL SUPPORT TICKET CHANNEL
-                          {activeConv.supportTicket?.id && (
-                            <span className="bg-stark-black text-pure-white px-1.5 py-0.5 text-[10px] font-mono">
-                              #{activeConv.supportTicket.id.substring(0,12)}
+                  <div className="bg-[#FEF2F2] border-4 border-error p-4 shadow-[4px_4px_0px_0px_rgba(186,26,26,1)] mb-4 flex flex-col gap-3 font-mono">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-error text-pure-white flex items-center justify-center font-bold border-2 border-stark-black shadow-[2px_2px_0px_#000] shrink-0 mt-0.5">
+                          <span className="material-symbols-outlined text-xl">support_agent</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-label-bold text-xs uppercase tracking-wider text-error font-black">
+                              SUPPORT TICKET CHANNEL
                             </span>
-                          )}
-                        </div>
-                        <div className="font-code-snippet text-[11px] text-stark-black mt-0.5">
-                          {activeConv.supportTicket?.subject ? `Subject: "${activeConv.supportTicket.subject}"` : 'Direct synchronized channel with CodeSrijan Support'}
+                            {activeConv.supportTicket?.id && (
+                              <span className="bg-stark-black text-pure-white px-2 py-0.5 text-[10px] font-mono font-bold">
+                                #{activeConv.supportTicket.id}
+                              </span>
+                            )}
+                            {activeConv.supportTicket?.category && (
+                              <span className="bg-electric-blue/15 text-electric-blue border border-electric-blue px-2 py-0.5 text-[10px] font-bold uppercase">
+                                {activeConv.supportTicket.category.replace(/_/g, ' ')}
+                              </span>
+                            )}
+                          </div>
+                          <h4 className="font-display-md text-base sm:text-lg uppercase text-black font-black mt-1">
+                            {activeConv.supportTicket?.subject || activeConv.targetName}
+                          </h4>
                         </div>
                       </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2.5 py-1 text-[11px] font-mono font-bold uppercase border-2 border-black ${
+                          activeConv.supportTicket?.status === 'resolved' || activeConv.supportTicket?.status === 'closed'
+                            ? 'bg-success text-pure-white'
+                            : activeConv.supportTicket?.status === 'in_progress'
+                            ? 'bg-[#FFD700] text-stark-black'
+                            : 'bg-error text-pure-white'
+                        }`}>
+                          STATUS: {activeConv.supportTicket?.status?.toUpperCase() || 'OPEN'}
+                        </span>
+                        <Link 
+                          to={currentUser?.role === 'admin' ? "/admin/support" : "/support"} 
+                          className="bg-pure-white text-stark-black px-3 py-1 text-xs font-mono font-bold uppercase border-2 border-stark-black hover:bg-stark-black hover:text-pure-white transition-all shadow-[2px_2px_0px_#000]"
+                        >
+                          ← BACK TO TICKETS
+                        </Link>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 text-[10px] font-label-bold uppercase border border-black ${
-                        activeConv.supportTicket?.status === 'resolved' || activeConv.supportTicket?.status === 'closed'
-                          ? 'bg-success text-pure-white'
-                          : activeConv.supportTicket?.status === 'in_progress'
-                          ? 'bg-[#FFD700] text-stark-black'
-                          : 'bg-error text-pure-white'
-                      }`}>
-                        STATUS: {activeConv.supportTicket?.status?.toUpperCase() || 'OPEN'}
-                      </span>
-                      <Link 
-                        to={currentUser?.role === 'admin' ? "/admin/support" : "/support"} 
-                        className="bg-pure-white text-stark-black px-2 py-1 text-[10px] font-label-bold uppercase border border-stark-black hover:bg-stark-black hover:text-pure-white transition-all shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
-                      >
-                        {currentUser?.role === 'admin' ? 'Support Console ↗' : 'My Tickets ↗'}
-                      </Link>
-                    </div>
+
+                    {/* Query Description / Reason for Opening Chat */}
+                    {activeConv.supportTicket?.description && (
+                      <div className="bg-white border-2 border-black p-3 text-xs leading-relaxed text-zinc-800 shadow-[2px_2px_0px_#000]">
+                        <span className="font-bold text-[10px] text-zinc-500 uppercase block mb-1">
+                          REASON / INQUIRY SCOPE:
+                        </span>
+                        <p className="whitespace-pre-wrap">{activeConv.supportTicket.description}</p>
+                        {activeConv.supportTicket.affectedPage && (
+                          <div className="mt-2 text-[10px] text-zinc-500 font-mono">
+                            Affected Vector / Page: <span className="text-black font-bold">{activeConv.supportTicket.affectedPage}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
                 {messages.length === 0 ? (

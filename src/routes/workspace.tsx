@@ -39,26 +39,65 @@ function WorkspaceHUD() {
     demoVideoUrl: ""
   });
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingTask, setEditingTask] = useState<any>(null);
-  const [createForm, setCreateForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' });
-  const [editForm, setEditForm] = useState({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '' });
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [editingTaskData, setEditingTaskData] = useState<any | null>(null);
+  const [taskModalForm, setTaskModalForm] = useState({
+    title: '',
+    description: '',
+    priority: 'medium',
+    status: 'todo',
+    assignedTo: '',
+    dueDate: ''
+  });
+  const [isSavingTask, setIsSavingTask] = useState(false);
+
+  const handleOpenCreateTask = (col: string = 'todo') => {
+    setEditingTaskData(null);
+    setTaskModalForm({
+      title: '',
+      description: '',
+      priority: 'medium',
+      status: col || 'todo',
+      assignedTo: currentUser?.name || '',
+      dueDate: ''
+    });
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenEditTask = (task: any) => {
+    setEditingTaskData(task);
+    setTaskModalForm({
+      title: task.title || '',
+      description: task.description || '',
+      priority: task.priority || 'medium',
+      status: task.status || 'todo',
+      assignedTo: task.assignedTo || '',
+      dueDate: task.dueDate || ''
+    });
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setEditingTaskData(null);
+    setTaskModalForm({
+      title: '',
+      description: '',
+      priority: 'medium',
+      status: 'todo',
+      assignedTo: '',
+      dueDate: ''
+    });
+  };
 
   const [isRequestingMentor, setIsRequestingMentor] = useState(false);
   const [mentorRequestForm, setMentorRequestForm] = useState({ topic: '', description: '' });
   const [activeMentorRequests, setActiveMentorRequests] = useState<any[]>([]);
 
-  const handleCloseTaskModal = () => {
-    setIsCreating(false);
-    setEditingTask(null);
-    setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: 'todo' });
-    setEditForm({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' } as any);
-  };
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (isCreating || editingTask) handleCloseTaskModal();
+        if (isTaskModalOpen) handleCloseTaskModal();
         if (isSubmitting) setIsSubmitting(false);
         if (isRequestingMentor) setIsRequestingMentor(false);
         if (showTrackDossier) setShowTrackDossier(false);
@@ -131,10 +170,16 @@ function WorkspaceHUD() {
   const paymentStatus = userRegistration?.paymentStatus;
   const regStatus = userRegistration?.status;
 
-  const isPaymentUnderReview = paymentStatus === 'payment_under_review' || regStatus === 'payment_under_review';
-  const isPaymentRejected = paymentStatus === 'rejected' || regStatus === 'rejected';
-  const isPaymentVerified = !isPaidEvent || paymentStatus === 'verified' || paymentStatus === 'not_required' || regStatus === 'registered';
-  const isPaymentPending = isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected;
+  const isWithdrawnOrPendingRefund = Boolean(
+    regStatus === 'withdrawn' || 
+    userRegistration?.refundRequested ||
+    (userRegistration?.status && ['withdrawn', 'cancelled', 'refund_requested', 'refund_pending'].includes(userRegistration.status))
+  );
+
+  const isPaymentUnderReview = !isWithdrawnOrPendingRefund && (paymentStatus === 'payment_under_review' || regStatus === 'payment_under_review');
+  const isPaymentRejected = !isWithdrawnOrPendingRefund && (paymentStatus === 'rejected' || regStatus === 'rejected');
+  const isPaymentVerified = isWithdrawnOrPendingRefund || !isPaidEvent || paymentStatus === 'verified' || paymentStatus === 'not_required' || regStatus === 'registered';
+  const isPaymentPending = isPaidEvent && !isPaymentVerified && !isPaymentUnderReview && !isPaymentRejected && !isWithdrawnOrPendingRefund;
 
   // Resolve problem statement track
   const activeProblemId = userTeam?.problemStatementId || userTeam?.problemId;
@@ -303,34 +348,62 @@ function WorkspaceHUD() {
     );
   }
 
-  const handleTaskCreate = async (e: React.FormEvent) => {
+  const handleSaveTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const titleToUse = (createForm.title || newTaskTitle).trim();
-    if (!titleToUse) {
+    const title = taskModalForm.title.trim();
+    if (!title) {
       toast.error("Please enter an objective title.");
+      return;
+    }
+    if (!userTeam) {
+      toast.error("Squad matrix not loaded.");
       return;
     }
 
     try {
+      setIsSavingTask(true);
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
 
-      await axios.post(`${BASE}/teams/${userTeam.id}/tasks`,
-        {
-          title: titleToUse,
-          description: createForm.description || "New Task Objective",
-          status: createForm.status || 'todo',
-          priority: createForm.priority || 'medium',
-          assignedTo: createForm.assignedTo || '',
-          dueDate: createForm.dueDate || ''
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setNewTaskTitle("");
+      if (editingTaskData) {
+        // Edit Task
+        await axios.put(
+          `${BASE}/teams/${userTeam.id}/tasks/${editingTaskData.id}`,
+          {
+            title,
+            description: taskModalForm.description || '',
+            priority: taskModalForm.priority || 'medium',
+            status: taskModalForm.status || 'todo',
+            assignedTo: taskModalForm.assignedTo || '',
+            dueDate: taskModalForm.dueDate || ''
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Objective updated successfully.");
+      } else {
+        // Create Task
+        await axios.post(
+          `${BASE}/teams/${userTeam.id}/tasks`,
+          {
+            title,
+            description: taskModalForm.description || 'Sprint Objective',
+            priority: taskModalForm.priority || 'medium',
+            status: taskModalForm.status || 'todo',
+            assignedTo: taskModalForm.assignedTo || '',
+            dueDate: taskModalForm.dueDate || ''
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        toast.success("Objective added to sprint board.");
+      }
+
       handleCloseTaskModal();
-      toast.success("Objective created successfully.");
       await refetchData();
-    } catch (e: any) { toast.error(e.response?.data?.message || "Task generation failed."); }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to save objective.");
+    } finally {
+      setIsSavingTask(false);
+    }
   };
 
   const handleQuickTaskCreate = async (e: React.FormEvent, status: string = 'todo') => {
@@ -541,17 +614,69 @@ function WorkspaceHUD() {
             </div>
             
             {activeMentorRequests.length > 0 && (
-              <div className="mt-2 text-right">
-                <span className="font-label-bold uppercase text-[10px] text-zinc-600 block mb-1">Guidance requests ({activeMentorRequests.length})</span>
-                <button type="button" onClick={fetchMentorRequests} className="underline text-xs font-bold mb-2">Refresh guidance responses</button>
-                {activeMentorRequests.map(req => (
-                  <div key={req.id} className="bg-surface p-2 border-2 border-ink-black flex flex-col items-end gap-1 mb-1 max-w-md break-words">
-                    <span className="font-label-bold text-xs uppercase">{req.topic} - <span className={req.status === 'accepted' ? 'text-success' : 'text-warning'}>{req.status}</span></span>
-                    {req.meetLink && /^https:\/\//i.test(req.meetLink) && <a href={req.meetLink} target="_blank" rel="noopener noreferrer" className="text-electric-blue text-xs font-bold underline flex items-center gap-1">JOIN MEET <span className="material-symbols-outlined text-xs">open_in_new</span></a>}
-                    {req.responses?.map((response: {id: string; message: string; createdAt?: string}) => <div key={response.id} className="text-left border-l-4 border-electric-blue pl-2 w-full my-2"><p className="text-xs font-bold">Mentor response</p><p className="text-sm whitespace-pre-wrap">{response.message}</p>{response.createdAt && <p className="text-xs mt-1">{new Date(response.createdAt).toLocaleString()}</p>}</div>)}
-                    {req.status === 'resolved' && <button type="button" className="underline text-xs font-bold" onClick={async () => { try { await axios.post(`${API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`}/mentor/requests/${encodeURIComponent(req.id)}/reopen`); await fetchMentorRequests(); } catch { toast.error('Could not reopen guidance request. Try again.'); } }}>Reopen guidance request</button>}
-                  </div>
-                ))}
+              <div className="mt-4 text-left border-2 border-black p-3 bg-surface-container max-w-xl">
+                <div className="flex justify-between items-center mb-2 pb-1 border-b border-black">
+                  <span className="font-label-bold uppercase text-[11px] text-black font-black flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-electric-blue">support_agent</span>
+                    ACTIVE GUIDANCE SESSIONS ({activeMentorRequests.length})
+                  </span>
+                  <button type="button" onClick={fetchMentorRequests} className="underline text-[10px] font-mono font-bold hover:text-electric-blue cursor-pointer">
+                    ↻ Refresh status
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                  {activeMentorRequests.map(req => (
+                    <div key={req.id} className="bg-white p-2.5 border border-black shadow-[2px_2px_0px_#000] text-xs">
+                      <div className="flex justify-between items-start gap-2">
+                        <span className="font-bold uppercase text-[11px]">{req.topic}</span>
+                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border uppercase ${
+                          req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800 border-emerald-500' :
+                          req.status === 'resolved' ? 'bg-zinc-200 text-zinc-700 border-zinc-400' :
+                          'bg-amber-100 text-amber-900 border-amber-500'
+                        }`}>
+                          {req.status}
+                        </span>
+                      </div>
+                      {req.meetLink && /^https:\/\//i.test(req.meetLink) && (
+                        <a href={req.meetLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-electric-blue font-bold text-xs underline">
+                          JOIN MEET <span className="material-symbols-outlined text-xs">open_in_new</span>
+                        </a>
+                      )}
+                      {req.responses?.map((response: {id: string; message: string; createdAt?: string}) => (
+                        <div key={response.id} className="mt-2 border-l-2 border-electric-blue pl-2 bg-blue-50/50 p-1.5">
+                          <p className="text-[10px] font-bold text-electric-blue uppercase">Mentor Guidance</p>
+                          <p className="text-xs whitespace-pre-wrap text-zinc-800">{response.message}</p>
+                          {response.createdAt && <p className="text-[9px] font-mono text-zinc-500 mt-0.5">{new Date(response.createdAt).toLocaleString()}</p>}
+                        </div>
+                      ))}
+                      {req.status === 'resolved' && (
+                        <div className="mt-2 pt-1 border-t border-zinc-200 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const token = localStorage.getItem("codesrijan_auth_token");
+                                const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+                                await axios.post(
+                                  `${BASE}/mentor/requests/${encodeURIComponent(req.id)}/reopen`,
+                                  {},
+                                  { headers: { Authorization: `Bearer ${token}` } }
+                                );
+                                toast.success("Guidance request reopened! Active mentors alerted.");
+                                await fetchMentorRequests();
+                              } catch (err: any) {
+                                toast.error(err.response?.data?.message || 'Could not reopen guidance request.');
+                              }
+                            }}
+                            className="bg-black hover:bg-electric-blue text-white font-mono text-[10px] font-bold uppercase px-2 py-1 transition-colors cursor-pointer"
+                          >
+                            Reopen guidance request
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -592,8 +717,30 @@ function WorkspaceHUD() {
           </button>
         </div>
 
-        {/* Payment Clearance Warning Banner (If Payment Incomplete/In Audit) */}
-        {isPaidEvent && !isPaymentVerified && (
+        {/* Withdrawal & Refund Pending or Payment Clearance Banner */}
+        {isWithdrawnOrPendingRefund ? (
+          <div className="border-4 p-4 sm:p-5 brutal-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-amber-400/20 border-amber-500 modal-content-animate">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined text-3xl shrink-0 mt-0.5 text-amber-600 animate-pulse">
+                pending_actions
+              </span>
+              <div>
+                <h4 className="font-display-md text-base md:text-lg uppercase text-black font-bold">
+                  WITHDRAWAL & REFUND CLAIM QUEUED — PENDING CLEARANCE
+                </h4>
+                <p className="font-mono text-xs text-zinc-700 mt-1 leading-relaxed">
+                  Your squad's voluntary withdrawal and refund claim{feeAmount ? ` (₹${feeAmount})` : ''} have been recorded in the administrative ledger. Participation in this tournament is relinquished and awaiting final clearance.
+                  {userRegistration?.refundUpi && (
+                    <span className="block mt-1 font-bold text-black">Refund Destination UPI: {userRegistration.refundUpi}</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <div className="shrink-0 bg-amber-400 border-2 border-black font-mono font-bold text-xs uppercase px-4 py-2 shadow-[2px_2px_0px_#000]">
+              ⏳ Queued for Admin Review
+            </div>
+          </div>
+        ) : isPaidEvent && !isPaymentVerified ? (
           <div className={`border-4 p-4 sm:p-5 brutal-shadow flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
             isPaymentUnderReview ? 'bg-yellow-400/15 border-yellow-500' :
             isPaymentRejected ? 'bg-rose-500/15 border-rose-500' :
@@ -633,7 +780,7 @@ function WorkspaceHUD() {
               {isPaymentUnderReview ? 'Track Audit Status →' : isPaymentRejected ? 'Resubmit Proof →' : 'Complete Payment Now →'}
             </Link>
           </div>
-        )}
+        ) : null}
 
         {/* Squad Operations Briefing Card (Roster, Track, Readiness) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-pure-white border-4 border-ink-black brutal-shadow p-6">
@@ -767,8 +914,16 @@ function WorkspaceHUD() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>3. Payment Clearance</span>
-                  <span className={isPaymentVerified ? "text-success font-bold" : "text-amber-500 font-bold"}>
-                    {isPaymentVerified ? "✓ CLEARED" : isPaymentUnderReview ? "⏳ IN AUDIT" : "○ DUE"}
+                  <span className={
+                    isWithdrawnOrPendingRefund ? "text-amber-600 font-bold" :
+                    isPaymentVerified ? "text-success font-bold" :
+                    isPaymentUnderReview ? "text-amber-500 font-bold" :
+                    "text-amber-500 font-bold"
+                  }>
+                    {isWithdrawnOrPendingRefund ? "⏳ WITHDRAWN" :
+                     isPaymentVerified ? "✓ CLEARED" :
+                     isPaymentUnderReview ? "⏳ IN AUDIT" :
+                     "○ DUE"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -782,14 +937,53 @@ function WorkspaceHUD() {
             <div className="text-[10px] font-mono text-zinc-500 mt-2">
               {isSubmitted ? "Project successfully transmitted and locked for judging." : readinessScore === 100 ? "Ready for final lockdown transmission." : "Complete all checkpoints to unlock clean submission."}
             </div>
-            {isSquadLeader && !isSubmitted && (
-              <a
-                href="#deliverable-matrix"
-                className="mt-3 w-full bg-surface-container hover:bg-black hover:text-white text-ink-black font-mono font-bold text-[11px] uppercase py-2 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-xs">arrow_downward</span>
-                STAGE DELIVERABLES BELOW ↓
-              </a>
+            {isSquadLeader && (
+              !hasLinks ? (
+                <a
+                  href="#deliverable-matrix"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const el = document.getElementById("deliverable-matrix");
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth" });
+                      const input = el.querySelector("input");
+                      if (input) input.focus();
+                    }
+                  }}
+                  className="mt-3 w-full bg-electric-blue text-white hover:bg-black font-mono font-bold text-[11px] uppercase py-2.5 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xs">arrow_downward</span>
+                  STAGE DELIVERABLES BELOW ↓
+                </a>
+              ) : !isSubmitted ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isHackathonStarted) {
+                      toast.info(`Tournament not commenced. Final submissions unlock on ${formattedStartDate || 'hackathon launch'}.`);
+                      return;
+                    }
+                    setSubmissionForm({
+                      description: userTeam.description || "",
+                      technologies: "",
+                      githubLink: githubLink,
+                      figmaLink: figmaLink,
+                      demoLink: demoLink,
+                      demoVideoUrl: ""
+                    });
+                    setIsSubmitting(true);
+                  }}
+                  className="mt-3 w-full bg-rose-600 hover:bg-black text-white font-mono font-bold text-[11px] uppercase py-2.5 px-3 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xs">rocket_launch</span>
+                  TRANSMIT FINAL PAYLOAD ↗
+                </button>
+              ) : (
+                <div className="mt-3 w-full bg-emerald-100 text-emerald-900 border-2 border-emerald-600 font-mono font-bold text-[11px] uppercase py-2 px-3 flex items-center justify-center gap-1.5">
+                  <span className="material-symbols-outlined text-xs text-emerald-600">check_circle</span>
+                  PAYLOAD SECURED IN EVALUATION LEDGER
+                </div>
+              )
             )}
           </div>
 
@@ -852,180 +1046,168 @@ function WorkspaceHUD() {
                 )}
               </div>
               {!isSubmitted && (
-                <button onClick={() => setIsCreating(true)} className="bg-electric-blue text-white font-bold py-2 px-4 border-2 border-black hover:-translate-y-0.5 brutal-shadow transition-transform text-xs uppercase shrink-0">
+                <button onClick={() => handleOpenCreateTask('todo')} className="bg-electric-blue text-white font-bold py-2 px-4 border-2 border-black hover:-translate-y-0.5 brutal-shadow transition-transform text-xs uppercase shrink-0 cursor-pointer">
                   + CREATE TASK
                 </button>
               )}
             </div>
           </div>
           
-          {(isCreating || editingTask) && (
+          {/* Completely Rewritten Task Creation & Edit Modal */}
+        {isTaskModalOpen && (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 modal-backdrop-animate font-mono"
+            onClick={handleCloseTaskModal}
+          >
             <div 
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate"
-              onClick={handleCloseTaskModal}
+              className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6 sm:p-8 modal-content-animate relative"
+              onClick={e => e.stopPropagation()}
             >
-              <div 
-                className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6 sm:p-8 modal-content-animate relative"
-                onClick={e => e.stopPropagation()}
-              >
-                {/* Header with Title and Close Button */}
-                <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-5">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-2xl text-electric-blue">
-                      {isCreating ? 'add_task' : 'edit_note'}
-                    </span>
-                    <h3 className="font-display-lg text-2xl uppercase text-ink-black">
-                      {isCreating ? 'CREATE TASK' : 'EDIT TASK'}
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCloseTaskModal}
-                    className="p-1 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer"
-                    title="Close (Esc)"
-                  >
-                    <span className="material-symbols-outlined text-xl">close</span>
-                  </button>
+              {/* Header with Title and Close Button */}
+              <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-5">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-2xl text-electric-blue">
+                    {editingTaskData ? 'edit_note' : 'add_task'}
+                  </span>
+                  <h3 className="font-display-lg text-2xl uppercase text-ink-black font-black">
+                    {editingTaskData ? 'EDIT TASK OBJECTIVE' : 'CREATE NEW OBJECTIVE'}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseTaskModal}
+                  className="p-1.5 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer"
+                  title="Close (Esc)"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveTaskSubmit} className="flex flex-col gap-4 text-xs">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                    Objective Title *
+                  </label>
+                  <input
+                    required
+                    autoFocus
+                    placeholder="e.g. Integrate Firebase Auth & Verify JWT"
+                    value={taskModalForm.title}
+                    onChange={e => setTaskModalForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
+                  />
                 </div>
 
-                <form onSubmit={isCreating ? handleTaskCreate : handleTaskUpdate} className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                    Scope & Technical Context
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Milestone details, involved files, DoD..."
+                    value={taskModalForm.description}
+                    onChange={e => setTaskModalForm(prev => ({ ...prev, description: e.target.value }))}
+                    className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                      Objective Title *
+                    <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                      Priority Level
+                    </label>
+                    <select
+                      value={taskModalForm.priority}
+                      onChange={e => setTaskModalForm(prev => ({ ...prev, priority: e.target.value }))}
+                      className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
+                    >
+                      <option value="low">Low Priority</option>
+                      <option value="medium">Medium Priority</option>
+                      <option value="high">High Priority</option>
+                      <option value="critical">Critical Priority</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                      Pipeline Column
+                    </label>
+                    <select
+                      value={taskModalForm.status}
+                      onChange={e => setTaskModalForm(prev => ({ ...prev, status: e.target.value }))}
+                      className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
+                    >
+                      <option value="todo">Pipeline: IDLE / BACKLOG</option>
+                      <option value="in-progress">Pipeline: ACTIVE OPERATIONS</option>
+                      <option value="review">Pipeline: QA / REVIEW DECK</option>
+                      <option value="completed">Pipeline: EXECUTED</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                      Assignee Operative
+                    </label>
+                    <select
+                      value={taskModalForm.assignedTo}
+                      onChange={e => setTaskModalForm(prev => ({ ...prev, assignedTo: e.target.value }))}
+                      className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
+                    >
+                      <option value="">Unassigned</option>
+                      {teamMembers.map((m: any) => (
+                        <option key={m.id || m._id} value={m.name || m.username || m.id}>
+                          {m.name || m.username || m.email || m.id}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-zinc-800 mb-1">
+                      Target Due Date
                     </label>
                     <input
-                      required
-                      autoFocus
-                      placeholder="e.g., Integrate Firebase Auth & Token Verification"
-                      value={isCreating ? createForm.title : editForm.title}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (isCreating) setCreateForm(prev => ({ ...prev, title: val }));
-                        else setEditForm(prev => ({ ...prev, title: val }));
-                      }}
-                      className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
+                      type="date"
+                      value={taskModalForm.dueDate}
+                      onChange={e => setTaskModalForm(prev => ({ ...prev, dueDate: e.target.value }))}
+                      className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
                     />
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                      Description & Scope
-                    </label>
-                    <textarea
-                      placeholder="Outline technical milestones, files involved, and DoD..."
-                      value={isCreating ? createForm.description : editForm.description}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (isCreating) setCreateForm(prev => ({ ...prev, description: val }));
-                        else setEditForm(prev => ({ ...prev, description: val }));
-                      }}
-                      rows={3}
-                      className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                        Priority Level
-                      </label>
-                      <select
-                        value={isCreating ? createForm.priority : editForm.priority}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (isCreating) setCreateForm(prev => ({ ...prev, priority: val }));
-                          else setEditForm(prev => ({ ...prev, priority: val }));
-                        }}
-                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
-                      >
-                        <option value="low">Low Priority</option>
-                        <option value="medium">Medium Priority</option>
-                        <option value="high">High Priority</option>
-                        <option value="critical">Critical Priority</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                        Pipeline Column
-                      </label>
-                      <select
-                        value={isCreating ? (createForm.status || 'todo') : ((editForm as any).status || editingTask?.status || 'todo')}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (isCreating) setCreateForm(prev => ({ ...prev, status: val }));
-                          else setEditForm(prev => ({ ...prev, status: val } as any));
-                        }}
-                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
-                      >
-                        <option value="todo">Pipeline: IDLE / BACKLOG</option>
-                        <option value="in-progress">Pipeline: ACTIVE OPERATIONS</option>
-                        <option value="review">Pipeline: QA / REVIEW DECK</option>
-                        <option value="completed">Pipeline: EXECUTED</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                        Assignee Operative
-                      </label>
-                      <select
-                        value={isCreating ? createForm.assignedTo : editForm.assignedTo}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (isCreating) setCreateForm(prev => ({ ...prev, assignedTo: val }));
-                          else setEditForm(prev => ({ ...prev, assignedTo: val }));
-                        }}
-                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
-                      >
-                        <option value="">Unassigned</option>
-                        {teamMembers.map((m: any) => (
-                          <option key={m.id || m._id} value={m.name || m.username || m.id}>
-                            {m.name || m.username || m.email || m.id}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
-                        Target Due Date
-                      </label>
-                      <input
-                        type="date"
-                        value={isCreating ? createForm.dueDate : editForm.dueDate}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (isCreating) setCreateForm(prev => ({ ...prev, dueDate: val }));
-                          else setEditForm(prev => ({ ...prev, dueDate: val }));
-                        }}
-                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 mt-4 pt-4 border-t-2 border-zinc-200">
-                    <button 
-                      type="submit" 
-                      className="flex-1 bg-electric-blue hover:bg-black text-white font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs flex items-center justify-center gap-1.5"
-                    >
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      {isCreating ? 'SAVE OBJECTIVE' : 'UPDATE OBJECTIVE'}
-                    </button>
-                    <button 
-                      type="button" 
-                      onClick={handleCloseTaskModal} 
-                      className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs"
-                    >
-                      CANCEL
-                    </button>
-                  </div>
-                </form>
-              </div>
+                <div className="flex gap-4 mt-3 pt-4 border-t-2 border-zinc-200">
+                  <button
+                    type="submit"
+                    disabled={isSavingTask}
+                    className="flex-1 bg-electric-blue hover:bg-black text-white font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs flex items-center justify-center gap-1.5 disabled:opacity-60"
+                  >
+                    {isSavingTask ? (
+                      <>
+                        <span className="material-symbols-outlined text-sm animate-spin">sync</span>
+                        SAVING OBJECTIVE...
+                      </>
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined text-sm">check_circle</span>
+                        {editingTaskData ? 'UPDATE OBJECTIVE' : 'SAVE OBJECTIVE'}
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSavingTask}
+                    onClick={handleCloseTaskModal}
+                    className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs disabled:opacity-60"
+                  >
+                    CANCEL
+                  </button>
+                </div>
+              </form>
             </div>
-          )}
+          </div>
+        )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {kanbanColumns.map((col, idx) => {
@@ -1041,10 +1223,7 @@ function WorkspaceHUD() {
                       {!isSubmitted && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: col });
-                            setIsCreating(true);
-                          }}
+                          onClick={() => handleOpenCreateTask(col)}
                           className="px-2 py-0.5 bg-white text-black hover:bg-yellow-300 font-black text-xs border border-black cursor-pointer shadow-[1px_1px_0px_#000] uppercase font-mono"
                           title={`Add objective directly to ${columnLabels[idx]}`}
                         >
@@ -1061,10 +1240,7 @@ function WorkspaceHUD() {
                         {!isSubmitted && (
                           <button
                             type="button"
-                            onClick={() => {
-                              setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: col });
-                              setIsCreating(true);
-                            }}
+                            onClick={() => handleOpenCreateTask(col)}
                             className="bg-black hover:bg-electric-blue text-white font-mono text-[10px] font-bold uppercase px-2.5 py-1 border border-black cursor-pointer shadow-[1px_1px_0px_#000]"
                           >
                             + ADD OBJECTIVE
@@ -1089,17 +1265,7 @@ function WorkspaceHUD() {
                               )}
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setEditingTask(task);
-                                  setEditForm({
-                                    title: task.title || '',
-                                    description: task.description || '',
-                                    priority: task.priority || 'medium',
-                                    assignedTo: task.assignedTo || '',
-                                    dueDate: task.dueDate || '',
-                                    status: task.status || col
-                                  } as any);
-                                }}
+                                onClick={() => handleOpenEditTask(task)}
                                 className="text-zinc-600 hover:text-black hover:bg-zinc-200 p-0.5 ml-1 border border-transparent hover:border-black transition-colors"
                                 title="Edit Objective"
                               >
