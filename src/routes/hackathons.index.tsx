@@ -13,6 +13,15 @@ function HackathonsHubPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const withdrawnRegistration = (registrations || []).find((r: any) => {
+        const isUserReg = r.userId === currentUser?.id || (currentUser?.teamId && r.teamId === currentUser.teamId);
+        return isUserReg && (r.status === 'withdrawn' || r.refundRequested === true);
+    });
+
+    const withdrawnEvent = withdrawnRegistration 
+        ? events.find((e: any) => e.id === withdrawnRegistration.hackathonId) 
+        : null;
+
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
     useEffect(() => {
@@ -53,6 +62,26 @@ function HackathonsHubPage() {
                     <h1 className="font-display-lg text-4xl md:text-5xl uppercase tracking-tight mt-2 font-black">HACKATHONS HUB</h1>
                     <p className="font-body-md mt-2 text-pure-white/90">Explore all active competitive hacks, build operational prototypes, and claim victory.</p>
                 </div>
+
+                {/* PERSONAL WITHDRAWAL NOTICE (VISIBLE EXCLUSIVELY TO WITHDRAWN OPERATIVE) */}
+                {withdrawnRegistration && (
+                    <div className="bg-amber-100 border-4 border-black brutal-shadow p-6 mb-10 border-l-8 border-l-amber-500">
+                        <div className="flex items-start gap-4">
+                            <span className="material-symbols-outlined text-amber-600 text-3xl shrink-0">warning</span>
+                            <div>
+                                <span className="bg-amber-500 text-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase border border-black">
+                                    ENROLLMENT RESTRICTION ACTIVE
+                                </span>
+                                <h3 className="font-display-lg text-lg sm:text-xl uppercase text-black font-black mt-1">
+                                    YOUR PREVIOUS WITHDRAWAL IS RECORDED
+                                </h3>
+                                <p className="font-mono text-xs text-zinc-800 mt-1 leading-relaxed">
+                                    Your withdrawal from <strong>{withdrawnEvent?.name || withdrawnRegistration.hackathonId}</strong> has been logged{withdrawnRegistration.refundRequested ? ' (Refund Claim Queued)' : ''}. Under tournament protocol, you cannot enroll in another hackathon while your withdrawal is active on record.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {loading ? (
                     <div className="text-center font-mono opacity-50 py-20">[LOADING HACKATHON ARENAS...]</div>
@@ -149,18 +178,27 @@ function HackathonsHubPage() {
                                             >
                                                 MANAGE HACKATHON →
                                             </Link>
-                                        ) : (
-                                            <Link 
-                                                to="/hackathons/$id/register" 
-                                                params={{ id: evt.id }} 
-                                                className={`px-4 py-2 font-label-bold text-xs uppercase brutal-border transition-colors ${
-                                                    isJoined 
-                                                        ? 'bg-electric-blue text-white hover:bg-stark-black shadow-[2px_2px_0px_0px_#000000]' 
-                                                        : 'bg-stark-black text-pure-white hover:bg-electric-blue'
-                                                }`}
-                                            >
-                                                {isJoined ? 'MANAGE ENROLLMENT →' : 'ENTER ARENA'}
-                                            </Link>
+                                        ) : withdrawnRegistration && !isJoined ? (
+                                                <button
+                                                    type="button"
+                                                    disabled
+                                                    className="px-4 py-2 font-label-bold text-xs uppercase brutal-border bg-zinc-300 text-zinc-600 cursor-not-allowed shadow-[2px_2px_0px_0px_#888888]"
+                                                    title="Enrollment blocked: Your previous hackathon withdrawal is recorded."
+                                                >
+                                                    🔒 ENROLLMENT LOCKED
+                                                </button>
+                                            ) : (
+                                                <Link 
+                                                    to="/hackathons/$id/register" 
+                                                    params={{ id: evt.id }} 
+                                                    className={`px-4 py-2 font-label-bold text-xs uppercase brutal-border transition-colors ${
+                                                        isJoined 
+                                                            ? 'bg-electric-blue text-white hover:bg-stark-black shadow-[2px_2px_0px_0px_#000000]' 
+                                                            : 'bg-stark-black text-pure-white hover:bg-electric-blue'
+                                                    }`}
+                                                >
+                                                    {isJoined ? 'MANAGE ENROLLMENT →' : 'ENTER ARENA'}
+                                                </Link>
                                         )}
                                     </div>
                                 </div>

@@ -438,11 +438,26 @@ function DashboardPage() {
                                     </Link>
                                 </div>
                             ) : !userTeam ? (
-                                <div className="bg-error text-on-primary p-6 brutal-border">
+                                <div className="space-y-4">
+                                    {Boolean((currentUser as any)?.teamLeaveCooldownUntil && new Date((currentUser as any).teamLeaveCooldownUntil).getTime() > Date.now()) && (
+                                        <div className="bg-amber-100 border-4 border-black p-4 text-black brutal-shadow">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="material-symbols-outlined text-amber-600">timer</span>
+                                                <span className="font-bold text-xs uppercase bg-amber-500 text-black px-2 py-0.5 border border-black">
+                                                    12-HOUR SQUAD DEPARTURE COOLDOWN ACTIVE
+                                                </span>
+                                            </div>
+                                            <p className="font-mono text-xs text-zinc-800">
+                                                You voluntarily departed your squad. You cannot form or join another squad until {new Date((currentUser as any).teamLeaveCooldownUntil).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}. (Operatives kicked by leaders experience zero cooldown).
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="bg-error text-on-primary p-6 brutal-border">
                                     <span className="material-symbols-outlined text-4xl mb-2">warning</span>
                                     <h3 className="font-label-bold text-xl uppercase mb-2">LONE WOLF DETECTED</h3>
                                     <p className="font-body-md mb-6">You have not joined a squad yet. You cannot access the project workspace or submit to the hackathon without a team.</p>
                                     <a href="/recruitment" className="bg-white text-ink-black py-3 px-6 font-label-bold text-center block brutal-hover hover:-translate-y-1">ACCESS RECRUITMENT MARKETPLACE</a>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-6">

@@ -15,6 +15,7 @@ export function CertificatesPage() {
     const [isEligible, setIsEligible] = useState(false);
     const [myCertificates, setMyCertificates] = useState<any[]>([]);
     const [certsLoading, setCertsLoading] = useState(false);
+    const [previewCert, setPreviewCert] = useState<any | null>(null);
 
     // Admin Upload State
     const [recipientType, setRecipientType] = useState<"user" | "team" | "hackathon">("user");
@@ -33,6 +34,74 @@ export function CertificatesPage() {
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
     // Fetch user's own certificates
+    
+    const handleDownloadCertificate = (cert: any) => {
+        if (cert.metadata?.fileUrl) {
+            const link = document.createElement('a');
+            link.href = cert.metadata.fileUrl;
+            link.download = `CodeSrijan-Certificate-${cert.id}`;
+            link.target = '_blank';
+            link.click();
+            return;
+        }
+
+        const certCode = cert.metadata?.verificationCode || cert.id;
+        const certTitle = cert.metadata?.title || (cert.type === 'winner' ? 'Certificate of Excellence' : cert.type === 'runner_up' ? 'Certificate of Merit' : 'Certificate of Participation');
+        const recipient = cert.userName || currentUser?.name || 'Operative';
+        const issueDate = cert.issueDate ? new Date(cert.issueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : new Date().toLocaleDateString();
+
+        const svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <rect width="1000" height="700" fill="#FCFAF2"/>
+  <rect x="25" y="25" width="950" height="650" fill="none" stroke="#000000" stroke-width="8"/>
+  <rect x="40" y="40" width="920" height="620" fill="none" stroke="#0066FF" stroke-width="2" stroke-dasharray="8 4"/>
+  <rect x="50" y="50" width="900" height="600" fill="none" stroke="#000000" stroke-width="2"/>
+  
+  <text x="500" y="110" font-family="monospace, sans-serif" font-size="28" font-weight="900" fill="#000000" text-anchor="middle" letter-spacing="4">CODESRIJAN 2026</text>
+  <text x="500" y="135" font-family="monospace, sans-serif" font-size="12" font-weight="700" fill="#666666" text-anchor="middle" letter-spacing="3">NATIONAL HACKATHON &amp; INNOVATION COUNCIL</text>
+  
+  <circle cx="500" cy="180" r="26" fill="#FFD700" stroke="#000000" stroke-width="3"/>
+  <text x="500" y="187" font-family="sans-serif" font-size="20" font-weight="bold" fill="#000000" text-anchor="middle">★</text>
+  
+  <text x="500" y="240" font-family="sans-serif" font-size="34" font-weight="900" fill="#0066FF" text-anchor="middle" letter-spacing="2">${certTitle.toUpperCase()}</text>
+  <text x="500" y="290" font-family="monospace, sans-serif" font-size="13" font-weight="600" fill="#333333" text-anchor="middle" letter-spacing="2">THIS CREDENTIAL IS PROUDLY CONFERRED UPON</text>
+  
+  <text x="500" y="360" font-family="sans-serif" font-size="42" font-weight="900" fill="#000000" text-anchor="middle" letter-spacing="1">${recipient.toUpperCase()}</text>
+  <line x1="250" y1="380" x2="750" y2="380" stroke="#000000" stroke-width="3"/>
+  
+  <text x="500" y="420" font-family="monospace, sans-serif" font-size="13" font-weight="500" fill="#444444" text-anchor="middle">For distinguished performance, system architecture, and technical innovation demonstrated</text>
+  <text x="500" y="445" font-family="monospace, sans-serif" font-size="13" font-weight="500" fill="#444444" text-anchor="middle">during competitive hackathon operations within the CodeSrijan engineering ecosystem.</text>
+  
+  <g transform="translate(180, 500)">
+    <circle cx="50" cy="50" r="45" fill="#FFFFFF" stroke="#000000" stroke-width="2"/>
+    <circle cx="50" cy="50" r="38" fill="none" stroke="#FF0033" stroke-width="1.5" stroke-dasharray="4 2"/>
+    <text x="50" y="46" font-family="monospace" font-size="9" font-weight="bold" fill="#FF0033" text-anchor="middle">OFFICIAL</text>
+    <text x="50" y="58" font-family="monospace" font-size="9" font-weight="bold" fill="#FF0033" text-anchor="middle">VERIFIED</text>
+  </g>
+  
+  <g transform="translate(620, 530)">
+    <line x1="0" y1="0" x2="200" y2="0" stroke="#000000" stroke-width="2"/>
+    <text x="100" y="20" font-family="monospace" font-size="11" font-weight="bold" fill="#000000" text-anchor="middle">EXECUTIVE DIRECTOR</text>
+    <text x="100" y="35" font-family="monospace" font-size="9" fill="#666666" text-anchor="middle">CodeSrijan Directorate</text>
+  </g>
+  
+  <rect x="70" y="605" width="860" height="35" fill="#EEEEEE" stroke="#000000" stroke-width="1"/>
+  <text x="85" y="627" font-family="monospace" font-size="10" font-weight="bold" fill="#333333">AUTHENTICATION HASH: <tspan fill="#0066FF">${certCode}</tspan></text>
+  <text x="915" y="627" font-family="monospace" font-size="10" font-weight="bold" fill="#333333" text-anchor="end">DATE ISSUED: ${issueDate}</text>
+</svg>`;
+
+        const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.href = url;
+        downloadAnchor.download = `CodeSrijan-Certificate-${certCode}.svg`;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        document.body.removeChild(downloadAnchor);
+        URL.revokeObjectURL(url);
+        toast.success("Official certificate exported successfully!");
+    };
+
     const fetchMyCertificates = async () => {
         if (!currentUser) return;
         try {
@@ -482,27 +551,24 @@ export function CertificatesPage() {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-2">
-                                            {cert.metadata?.fileUrl ? (
-                                                <a
-                                                    href={cert.metadata.fileUrl}
-                                                    download={`CodeSrijan-Certificate-${cert.id}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="flex-1 py-2.5 bg-stark-black hover:bg-electric-blue text-white text-center font-bold text-xs uppercase border border-black transition-colors flex items-center justify-center gap-1.5"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">download</span>
-                                                    Download Certificate
-                                                </a>
-                                            ) : (
-                                                <button
-                                                    onClick={() => toast.success(`Certificate ${cert.id} verified on chain.`)}
-                                                    className="flex-1 py-2.5 bg-stark-black hover:bg-electric-blue text-white text-center font-bold text-xs uppercase border border-black transition-colors flex items-center justify-center gap-1.5"
-                                                >
-                                                    <span className="material-symbols-outlined text-sm">verified</span>
-                                                    Verified Certificate
-                                                </button>
-                                            )}
+                                        <div className="flex flex-col sm:flex-row gap-2 mt-4 pt-3 border-t border-zinc-200">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDownloadCertificate(cert)}
+                                                className="flex-1 py-2.5 px-3 bg-electric-blue hover:bg-black text-white text-center font-bold text-xs uppercase border-2 border-black transition-all flex items-center justify-center gap-1.5 cursor-pointer brutal-shadow-sm hover:-translate-y-0.5"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">download</span>
+                                                Download Certificate
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setPreviewCert(cert)}
+                                                className="py-2.5 px-3 bg-pure-white hover:bg-zinc-100 text-black text-center font-bold text-xs uppercase border-2 border-black transition-all flex items-center justify-center gap-1.5 cursor-pointer brutal-shadow-sm hover:-translate-y-0.5"
+                                                title="Preview and print official certificate"
+                                            >
+                                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                                Preview / Print
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
@@ -510,6 +576,109 @@ export function CertificatesPage() {
                         )}
                     </section>
                 )}
+
+                {/* CERTIFICATE PREVIEW & PRINT MODAL */}
+                {previewCert && (
+                    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={(e) => { if (e.target === e.currentTarget) setPreviewCert(null); }}>
+                        <div className="bg-white border-4 border-black brutal-shadow max-w-4xl w-full p-6 sm:p-8 my-8 space-y-6">
+                            <div className="flex justify-between items-center border-b-2 border-black pb-4">
+                                <div className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-electric-blue text-2xl">workspace_premium</span>
+                                    <h3 className="font-display-lg text-xl uppercase font-black text-black">
+                                        OFFICIAL CERTIFICATE PREVIEW
+                                    </h3>
+                                </div>
+                                <button
+                                    onClick={() => setPreviewCert(null)}
+                                    className="bg-black text-white p-1.5 hover:bg-rose-600 transition-colors border border-black cursor-pointer font-bold text-xs"
+                                >
+                                    ✕ CLOSE
+                                </button>
+                            </div>
+
+                            {/* Printable Certificate Frame */}
+                            <div id="codesrijan-certificate-frame" className="border-8 border-black p-8 sm:p-12 bg-[#FCFAF2] text-center space-y-6 relative shadow-inner">
+                                <div className="border-2 border-dashed border-[#0066FF] p-6 sm:p-8 space-y-6">
+                                    <div className="flex justify-between items-center text-xs font-mono font-bold text-zinc-500 uppercase border-b pb-2">
+                                        <span>CODESRIJAN 2026 OFFICIAL CREDENTIAL</span>
+                                        <span>HASH: {previewCert.metadata?.verificationCode || previewCert.id}</span>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <div className="w-14 h-14 bg-[#FFD700] text-black border-2 border-black flex items-center justify-center font-bold text-2xl mx-auto shadow-[2px_2px_0px_#000]">
+                                            ★
+                                        </div>
+                                        <h2 className="font-display-lg text-2xl sm:text-4xl uppercase text-electric-blue tracking-tight font-black pt-2">
+                                            {previewCert.metadata?.title || (previewCert.type === 'winner' ? 'Certificate of Excellence' : previewCert.type === 'runner_up' ? 'Certificate of Merit' : 'Certificate of Participation')}
+                                        </h2>
+                                        <p className="font-mono text-xs uppercase tracking-widest text-zinc-600">
+                                            PROUDLY PRESENTED TO
+                                        </p>
+                                    </div>
+
+                                    <div className="py-2">
+                                        <div className="text-3xl sm:text-5xl font-black uppercase text-black tracking-wide border-b-4 border-black pb-2 inline-block px-6">
+                                            {previewCert.userName || currentUser?.name || 'Operative'}
+                                        </div>
+                                    </div>
+
+                                    <p className="font-mono text-xs sm:text-sm text-zinc-700 max-w-xl mx-auto leading-relaxed">
+                                        For outstanding performance, system architecture, and technical innovation demonstrated during competitive hackathon operations within the CodeSrijan engineering ecosystem.
+                                    </p>
+
+                                    <div className="flex flex-col sm:flex-row justify-between items-center pt-8 gap-6 border-t-2 border-black mt-6">
+                                        <div className="text-left">
+                                            <span className="font-bold uppercase text-[10px] text-zinc-500 block">Verification Authority:</span>
+                                            <span className="font-mono text-xs font-bold text-electric-blue">{previewCert.metadata?.verificationCode || previewCert.id}</span>
+                                            <span className="block text-[10px] text-zinc-400 font-mono">Date Issued: {previewCert.issueDate ? new Date(previewCert.issueDate).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="text-center sm:text-right">
+                                            <div className="w-48 border-b-2 border-black pb-1 mb-1">
+                                                <span className="font-mono text-xs italic text-zinc-600">CodeSrijan Directorate</span>
+                                            </div>
+                                            <span className="font-bold uppercase text-[10px] text-black block tracking-wider">Executive Organizing Council</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Action Buttons */}
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(previewCert.metadata?.verificationCode || previewCert.id);
+                                        toast.success("Verification hash copied to clipboard!");
+                                    }}
+                                    className="py-2.5 px-4 bg-zinc-100 hover:bg-zinc-200 text-black font-bold text-xs uppercase border-2 border-black transition-colors flex items-center gap-2 cursor-pointer w-full sm:w-auto"
+                                >
+                                    <span className="material-symbols-outlined text-sm">content_copy</span>
+                                    Copy Hash
+                                </button>
+
+                                <div className="flex gap-3 w-full sm:w-auto">
+                                    <button
+                                        type="button"
+                                        onClick={() => window.print()}
+                                        className="flex-1 sm:flex-initial py-2.5 px-5 bg-pure-white hover:bg-zinc-100 text-black font-bold text-xs uppercase border-2 border-black transition-colors flex items-center justify-center gap-2 cursor-pointer brutal-shadow-sm"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">print</span>
+                                        Print / PDF
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDownloadCertificate(previewCert)}
+                                        className="flex-1 sm:flex-initial py-2.5 px-5 bg-electric-blue hover:bg-black text-white font-bold text-xs uppercase border-2 border-black transition-colors flex items-center justify-center gap-2 cursor-pointer brutal-shadow-sm"
+                                    >
+                                        <span className="material-symbols-outlined text-sm">download</span>
+                                        Download File
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
             </main>
         </div>
     );

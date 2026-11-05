@@ -558,129 +558,167 @@ function WorkspaceHUD() {
     <div className="min-h-screen bg-surface-container-lowest text-on-background pb-16 px-gutter md:px-0 bg-[radial-gradient(#00000018_1px,transparent_1px)] bg-[size:16px_16px]">
       <div className="max-w-[1400px] mx-auto flex flex-col gap-6 md:pt-12 pt-6">
         
-        {/* Navigation & Header block */}
-        <div className="w-full flex md:flex-row flex-col items-start md:items-center justify-between border-4 border-ink-black pb-8 bg-pure-white p-6 sm:p-8 brutal-shadow">
+        {/* Navigation & Command Header Block */}
+        <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between border-4 border-ink-black bg-pure-white p-6 sm:p-8 brutal-shadow gap-6">
           <div>
-            <Link to="/dashboard" className="font-label-bold uppercase text-ink-black flex items-center gap-2 mb-4 transition-transform hover:-translate-x-1 w-fit">
-              <span className="material-symbols-outlined">arrow_back</span>
+            <Link to="/dashboard" className="font-label-bold uppercase text-ink-black flex items-center gap-2 mb-3 transition-transform hover:-translate-x-1 w-fit text-xs">
+              <span className="material-symbols-outlined text-sm">arrow_back</span>
               RETURN TO DASHBOARD
             </Link>
-            <h1 className="font-display-lg text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-ink-black">
+            <h1 className="font-display-lg text-3xl sm:text-4xl md:text-5xl uppercase tracking-tight text-ink-black font-black">
               SQUAD WORKSPACE
             </h1>
-            <p className="font-mono text-xs sm:text-sm text-zinc-700 flex gap-3 sm:gap-4 mt-2 font-bold flex-wrap items-center">
-              <span className="uppercase text-electric-blue">DESIGNATION: {userTeam.name}</span>
-              <span className="text-zinc-400">|</span>
-              <span>EVENT: {activeEvent?.name || activeEvent?.id?.toUpperCase()}</span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-3">
+              <span className="px-2.5 py-1 bg-blue-50 border-2 border-electric-blue text-electric-blue text-xs font-mono font-bold uppercase tracking-wider">
+                SQUAD: {userTeam.name}
+              </span>
+              <span className="px-2.5 py-1 bg-zinc-100 border-2 border-black text-black text-xs font-mono font-bold uppercase">
+                EVENT: {activeEvent?.name || activeEvent?.id?.toUpperCase()}
+              </span>
               {isPaidEvent && (
-                <>
-                  <span className="text-zinc-400">|</span>
-                  <span className={isPaymentVerified ? 'text-emerald-600 font-bold' : isPaymentUnderReview ? 'text-yellow-600 font-bold' : 'text-amber-600 font-bold'}>
-                    {isPaymentVerified ? 'PAYMENT VERIFIED' : isPaymentUnderReview ? 'PAYMENT IN AUDIT' : isPaymentRejected ? 'PAYMENT REJECTED' : `PAYMENT DUE (₹${feeAmount})`}
-                  </span>
-                </>
+                <span className={`px-2.5 py-1 border-2 border-black text-xs font-mono font-bold uppercase ${
+                  isPaymentVerified 
+                    ? 'bg-emerald-400 text-black' 
+                    : isPaymentUnderReview 
+                    ? 'bg-yellow-400 text-black' 
+                    : isPaymentRejected 
+                    ? 'bg-rose-500 text-white' 
+                    : 'bg-amber-400 text-black'
+                }`}>
+                  {isPaymentVerified ? '✓ PAYMENT VERIFIED' : isPaymentUnderReview ? '⏳ PAYMENT IN AUDIT' : isPaymentRejected ? '✕ PAYMENT REJECTED' : `⚠️ PAYMENT DUE (₹${feeAmount})`}
+                </span>
               )}
-            </p>
+            </div>
           </div>
 
-          <div className="flex flex-col items-start md:items-end gap-2 mt-6 md:mt-0">
-            <span className="font-label-bold uppercase text-zinc-600 text-xs">Framework Status</span>
-            <div className="flex gap-3 items-center flex-wrap">
-              {isSubmitted ? (
-                <span className="bg-emerald-500 text-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
-                  <span className="material-symbols-outlined text-sm">lock</span> PAYLOAD DELIVERED
-                </span>
-              ) : (
-                <span className="bg-amber-400 text-black px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-black brutal-shadow-sm">
-                  <span className="material-symbols-outlined text-sm">shield</span> SYSTEMS UNLOCKED
-                </span>
-              )}
-              {isSquadLeader && activeEvent && !isSubmitted && (
-                <button 
-                  type="button" 
-                  onClick={() => setShowWorkspaceWithdrawModal(true)} 
-                  className="bg-rose-100 hover:bg-rose-600 hover:text-white text-rose-800 px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-wider flex items-center gap-1.5 border-2 border-rose-600 brutal-shadow-sm transition-colors cursor-pointer"
-                  title="Withdraw squad from active hackathon"
-                >
-                  <span className="material-symbols-outlined text-sm">logout</span> WITHDRAW FROM EVENT
-                </button>
-              )}
-              <button 
-                onClick={() => setIsRequestingMentor(true)} 
-                className="bg-error text-pure-white px-3 sm:px-4 py-2 font-label-bold text-xs uppercase tracking-widest flex items-center gap-2 border-2 border-error brutal-shadow-sm brutal-hover hover:-translate-y-1 cursor-pointer"
-              >
-                <span className="material-symbols-outlined text-sm">sos</span> REQUEST MENTOR
-              </button>
-            </div>
-            
-            {activeMentorRequests.length > 0 && (
-              <div className="mt-4 text-left border-2 border-black p-3 bg-surface-container max-w-xl">
-                <div className="flex justify-between items-center mb-2 pb-1 border-b border-black">
-                  <span className="font-label-bold uppercase text-[11px] text-black font-black flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-sm text-electric-blue">support_agent</span>
-                    ACTIVE GUIDANCE SESSIONS ({activeMentorRequests.length})
-                  </span>
-                  <button type="button" onClick={fetchMentorRequests} className="underline text-[10px] font-mono font-bold hover:text-electric-blue cursor-pointer">
-                    ↻ Refresh status
-                  </button>
-                </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                  {activeMentorRequests.map(req => (
-                    <div key={req.id} className="bg-white p-2.5 border border-black shadow-[2px_2px_0px_#000] text-xs">
-                      <div className="flex justify-between items-start gap-2">
-                        <span className="font-bold uppercase text-[11px]">{req.topic}</span>
-                        <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 border uppercase ${
-                          req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800 border-emerald-500' :
-                          req.status === 'resolved' ? 'bg-zinc-200 text-zinc-700 border-zinc-400' :
-                          'bg-amber-100 text-amber-900 border-amber-500'
-                        }`}>
-                          {req.status}
-                        </span>
-                      </div>
-                      {req.meetLink && /^https:\/\//i.test(req.meetLink) && (
-                        <a href={req.meetLink} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-electric-blue font-bold text-xs underline">
-                          JOIN MEET <span className="material-symbols-outlined text-xs">open_in_new</span>
-                        </a>
-                      )}
-                      {req.responses?.map((response: {id: string; message: string; createdAt?: string}) => (
-                        <div key={response.id} className="mt-2 border-l-2 border-electric-blue pl-2 bg-blue-50/50 p-1.5">
-                          <p className="text-[10px] font-bold text-electric-blue uppercase">Mentor Guidance</p>
-                          <p className="text-xs whitespace-pre-wrap text-zinc-800">{response.message}</p>
-                          {response.createdAt && <p className="text-[9px] font-mono text-zinc-500 mt-0.5">{new Date(response.createdAt).toLocaleString()}</p>}
-                        </div>
-                      ))}
-                      {req.status === 'resolved' && (
-                        <div className="mt-2 pt-1 border-t border-zinc-200 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                const token = localStorage.getItem("codesrijan_auth_token");
-                                const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-                                await axios.post(
-                                  `${BASE}/mentor/requests/${encodeURIComponent(req.id)}/reopen`,
-                                  {},
-                                  { headers: { Authorization: `Bearer ${token}` } }
-                                );
-                                toast.success("Guidance request reopened! Active mentors alerted.");
-                                await fetchMentorRequests();
-                              } catch (err: any) {
-                                toast.error(err.response?.data?.message || 'Could not reopen guidance request.');
-                              }
-                            }}
-                            className="bg-black hover:bg-electric-blue text-white font-mono text-[10px] font-bold uppercase px-2 py-1 transition-colors cursor-pointer"
-                          >
-                            Reopen guidance request
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {/* Action Button Row */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+            {isSubmitted ? (
+              <span className="bg-emerald-500 text-white px-4 py-2.5 font-label-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-black brutal-shadow-sm">
+                <span className="material-symbols-outlined text-sm">lock</span> PAYLOAD DELIVERED
+              </span>
+            ) : (
+              <span className="bg-amber-400 text-black px-4 py-2.5 font-label-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-black brutal-shadow-sm">
+                <span className="material-symbols-outlined text-sm">shield</span> SYSTEMS UNLOCKED
+              </span>
             )}
+
+            {isSquadLeader && activeEvent && !isSubmitted && (
+              <button 
+                type="button" 
+                onClick={() => setShowWorkspaceWithdrawModal(true)} 
+                className="bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-800 px-4 py-2.5 font-label-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 border-2 border-rose-600 brutal-shadow-sm transition-all cursor-pointer hover:-translate-y-0.5"
+                title="Withdraw squad from active hackathon"
+              >
+                <span className="material-symbols-outlined text-sm">logout</span> WITHDRAW FROM EVENT
+              </button>
+            )}
+
+            <button 
+              type="button"
+              onClick={() => setIsRequestingMentor(true)} 
+              className="bg-error text-pure-white px-4 py-2.5 font-label-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-black brutal-shadow-sm transition-all hover:-translate-y-0.5 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm">sos</span> SOS REQUEST MENTOR
+            </button>
           </div>
         </div>
+
+        {/* Dedicated Active Guidance HUD Card */}
+        {activeMentorRequests.length > 0 && (
+          <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b-2 border-black pb-3 mb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-electric-blue text-2xl">support_agent</span>
+                <div>
+                  <h3 className="font-display-lg text-lg uppercase font-black text-black">
+                    ACTIVE MENTOR GUIDANCE SESSIONS ({activeMentorRequests.length})
+                  </h3>
+                  <p className="font-mono text-xs text-zinc-500">Live operational guidance from CodeSrijan technical mentors</p>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                onClick={fetchMentorRequests} 
+                className="px-3 py-1.5 bg-zinc-100 hover:bg-electric-blue hover:text-white border-2 border-black font-mono text-xs font-bold uppercase transition-colors flex items-center gap-1.5 cursor-pointer brutal-shadow-sm"
+              >
+                <span className="material-symbols-outlined text-sm">refresh</span>
+                Refresh Responses
+              </button>
+            </div>
+
+            {/* Responsive Grid of Guidance Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {activeMentorRequests.map(req => (
+                <div key={req.id} className="bg-surface-container border-2 border-black p-4 brutal-shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start gap-2 mb-2">
+                      <span className="font-bold uppercase text-xs text-black line-clamp-1">{req.topic}</span>
+                      <span className={`text-[10px] font-mono font-bold px-2 py-0.5 border uppercase ${
+                        req.status === 'accepted' ? 'bg-emerald-100 text-emerald-800 border-emerald-500' :
+                        req.status === 'resolved' ? 'bg-zinc-200 text-zinc-700 border-zinc-400' :
+                        'bg-amber-100 text-amber-900 border-amber-500'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </div>
+                    <p className="font-mono text-xs text-zinc-600 line-clamp-2 mb-2">{req.description}</p>
+                    {req.meetLink && /^https:\/\//i.test(req.meetLink) && (
+                      <a 
+                        href={req.meetLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-electric-blue text-white font-bold text-xs uppercase border border-black mb-3 hover:bg-black transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">video_call</span>
+                        JOIN LIVE MEET ↗
+                      </a>
+                    )}
+                    {req.responses && req.responses.length > 0 && (
+                      <div className="space-y-2 mt-2 pt-2 border-t border-zinc-300">
+                        {req.responses.map((resp: any) => (
+                          <div key={resp.id} className="bg-white border-l-4 border-electric-blue p-2.5 text-xs">
+                            <div className="flex justify-between text-[10px] font-bold text-electric-blue uppercase mb-1">
+                              <span>Mentor Guidance</span>
+                              {resp.createdAt && <span className="font-mono text-zinc-400">{new Date(resp.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                            </div>
+                            <p className="text-xs text-zinc-800 whitespace-pre-wrap">{resp.message}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {req.status === 'resolved' && (
+                    <div className="mt-3 pt-2 border-t border-zinc-200 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem("codesrijan_auth_token");
+                            const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
+                            await axios.post(
+                              `${BASE}/mentor/requests/${encodeURIComponent(req.id)}/reopen`,
+                              {},
+                              { headers: { Authorization: `Bearer ${token}` } }
+                            );
+                            toast.success("Guidance request reopened! Active mentors alerted.");
+                            await fetchMentorRequests();
+                          } catch (err: any) {
+                            toast.error(err.response?.data?.message || 'Could not reopen guidance request.');
+                          }
+                        }}
+                        className="bg-black hover:bg-electric-blue text-white font-mono text-[10px] font-bold uppercase px-3 py-1.5 transition-colors cursor-pointer border border-black"
+                      >
+                        Reopen guidance request
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Squad Authorization Code Box */}
         <div className="bg-pure-white border-4 border-ink-black brutal-shadow p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

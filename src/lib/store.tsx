@@ -296,8 +296,20 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
         socket.on('receive_message', handleReceive);
 
+        const handleFriendUpdate = () => {
+            void refetchData();
+        };
+        socket.on('user:friends_updated', handleFriendUpdate);
+        socket.on('friend:update', handleFriendUpdate);
+        socket.on('team:invite_received', handleFriendUpdate);
+        socket.on('team:kicked', handleFriendUpdate);
+
         return () => {
             socket.off('receive_message', handleReceive);
+            socket.off('user:friends_updated', handleFriendUpdate);
+            socket.off('friend:update', handleFriendUpdate);
+            socket.off('team:invite_received', handleFriendUpdate);
+            socket.off('team:kicked', handleFriendUpdate);
         };
     }, [state.currentUser?.teamId]);
 

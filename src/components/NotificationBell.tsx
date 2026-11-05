@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { useAppStore } from "../lib/store";
+import { useAppStore, socket } from "../lib/store";
 import { Link } from "@tanstack/react-router";
 
 const BASE_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
@@ -142,7 +142,17 @@ export function NotificationBell() {
         if (!currentUser?.id) return;
         fetchNotifications();
         const interval = setInterval(fetchNotifications, 15000);
-        return () => clearInterval(interval);
+
+        const handleLiveNotif = (notif: any) => {
+            if (notif && (notif.userId === currentUser.id || !notif.userId)) {
+                setNotifications(prev => [notif, ...prev.filter(n => n.id !== notif.id)]);
+            }
+        };
+        socket.on('notification:new', handleLiveNotif);
+        return () => {
+            clearInterval(interval);
+            socket.off('notification:new', handleLiveNotif);
+        };
     }, [currentUser?.id]);
 
     const handleMarkAsRead = async (id: string) => {

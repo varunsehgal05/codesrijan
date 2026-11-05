@@ -39,7 +39,8 @@ const userSchema = new mongoose.Schema({
 
     // Social & Specialization Attributes
     specialization: { type: String, default: 'Fullstack' },
-    friends: { type: [String], default: [] }
+    friends: { type: [String], default: [] },
+    teamLeaveCooldownUntil: { type: Date, default: null }
 }, { timestamps: true, toJSON: { transform: (_doc, ret) => { delete ret.passwordHash; return ret; } } });
 
 // 2. Hackathons Collection

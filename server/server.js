@@ -110,6 +110,9 @@ io.use((socket, next) => {
     requireAuth(req, res, () => { socket.data.user = req.user; next(); });
 });
 io.on('connection', (socket) => {
+    if (socket.data?.user?.id) {
+        socket.join('user:' + socket.data.user.id);
+    }
     const authorize = async (conversationId) => {
         if (typeof conversationId !== 'string') return false;
         // Recheck account/session validity when subscribing or emitting.
@@ -1158,6 +1161,26 @@ app.post('/api/hackathons/:id/register', requireAuth, requireRole(['student']), 
         }
 
         // 4. Check for Existing Registration & 1 Active Hackathon Limit
+        // Enforce restriction if previous hackathon withdrawal is recorded
+        const withdrawalReg = await Registration.findOne({
+            $or: [
+                { userId: req.user.id },
+                { 'rosterMembers.userId': req.user.id },
+                ...(req.user.teamId ? [{ teamId: req.user.teamId }] : [])
+            ],
+            $or: [
+                { status: 'withdrawn' },
+                { refundRequested: true }
+            ]
+        }).sort({ updatedAt: -1 });
+
+        if (withdrawalReg) {
+            const withEvent = await Hackathon.findOne({ id: withdrawalReg.hackathonId });
+            return res.status(403).json({ 
+                message: `Your withdrawal from "${withEvent?.name || withdrawalReg.hackathonId}" is on record. Under event protocol, you cannot enroll in another hackathon while your withdrawal is active or pending clearance.` 
+            });
+        }
+
         const existingReg = await Registration.findOne({ hackathonId, userId });
         if (existingReg) {
             return res.status(409).json({ message: "Duplicate record: This operative is already registered for this event.", registration: existingReg });
@@ -1699,7 +1722,7 @@ app.post('/api/users/:id/friend', requireAuth, async (req, res) => {
             await User.updateOne({ id: req.user.id }, { $addToSet: { friends: targetUserId } });
             await User.updateOne({ id: targetUserId }, { $addToSet: { friends: req.user.id } });
             
-            await Notification.create({
+            const comradeNotif = await Notification.create({
                 id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
                 userId: targetUserId,
                 type: 'team_invite',
@@ -1708,7 +1731,11 @@ app.post('/api/users/:id/friend', requireAuth, async (req, res) => {
                 referenceType: 'user',
                 referenceId: currentUser.id,
                 isRead: false
-            }).catch(() => {});
+            }).catch(() => null);
+            if (comradeNotif) {
+                io.to('user:' + targetUserId).emit('notification:new', comradeNotif);
+            }
+            io.to('user:' + targetUserId).emit('friend:update', { friendId: currentUser.id, action: 'added' });
 
             const updatedTarget = await User.findOne({ id: targetUserId });
             res.json({ message: "Added to network comrades!", isFriend: true, friendCount: (updatedTarget.friends || []).length });
@@ -2294,7 +2321,7 @@ app.get('/api/users', requireAuth, async (req, res) => {
     }
     // Return sanitized student directory for recruitment matrix / team builder
     const users = await User.find({ role: 'student' })
-        .select('id name email role college branch year specialization bio techStack skills githubUrl linkedinUrl profilePicture teamId friends isTest')
+        .select('id name email role college branch year specialization bio techStack skills githubUrl linkedinUrl profilePicture teamId friends teamLeaveCooldownUntil isTest')
         .lean();
     res.json(users);
 });
@@ -2339,6 +2366,15 @@ app.get('/api/teams', requireAuth, async (req, res) => {
     res.json(teams);
 });
 app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    if (req.user.teamLeaveCooldownUntil && new Date(req.user.teamLeaveCooldownUntil) > new Date()) {
+        const diffMs = new Date(req.user.teamLeaveCooldownUntil).getTime() - Date.now();
+        const hrs = Math.floor(diffMs / (3600 * 1000));
+        const mins = Math.ceil((diffMs % (3600 * 1000)) / (60 * 1000));
+        return res.status(403).json({ 
+            message: `12-hour squad departure cooldown active. You voluntarily left a squad and cannot create or join a team for another ${hrs}h ${mins}m.`,
+            cooldownUntil: req.user.teamLeaveCooldownUntil
+        });
+    }
     // Only logged-in students (and admins for testing) can create teams, and they become the leader automatically.
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
@@ -2354,6 +2390,15 @@ app.post('/api/teams', requireAuth, requireRole(['student', 'admin']), async (re
     res.json(team);
 });
 app.post('/api/teams/join', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+    if (req.user.teamLeaveCooldownUntil && new Date(req.user.teamLeaveCooldownUntil) > new Date()) {
+        const diffMs = new Date(req.user.teamLeaveCooldownUntil).getTime() - Date.now();
+        const hrs = Math.floor(diffMs / (3600 * 1000));
+        const mins = Math.ceil((diffMs % (3600 * 1000)) / (60 * 1000));
+        return res.status(403).json({ 
+            message: `12-hour squad departure cooldown active. You voluntarily left a squad and cannot create or join a team for another ${hrs}h ${mins}m.`,
+            cooldownUntil: req.user.teamLeaveCooldownUntil
+        });
+    }
     const { teamCode } = req.body;
     if (req.user.teamId) {
         return res.status(403).json({ message: "You are already in a team." });
@@ -2406,8 +2451,9 @@ app.post('/api/teams/leave', requireAuth, requireRole(['student']), async (req, 
         await Team.findOneAndUpdate({ id: team.id }, { $pull: { memberIds: req.user.id } });
     }
 
-    await User.findOneAndUpdate({ id: req.user.id }, { $unset: { teamId: "" } });
-    res.json({ message: "Successfully departed squad operations." });
+    const cooldownUntil = new Date(Date.now() + 12 * 60 * 60 * 1000);
+    await User.findOneAndUpdate({ id: req.user.id }, { $unset: { teamId: "" }, $set: { teamLeaveCooldownUntil: cooldownUntil } });
+    res.json({ message: "Successfully departed squad operations. 12-hour re-enlistment cooldown applied.", cooldownUntil });
 });
 
 app.delete('/api/teams/:id', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
@@ -2905,6 +2951,8 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
             relatedId: invite.id
         });
         await notification.save();
+        io.to('user:' + receiver.id).emit('notification:new', notification);
+        io.to('user:' + receiver.id).emit('team:invite_received', invite);
 
         res.json(invite);
     } catch (e) {
@@ -2912,6 +2960,15 @@ app.post('/api/teams/:id/invite', requireAuth, requireRole(['student']), async (
     }
 });
 app.post('/api/teams/accept-invite/:inviteId', requireAuth, requireRole(['student']), async (req, res) => {
+    if (req.user.teamLeaveCooldownUntil && new Date(req.user.teamLeaveCooldownUntil) > new Date()) {
+        const diffMs = new Date(req.user.teamLeaveCooldownUntil).getTime() - Date.now();
+        const hrs = Math.floor(diffMs / (3600 * 1000));
+        const mins = Math.ceil((diffMs % (3600 * 1000)) / (60 * 1000));
+        return res.status(403).json({ 
+            message: `12-hour squad departure cooldown active. You voluntarily left a squad and cannot create or join a team for another ${hrs}h ${mins}m.`,
+            cooldownUntil: req.user.teamLeaveCooldownUntil
+        });
+    }
     const invite = await TeamInvitation.findOne({ id: req.params.inviteId, receiverId: req.user.id, status: 'pending' });
     if (!invite) return res.status(404).json({ message: "Invite not found or expired." });
 
@@ -3192,7 +3249,7 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
 
         team.memberIds = team.memberIds.filter(id => id !== userId);
         await team.save();
-        await User.findOneAndUpdate({ id: userId }, { teamId: null });
+        await User.findOneAndUpdate({ id: userId }, { teamId: null, teamLeaveCooldownUntil: null });
 
         // Dispatch official expulsion notification to the removed operative
         const kickNotification = new Notification({
@@ -3208,6 +3265,8 @@ app.post('/api/teams/:id/kick', requireAuth, requireRole(['student', 'admin']), 
             createdAt: new Date()
         });
         await kickNotification.save();
+        io.to('user:' + userId).emit('notification:new', kickNotification);
+        io.to('user:' + userId).emit('team:kicked', { teamId: team.id });
 
         res.json({ message: "Operative purged from squad.", notification: kickNotification });
     } catch (e) { res.status(500).json({ error: e.message }) }

@@ -160,6 +160,10 @@ function RecruitmentMatrix() {
   // --------------------------------------------------------------------------
   const handleJoinByCode = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if ((currentUser as any)?.teamLeaveCooldownUntil && new Date((currentUser as any).teamLeaveCooldownUntil).getTime() > Date.now()) {
+      toast.error("12-hour squad departure cooldown active. You cannot join a squad until the cooldown period expires.");
+      return;
+    }
     setLoading(true);
     setErrorMsg("");
     const formData = new FormData(e.currentTarget);
@@ -849,6 +853,35 @@ function RecruitmentMatrix() {
             </button>
           </div>
         </header>
+
+        {/* 12-HOUR SQUAD DEPARTURE COOLDOWN WARNING BANNER */}
+        {Boolean(
+          (currentUser as any)?.teamLeaveCooldownUntil && 
+          new Date((currentUser as any).teamLeaveCooldownUntil).getTime() > Date.now()
+        ) && (
+          <div className="p-6 bg-amber-100 border-4 border-black brutal-shadow border-l-8 border-l-amber-500 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined text-amber-600 text-3xl shrink-0">timer</span>
+              <div>
+                <span className="bg-amber-500 text-black px-2 py-0.5 text-[10px] font-mono font-bold uppercase border border-black">
+                  12-HOUR RE-ENLISTMENT COOLDOWN ACTIVE
+                </span>
+                <h3 className="font-display-lg text-lg uppercase text-black font-black mt-1">
+                  VOLUNTARY SQUAD DEPARTURE RESTRICTION
+                </h3>
+                <p className="font-mono text-xs text-zinc-800 mt-0.5">
+                  You voluntarily left your squad. Under tournament fair-play regulations, you must wait 12 hours before creating a new squad or joining another squad.
+                </p>
+                <p className="font-mono text-xs font-bold text-amber-900 mt-1">
+                  Cooldown lifts at: {new Date((currentUser as any).teamLeaveCooldownUntil).toLocaleString()}
+                </p>
+              </div>
+            </div>
+            <span className="bg-stark-black text-white px-3 py-1.5 text-xs font-mono font-bold whitespace-nowrap brutal-border">
+              KICKED OPERATIVES = 0 COOLDOWN
+            </span>
+          </div>
+        )}
 
         {errorMsg && (
           <div className="p-4 bg-error text-pure-white font-label-bold uppercase brutal-border">
