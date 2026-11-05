@@ -54,20 +54,210 @@ export function TimelinePage() {
         return () => clearInterval(timer);
     }, []);
 
-    // Fetch timeline from backend
+    // Helper to generate rich canonical milestones from hackathon configurations
+    const buildMilestonesFromHackathons = (hList: any[]): Milestone[] => {
+        const results: Milestone[] = [];
+        const currentTime = new Date();
+        const fallbackList = Array.isArray(hList) && hList.length > 0 ? hList : [
+            {
+                id: 'hack-free-1792862581267',
+                name: 'CodeSrijan Impact Challenge — Free Edition',
+                mode: 'hybrid',
+                entryType: 'free',
+                venue: 'CodeSrijan Virtual Arena & Stage'
+            },
+            {
+                id: 'hack-paid-1792862582632',
+                name: 'CodeSrijan 24-Hour Innovation Hackathon',
+                mode: 'offline',
+                entryType: 'paid',
+                venue: 'Main Campus Auditorium'
+            }
+        ];
+
+        for (const h of fallbackList) {
+            const hStart = new Date(h.startDate || h.hackathonStart || Date.now());
+            const hEnd = new Date(h.endDate || h.hackathonEnd || (hStart.getTime() + 48 * 3600000));
+            const regStart = new Date(h.registrationStart || (hStart.getTime() - 14 * 86400000));
+            const regEnd = new Date(h.registrationEnd || h.startDate || (hStart.getTime() - 2 * 3600000));
+            const subDeadline = new Date(h.submissionDeadline || (hEnd.getTime() - 2 * 3600000));
+            const evalDeadline = new Date(h.evaluationDeadline || (hEnd.getTime() - 3600000));
+            const resultDate = new Date(h.resultDate || hEnd);
+            const hackDuration = Math.max(3600000, subDeadline.getTime() - hStart.getTime());
+
+            const phases = [
+                {
+                    phaseKey: 'registration',
+                    phaseNumber: 1,
+                    title: 'Registration Window',
+                    category: 'Registration',
+                    description: 'Individual and squad enrollment opens. Operatives register, submit credentials, and claim tournament entry.',
+                    startDate: regStart.toISOString(),
+                    endDate: regEnd.toISOString(),
+                    icon: 'app_registration'
+                },
+                {
+                    phaseKey: 'team_formation',
+                    phaseNumber: 2,
+                    title: 'Team Formation & Roster Lock',
+                    category: 'Teams',
+                    description: 'Assemble your squad, recruit specialists across Frontend, Backend, AI/ML, and Cybersecurity via the Recruitment Directorate.',
+                    startDate: regStart.toISOString(),
+                    endDate: new Date(Math.min(regEnd.getTime(), hStart.getTime())).toISOString(),
+                    icon: 'group_add'
+                },
+                {
+                    phaseKey: 'opening_ceremony',
+                    phaseNumber: 3,
+                    title: 'Opening Ceremony & Keynote Briefing',
+                    category: 'Kickoff',
+                    description: 'Official tournament kickoff, keynote presentations, problem directives briefing, and matrix initialization.',
+                    startDate: hStart.toISOString(),
+                    endDate: new Date(hStart.getTime() + 60 * 60 * 1000).toISOString(),
+                    icon: 'campaign'
+                },
+                {
+                    phaseKey: 'hacking_begins',
+                    phaseNumber: 4,
+                    title: 'Hacking Begins & Git Repositories Live',
+                    category: 'Development',
+                    description: 'Development sprint commences. Git repositories active, APIs accessible, and workspace Kanban unlocked.',
+                    startDate: new Date(hStart.getTime() + 60 * 60 * 1000).toISOString(),
+                    endDate: subDeadline.toISOString(),
+                    icon: 'terminal'
+                },
+                {
+                    phaseKey: 'checkpoint_1',
+                    phaseNumber: 5,
+                    title: 'Checkpoint 1: Idea Validation & Architecture Review',
+                    category: 'Mentorship',
+                    description: 'Initial mentor consultation. Review system architecture, domain problem alignment, and technology stack.',
+                    startDate: new Date(hStart.getTime() + Math.max(3600000, hackDuration * 0.25)).toISOString(),
+                    endDate: new Date(hStart.getTime() + Math.max(3600000, hackDuration * 0.25) + 2 * 3600000).toISOString(),
+                    icon: 'support_agent'
+                },
+                {
+                    phaseKey: 'midpoint_review',
+                    phaseNumber: 6,
+                    title: 'Mid-Point Checkpoint: Core Implementation Sync',
+                    category: 'Mentorship',
+                    description: 'Progress assessment. Verify database schemas, core business logic, and API endpoints.',
+                    startDate: new Date(hStart.getTime() + Math.max(7200000, hackDuration * 0.5)).toISOString(),
+                    endDate: new Date(hStart.getTime() + Math.max(7200000, hackDuration * 0.5) + 2 * 3600000).toISOString(),
+                    icon: 'sync'
+                },
+                {
+                    phaseKey: 'checkpoint_3',
+                    phaseNumber: 7,
+                    title: 'Checkpoint 3: Feature Freeze & Polish',
+                    category: 'Mentorship',
+                    description: 'Final technical check. UI/UX polish, bug fixes, edge-case hardening, and deployment readiness review.',
+                    startDate: new Date(hStart.getTime() + Math.max(10800000, hackDuration * 0.75)).toISOString(),
+                    endDate: new Date(hStart.getTime() + Math.max(10800000, hackDuration * 0.75) + 2 * 3600000).toISOString(),
+                    icon: 'fact_check'
+                },
+                {
+                    phaseKey: 'submission_deadline',
+                    phaseNumber: 8,
+                    title: 'Code Freeze & Deliverable Submission Deadline',
+                    category: 'Submission',
+                    description: 'Absolute deadline for final GitHub repository commit hashes and live deployment URLs. Workspace locks immediately.',
+                    startDate: new Date(subDeadline.getTime() - 3600000).toISOString(),
+                    endDate: subDeadline.toISOString(),
+                    icon: 'lock_clock'
+                },
+                {
+                    phaseKey: 'judging_period',
+                    phaseNumber: 9,
+                    title: 'Evaluation & Judging Period',
+                    category: 'Judging',
+                    description: 'Judicial panel executes blind rubric scoring across Innovation, Architecture, Functionality, and Presentation vectors.',
+                    startDate: subDeadline.toISOString(),
+                    endDate: evalDeadline.toISOString(),
+                    icon: 'gavel'
+                },
+                {
+                    phaseKey: 'grand_finale',
+                    phaseNumber: 10,
+                    title: 'Grand Finale & Awards Ceremony',
+                    category: 'Ceremony',
+                    description: 'Live broadcast of final deliberations, winner announcements, podium distribution, and achievement certificate issuance.',
+                    startDate: evalDeadline.toISOString(),
+                    endDate: resultDate.toISOString(),
+                    icon: 'emoji_events'
+                }
+            ];
+
+            for (const p of phases) {
+                const s = new Date(p.startDate);
+                const e = new Date(p.endDate);
+                const status: 'completed' | 'ongoing' | 'upcoming' = currentTime > e ? 'completed' : (currentTime >= s ? 'ongoing' : 'upcoming');
+                results.push({
+                    id: `${h.id}-${p.phaseKey}`,
+                    hackathonId: h.id,
+                    hackathonName: h.name || h.title || 'CodeSrijan Hackathon',
+                    hackathonMode: h.mode || 'hybrid',
+                    entryType: h.entryType || (h.fee > 0 ? 'paid' : 'free'),
+                    location: h.venue || (h.mode === 'offline' ? 'Main Campus Auditorium' : 'CodeSrijan Virtual Arena & Stage'),
+                    meetingUrl: (h.mode === 'online' || !h.venue) ? 'https://meet.google.com/codesrijan-hackathon' : undefined,
+                    status,
+                    isCurrentPhase: status === 'ongoing',
+                    ...p
+                });
+            }
+        }
+        return results;
+    };
+
+    // Fetch timeline from backend with automated fallback
     useEffect(() => {
         axios.get(`${API_URL}/timeline`)
             .then(res => {
-                const data: Milestone[] = Array.isArray(res.data) ? res.data : [];
-                setMilestones(data);
-                if (data.length > 0 && !selectedHackathonId) {
-                    setSelectedHackathonId(data[0].hackathonId);
+                const data: Milestone[] = Array.isArray(res.data) && res.data.length > 0 ? res.data : [];
+                if (data.length > 0) {
+                    setMilestones(data);
+                    if (!selectedHackathonId) setSelectedHackathonId(data[0].hackathonId);
+                    setLoading(false);
+                } else {
+                    // Fallback to active hackathons
+                    axios.get(`${API_URL}/hackathons`)
+                        .then(hRes => {
+                            const fallback = buildMilestonesFromHackathons(Array.isArray(hRes.data) ? hRes.data : []);
+                            setMilestones(fallback);
+                            if (fallback.length > 0 && !selectedHackathonId) {
+                                setSelectedHackathonId(fallback[0].hackathonId);
+                            }
+                            setLoading(false);
+                        })
+                        .catch(() => {
+                            const fallback = buildMilestonesFromHackathons([]);
+                            setMilestones(fallback);
+                            if (fallback.length > 0 && !selectedHackathonId) {
+                                setSelectedHackathonId(fallback[0].hackathonId);
+                            }
+                            setLoading(false);
+                        });
                 }
-                setLoading(false);
             })
             .catch(err => {
-                console.error("Failed to load timeline milestones from backend", err);
-                setLoading(false);
+                console.warn("Falling back to client-generated tournament milestones", err);
+                axios.get(`${API_URL}/hackathons`)
+                    .then(hRes => {
+                        const fallback = buildMilestonesFromHackathons(Array.isArray(hRes.data) ? hRes.data : []);
+                        setMilestones(fallback);
+                        if (fallback.length > 0 && !selectedHackathonId) {
+                            setSelectedHackathonId(fallback[0].hackathonId);
+                        }
+                        setLoading(false);
+                    })
+                    .catch(() => {
+                        const fallback = buildMilestonesFromHackathons([]);
+                        setMilestones(fallback);
+                        if (fallback.length > 0 && !selectedHackathonId) {
+                            setSelectedHackathonId(fallback[0].hackathonId);
+                        }
+                        setLoading(false);
+                    });
             });
     }, [API_URL]);
 

@@ -65,23 +65,62 @@ export function AdminCertificates() {
     return safeTeams.filter(t => t.hackathonId === selectedHackathonId);
   }, [safeTeams, selectedHackathonId]);
 
-  // Handle local image/PDF file conversion to data URL or upload
+  // Handle local image/PDF file conversion to data URL with automatic high-res compression
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("File size exceeds 5MB limit. Please choose a smaller template.");
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size exceeds 10MB limit. Please choose a smaller template.");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (loadEvent) => {
-      const result = loadEvent.target?.result as string;
-      setTemplateUrl(result);
-      toast.success(`Template "${file.name}" loaded for preview.`);
-    };
-    reader.readAsDataURL(file);
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const rawUrl = loadEvent.target?.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 1280;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimized = canvas.toDataURL('image/jpeg', 0.82);
+            setTemplateUrl(optimized);
+            toast.success(`Template optimized and loaded (${Math.round(optimized.length / 1024)} KB).`);
+          } else {
+            setTemplateUrl(rawUrl);
+          }
+        };
+        img.onerror = () => {
+          setTemplateUrl(rawUrl);
+        };
+        img.src = rawUrl;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const result = loadEvent.target?.result as string;
+        setTemplateUrl(result);
+        toast.success(`Document loaded for dispatch.`);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Issue Certificates flow
