@@ -260,11 +260,10 @@ export function ChatBotWidget() {
                                                 onClick={() => handleCopyResponse(m.text, i)}
                                                 aria-label={copiedIndex === i ? "Copied response to clipboard" : "Copy response"}
                                                 title={copiedIndex === i ? "Copied!" : "Copy response"}
-                                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all cursor-pointer font-bold ${
-                                                    copiedIndex === i
+                                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all cursor-pointer font-bold ${copiedIndex === i
                                                         ? "bg-emerald-100 text-emerald-800 border border-emerald-500"
                                                         : "text-zinc-600 hover:text-ink-black hover:bg-zinc-200/60"
-                                                }`}
+                                                    }`}
                                             >
                                                 <span className="material-symbols-outlined text-[14px]">
                                                     {copiedIndex === i ? "check" : "content_copy"}

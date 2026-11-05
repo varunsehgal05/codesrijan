@@ -2472,6 +2472,17 @@ app.post('/api/teams/:id/submit', requireAuth, requireRole(['student', 'admin'])
             if (team.hackathonId) {
                 const hackathon = await Hackathon.findOne({ id: team.hackathonId });
                 if (hackathon) {
+                    const now = new Date();
+                    if (hackathon.startDate && new Date(hackathon.startDate) > now && ["upcoming", "scheduled", "draft"].includes(hackathon.status)) {
+                        return res.status(400).json({
+                            message: `Submissions are locked. The hackathon tournament has not officially commenced yet (Commencing ${new Date(hackathon.startDate).toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })} IST).`
+                        });
+                    }
+                    if (hackathon.status === "upcoming") {
+                        return res.status(400).json({
+                            message: "Submissions are locked. The hackathon tournament has not officially commenced yet."
+                        });
+                    }
                     if (hackathon.status === 'evaluation' || hackathon.status === 'completed') {
                         return res.status(403).json({ message: "Submissions for this hackathon are officially closed." });
                     }
@@ -4587,7 +4598,7 @@ app.get('/api/teams/:id/tasks', requireAuth, async (req, res) => {
 app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
-    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED: Final Payload already transmitted." });
+    // Tasks remain editable for sprint task management
 
     const task = new ProjectTask({
         ...req.body,
@@ -4599,10 +4610,10 @@ app.post('/api/teams/:id/tasks', requireAuth, requireRole(['student', 'admin']),
     res.json(task);
 });
 
-app.put('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
+const handleTaskUpdate = async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
-    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+    // Tasks remain editable for sprint task management
 
     const task = await ProjectTask.findOneAndUpdate(
         { id: req.params.taskId, teamId: team.id },
@@ -4618,12 +4629,14 @@ app.put('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'ad
     );
     if (!task) return res.status(404).json({ message: "Task Node missing." });
     res.json(task);
-});
+};
+app.put('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), handleTaskUpdate);
+app.patch('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), handleTaskUpdate);
 
 app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
-    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+    // Tasks remain editable for sprint task management
 
     const task = await ProjectTask.findOneAndUpdate(
         { id: req.params.taskId, teamId: team.id },
@@ -4636,7 +4649,7 @@ app.put('/api/teams/:id/tasks/:taskId/status', requireAuth, requireRole(['studen
 app.delete('/api/teams/:id/tasks/:taskId', requireAuth, requireRole(['student', 'admin']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team || (!team.memberIds.includes(req.user.id) && team.leaderId !== req.user.id && req.user.role !== 'admin')) return res.status(403).json({ message: "Access Denied." });
-    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+    // Tasks remain editable for sprint task management
 
     const task = await ProjectTask.findOne({ id: req.params.taskId });
     if (!task) return res.status(404).json({ message: "Task Node missing." });
@@ -4722,7 +4735,7 @@ app.patch('/api/admin/submissions/:id/lock', requireAuth, requireRole(['admin'])
 app.put('/api/teams/:id/links', requireAuth, requireRole(['student']), async (req, res) => {
     const team = await Team.findOne({ id: req.params.id });
     if (!team || !team.memberIds.includes(req.user.id)) return res.status(403).json({ message: "Access Denied." });
-    if (team.isSubmitted) return res.status(403).json({ message: "WORKSPACE LOCKED." });
+    // Tasks remain editable for sprint task management
 
     team.githubLink = req.body.githubLink !== undefined ? req.body.githubLink : team.githubLink;
     team.figmaLink = req.body.figmaLink !== undefined ? req.body.figmaLink : team.figmaLink;

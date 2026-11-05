@@ -703,16 +703,27 @@ function DashboardPage() {
             {kickTarget && (
                 <div 
                     onClick={(e) => { if (e.target === e.currentTarget && !kicking) setKickTarget(null); }}
-                    className="fixed inset-0 bg-stark-black/85 z-[100] flex items-center justify-center p-4 backdrop-blur-xs font-mono"
+                    className="fixed inset-0 bg-stark-black/85 z-[100] flex items-center justify-center p-4 backdrop-blur-sm font-mono modal-backdrop-animate"
                 >
-                    <div className="bg-pure-white brutal-border border-4 border-error shadow-[10px_10px_0px_0px_#FF0033] w-full max-w-md p-6 sm:p-8 flex flex-col gap-5 relative">
+                    <div className="bg-pure-white brutal-border border-4 border-error shadow-[10px_10px_0px_0px_#FF0033] w-full max-w-md p-6 sm:p-8 flex flex-col gap-5 relative modal-content-animate">
                         {/* Header Banner */}
-                        <div className="bg-error text-white p-3 brutal-border flex items-center gap-3">
-                            <span className="material-symbols-outlined text-2xl animate-pulse">person_remove</span>
-                            <div>
-                                <h3 className="font-headline-md text-base uppercase font-black tracking-tight">EXPULSION PROTOCOL // SQUAD PURGE</h3>
-                                <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Squad Member Removal</p>
+                        <div className="bg-error text-white p-3 brutal-border flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="material-symbols-outlined text-2xl animate-pulse">person_remove</span>
+                                <div>
+                                    <h3 className="font-headline-md text-base uppercase font-black tracking-tight">EXPULSION PROTOCOL // SQUAD PURGE</h3>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider opacity-90">Squad Member Removal</p>
+                                </div>
                             </div>
+                            <button
+                                type="button"
+                                disabled={kicking}
+                                onClick={() => setKickTarget(null)}
+                                className="p-1 hover:bg-black hover:text-white border border-white transition-colors cursor-pointer"
+                                title="Close (Esc)"
+                            >
+                                <span className="material-symbols-outlined text-lg">close</span>
+                            </button>
                         </div>
 
                         <div className="space-y-3 text-xs leading-relaxed text-stark-black">

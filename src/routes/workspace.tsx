@@ -48,6 +48,27 @@ function WorkspaceHUD() {
   const [mentorRequestForm, setMentorRequestForm] = useState({ topic: '', description: '' });
   const [activeMentorRequests, setActiveMentorRequests] = useState<any[]>([]);
 
+  const handleCloseTaskModal = () => {
+    setIsCreating(false);
+    setEditingTask(null);
+    setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: currentUser?.name || '', dueDate: '', status: 'todo' });
+    setEditForm({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' } as any);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isCreating || editingTask) handleCloseTaskModal();
+        if (isSubmitting) setIsSubmitting(false);
+        if (isRequestingMentor) setIsRequestingMentor(false);
+        if (showTrackDossier) setShowTrackDossier(false);
+        if (showWorkspaceWithdrawModal) setShowWorkspaceWithdrawModal(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCreating, editingTask, isSubmitting, isRequestingMentor, showTrackDossier, showWorkspaceWithdrawModal]);
+
   const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
   // Unified submission state
@@ -70,6 +91,30 @@ function WorkspaceHUD() {
            (hackathons || []).find((h: any) => h.status === 'active' || h.status === 'registration_open') || 
            hackathons[0];
   }, [hackathons, userTeam]);
+
+  const isHackathonStarted = useMemo(() => {
+    if (!activeEvent) return true;
+    const status = (activeEvent.status || '').toLowerCase();
+    if (['active', 'ongoing', 'live'].includes(status)) return true;
+    if (activeEvent.startDate) {
+      return new Date(activeEvent.startDate).getTime() <= Date.now();
+    }
+    if (status === 'upcoming') return false;
+    return true;
+  }, [activeEvent]);
+
+  const formattedStartDate = useMemo(() => {
+    if (!activeEvent?.startDate) return "";
+    try {
+      return new Date(activeEvent.startDate).toLocaleString('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Asia/Kolkata'
+      }) + " IST";
+    } catch {
+      return activeEvent.startDate;
+    }
+  }, [activeEvent]);
 
   const userRegistration = useMemo(() => {
     return (registrations || []).find((r: any) => 
@@ -191,17 +236,27 @@ function WorkspaceHUD() {
   const handleTaskUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTask) return;
+    if (!editForm.title.trim()) {
+      toast.error("Objective title cannot be empty.");
+      return;
+    }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       if (!userTeam) return;
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
-      await axios.put(`${BASE}/teams/${userTeam.id}/tasks/${editingTask.id}`, editForm, { headers: { Authorization: `Bearer ${token}` } });
-      setIsCreating(false);
-      setEditingTask(null);
-      toast.success("Task updated.");
+      await axios.put(`${BASE}/teams/${userTeam.id}/tasks/${editingTask.id}`, {
+        title: editForm.title.trim(),
+        description: editForm.description,
+        status: (editForm as any).status || editingTask.status || 'todo',
+        priority: editForm.priority || 'medium',
+        assignedTo: editForm.assignedTo || '',
+        dueDate: editForm.dueDate || ''
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      handleCloseTaskModal();
+      toast.success("Objective updated successfully.");
       refetchData();
     } catch (err: any) {
-      toast.error(`Error updating task: ${err.message}`);
+      toast.error(`Error updating task: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -255,7 +310,6 @@ function WorkspaceHUD() {
       toast.error("Please enter an objective title.");
       return;
     }
-    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
 
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -273,8 +327,7 @@ function WorkspaceHUD() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setNewTaskTitle("");
-      setCreateForm({ title: '', description: '', priority: 'medium', assignedTo: '', dueDate: '', status: 'todo' });
-      setIsCreating(false);
+      handleCloseTaskModal();
       toast.success("Objective created successfully.");
       await refetchData();
     } catch (e: any) { toast.error(e.response?.data?.message || "Task generation failed."); }
@@ -283,7 +336,6 @@ function WorkspaceHUD() {
   const handleQuickTaskCreate = async (e: React.FormEvent, status: string = 'todo') => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
-    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -298,7 +350,6 @@ function WorkspaceHUD() {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
-    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
       const BASE = API_URL.endsWith('/api') ? API_URL : `${API_URL}/api`;
@@ -322,7 +373,6 @@ function WorkspaceHUD() {
   };
 
   const deleteTask = async (taskId: string) => {
-    if (isSubmitted) { toast.error("WORKSPACE LOCKED."); return; }
     if (!confirm("Are you sure you want to delete this objective?")) return;
     try {
       const token = localStorage.getItem("codesrijan_auth_token");
@@ -747,18 +797,31 @@ function WorkspaceHUD() {
 
         {/* Mentor Request Modal */}
         {isRequestingMentor && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6">
-              <h3 className="font-display-lg text-2xl uppercase mb-4 text-error flex items-center gap-2">
-                <span className="material-symbols-outlined text-3xl">sos</span> SOS MENTOR DISPATCH
-              </h3>
-              <p className="font-body-md text-zinc-700 mb-4 font-bold">Stuck on a technical blocker? Broadcast a distress signal to all active mentors.</p>
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate"
+            onClick={e => { if (e.target === e.currentTarget) setIsRequestingMentor(false); }}
+          >
+            <div className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6 sm:p-8 modal-content-animate relative">
+              <div className="flex items-center justify-between border-b-4 border-black pb-3 mb-4">
+                <h3 className="font-display-lg text-2xl uppercase text-error flex items-center gap-2">
+                  <span className="material-symbols-outlined text-3xl animate-pulse">sos</span> SOS MENTOR DISPATCH
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setIsRequestingMentor(false)}
+                  className="p-1 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer"
+                  title="Close (Esc)"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
+              <p className="font-body-md text-zinc-700 mb-4 font-bold text-xs">Stuck on a technical blocker? Broadcast a distress signal to all active mentors.</p>
               <form onSubmit={handleMentorRequest} className="flex flex-col gap-4">
-                <input required placeholder="Topic (e.g., MongoDB Connection Error)" value={mentorRequestForm.topic} onChange={e => setMentorRequestForm({...mentorRequestForm, topic: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet" />
-                <textarea required placeholder="Describe what you tried..." value={mentorRequestForm.description} onChange={e => setMentorRequestForm({...mentorRequestForm, description: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet min-h-[100px]"></textarea>
-                <div className="flex gap-4 mt-4">
-                  <button type="submit" className="flex-1 bg-error text-white font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">TRANSMIT SIGNAL</button>
-                  <button type="button" onClick={() => setIsRequestingMentor(false)} className="flex-1 bg-zinc-300 text-black font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">CANCEL</button>
+                <input required placeholder="Topic (e.g., MongoDB Connection Error)" value={mentorRequestForm.topic} onChange={e => setMentorRequestForm({...mentorRequestForm, topic: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet text-xs" />
+                <textarea required placeholder="Describe what you tried..." value={mentorRequestForm.description} onChange={e => setMentorRequestForm({...mentorRequestForm, description: e.target.value})} className="border-2 border-black p-3 bg-surface-container font-code-snippet min-h-[100px] text-xs"></textarea>
+                <div className="flex gap-4 mt-2">
+                  <button type="submit" className="flex-1 bg-error hover:bg-black text-white font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow transition-all text-xs cursor-pointer">TRANSMIT SIGNAL</button>
+                  <button type="button" onClick={() => setIsRequestingMentor(false)} className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow transition-all text-xs cursor-pointer">CANCEL</button>
                 </div>
               </form>
             </div>
@@ -797,86 +860,171 @@ function WorkspaceHUD() {
           </div>
           
           {(isCreating || editingTask) && (
-              <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-                  <div className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6">
-                      <h3 className="font-display-lg text-2xl uppercase mb-4">{isCreating ? 'CREATE TASK' : 'EDIT TASK'}</h3>
-                      <form onSubmit={isCreating ? handleTaskCreate : handleTaskUpdate} className="flex flex-col gap-4">
-                          <input
-                            required
-                            placeholder="Task Title"
-                            value={isCreating ? createForm.title : editForm.title}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, title: val }));
-                              else setEditForm(prev => ({ ...prev, title: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container"
-                          />
-                          <textarea
-                            placeholder="Description"
-                            value={isCreating ? createForm.description : editForm.description}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, description: val }));
-                              else setEditForm(prev => ({ ...prev, description: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container"
-                          />
-                          <select
-                            value={isCreating ? createForm.priority : editForm.priority}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, priority: val }));
-                              else setEditForm(prev => ({ ...prev, priority: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container font-mono text-xs uppercase"
-                          >
-                              <option value="low">Low Priority</option>
-                              <option value="medium">Medium Priority</option>
-                              <option value="high">High Priority</option>
-                              <option value="critical">Critical Priority</option>
-                          </select>
-                          <select
-                            value={isCreating ? (createForm.status || 'todo') : (editForm.status || 'todo')}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, status: val }));
-                              else setEditForm(prev => ({ ...prev, status: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container font-mono text-xs uppercase"
-                          >
-                              <option value="todo">Pipeline Column: IDLE / BACKLOG</option>
-                              <option value="in-progress">Pipeline Column: ACTIVE OPERATIONS</option>
-                              <option value="review">Pipeline Column: QA / REVIEW DECK</option>
-                              <option value="completed">Pipeline Column: EXECUTED</option>
-                          </select>
-                          <input
-                            placeholder="Assign To (Username or ID)"
-                            value={isCreating ? createForm.assignedTo : editForm.assignedTo}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, assignedTo: val }));
-                              else setEditForm(prev => ({ ...prev, assignedTo: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container"
-                          />
-                          <input
-                            type="date"
-                            value={isCreating ? createForm.dueDate : editForm.dueDate}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              if (isCreating) setCreateForm(prev => ({ ...prev, dueDate: val }));
-                              else setEditForm(prev => ({ ...prev, dueDate: val }));
-                            }}
-                            className="border-2 border-black p-3 bg-surface-container"
-                          />
-                          <div className="flex gap-4 mt-4">
-                              <button type="submit" className="flex-1 bg-electric-blue text-white font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">SAVE TASK</button>
-                              <button type="button" onClick={() => { setIsCreating(false); setEditingTask(null); }} className="flex-1 bg-zinc-300 text-black font-bold py-3 border-2 border-black hover:-translate-y-1 brutal-shadow">CANCEL</button>
-                          </div>
-                      </form>
+            <div 
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate"
+              onClick={handleCloseTaskModal}
+            >
+              <div 
+                className="bg-white border-4 border-black brutal-shadow max-w-lg w-full p-6 sm:p-8 modal-content-animate relative"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Header with Title and Close Button */}
+                <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-5">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-2xl text-electric-blue">
+                      {isCreating ? 'add_task' : 'edit_note'}
+                    </span>
+                    <h3 className="font-display-lg text-2xl uppercase text-ink-black">
+                      {isCreating ? 'CREATE TASK' : 'EDIT TASK'}
+                    </h3>
                   </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseTaskModal}
+                    className="p-1 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer"
+                    title="Close (Esc)"
+                  >
+                    <span className="material-symbols-outlined text-xl">close</span>
+                  </button>
+                </div>
+
+                <form onSubmit={isCreating ? handleTaskCreate : handleTaskUpdate} className="flex flex-col gap-4">
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                      Objective Title *
+                    </label>
+                    <input
+                      required
+                      autoFocus
+                      placeholder="e.g., Integrate Firebase Auth & Token Verification"
+                      value={isCreating ? createForm.title : editForm.title}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (isCreating) setCreateForm(prev => ({ ...prev, title: val }));
+                        else setEditForm(prev => ({ ...prev, title: val }));
+                      }}
+                      className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                      Description & Scope
+                    </label>
+                    <textarea
+                      placeholder="Outline technical milestones, files involved, and DoD..."
+                      value={isCreating ? createForm.description : editForm.description}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (isCreating) setCreateForm(prev => ({ ...prev, description: val }));
+                        else setEditForm(prev => ({ ...prev, description: val }));
+                      }}
+                      rows={3}
+                      className="w-full border-2 border-black p-3 bg-surface-container font-mono text-xs focus:outline-none focus:ring-2 focus:ring-electric-blue"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                        Priority Level
+                      </label>
+                      <select
+                        value={isCreating ? createForm.priority : editForm.priority}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (isCreating) setCreateForm(prev => ({ ...prev, priority: val }));
+                          else setEditForm(prev => ({ ...prev, priority: val }));
+                        }}
+                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
+                      >
+                        <option value="low">Low Priority</option>
+                        <option value="medium">Medium Priority</option>
+                        <option value="high">High Priority</option>
+                        <option value="critical">Critical Priority</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                        Pipeline Column
+                      </label>
+                      <select
+                        value={isCreating ? (createForm.status || 'todo') : ((editForm as any).status || editingTask?.status || 'todo')}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (isCreating) setCreateForm(prev => ({ ...prev, status: val }));
+                          else setEditForm(prev => ({ ...prev, status: val } as any));
+                        }}
+                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs uppercase"
+                      >
+                        <option value="todo">Pipeline: IDLE / BACKLOG</option>
+                        <option value="in-progress">Pipeline: ACTIVE OPERATIONS</option>
+                        <option value="review">Pipeline: QA / REVIEW DECK</option>
+                        <option value="completed">Pipeline: EXECUTED</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                        Assignee Operative
+                      </label>
+                      <select
+                        value={isCreating ? createForm.assignedTo : editForm.assignedTo}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (isCreating) setCreateForm(prev => ({ ...prev, assignedTo: val }));
+                          else setEditForm(prev => ({ ...prev, assignedTo: val }));
+                        }}
+                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
+                      >
+                        <option value="">Unassigned</option>
+                        {teamMembers.map((m: any) => (
+                          <option key={m.id || m._id} value={m.name || m.username || m.id}>
+                            {m.name || m.username || m.email || m.id}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase font-bold text-zinc-700 mb-1">
+                        Target Due Date
+                      </label>
+                      <input
+                        type="date"
+                        value={isCreating ? createForm.dueDate : editForm.dueDate}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (isCreating) setCreateForm(prev => ({ ...prev, dueDate: val }));
+                          else setEditForm(prev => ({ ...prev, dueDate: val }));
+                        }}
+                        className="w-full border-2 border-black p-2.5 bg-surface-container font-mono text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 mt-4 pt-4 border-t-2 border-zinc-200">
+                    <button 
+                      type="submit" 
+                      className="flex-1 bg-electric-blue hover:bg-black text-white font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs flex items-center justify-center gap-1.5"
+                    >
+                      <span className="material-symbols-outlined text-sm">check_circle</span>
+                      {isCreating ? 'SAVE OBJECTIVE' : 'UPDATE OBJECTIVE'}
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={handleCloseTaskModal} 
+                      className="flex-1 bg-zinc-200 hover:bg-zinc-300 text-black font-label-bold uppercase py-3 border-2 border-black transition-all brutal-shadow hover:-translate-y-0.5 cursor-pointer text-xs"
+                    >
+                      CANCEL
+                    </button>
+                  </div>
+                </form>
               </div>
+            </div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -939,11 +1087,27 @@ function WorkspaceHUD() {
                                   {task.priority}
                                 </span>
                               )}
-                              {!isSubmitted && (
-                                <button onClick={() => deleteTask(task.id)} className="text-error hover:bg-error/10 p-0.5 ml-1" title="Delete Task">
-                                  <span className="material-symbols-outlined text-xs">delete</span>
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingTask(task);
+                                  setEditForm({
+                                    title: task.title || '',
+                                    description: task.description || '',
+                                    priority: task.priority || 'medium',
+                                    assignedTo: task.assignedTo || '',
+                                    dueDate: task.dueDate || '',
+                                    status: task.status || col
+                                  } as any);
+                                }}
+                                className="text-zinc-600 hover:text-black hover:bg-zinc-200 p-0.5 ml-1 border border-transparent hover:border-black transition-colors"
+                                title="Edit Objective"
+                              >
+                                <span className="material-symbols-outlined text-xs">edit</span>
+                              </button>
+                              <button onClick={() => deleteTask(task.id)} className="text-error hover:bg-error/10 p-0.5 ml-0.5" title="Delete Task">
+                                <span className="material-symbols-outlined text-xs">delete</span>
+                              </button>
                             </div>
                           </div>
 
@@ -953,7 +1117,7 @@ function WorkspaceHUD() {
                           )}
 
                           {/* Quick Nudge Arrows & Select Status Controls */}
-                          {!isSubmitted && (
+                          {true && (
                             <div className="flex items-center gap-1.5 pt-2 border-t border-zinc-200 mt-2">
                               {idx > 0 && (
                                 <button
@@ -1127,13 +1291,34 @@ function WorkspaceHUD() {
                   Execute this action ONLY when your squad has finalized structural construction. Submitting locks your project links permanently for evaluation.
                 </p>
 
-                {isPaidEvent && !isPaymentVerified && (
+                {!isHackathonStarted ? (
+                  <div className="bg-amber-100 border-4 border-amber-600 p-4 text-xs font-mono text-amber-950 mb-4 w-full text-center shadow-[3px_3px_0px_#d97706] modal-content-animate">
+                    <div className="flex items-center justify-center gap-1.5 font-black text-sm mb-1 text-amber-900 uppercase">
+                      <span className="material-symbols-outlined text-lg">lock_clock</span> TOURNAMENT NOT COMMENCED
+                    </div>
+                    <p className="leading-relaxed">
+                      Deliverable submissions unlock automatically once the hackathon officially commences${formattedStartDate ? ` on ${formattedStartDate}` : ''}.
+                    </p>
+                    <div className="mt-2 text-[10px] uppercase font-bold text-amber-800 bg-amber-200/80 py-1 px-2 border border-amber-400">
+                      Phase: Pre-Commencement Stage
+                    </div>
+                  </div>
+                ) : isPaidEvent && !isPaymentVerified ? (
                   <div className="bg-amber-100 border-2 border-amber-500 p-2 text-[11px] font-mono text-amber-900 mb-4 w-full">
                     ⚠️ Payment clearance (₹{feeAmount}) required before submission.
                   </div>
-                )}
+                ) : null}
 
-                {!isSquadLeader ? (
+                {!isHackathonStarted ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="bg-zinc-200 text-zinc-500 cursor-not-allowed font-headline-md uppercase px-6 py-3.5 w-full border-4 border-zinc-400 block mx-auto max-w-xs shadow-none opacity-80"
+                    title={`Submissions unlock on ${formattedStartDate || 'tournament commencement'}`}
+                  >
+                    🔒 SUBMISSION LOCKED
+                  </button>
+                ) : !isSquadLeader ? (
                   <div className="bg-zinc-100 border-2 border-zinc-500 p-3 text-[11px] font-mono text-zinc-800 mb-2 w-full text-center">
                     🔒 <strong>ONLY SQUAD LEADER CAN SUBMIT:</strong><br/>
                     Contact your team leader ({teamMembers.find((m: any) => m.id === userTeam.leaderId)?.name || "Leader"}) to transmit the final project.
@@ -1156,7 +1341,7 @@ function WorkspaceHUD() {
                       });
                       setIsSubmitting(true);
                     }}
-                    className="bg-rose-600 hover:bg-black text-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-black brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    className="bg-rose-600 hover:bg-black text-white font-headline-md uppercase px-6 py-3.5 w-full border-4 border-black brutal-hover hover:-translate-y-1 block mx-auto max-w-xs cursor-pointer shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all"
                   >
                     SUBMIT YOUR PROJECT
                   </button>
@@ -1195,11 +1380,27 @@ function WorkspaceHUD() {
         
         {/* Rich Submission Modal */}
         {isSubmitting && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white border-4 border-black brutal-shadow max-w-3xl w-full p-6 sm:p-8 my-8">
-              <h3 className="font-display-lg text-3xl sm:text-4xl uppercase mb-4 text-stark-black border-l-8 border-success pl-4">
-                {isSubmitted ? "UPDATE DELIVERABLES TRANSMISSION" : "FINAL TRANSMISSION"}
-              </h3>
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-animate"
+            onClick={e => { if (e.target === e.currentTarget && !isSubmitLoading) setIsSubmitting(false); }}
+          >
+            <div className="bg-white border-4 border-black brutal-shadow max-w-3xl w-full p-6 sm:p-8 my-8 modal-content-animate relative">
+              <div className="flex items-start justify-between border-b-4 border-black pb-4 mb-4">
+                <div>
+                  <h3 className="font-display-lg text-2xl sm:text-3xl uppercase text-stark-black border-l-8 border-success pl-3">
+                    {isSubmitted ? "UPDATE DELIVERABLES TRANSMISSION" : "FINAL TRANSMISSION"}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  disabled={isSubmitLoading}
+                  onClick={() => setIsSubmitting(false)}
+                  className="p-1 hover:bg-black hover:text-white border-2 border-black transition-colors cursor-pointer disabled:opacity-50"
+                  title="Close (Esc)"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
+              </div>
               <p className="font-code-snippet text-on-surface-variant mb-6 uppercase tracking-widest text-xs">
                 {isSubmitted 
                   ? "Modify and synchronize your payload before evaluation locks." 
@@ -1273,8 +1474,8 @@ function WorkspaceHUD() {
 
         {/* Track Dossier Modal */}
         {showTrackDossier && currentProblem && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-white border-4 border-black brutal-shadow max-w-2xl w-full p-6 sm:p-8 my-8 space-y-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto modal-backdrop-animate" onClick={e => { if (e.target === e.currentTarget) setShowTrackDossier(false); }}>
+            <div className="bg-white border-4 border-black brutal-shadow max-w-2xl w-full p-6 sm:p-8 my-8 space-y-4 modal-content-animate">
               <div className="flex justify-between items-start gap-4 border-b-2 border-black pb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -1350,8 +1551,8 @@ function WorkspaceHUD() {
 
         {/* Workspace Withdrawal Modal */}
         {showWorkspaceWithdrawModal && activeEvent && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-white border-4 border-black brutal-shadow max-w-md w-full p-6 space-y-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-backdrop-animate" onClick={e => { if (e.target === e.currentTarget && !isWithdrawing) setShowWorkspaceWithdrawModal(false); }}>
+            <div className="bg-white border-4 border-black brutal-shadow max-w-md w-full p-6 space-y-4 modal-content-animate">
               <h3 className="font-display-lg uppercase text-xl text-rose-600 flex items-center gap-2">
                 <span className="material-symbols-outlined">warning</span> WITHDRAW SQUAD FROM EVENT
               </h3>
