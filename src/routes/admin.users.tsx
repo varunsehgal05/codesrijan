@@ -27,6 +27,7 @@ function AdminUsers() {
 
     // Form states
     const [formData, setFormData] = useState({ name: '', email: '', role: 'student', status: 'Active' });
+    const [newUserPassword, setNewUserPassword] = useState('');
 
     const API_URL = (import.meta.env.VITE_API_URL ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : import.meta.env.VITE_API_URL + '/api') : 'https://codesrijan-api-6tfr.onrender.com/api');
 
@@ -70,10 +71,11 @@ function AdminUsers() {
         setLoading(true);
         try {
             const token = localStorage.getItem("codesrijan_auth_token");
-            await axios.post(`${API_URL}/admin/users`, formData, { headers: { Authorization: `Bearer ${token}` } });
+            await axios.post(`${API_URL}/admin/users`, { ...formData, password: newUserPassword }, { headers: { Authorization: `Bearer ${token}` } });
             toast.success("SUCCESS: Operative successfully injected into the matrix.");
             setIsAddOpen(false);
             setFormData({ name: '', email: '', role: 'student', status: 'Active' });
+            setNewUserPassword('');
             await refetchData();
         } catch (e: any) {
             toast.error(`FAIL: ${e.response?.data?.message || e.message}`);
@@ -186,6 +188,10 @@ function AdminUsers() {
                         <div className="flex flex-col gap-2">
                             <label className="font-label-bold uppercase">Email Address (Unique Vector)</label>
                             <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="brutal-border p-3 bg-surface-container font-code-snippet focus:outline-none focus:ring-2 focus:ring-electric-blue" placeholder="john.matrix@codesrijan.io" />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <label className="font-label-bold uppercase" htmlFor="force-add-password">Temporary Password (12+ characters)</label>
+                            <input id="force-add-password" required type="password" minLength={12} autoComplete="new-password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} className="brutal-border p-3 bg-surface-container font-code-snippet focus:outline-none focus:ring-2 focus:ring-electric-blue" placeholder="Set a temporary password" />
                         </div>
                         <div className="flex flex-col gap-2">
                             <label className="font-label-bold uppercase">Clearance Role</label>
